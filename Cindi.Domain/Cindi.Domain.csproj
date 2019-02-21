@@ -4,4 +4,31 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Entities\Common - Copy\**" />
+    <Compile Remove="Entities\Sequences - Copy\**" />
+    <Compile Remove="Entities\SequenceTemplates - Copy\**" />
+    <Compile Remove="Entities\Steps - Copy\**" />
+    <Compile Remove="Entities\StepTemplates - Copy\**" />
+    <EmbeddedResource Remove="Entities\Common - Copy\**" />
+    <EmbeddedResource Remove="Entities\Sequences - Copy\**" />
+    <EmbeddedResource Remove="Entities\SequenceTemplates - Copy\**" />
+    <EmbeddedResource Remove="Entities\Steps - Copy\**" />
+    <EmbeddedResource Remove="Entities\StepTemplates - Copy\**" />
+    <None Remove="Entities\Common - Copy\**" />
+    <None Remove="Entities\Sequences - Copy\**" />
+    <None Remove="Entities\SequenceTemplates - Copy\**" />
+    <None Remove="Entities\Steps - Copy\**" />
+    <None Remove="Entities\StepTemplates - Copy\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\StepTests\" />
+    <Folder Include="Entities\SequenceTemplates\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+  </ItemGroup>
+
 </Project>
