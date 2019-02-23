@@ -25,6 +25,17 @@ namespace Cindi.Domain.Entities.Steps
             Error
         };
 
+        public static bool IsCompleteStatus(string status)
+        {
+            if (status == Successful ||
+                status == Warning ||
+                status == Error)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public static bool IsValid(string value)
         {
             if (value == Unassigned ||

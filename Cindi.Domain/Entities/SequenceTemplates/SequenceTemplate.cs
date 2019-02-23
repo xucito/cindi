@@ -5,6 +5,7 @@ using System.Linq;
 using Cindi.Domain.ValueObjects;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
+using Cindi.Domain.Exceptions.Steps;
 
 namespace Cindi.Domain.Entities.SequencesTemplates
 {
@@ -23,7 +24,7 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         /// <summary>
         /// Version of the definition
         /// </summary>
-        public int Version { get; set; }
+        public string Version { get; set; }
 
         public string Description { get; set; }
 
@@ -46,7 +47,7 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
-        public Dictionary<string, DataDescription> InputDefinitions { get; set; }
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
     }
 
     public class LogicBlock

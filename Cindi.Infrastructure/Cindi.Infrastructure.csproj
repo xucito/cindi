@@ -4,4 +4,25 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Sequences\**" />
+    <Compile Remove="SequenceTemplates\**" />
+    <Compile Remove="StepTemplates\**" />
+    <EmbeddedResource Remove="Sequences\**" />
+    <EmbeddedResource Remove="SequenceTemplates\**" />
+    <EmbeddedResource Remove="StepTemplates\**" />
+    <None Remove="Sequences\**" />
+    <None Remove="SequenceTemplates\**" />
+    <None Remove="StepTemplates\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="6.0.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.7.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

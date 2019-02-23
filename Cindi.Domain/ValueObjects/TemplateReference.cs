@@ -9,7 +9,7 @@ namespace Cindi.Domain.ValueObjects
     public class TemplateReference
     {
         public string Name { get; set; }
-        public int Version { get; set; }
+        public string Version { get; set; }
 
         [JsonIgnore]
         public string TemplateId { get { return Name + ":" + Version; } }

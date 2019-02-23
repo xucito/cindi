@@ -1,5 +1,7 @@
-﻿using Cindi.Domain.Entities.StepTests;
+﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.StepTests;
 using Cindi.Domain.ValueObjects;
+using Cindi.Domain.ValueObjects.Journal;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,13 +17,13 @@ namespace Cindi.Domain.Entities.Steps
     {
         public Step()
         {
-            Inputs = new List<DynamicData>();
-            Outputs = new List<DynamicData>();
+            Inputs = new Dictionary<string, object>();
+            //Outputs = new List<DynamicData>();
             Tests = new List<TemplateReference>();
-            SuspendedTimes = new List<DateTimeOffset>();
+            //SuspendedTimes = new List<DateTime>();
         }
+        
 
-        [Required]
         public string Name { get; set; }
 
         public string Description { get; set; }
@@ -34,15 +36,15 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Used to map to a specific step in a sequence
         /// </summary>
-        public int StepRefId { get; set; }
+        public int? StepRefId { get; set; }
 
         public List<TemplateReference> Tests { get; set; }
-        public List<StepTestResult> TestResults { get; set; }
+        public List<StepTestResult> TestResults { get { return Journal.GetLatestValueOrDefault<List<StepTestResult>>("testresults", null); } }
 
         /// <summary>
         /// 
         /// </summary>
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public TemplateReference StepTemplateReference { get; set; }
@@ -50,62 +52,68 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
-        public List<DynamicData> Inputs { get; set; }
+        public Dictionary<string, object> Inputs { get; set; }
 
-        /// <summary>
-        /// Output from task, the output name is the dictionary key and the value is Dictionary value
-        /// </summary>
-        public List<DynamicData> Outputs { get; set; }
 
-        public DateTimeOffset CreatedOn { get; set; }
+        public DateTime CreatedOn { get; set; }
 
-        public DateTimeOffset AssignedOn { get; set; }
+        /*  public DateTime AssignedOn { get; set; }
 
-        /// <summary>
-        /// Suspended times
-        /// </summary>
-        public List<DateTimeOffset> SuspendedTimes { get; set; }
-
+          /// <summary>
+          /// Suspended times
+          /// </summary>
+          public List<DateTime> SuspendedTimes { get; set; }
+          */
         /// <summary>
         /// Completed is the date the step is moved to a completed queue
         /// </summary>
-        public DateTimeOffset CompletedOn { get; set; }
+        public DateTime? CompletedOn
+        {
+            get
+            {
+                var lastStatusAction = Journal.GetLatestAction("status");
+                if (StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
+                {
+                    return lastStatusAction.RecordedOn;
+                }
+                return null;
+            }
+        }
 
-        private string _status { get; set; }
         public string Status
         {
-            get { return _status; }
-            set
+            get
             {
-                if (!StepStatuses.AllStatuses.Contains(value))
-                {
-                    throw new InvalidOperationException("Status " + value + " is not a valid step status");
-                }
-                _status = value;
+                return Journal.GetLatestValueOrDefault("status", StepStatuses.Unassigned);
             }
         }
 
         /// <summary>
+        /// Output from task, the output name is the dictionary key and the value is Dictionary value
+        /// </summary>
+        public List<DynamicData> Outputs { get { return Journal.GetLatestValueOrDefault<List<DynamicData>>("outputs", null); } }
+
+        /// <summary>
         /// Combined with Status can be used to evaluate dependencies
         /// </summary>
-        public int StatusCode { get; set; }
+        //public int StatusCode { get; set; }
 
-        public string Log { get; set; }
+        //public string Log { get; set; }
 
         public bool IsComplete
         {
             get
             {
-                if (_status == StepStatuses.Warning ||
-                    _status == StepStatuses.Successful ||
-                    _status == StepStatuses.Error
-                    )
+                var lastStatusAction = Journal.GetLatestAction("status");
+                if (StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
                 {
                     return true;
                 }
                 return false;
             }
         }
+
+        public Journal Journal { get; set; }
     }
 
 

@@ -3,15 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Application", "Cindi.Application\Cindi.Application.csproj", "{FB00627A-59C1-4FBD-8D6A-99DF91BF4D06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Application", "Cindi.Application\Cindi.Application.csproj", "{FB00627A-59C1-4FBD-8D6A-99DF91BF4D06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Domain", "Cindi.Domain\Cindi.Domain.csproj", "{A235207B-2999-42D5-A876-8BF1489D4CAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Domain", "Cindi.Domain\Cindi.Domain.csproj", "{A235207B-2999-42D5-A876-8BF1489D4CAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Infrastructure", "Cindi.Infrastructure\Cindi.Infrastructure.csproj", "{64E4FCED-E04E-439D-8900-E762DD31ADDB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Infrastructure", "Cindi.Infrastructure\Cindi.Infrastructure.csproj", "{64E4FCED-E04E-439D-8900-E762DD31ADDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Persistence", "Cindi.Persistence\Cindi.Persistence.csproj", "{A21E00FC-3138-4165-8408-926F68081A78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Persistence", "Cindi.Persistence\Cindi.Persistence.csproj", "{A21E00FC-3138-4165-8408-926F68081A78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Presentation", "Cindi.Presentation\Cindi.Presentation.csproj", "{E05B89A2-85D5-4A02-A652-E9D30CD87665}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Presentation", "Cindi.Presentation\Cindi.Presentation.csproj", "{E05B89A2-85D5-4A02-A652-E9D30CD87665}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8894F407-D591-4FB0-8FEE-243784C9D3F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Infrastructure.Tests", "Cindi.Infrastructure.Tests\Cindi.Infrastructure.Tests.csproj", "{D9BD42DF-F19F-4292-8430-65627681EDBA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,9 +43,16 @@ Global
 		{E05B89A2-85D5-4A02-A652-E9D30CD87665}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E05B89A2-85D5-4A02-A652-E9D30CD87665}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E05B89A2-85D5-4A02-A652-E9D30CD87665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9BD42DF-F19F-4292-8430-65627681EDBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9BD42DF-F19F-4292-8430-65627681EDBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9BD42DF-F19F-4292-8430-65627681EDBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9BD42DF-F19F-4292-8430-65627681EDBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D9BD42DF-F19F-4292-8430-65627681EDBA} = {8894F407-D591-4FB0-8FEE-243784C9D3F1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E86850D9-ABDC-4CE8-B34D-22BEC52926A3}

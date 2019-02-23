@@ -4,4 +4,17 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Sequences\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="2.7.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cindi.Application\Cindi.Application.csproj" />
+    <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

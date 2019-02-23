@@ -11,9 +11,9 @@ namespace Cindi.Domain.Entities.Sequences
     /// </summary>
     public class Sequence
     {
-        public string Id { get; }
+        public Guid Id { get; }
         public string Name { get; }
-        public DateTimeOffset CreatedOn { get; }
+        public DateTime CreatedOn { get; }
         public TemplateReference SequenceTemplateReference { get; set; }
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace Cindi.Domain.Entities.Sequences
         /// </summary>
         public List<DynamicData> Inputs { get; set; }
 
-        public Sequence(string Id, string Name, DateTimeOffset CreatedOn, TemplateReference templateReference)
+        public Sequence(Guid Id, string Name, DateTime CreatedOn, TemplateReference templateReference)
         {
             this.Id = Id;
             this.Name = Name;
