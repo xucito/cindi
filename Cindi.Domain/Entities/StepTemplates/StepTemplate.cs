@@ -1,5 +1,6 @@
 ﻿using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
+using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.ValueObjects;
 using System;
@@ -64,7 +65,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         /// <returns></returns>
         public bool StepMatches(Step step)
         {
-            if (step.StepTemplateReference.TemplateId == Reference.TemplateId)
+            if (step.TemplateReference.TemplateId == Reference.TemplateId)
             {
                 return true;
             }
@@ -128,6 +129,82 @@ namespace Cindi.Domain.Entities.StepTemplates
 
             exception = null;
             return true;
+        }
+
+        public Step GenerateStep(TemplateReference templateReference, string name = "", string description = "", Dictionary<string, object> inputs = null, List<TemplateReference> tests = null, int? stepRefId = null, string sequenceId = null)
+        {
+            var newStep = new Step();
+            newStep.Name = name;
+            newStep.Description = description;
+            newStep.TemplateReference = templateReference;
+            newStep.Inputs = new Dictionary<string, object>();
+
+            if (inputs != null)
+            {
+                if(inputs.Count() > InputDefinitions.Count() && !AllowDynamicInputs)
+                {
+                    throw new InvalidStepInputException("Too many step inputs for step template " + Id + " were given, expected " + InputDefinitions.Count() + " got " + inputs.Count());
+                }
+
+                if(InputDefinitions.Count() > inputs.Count())
+                {
+                    string missingInputs = "";
+                    foreach(var id in InputDefinitions)
+                    {
+                        if(!inputs.Select(i => i.Key).Contains(id.Key))
+                        {
+                            missingInputs += id.Key + " ";
+                        }
+                    }
+                    throw new InvalidStepInputException("Missing step inputs for step template " + Id + ", expected " + InputDefinitions.Count() + " got " + inputs.Count() + " missing ");
+                }
+                
+                foreach (var input in inputs)
+                {
+                    var foundTemplate = InputDefinitions.Where(tp => tp.Key == input.Key).FirstOrDefault();
+
+                    if (!IsStepInputValid(input))
+                    {
+                        throw new InvalidStepInputException("Step input " + input.Key + " is not found in the template definition.");
+                    }
+
+                    if (AllowDynamicInputs && !InputDefinitions.ContainsKey(input.Key))
+                    {
+                        newStep.Inputs.Add(input.Key, input.Value);
+                    }
+                    else
+                    {
+                        newStep.Inputs.Add(input.Key, input.Value);
+                    }
+                }
+            }
+            else if (inputs == null && InputDefinitions.Count() > 0)
+            {
+                throw new InvalidStepInputException("No inputs were specified however step template " + Id + " has " + InputDefinitions.Count() + " inputs.");
+            }
+            newStep.Tests = tests;
+            newStep.StepRefId = stepRefId;
+            newStep.SequenceId = sequenceId;
+            newStep.CreatedOn = DateTime.Now;
+            return newStep;
+        }
+
+        private bool IsStepInputValid(KeyValuePair<string, object> input)
+        {
+            try
+            {
+                var foundTemplate = InputDefinitions.Where(tp => tp.Key == input.Key).First();
+
+                if (!InputDefinitions.ContainsKey(input.Key) && !AllowDynamicInputs)
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
         }
     }
 }

@@ -23,6 +23,7 @@ using Cindi.Persistence.Steps;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Application.Interfaces;
 using Cindi.Persistence;
+using Cindi.Application.Steps.Commands;
 
 namespace Cindi.Presentation
 {
@@ -42,6 +43,7 @@ namespace Cindi.Presentation
         {
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
+            services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 

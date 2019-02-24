@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using static Cindi.Domain.ValueObjects.DynamicDataDescription;
 
-namespace Cindi.Infrastructure.Tests.TestData
+namespace Cindi.Test.Global.TestData
 {
     public static class FibonacciSampleData
     {
@@ -36,7 +36,8 @@ namespace Cindi.Infrastructure.Tests.TestData
 
         public static readonly Step Step = new Step()
         {
-            StepTemplateReference = StepTemplate.Reference,
+            Id = Guid.NewGuid(),
+            TemplateReference = StepTemplate.Reference,
             Inputs = new Dictionary<string, object>()
             {
                 {"n-2","1" },

@@ -49,19 +49,37 @@ namespace Cindi.Persistence.Steps
 
             foreach (var step in steps)
             {
-                step.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
+                tasks.Add(Task.Run(async () =>
+                {
+                    var temp = step;
+                    temp.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
+                    return temp;
+                }));
             };
 
             var results = await Task.WhenAll(tasks);
-
             return results.ToList();
+        }
+
+        public async Task<Step> GetStepAsync(Guid stepId)
+        {
+           var step = (await _steps.FindAsync(s => s.Id == stepId)).FirstOrDefault();
+            step.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
+            return step;
         }
 
         public async Task<Step> InsertStepAsync(Step step)
         {
+            step.Id = Guid.NewGuid();
             step.CreatedOn = DateTime.UtcNow;
             await _steps.InsertOneAsync(step);
             return step;
+        }
+
+        public async Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry)
+        {
+            await _journalEntries.InsertOneAsync(entry);
+            return entry;
         }
     }
 }

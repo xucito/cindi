@@ -20,13 +20,14 @@ namespace Cindi.Domain.Exceptions
         {
         }
 
-        public ExceptionResult ToExceptionResult()
+        public ExceptionResult ToExceptionResult(long elapsedMs)
         {
             return new ExceptionResult()
             {
                 ExceptionName = this.GetType().Name,
                 Generated = DateTime.UtcNow,
-                Message = this.Message
+                Message = this.Message,
+                ElapsedMs = elapsedMs
             };
         }
     }

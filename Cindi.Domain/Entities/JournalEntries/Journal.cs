@@ -16,9 +16,11 @@ namespace Cindi.Domain.Entities.JournalEntries
 
             foreach (var entry in entries)
             {
-                journalEntries.Add(entry.Id, entry);
+                journalEntries.Add(entry.ChainId, entry);
             }
         }
+
+        public List<JournalEntry> Entries { get { return journalEntries.Select(je => je.Value).ToList(); } }
 
         public T GetLatestValueOrDefault<T>(string fieldName, T defaultValue)
         {

@@ -3,11 +3,13 @@ using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Application.StepTemplates.Queries.GetStepTemplate;
 using Cindi.Application.StepTemplates.Queries.GetStepTemplates;
 using Cindi.Domain.Exceptions;
+using Cindi.Presentation.Results;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,24 +17,27 @@ namespace Cindi.Presentation.Controllers
 {
     public class StepTemplatesController : BaseController
     {
-        ILogger<StepTemplatesController> Logger;
 
-        public StepTemplatesController(ILoggerFactory logger)
+        public StepTemplatesController(ILoggerFactory logger) : base(logger.CreateLogger<StepTemplatesController>())
         {
-            Logger = logger.CreateLogger<StepTemplatesController>();
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody]CreateStepTemplateCommand command)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             try
             {
-                return Ok(await Mediator.Send(command));
+                var result = await Mediator.Send(command);
+                stopwatch.Stop();
+                return Ok(new HttpCommandResult("/api/steptemplates/" + command.Name + "/" + command.Version, stopwatch.ElapsedMilliseconds, result));
             }
             catch (BaseException e)
             {
                 Logger.LogError(e.Message);
-                return BadRequest(e.ToExceptionResult());
+                stopwatch.Stop();
+                return BadRequest(e.ToExceptionResult(stopwatch.ElapsedMilliseconds));
             }
         }
 

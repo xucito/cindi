@@ -1,4 +1,5 @@
-﻿using Cindi.Domain.Entities.Steps;
+﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
@@ -24,6 +25,7 @@ namespace Cindi.Persistence
         {
             BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
+            BsonClassMap.RegisterClassMap<JournalEntry>(je => JournalEntriesMap.Register(je));
         }
     }
 }

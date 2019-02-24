@@ -14,11 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Unit\" />
+    <Folder Include="Steps\Queries\" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cindi.Persistence\Cindi.Persistence.csproj" />
+    <ProjectReference Include="..\Cindi.Application\Cindi.Application.csproj" />
     <ProjectReference Include="..\Cindi.Test.Data\Cindi.Test.Global.csproj" />
   </ItemGroup>
 

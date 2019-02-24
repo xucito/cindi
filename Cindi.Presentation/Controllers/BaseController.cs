@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,5 +16,12 @@ namespace Cindi.Presentation.Controllers
 
         protected IMediator Mediator => _mediator ?? (_mediator = (IMediator)HttpContext.RequestServices.GetService(typeof(IMediator)));
 
+        private ILogger _logger;
+        protected ILogger Logger => _logger;
+
+        public BaseController(ILogger logger)
+        {
+            _logger = logger;
+        }
     }
 }

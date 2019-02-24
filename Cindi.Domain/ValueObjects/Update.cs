@@ -14,7 +14,7 @@ namespace Cindi.Domain.ValueObjects
     public static class UpdateType
     {
         // Update existing data
-        public const string Change = "change";
+        public const string Override = "override";
         // Append data to a record
         public const string Append = "append";
     }

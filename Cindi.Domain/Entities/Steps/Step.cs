@@ -31,7 +31,7 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// The sequence this step belongs to 
         /// </summary>
-        public int? SequenceId { get; set; }
+        public string SequenceId { get; set; }
 
         /// <summary>
         /// Used to map to a specific step in a sequence
@@ -47,7 +47,7 @@ namespace Cindi.Domain.Entities.Steps
         public Guid Id { get; set; }
 
         [Required]
-        public TemplateReference StepTemplateReference { get; set; }
+        public TemplateReference TemplateReference { get; set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
@@ -72,7 +72,7 @@ namespace Cindi.Domain.Entities.Steps
             get
             {
                 var lastStatusAction = Journal.GetLatestAction("status");
-                if (StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
+                if (lastStatusAction != null && StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
                 {
                     return lastStatusAction.RecordedOn;
                 }
@@ -105,7 +105,7 @@ namespace Cindi.Domain.Entities.Steps
             get
             {
                 var lastStatusAction = Journal.GetLatestAction("status");
-                if (StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
+                if (lastStatusAction != null && StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
                 {
                     return true;
                 }

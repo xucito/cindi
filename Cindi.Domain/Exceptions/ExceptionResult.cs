@@ -9,5 +9,6 @@ namespace Cindi.Domain.Exceptions
         public string ExceptionName { get; set; }
         public string Message { get; set; }
         public DateTime Generated { get; set; }
+        public long ElapsedMs { get; set; }
     }
 }

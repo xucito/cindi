@@ -1,4 +1,5 @@
-﻿using Cindi.Domain.Entities.StepTemplates;
+﻿using Cindi.Application.Results;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
@@ -8,7 +9,7 @@ using System.Text;
 
 namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
-    public class CreateStepTemplateCommand: IRequest<StepTemplate>
+    public class CreateStepTemplateCommand: IRequest<CommandResult>
     {
         [Required]
         public string Name { get; set; }

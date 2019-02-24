@@ -1,7 +1,10 @@
-﻿using Cindi.Infrastructure.Tests.TestData;
+﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.ValueObjects;
 using Cindi.Persistence;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
+using Cindi.Test.Global.TestData;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -11,37 +14,103 @@ using Xunit;
 
 namespace Cindi.Infrastructure.Tests.Integration
 {
-    public class MongoDbTests: IAsyncLifetime
+    public class MongoDbTests : IAsyncLifetime, IClassFixture<MongoDBFixture>
     {
-        public MongoDbTests()
+        public string TestDBId;
+        public StepTemplatesRepository stepTemplatesRepository;
+        public StepsRepository stepsRepository;
+
+        public MongoDbTests(MongoDBFixture fixture)
         {
-            BaseRepository.RegisterClassMaps();
+
         }
 
         [Fact]
         public async void CreateStep()
         {
-
-            var stepTemplatesRepository = new StepTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, GlobalTestSettings.TestDBName);
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
-
-            var stepsRepository = new StepsRepository(GlobalTestSettings.CindiDBConnectionString, GlobalTestSettings.TestDBName);
             await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
-
-            var steps = await stepsRepository.GetStepsAsync(0,1000);
+            var steps = await stepsRepository.GetStepsAsync(0, 1000);
 
             Assert.NotEmpty(steps);
+            Assert.Null(steps[0].CompletedOn);
+            Assert.Null(steps[0].TestResults);
+            Assert.Null(steps[0].Outputs);
+            Assert.Equal(StepStatuses.Unassigned, steps[0].Status);
+            Assert.False(steps[0].IsComplete);
+        }
+
+        [Fact]
+        public async void ChangeStepAssignment()
+        {
+            await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
+            var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+            var step = await stepsRepository.GetStepAsync(createdStep.Id);
+            
+            Assert.NotNull(step);
+            Assert.Equal(StepStatuses.Unassigned, step.Status);
+            Assert.False(step.IsComplete);
+
+            await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                Entity = JournalEntityTypes.Step,
+                SubjectId = step.Id,
+                RecordedOn = DateTime.UtcNow,
+                ChainId = 0,
+                Updates = new List<Domain.ValueObjects.Update>()
+                {
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "status",
+                        Value = StepStatuses.Assigned,
+                    }
+
+                }
+            });
+
+            step = await stepsRepository.GetStepAsync(createdStep.Id);
+            Assert.NotEmpty(step.Journal.Entries[0].Id);
+            Assert.Equal(StepStatuses.Assigned, step.Status);
+            Assert.False(step.IsComplete);
+
+            await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                Entity = JournalEntityTypes.Step,
+                SubjectId = step.Id,
+                RecordedOn = DateTime.UtcNow,
+                ChainId = 1,
+                Updates = new List<Domain.ValueObjects.Update>()
+                {
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "status",
+                        Value = StepStatuses.Successful
+                    }
+
+                }
+            });
+
+            step = await stepsRepository.GetStepAsync(createdStep.Id);
+            Assert.Equal(StepStatuses.Successful, step.Status);
+            Assert.True(step.IsComplete);
+
         }
 
         public Task DisposeAsync()
         {
             var client = new MongoClient(GlobalTestSettings.CindiDBConnectionString);
-            client.DropDatabase(GlobalTestSettings.TestDBName);
+            client.DropDatabase(TestDBId);
             return Task.CompletedTask;
         }
 
         public Task InitializeAsync()
         {
+            TestDBId = GlobalTestSettings.TestDBName + this.GetType().Name + Guid.NewGuid();
+            //BaseRepository.RegisterClassMaps();
+            stepTemplatesRepository = new StepTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
+            stepsRepository = new StepsRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
             return Task.CompletedTask;
         }
     }
