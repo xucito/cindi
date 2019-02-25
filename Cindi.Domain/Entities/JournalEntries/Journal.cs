@@ -37,6 +37,11 @@ namespace Cindi.Domain.Entities.JournalEntries
             return defaultValue;
         }
 
+        public int GetNextChainId()
+        {
+            return journalEntries.Last().Key + 1;
+        }
+
         public UpdateRecord GetLatestAction(string fieldName)
         {
             foreach (var entry in journalEntries.Reverse())

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.Steps.Commands;
+using Cindi.Application.Steps.Commands.AssignStep;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Steps.Queries;
 using Cindi.Application.Steps.Queries.GetStep;
@@ -34,7 +35,7 @@ namespace Cindi.Presentation.Controllers
             try
             {
                 var result = await Mediator.Send(command);
-                return Ok(new HttpCommandResult("step", result));
+                return Ok(new HttpCommandResult<Step>("step", result, null));
             }
             catch (BaseException e)
             {
@@ -42,6 +43,15 @@ namespace Cindi.Presentation.Controllers
                 stopwatch.Stop();
                 return BadRequest(e.ToExceptionResult(stopwatch.ElapsedMilliseconds));
             }
+        }
+
+        [HttpPost]
+        [Route("assignment")]
+        public async Task<IActionResult> GetNextStep(AssignStepCommand command)
+        {
+            var result = await Mediator.Send(command);
+            var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+            return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
         }
 
         [HttpGet]

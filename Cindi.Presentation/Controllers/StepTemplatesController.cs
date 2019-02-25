@@ -2,6 +2,7 @@
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Application.StepTemplates.Queries.GetStepTemplate;
 using Cindi.Application.StepTemplates.Queries.GetStepTemplates;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
 using MediatR;
@@ -30,7 +31,7 @@ namespace Cindi.Presentation.Controllers
             try
             {
                 var result = await Mediator.Send(command);
-                return Ok(new HttpCommandResult("/api/steptemplates/" + command.Name + "/" + command.Version, result));
+                return Ok(new HttpCommandResult<StepTemplate>("/api/steptemplates/" + command.Name + "/" + command.Version, result, null));
             }
             catch (BaseException e)
             {

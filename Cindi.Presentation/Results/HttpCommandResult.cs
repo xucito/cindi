@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Results
 {
-    public class HttpCommandResult: CommandResult
+    public class HttpCommandResult<T> : CommandResult
     {
         public string HRef { get; set; }
+        public T Result { get; set; }
 
-        public HttpCommandResult(string href, CommandResult result)
+        public HttpCommandResult(string href, CommandResult result, T returnObject)
         {
             HRef = href;
             Type = result.Type;
             ElapsedMs = result.ElapsedMs;
             ObjectRefId = result.ObjectRefId;
+            Result = returnObject;
         }
     }
 }

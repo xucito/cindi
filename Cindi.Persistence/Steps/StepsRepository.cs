@@ -39,7 +39,7 @@ namespace Cindi.Persistence.Steps
             _journalEntries = database.GetCollection<JournalEntry>("StepEntries");
         }
 
-        public async Task<Step> GetSteps(string status, string[] stepTemplateIds)
+        public async Task<Step> GetStepsAsync(string status, string[] stepTemplateIds)
         {
             if (!StepStatuses.IsValid(status))
             {
@@ -47,7 +47,7 @@ namespace Cindi.Persistence.Steps
             }
 
             var filter = Builders<Step>.Filter.In(x => x.StepTemplateId, stepTemplateIds);
-            var matchingSteps =  _steps.Find(filter).ToEnumerable();
+            var matchingSteps = _steps.Find(filter).ToEnumerable();
 
             //Add cursor here
             var batch = new List<Step>();
@@ -90,7 +90,7 @@ namespace Cindi.Persistence.Steps
 
                 var result = _journalEntries.Aggregate<JournalEntry>(projectStatus).ToList();//.AppendStage<JournalEntry>(projectStatus).ToList();
 
-                if(result.Count() > 0)
+                if (result.Count() > 0)
                 {
                     //Always take the first element
                     var foundStep = batch.Where(s => s.Id == result.First().SubjectId).First();
@@ -166,9 +166,39 @@ namespace Cindi.Persistence.Steps
             return step;
         }
 
+        /*public async Task<JournalEntry> ReassignStepAsync(Guid stepId, string status)
+        {
+            if (!StepStatuses.IsValid(status))
+            {
+                throw new InvalidStepStatusInputException(status + " is not a valid staus.");
+            }
+
+            var step = await GetStepAsync(stepId);
+
+            //Throw a error if you are assigning a step that is unassigned
+            if(status == StepStatuses.Assigned && step.Status != StepStatuses.Unassigned)
+            {
+                throw new InvalidStepQueueException("You cannot assign step " + stepId + " as it is not unassigned.");
+            }
+
+            //Throw a error if you try to complete a step without it being in a assigned
+            if(StepStatuses.IsCompleteStatus(status) && step.Status != StepStatuses.Assigned)
+            {
+                throw new InvalidStepQueueException("Cannot complete step with status " +  status + " when the step is not assigned first, the current status is " + step.Status);
+            }
+
+            return await InsertJournalEntryAsync(new JournalEntry() {
+            });
+        }*/
+
+        public async Task<int> GetNextChainId(Guid subjectId)
+        {
+            var filter = Builders<JournalEntry>.Filter.Eq(x => x.SubjectId, subjectId);
+            return (await _journalEntries.FindAsync(filter)).ToList().OrderBy(je => je.RecordedOn).Last().ChainId + 1;
+        }
+
         public async Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry)
         {
-            entry.RecordedOn = DateTime.UtcNow;
             await _journalEntries.InsertOneAsync(entry);
             return entry;
         }
