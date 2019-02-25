@@ -21,6 +21,7 @@ namespace Cindi.Domain.Entities.Steps
             //Outputs = new List<DynamicData>();
             Tests = new List<TemplateReference>();
             //SuspendedTimes = new List<DateTime>();
+            Journal = new Journal(new List<JournalEntry>());
         }
         
 
@@ -39,7 +40,7 @@ namespace Cindi.Domain.Entities.Steps
         public int? StepRefId { get; set; }
 
         public List<TemplateReference> Tests { get; set; }
-        public List<StepTestResult> TestResults { get { return Journal.GetLatestValueOrDefault<List<StepTestResult>>("testresults", null); } }
+        public List<StepTestResult> TestResults { get { return Journal.GetLatestValueOrDefault<List<StepTestResult>>("testresults", new List<StepTestResult>()); } }
 
         /// <summary>
         /// 
@@ -91,7 +92,7 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Output from task, the output name is the dictionary key and the value is Dictionary value
         /// </summary>
-        public List<DynamicData> Outputs { get { return Journal.GetLatestValueOrDefault<List<DynamicData>>("outputs", null); } }
+        public List<DynamicData> Outputs { get { return Journal.GetLatestValueOrDefault<List<DynamicData>>("outputs", new List<DynamicData>()); } }
 
         /// <summary>
         /// Combined with Status can be used to evaluate dependencies

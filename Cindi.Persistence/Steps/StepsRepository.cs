@@ -16,6 +16,8 @@ namespace Cindi.Persistence.Steps
         private IMongoCollection<Step> _steps;
         private IMongoCollection<JournalEntry> _journalEntries;
 
+        public long CountSteps() { return _steps.EstimatedDocumentCount(); }
+
         public StepsRepository(string mongoDbConnectionString, string databaseName) : base(mongoDbConnectionString, databaseName)
         {
             var client = new MongoClient(mongoDbConnectionString);
@@ -33,40 +35,48 @@ namespace Cindi.Persistence.Steps
             _journalEntries = database.GetCollection<JournalEntry>("StepEntries");
         }
 
-        public async Task<List<Step>> GetStepsAsync(int page, int size)
+        public async Task<List<Step>> GetStepsAsync(int page = 0, int size = 10)
         {
             FilterDefinition<Step> filter = FilterDefinition<Step>.Empty;
             FindOptions<Step> options = new FindOptions<Step>
             {
                 BatchSize = size,
                 NoCursorTimeout = false,
-                Skip = page
+                Skip = page,
+                Limit = size
             };
 
             var steps = (await _steps.FindAsync(filter, options)).ToList();
 
             List<Task<Step>> tasks = new List<Task<Step>>();
 
+            var builder = Builders<JournalEntry>.Filter;
+
+            var journalFilter = builder.In("SubjectId", steps.Select(s => s.Id));
+
+            var journals = (await _journalEntries.FindAsync(journalFilter)).ToList();
             foreach (var step in steps)
             {
-                tasks.Add(Task.Run(async () =>
+                step.Journal = new Journal(journals.Where(j => j.SubjectId == step.Id).ToList());
+              /*  tasks.Add(Task.Run(async () =>
                 {
                     var temp = step;
                     temp.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
                     return temp;
                 }));
+                */
             };
-
-            var results = await Task.WhenAll(tasks);
-            return results.ToList();
+            
+            return steps;
         }
 
         public async Task<Step> GetStepAsync(Guid stepId)
         {
-           var step = (await _steps.FindAsync(s => s.Id == stepId)).FirstOrDefault();
+            var step = (await _steps.FindAsync(s => s.Id == stepId)).FirstOrDefault();
             step.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
             return step;
         }
+
 
         public async Task<Step> InsertStepAsync(Step step)
         {

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Cindi.Application.Steps.Commands
+namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommand: IRequest<CommandResult>
     {

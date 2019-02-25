@@ -24,6 +24,7 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Application.Interfaces;
 using Cindi.Persistence;
 using Cindi.Application.Steps.Commands;
+using Cindi.Application.Steps.Commands.CreateStep;
 
 namespace Cindi.Presentation
 {

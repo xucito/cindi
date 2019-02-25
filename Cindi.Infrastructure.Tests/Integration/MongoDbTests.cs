@@ -14,13 +14,13 @@ using Xunit;
 
 namespace Cindi.Infrastructure.Tests.Integration
 {
-    public class MongoDbTests : IAsyncLifetime, IClassFixture<MongoDBFixture>
+    public class MongoDb_Tests : IAsyncLifetime, IClassFixture<MongoDBFixture>
     {
         public string TestDBId;
         public StepTemplatesRepository stepTemplatesRepository;
         public StepsRepository stepsRepository;
 
-        public MongoDbTests(MongoDBFixture fixture)
+        public MongoDb_Tests(MongoDBFixture fixture)
         {
 
         }
@@ -46,7 +46,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
             var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
             var step = await stepsRepository.GetStepAsync(createdStep.Id);
-            
+
             Assert.NotNull(step);
             Assert.Equal(StepStatuses.Unassigned, step.Status);
             Assert.False(step.IsComplete);
@@ -95,6 +95,11 @@ namespace Cindi.Infrastructure.Tests.Integration
             step = await stepsRepository.GetStepAsync(createdStep.Id);
             Assert.Equal(StepStatuses.Successful, step.Status);
             Assert.True(step.IsComplete);
+
+            var steps = await stepsRepository.GetStepsAsync();
+
+            Assert.Equal(StepStatuses.Successful, steps[0].Status);
+            Assert.True(steps[0].IsComplete);
 
         }
 

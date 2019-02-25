@@ -9,5 +9,6 @@ namespace Cindi.Application.Interfaces
         Task<StepTemplate> GetStepTemplateAsync(string name, string version);
         Task<List<StepTemplate>> GetStepTemplatesAsync(int page, int size);
         Task<StepTemplate> InsertAsync(StepTemplate stepTemplate);
+        long CountStepTemplates();
     }
 }

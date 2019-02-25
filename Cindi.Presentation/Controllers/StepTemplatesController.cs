@@ -30,8 +30,7 @@ namespace Cindi.Presentation.Controllers
             try
             {
                 var result = await Mediator.Send(command);
-                stopwatch.Stop();
-                return Ok(new HttpCommandResult("/api/steptemplates/" + command.Name + "/" + command.Version, stopwatch.ElapsedMilliseconds, result));
+                return Ok(new HttpCommandResult("/api/steptemplates/" + command.Name + "/" + command.Version, result));
             }
             catch (BaseException e)
             {

@@ -1,17 +1,19 @@
 ﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Results;
 using Cindi.Domain.Entities.StepTemplates;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cindi.Application.StepTemplates.Queries.GetStepTemplate
 {
-    public class GetStepTemplateQueryHandler : IRequestHandler<GetStepTemplateQuery, StepTemplate>
+    public class GetStepTemplateQueryHandler : IRequestHandler<GetStepTemplateQuery, QueryResult<StepTemplate>>
     {
         private readonly IStepTemplatesRepository _stepTemplateRepository;
 
@@ -20,10 +22,19 @@ namespace Cindi.Application.StepTemplates.Queries.GetStepTemplate
             _stepTemplateRepository = stepTemplateRepository;
         }
 
-        public async Task<StepTemplate> Handle(GetStepTemplateQuery request, CancellationToken cancellationToken)
+        public async Task<QueryResult<StepTemplate>> Handle(GetStepTemplateQuery request, CancellationToken cancellationToken)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var result = await _stepTemplateRepository.GetStepTemplateAsync(request.Name, request.Version);
-            return result;
+            stopwatch.Stop();
+
+            return new QueryResult<StepTemplate>()
+            {
+                Result = result,
+                Count = result == null ? 0 : 1,
+                ElapsedMs = stopwatch.ElapsedMilliseconds
+            };
         }
     }
 }

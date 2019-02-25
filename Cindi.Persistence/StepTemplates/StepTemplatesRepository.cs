@@ -22,6 +22,8 @@ namespace Cindi.Persistence.StepTemplates
             SetCollection(client);
         }
 
+        public long CountStepTemplates() { return _stepTemplates.EstimatedDocumentCount(); }
+
         public StepTemplatesRepository(IMongoClient client) : base(client)
         {
             SetCollection(client);

@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cindi.Application.Steps.Commands
+namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult>
     {

@@ -8,7 +8,8 @@ namespace Cindi.Application.Interfaces
 {
     public interface IStepsRepository
     {
-        Task<List<Step>> GetStepsAsync(int page = 0, int size = 1000);
+        long CountSteps();
+        Task<List<Step>> GetStepsAsync(int page = 0, int size = 10);
         Task<Step> GetStepAsync(Guid stepId);
         Task<Step> InsertStepAsync(Step step);
         Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry);

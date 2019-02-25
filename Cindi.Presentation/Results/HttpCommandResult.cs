@@ -10,11 +10,11 @@ namespace Cindi.Presentation.Results
     {
         public string HRef { get; set; }
 
-        public HttpCommandResult(string href, long elapsedMs, CommandResult result)
+        public HttpCommandResult(string href, CommandResult result)
         {
             HRef = href;
             Type = result.Type;
-            ElapsedMs = elapsedMs;
+            ElapsedMs = result.ElapsedMs;
             ObjectRefId = result.ObjectRefId;
         }
     }

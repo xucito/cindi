@@ -4,6 +4,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.Steps.Commands;
+using Cindi.Application.Steps.Commands.CreateStep;
+using Cindi.Application.Steps.Queries;
+using Cindi.Application.Steps.Queries.GetStep;
+using Cindi.Application.Steps.Queries.GetSteps;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
 using Microsoft.AspNetCore.Http;
@@ -16,12 +21,12 @@ namespace Cindi.Presentation.Controllers
     [ApiController]
     public class StepsController : BaseController
     {
-        public StepsController(ILoggerFactory logger): base(logger.CreateLogger<StepsController>())
+        public StepsController(ILoggerFactory logger) : base(logger.CreateLogger<StepsController>())
         {
 
         }
 
-       [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> Create(CreateStepCommand command)
         {
             var stopwatch = new Stopwatch();
@@ -29,8 +34,7 @@ namespace Cindi.Presentation.Controllers
             try
             {
                 var result = await Mediator.Send(command);
-                stopwatch.Stop();
-                return Ok(new HttpCommandResult("step", stopwatch.ElapsedMilliseconds, result));
+                return Ok(new HttpCommandResult("step", result));
             }
             catch (BaseException e)
             {
@@ -38,6 +42,26 @@ namespace Cindi.Presentation.Controllers
                 stopwatch.Stop();
                 return BadRequest(e.ToExceptionResult(stopwatch.ElapsedMilliseconds));
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll(int page = 0, int size = 100)
+        {
+            return Ok(await Mediator.Send(new GetStepsQuery()
+            {
+                Page = page,
+                Size = size
+            }));
+        }
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            return Ok(await Mediator.Send(new GetStepQuery()
+            {
+                Id = id
+            }));
         }
     }
 }
