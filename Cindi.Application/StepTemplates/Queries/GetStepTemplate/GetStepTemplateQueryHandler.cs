@@ -26,7 +26,7 @@ namespace Cindi.Application.StepTemplates.Queries.GetStepTemplate
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var result = await _stepTemplateRepository.GetStepTemplateAsync(request.Name, request.Version);
+            var result = await _stepTemplateRepository.GetStepTemplateAsync(request.Id);
             stopwatch.Stop();
 
             return new QueryResult<StepTemplate>()

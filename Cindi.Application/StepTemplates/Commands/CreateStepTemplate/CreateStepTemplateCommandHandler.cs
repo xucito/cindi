@@ -29,8 +29,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 
             var result = await _stepTemplateRepository.InsertAsync(new StepTemplate()
             {
-                Name = request.Name,
-                Version = request.Version,
+                Id = request.Name + ":" + request.Version,
                 AllowDynamicInputs = request.AllowDynamicInputs,
                 InputDefinitions = request.InputDefinitions,
                 OutputDefinitions = request.OutputDefinitions

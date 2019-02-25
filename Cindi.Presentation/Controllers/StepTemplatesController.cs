@@ -56,8 +56,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetStepTemplateQuery()
             {
-                Name = name,
-                Version = version
+                Id = name + ":" + version
             }));
         }
     }

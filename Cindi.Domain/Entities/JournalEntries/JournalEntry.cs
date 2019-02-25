@@ -27,8 +27,10 @@ namespace Cindi.Domain.Entities.JournalEntries
         public string Id { get { return _entity + ":" + SubjectId + ":" + ChainId; } }
         public int ChainId { get; set; }
         public List<Update> Updates { get; set; }
-    }
 
+        public JournalEntry()
+        {}
+    }
     public static class JournalEntityTypes
     {
         public const string Step = "step";

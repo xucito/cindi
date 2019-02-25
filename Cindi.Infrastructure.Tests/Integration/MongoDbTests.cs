@@ -34,8 +34,8 @@ namespace Cindi.Infrastructure.Tests.Integration
 
             Assert.NotEmpty(steps);
             Assert.Null(steps[0].CompletedOn);
-            Assert.Null(steps[0].TestResults);
-            Assert.Null(steps[0].Outputs);
+            Assert.Empty(steps[0].TestResults);
+            Assert.Empty(steps[0].Outputs);
             Assert.Equal(StepStatuses.Unassigned, steps[0].Status);
             Assert.False(steps[0].IsComplete);
         }
@@ -56,7 +56,7 @@ namespace Cindi.Infrastructure.Tests.Integration
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
                 RecordedOn = DateTime.UtcNow,
-                ChainId = 0,
+                ChainId = 1,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
                     new Update()
@@ -79,7 +79,7 @@ namespace Cindi.Infrastructure.Tests.Integration
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
                 RecordedOn = DateTime.UtcNow,
-                ChainId = 1,
+                ChainId = 2,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
                     new Update()
@@ -101,6 +101,63 @@ namespace Cindi.Infrastructure.Tests.Integration
             Assert.Equal(StepStatuses.Successful, steps[0].Status);
             Assert.True(steps[0].IsComplete);
 
+        }
+
+        [Fact]
+        public async void DetectStepQueues()
+        {
+            await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
+            var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+            var step = await stepsRepository.GetStepAsync(createdStep.Id);
+
+            Assert.NotNull(step);
+            Assert.Equal(StepStatuses.Unassigned, step.Status);
+            Assert.False(step.IsComplete);
+            Assert.NotNull(await stepsRepository.GetSteps(StepStatuses.Unassigned, new string[] { createdStep.StepTemplateId }));
+
+            await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                Entity = JournalEntityTypes.Step,
+                SubjectId = step.Id,
+                RecordedOn = DateTime.UtcNow,
+                ChainId = 1,
+                Updates = new List<Domain.ValueObjects.Update>()
+                {
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "status",
+                        Value = StepStatuses.Assigned,
+                    }
+
+                }
+            });
+
+            Assert.Null(await stepsRepository.GetSteps(StepStatuses.Unassigned, new string[] { createdStep.StepTemplateId }));
+            Assert.NotNull(await stepsRepository.GetSteps(StepStatuses.Assigned, new string[] { createdStep.StepTemplateId }));
+
+            await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                Entity = JournalEntityTypes.Step,
+                SubjectId = step.Id,
+                RecordedOn = DateTime.UtcNow,
+                ChainId = 2,
+                Updates = new List<Domain.ValueObjects.Update>()
+                {
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "status",
+                        Value = StepStatuses.Successful,
+                    }
+                }
+            });
+
+            Assert.Null(await stepsRepository.GetSteps(StepStatuses.Unassigned, new string[] { createdStep.StepTemplateId }));
+            Assert.Null(await stepsRepository.GetSteps(StepStatuses.Assigned, new string[] { createdStep.StepTemplateId }));
+            Assert.Null(await stepsRepository.GetSteps(StepStatuses.Warning, new string[] { createdStep.StepTemplateId }));
+            Assert.Null(await stepsRepository.GetSteps(StepStatuses.Error, new string[] { createdStep.StepTemplateId }));
+            Assert.NotNull(await stepsRepository.GetSteps(StepStatuses.Successful, new string[] { createdStep.StepTemplateId }));
         }
 
         public Task DisposeAsync()

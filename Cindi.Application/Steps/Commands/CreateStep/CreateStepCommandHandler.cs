@@ -27,15 +27,15 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var resolvedTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(request.TemplateReference.Name, request.TemplateReference.Version);
+            var resolvedTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(request.StepTemplateId);
 
             if (resolvedTemplate == null)
             {
-                throw new StepTemplateNotFoundException("Step template " + request.TemplateReference.TemplateId + " not found.");
+                throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
             var result = await _stepsRepository.InsertStepAsync(
-                resolvedTemplate.GenerateStep(request.TemplateReference, request.Name, request.Description, request.Inputs, request.Tests)
+                resolvedTemplate.GenerateStep(request.StepTemplateId, request.Name, request.Description, request.Inputs, request.Tests)
                 );
 
             stopwatch.Stop();

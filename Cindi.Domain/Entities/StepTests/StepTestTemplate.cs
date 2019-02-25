@@ -1,13 +1,32 @@
 ﻿using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Cindi.Domain.Entities.StepTests
 {
     public class StepTestTemplate
     {
+        private string _id { get; set; }
+        public string Id
+        {
+            get { return _id; }
+            set
+            {
+                if (value.Count(c => c == ':') == 1)
+                {
+                    _id = value;
+                }
+                else
+                {
+                    throw new InvalidIdException("Step Test Template template Id " + value + " is invalid.");
+                }
+            }
+        }
+
         /// <summary>
         /// Name of definition
         /// </summary>
@@ -18,18 +37,6 @@ namespace Cindi.Domain.Entities.StepTests
         public string Version { get; set; }
 
         public string Description { get; set; }
-
-        public TemplateReference Reference
-        {
-            get
-            {
-                return new TemplateReference()
-                {
-                    Name = this.Name,
-                    Version = this.Version
-                };
-            }
-        }
 
         //public TemplateReference StepTemplate { get; set; }
         public Dictionary<string, string> Inputs { get; set; }
@@ -53,7 +60,7 @@ namespace Cindi.Domain.Entities.StepTests
             }
 
             return new StepTestResult() {
-                StepTestId = this.Reference,
+                StepTestTemplateId = Id,
                 TestResults = results,
                 StartTime = startTime,
                 CompletionTime = DateTime.Now

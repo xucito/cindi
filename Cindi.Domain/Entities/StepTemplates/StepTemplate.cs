@@ -1,5 +1,6 @@
 ﻿using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
+using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.ValueObjects;
@@ -14,15 +15,19 @@ namespace Cindi.Domain.Entities.StepTemplates
     public class StepTemplate
     {
         // Will always be set to Name:Version
-        public string Id { get { return Reference.TemplateId; } }
-        /// <summary>
-        /// Name of definition
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// Version of the definition
-        /// </summary>
-        public string Version { get; set; }
+        private string _id { get; set; }
+
+        public string Id { get { return _id; } set {
+                if(value.Count(c => c == ':') == 1)
+                {
+                    _id = value;
+                }
+                else
+                {
+                    throw new InvalidIdException("Step template Id " + value + " is invalid.");
+                }
+            }
+        }
 
         public string Description { get; set; }
 
@@ -31,17 +36,13 @@ namespace Cindi.Domain.Entities.StepTemplates
         /// </summary>
         public bool AllowDynamicInputs = false;
 
-        public TemplateReference Reference
+        /*public TemplateReference Reference
         {
             get
             {
-                return new TemplateReference()
-                {
-                    Name = this.Name,
-                    Version = this.Version
-                };
+                return new TemplateReference(Id);
             }
-        }
+        }*/
 
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
@@ -65,7 +66,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         /// <returns></returns>
         public bool StepMatches(Step step)
         {
-            if (step.TemplateReference.TemplateId == Reference.TemplateId)
+            if (step.StepTemplateId == Id)
             {
                 return true;
             }
@@ -131,12 +132,12 @@ namespace Cindi.Domain.Entities.StepTemplates
             return true;
         }
 
-        public Step GenerateStep(TemplateReference templateReference, string name = "", string description = "", Dictionary<string, object> inputs = null, List<TemplateReference> tests = null, int? stepRefId = null, string sequenceId = null)
+        public Step GenerateStep(string stepTemplateId, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, string sequenceId = null)
         {
             var newStep = new Step();
             newStep.Name = name;
             newStep.Description = description;
-            newStep.TemplateReference = templateReference;
+            newStep.StepTemplateId = stepTemplateId;
             newStep.Inputs = new Dictionary<string, object>();
 
             if (inputs != null)
@@ -182,7 +183,7 @@ namespace Cindi.Domain.Entities.StepTemplates
             {
                 throw new InvalidStepInputException("No inputs were specified however step template " + Id + " has " + InputDefinitions.Count() + " inputs.");
             }
-            newStep.Tests = tests;
+            newStep.Tests = stepTestTemplateIds;
             newStep.StepRefId = stepRefId;
             newStep.SequenceId = sequenceId;
             newStep.CreatedOn = DateTime.Now;

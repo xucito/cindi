@@ -1,5 +1,6 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.StepTests;
+using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
 using Cindi.Domain.ValueObjects.Journal;
 using Newtonsoft.Json;
@@ -19,7 +20,7 @@ namespace Cindi.Domain.Entities.Steps
         {
             Inputs = new Dictionary<string, object>();
             //Outputs = new List<DynamicData>();
-            Tests = new List<TemplateReference>();
+            Tests = new List<string>();
             //SuspendedTimes = new List<DateTime>();
             Journal = new Journal(new List<JournalEntry>());
         }
@@ -39,7 +40,7 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public int? StepRefId { get; set; }
 
-        public List<TemplateReference> Tests { get; set; }
+        public List<string> Tests { get; set; }
         public List<StepTestResult> TestResults { get { return Journal.GetLatestValueOrDefault<List<StepTestResult>>("testresults", new List<StepTestResult>()); } }
 
         /// <summary>
@@ -48,7 +49,7 @@ namespace Cindi.Domain.Entities.Steps
         public Guid Id { get; set; }
 
         [Required]
-        public TemplateReference TemplateReference { get; set; }
+        public string StepTemplateId { get; set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
@@ -85,7 +86,12 @@ namespace Cindi.Domain.Entities.Steps
         {
             get
             {
-                return Journal.GetLatestValueOrDefault("status", StepStatuses.Unassigned);
+                var status = Journal.GetLatestValueOrDefault<string>("status", null);
+                if(status == null)
+                {
+                    throw new InvalidStepStatusInputException("Status for step " + Id + " was not found.");
+                }
+                return status;
             }
         }
 

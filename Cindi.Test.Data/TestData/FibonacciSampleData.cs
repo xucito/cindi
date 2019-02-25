@@ -12,8 +12,7 @@ namespace Cindi.Test.Global.TestData
     {
         public static readonly StepTemplate StepTemplate = new StepTemplate()
         {
-            Name = "Fibonacci_stepTemplate",
-            Version = "0",
+            Id = "Fibonacci_stepTemplate:0",
             InputDefinitions = new Dictionary<string, DynamicDataDescription>(){
                         {"n-2", new DynamicDataDescription(){
                             Type = (int)InputDataType.Int,
@@ -37,7 +36,7 @@ namespace Cindi.Test.Global.TestData
         public static readonly Step Step = new Step()
         {
             Id = Guid.NewGuid(),
-            TemplateReference = StepTemplate.Reference,
+            StepTemplateId = StepTemplate.Id,
             Inputs = new Dictionary<string, object>()
             {
                 {"n-2","1" },

@@ -6,11 +6,13 @@ using Cindi.Domain.ValueObjects;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
 using Cindi.Domain.Exceptions.Steps;
+using Cindi.Domain.Exceptions.Global;
 
 namespace Cindi.Domain.Entities.SequencesTemplates
 {
     public class SequenceTemplate
     {
+        public string Id { get; set; }
 
         public SequenceTemplate()
         {
@@ -27,18 +29,6 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         public string Version { get; set; }
 
         public string Description { get; set; }
-
-        public TemplateReference Reference
-        {
-            get
-            {
-                return new TemplateReference()
-                {
-                    Name = this.Name,
-                    Version = this.Version
-                };
-            }
-        }
 
 
         public List<LogicBlock> LogicBlocks { get; set; }
@@ -127,7 +117,7 @@ namespace Cindi.Domain.Entities.SequencesTemplates
 
         public string Description { get; set; }
 
-        public TemplateReference StepTemplateReference { get; set; }
+        public string StepTemplateId { get; set; }
         public List<Mapping> Mappings { get; set; }
         public bool IsPriority { get; set; }
         public int StepRefId { get; set; }

@@ -47,7 +47,7 @@ namespace Cindi.Persistence.StepTemplates
             {
                 if (e.Message.Contains("E11000 duplicate key error collection"))
                 {
-                    var existingTemplate = await GetStepTemplateAsync(stepTemplate.Name, stepTemplate.Version);
+                    var existingTemplate = await GetStepTemplateAsync(stepTemplate.Id);
                     BaseException comparisonException;
                     var isConflicting = existingTemplate.IsEqual(stepTemplate, out comparisonException);
                     if(!isConflicting)
@@ -66,9 +66,9 @@ namespace Cindi.Persistence.StepTemplates
             }
         }
 
-        public async Task<StepTemplate> GetStepTemplateAsync(string name, string version)
+        public async Task<StepTemplate> GetStepTemplateAsync(string id)
         {
-            return (await _stepTemplates.FindAsync(st => st.Name == name.ToLower() && st.Version == version)).FirstOrDefault();
+            return (await _stepTemplates.FindAsync(st => st.Id.ToLower() == id)).FirstOrDefault();
         }
 
         public async Task<List<StepTemplate>> GetStepTemplatesAsync(int page, int size)

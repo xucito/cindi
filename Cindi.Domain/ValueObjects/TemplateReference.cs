@@ -6,12 +6,9 @@ using System.Text;
 
 namespace Cindi.Domain.ValueObjects
 {
-    public class TemplateReference
+    /*public class TemplateReference
     {
-        public string Name { get; set; }
-        public string Version { get; set; }
-
-        [JsonIgnore]
-        public string TemplateId { get { return Name + ":" + Version; } }
-    }
+        public string Name { get; set; }//{ get { return Id.Split(':')[0]; } } 
+        public string Version { get; set; }// { get { return Id.Split(':')[1]; } }
+    }*/
 }

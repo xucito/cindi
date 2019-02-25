@@ -16,13 +16,13 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         /// Maps to a Step Definition
         /// </summary>
         //[Required]
-        public TemplateReference TemplateReference { get; set; }
+        public string StepTemplateId { get; set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
         public Dictionary<string, object> Inputs { get; set; }
 
-        public List<TemplateReference> Tests { get; set; }
+        public List<string> Tests { get; set; }
     }
 }
