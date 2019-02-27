@@ -1,7 +1,7 @@
 ﻿using Cindi.Application.Services.ClusterState;
 using System.Threading.Tasks;
 
-namespace Cindi.Application.Interfaces
+namespace Cindi.Persistence.SequenceTemplates
 {
     public interface IClusterRepository
     {

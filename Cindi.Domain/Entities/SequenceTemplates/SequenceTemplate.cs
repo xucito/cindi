@@ -19,18 +19,8 @@ namespace Cindi.Domain.Entities.SequencesTemplates
             this.LogicBlocks = new List<LogicBlock>();
             // this.StartingMapping = new List<Mapping>();
         }
-        /// <summary>
-        /// Name of definition
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// Version of the definition
-        /// </summary>
-        public string Version { get; set; }
 
         public string Description { get; set; }
-
-
         public List<LogicBlock> LogicBlocks { get; set; }
         //  public TemplateReference StartingStepTemplateReference { get; set; }
         //   public List<Mapping> StartingMapping { get; set; }
@@ -53,20 +43,6 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         public new List<PrerequisiteStep> PrerequisiteSteps { get; set; }
         public new List<SubsequentStep> SubsequentSteps { get; set; }
     }
-    /*
-    public class Dependency
-    {
-        public int Id { get; set; }
-        /// <summary>
-        /// AND or OR
-        /// </summary>
-        public string Condition { get; set; }
-        /// <summary>
-        /// Key is the output from the Step, value is the input id for which it is mapped to, type must match
-        /// </summary>
-        public Dictionary<int, int> OutputMappings { get; set; }
-        public List<StatusId> Status { get; set; }
-    }*/
 
     public class Logic
     {
@@ -83,7 +59,7 @@ namespace Cindi.Domain.Entities.SequencesTemplates
 
         public string Description { get; set; }
 
-        // public TemplateReference StepTemplateReference { get; set; }
+        public string StepTemplateReferenceId { get; set; }
 
         private string _status { get; set; }
 
@@ -116,7 +92,6 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         }
 
         public string Description { get; set; }
-
         public string StepTemplateId { get; set; }
         public List<Mapping> Mappings { get; set; }
         public bool IsPriority { get; set; }

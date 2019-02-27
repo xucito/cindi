@@ -8,9 +8,6 @@
     <Folder Include="Sequences\Commands\CreateSequence\" />
     <Folder Include="Sequences\Queries\GetSequence\" />
     <Folder Include="Sequences\Queries\GetSequences\" />
-    <Folder Include="SequenceTemplates\Commands\CreateSequenceTemplate\" />
-    <Folder Include="SequenceTemplates\Queries\GetSequenceTemplate\" />
-    <Folder Include="SequenceTemplates\Queries\GetSequenceTemplates\" />
   </ItemGroup>
 
   <ItemGroup>
