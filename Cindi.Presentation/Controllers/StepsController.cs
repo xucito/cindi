@@ -71,6 +71,8 @@ namespace Cindi.Presentation.Controllers
             }));
         }
 
+        [HttpPost]
+
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> Get(Guid id)

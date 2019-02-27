@@ -41,3 +41,21 @@ Parents:
 Specific Exception
 
 * 0000 - Specific error code
+
+
+# URL Conventions
+
+URLs use Snake Casing i.e. api/step_templates
+
+Reference: https://google.github.io/styleguide/jsoncstyleguide.xml
+
+The Body of requests does uses snake-casing for field names:
+```
+{
+	"name":"",
+	"Version":"",
+	"allowDynamicInputs":"",
+	"inputDefinitions":"",
+	"outputDefinitions": ""
+}
+```

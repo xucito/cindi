@@ -1,12 +1,24 @@
-﻿using System;
+﻿using Cindi.Application.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace Cindi.Application.Services.ClusterState
 {
     public class ClusterStateService
     {
         private ClusterState state;
+        private IClusterRepository _clusterRepository;
+        private Thread SaveThread;
+
+        public ClusterStateService(IClusterRepository clusterRepository)
+        {
+            state = new ClusterState();
+            _clusterRepository = clusterRepository;
+
+            state = _clusterRepository.GetClusterState().GetAwaiter().GetResult();
+        }
 
         public ClusterStateService()
         {
@@ -47,6 +59,23 @@ namespace Cindi.Application.Services.ClusterState
                     state.StepAssignmentCheckpoints.Add(update.Key, update.Value);
                 }
             }
+
+            SaveState();
+        }
+
+        public void SaveState()
+        {
+            if (_clusterRepository != null)
+            {
+                if (SaveThread == null || !SaveThread.IsAlive)
+                {
+                    SaveThread = new Thread(async () =>
+                    {
+                        await _clusterRepository.SaveClusterState(state);
+                    });
+                    SaveThread.Start();
+                }
+            }
         }
 
         public void UpdateStepAssignmentCheckpoint(string stepTemplateId, DateTime updatedTime)
@@ -62,6 +91,8 @@ namespace Cindi.Application.Services.ClusterState
             {
                 state.StepAssignmentCheckpoints.Add(stepTemplateId, updatedTime);
             }
+
+            SaveState();
         }
     }
 }

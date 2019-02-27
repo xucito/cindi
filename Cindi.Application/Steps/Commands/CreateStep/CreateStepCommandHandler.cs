@@ -1,6 +1,9 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
+using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -34,14 +37,32 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
-            var result = await _stepsRepository.InsertStepAsync(
+            var step = await _stepsRepository.InsertStepAsync(
                 resolvedTemplate.GenerateStep(request.StepTemplateId, request.Name, request.Description, request.Inputs, request.Tests)
                 );
+
+
+            await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
+            {
+                SubjectId = step.Id,
+                ChainId = 0,
+                Entity = JournalEntityTypes.Step,
+                RecordedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Override
+                    }
+                }
+            });
 
             stopwatch.Stop();
             return new CommandResult()
             {
-                ObjectRefId = result.Id.ToString(),
+                ObjectRefId = step.Id.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
             };

@@ -63,10 +63,10 @@ namespace Cindi.Persistence.Steps
             var stepFilter = new BsonDocument { { "$or", searchArray } };
 
 
-            var matchingSteps = _steps.Find(stepFilter).SortBy(s => s.CreatedOn).ToEnumerable();
+            var matchingSteps = _steps.Find(stepFilter).SortBy(s => s.CreatedOn).Project(projection => projection.Id).ToList();
 
             //Add cursor here
-            var batch = new List<Step>();
+            var batch = new List<Guid>();
             var page = 0;
             var size = 100;
             var totalRecordCount = matchingSteps.Count();
@@ -79,7 +79,7 @@ namespace Cindi.Persistence.Steps
                 var projectStatus = new BsonDocument[] {
 
             new BsonDocument {
-                { "$match", new BsonDocument("$expr", new BsonDocument{ { "$in", new BsonArray { "$SubjectId", new BsonArray(batch.Select(s => s.Id)) } } } )}  } ,
+                { "$match", new BsonDocument("$expr", new BsonDocument{ { "$in", new BsonArray { "$SubjectId", new BsonArray(batch.Select(s => s)) } } } )}  } ,
                 new BsonDocument {{ "$project", new BsonDocument(new Dictionary<string, object> {
                 { "_id", "$SubjectId" } ,
                  { "SubjectId", "$SubjectId" } ,
@@ -109,12 +109,17 @@ namespace Cindi.Persistence.Steps
                 if (result.Count() > 0)
                 {
                     //Always take the first element
-                    foreach(var s in batch)
+                    foreach (var s in batch)
                     {
-                        if(result.Contains(s.Id))
+                        if (result.Contains(s))
                         {
-                            s.Journal = new Journal(_journalEntries.Find(je => je.SubjectId == s.Id).ToList());
-                            return s;
+                            //Pull latest chain and if the chain is now showing unassigned do not return it
+                            var fullStep = await GetStepAsync(s);
+                            //s.Journal = new Journal(_journalEntries.Find(je => je.SubjectId == s.Id).ToList());
+                            if (fullStep.Status == StepStatuses.Unassigned)
+                            {
+                                return fullStep;
+                            }
                         }
                     }
                     //Get full journal
@@ -170,21 +175,6 @@ namespace Cindi.Persistence.Steps
         {
             step.Id = Guid.NewGuid();
             step.CreatedOn = DateTime.UtcNow;
-            await InsertJournalEntryAsync(new JournalEntry()
-            {
-                SubjectId = step.Id,
-                ChainId = 0,
-                Entity = JournalEntityTypes.Step,
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = StepStatuses.Unassigned,
-                        Type = UpdateType.Override
-                    }
-                }
-            });
             await _steps.InsertOneAsync(step);
             return step;
         }

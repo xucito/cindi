@@ -34,33 +34,33 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             var checkpoints = _clusterStateService.GetLastStepAssignmentCheckpoints(request.CompatibleStepTemplateIds);
 
             var assignedStepSuccessfully = false;
-            Step step = null;
+            Step unassignedStep = null;
             var dateChecked = DateTime.UtcNow;
             do
             {
-                var unassignedStep = await _stepsRepository.GetStepsAsync(StepStatuses.Unassigned, checkpoints);
+                unassignedStep = await _stepsRepository.GetStepsAsync(StepStatuses.Unassigned, checkpoints);
 
                 if (unassignedStep != null)
                 {
-                    step = await _stepsRepository.GetStepAsync(unassignedStep.Id);
+                    //unassignedStep = await _stepsRepository.GetStepAsync(unassignedStep.Id);
 
                     try
                     {
                         //This should not throw a error externally, the server should loop to the next one and log a error
-                        if (step.Status != StepStatuses.Unassigned)
+                        if (unassignedStep.Status != StepStatuses.Unassigned)
                         {
-                            throw new InvalidStepQueueException("You cannot assign step " + step.Id + " as it is not unassigned.");
+                            throw new InvalidStepQueueException("You cannot assign step " + unassignedStep.Id + " as it is not unassigned.");
                         }
 
-                        _clusterStateService.UpdateStepAssignmentCheckpoint(step.StepTemplateId, step.CreatedOn);
+                        _clusterStateService.UpdateStepAssignmentCheckpoint(unassignedStep.StepTemplateId, unassignedStep.CreatedOn);
 
 
                         await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
                         {
                             Entity = JournalEntityTypes.Step,
-                            SubjectId = step.Id,
+                            SubjectId = unassignedStep.Id,
                             RecordedOn = DateTime.UtcNow,
-                            ChainId = step.Journal.GetNextChainId(),
+                            ChainId = unassignedStep.Journal.GetNextChainId(),
                             Updates = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
@@ -96,7 +96,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             stopwatch.Stop();
             return new CommandResult()
             {
-                ObjectRefId = step != null ? step.Id.ToString(): "",
+                ObjectRefId = unassignedStep != null ? unassignedStep.Id.ToString(): "",
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Update
             };
