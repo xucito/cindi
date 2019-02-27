@@ -1,4 +1,5 @@
-﻿using Cindi.Domain.Entities.JournalEntries;
+﻿using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.ValueObjects;
 using Cindi.Persistence;
@@ -109,11 +110,13 @@ namespace Cindi.Infrastructure.Tests.Integration
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
             var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
             var step = await stepsRepository.GetStepAsync(createdStep.Id);
+            var clusterStateService = new ClusterStateService();
+            var state = clusterStateService.GetLastStepAssignmentCheckpoints(new string[] { FibonacciSampleData.StepTemplate.Id });
 
             Assert.NotNull(step);
             Assert.Equal(StepStatuses.Unassigned, step.Status);
             Assert.False(step.IsComplete);
-            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, new string[] { createdStep.StepTemplateId }));
+            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, state));
 
             await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
             {
@@ -133,8 +136,8 @@ namespace Cindi.Infrastructure.Tests.Integration
                 }
             });
 
-            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, new string[] { createdStep.StepTemplateId }));
-            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Assigned, new string[] { createdStep.StepTemplateId }));
+            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, state));
+            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Assigned, state));
 
             await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
             {
@@ -153,11 +156,11 @@ namespace Cindi.Infrastructure.Tests.Integration
                 }
             });
 
-            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, new string[] { createdStep.StepTemplateId }));
-            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Assigned, new string[] { createdStep.StepTemplateId }));
-            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Warning, new string[] { createdStep.StepTemplateId }));
-            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Error, new string[] { createdStep.StepTemplateId }));
-            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Successful, new string[] { createdStep.StepTemplateId }));
+            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, state));
+            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Assigned, state));
+            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Warning, state));
+            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Error, state));
+            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Successful, state));
         }
 
         public Task DisposeAsync()

@@ -46,12 +46,19 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpPost]
-        [Route("assignment")]
+        [Route("assignments")]
         public async Task<IActionResult> GetNextStep(AssignStepCommand command)
         {
             var result = await Mediator.Send(command);
-            var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
-            return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
+            if (result.ObjectRefId != "")
+            {
+                var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
+            }
+            else
+            {
+                return Ok(new HttpCommandResult<Step>("", result, null));
+            }
         }
 
         [HttpGet]

@@ -13,7 +13,7 @@ namespace Cindi.Application.Interfaces
         Task<Step> GetStepAsync(Guid stepId);
         Task<Step> InsertStepAsync(Step step);
         Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry);
-        Task<Step> GetStepsAsync(string status, string[] stepTemplateIds);
+        Task<Step> GetStepsAsync(string status, Dictionary<string, DateTime?> stepTemplateIds);
         Task<int> GetNextChainId(Guid subjectId);
     }
 }

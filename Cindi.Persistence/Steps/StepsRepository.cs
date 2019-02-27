@@ -39,15 +39,31 @@ namespace Cindi.Persistence.Steps
             _journalEntries = database.GetCollection<JournalEntry>("StepEntries");
         }
 
-        public async Task<Step> GetStepsAsync(string status, string[] stepTemplateIds)
+        public async Task<Step> GetStepsAsync(string status, Dictionary<string, DateTime?> stepFilters)
         {
             if (!StepStatuses.IsValid(status))
             {
                 throw new InvalidStepStatusInputException(status + " is not a valid step status entry.");
             }
 
-            var filter = Builders<Step>.Filter.In(x => x.StepTemplateId, stepTemplateIds);
-            var matchingSteps = _steps.Find(filter).ToEnumerable();
+            //var filter = Builders<Step>.Filter.In(x => x.StepTemplateId, stepTemplateIds);
+
+            var searchArray = new BsonArray();
+
+            foreach (var templateId in stepFilters)
+            {
+                var innerArray = new BsonArray { new BsonDocument { { "StepTemplateId", templateId.Key } } };
+                if (templateId.Value != null)
+                {
+                    innerArray.Add(new BsonDocument { { "CreatedOn", new BsonDocument { { "$gt", templateId.Value } } } });
+                }
+                searchArray.Add(new BsonDocument { { "$and", innerArray } });
+            }
+
+            var stepFilter = new BsonDocument { { "$or", searchArray } };
+
+
+            var matchingSteps = _steps.Find(stepFilter).SortBy(s => s.CreatedOn).ToEnumerable();
 
             //Add cursor here
             var batch = new List<Step>();
@@ -88,15 +104,22 @@ namespace Cindi.Persistence.Steps
 
                 var createBuckets = new BsonDocument { { "$bucket", new BsonDocument { { "groupBy", "$SubjectId" }, { "boundaries", new BsonArray() { 0, 5, 10 } } } } };
 
-                var result = _journalEntries.Aggregate<JournalEntry>(projectStatus).ToList();//.AppendStage<JournalEntry>(projectStatus).ToList();
+                var result = _journalEntries.Aggregate<JournalEntry>(projectStatus).ToList().Select(je => je.SubjectId);//.AppendStage<JournalEntry>(projectStatus).ToList();
 
                 if (result.Count() > 0)
                 {
                     //Always take the first element
-                    var foundStep = batch.Where(s => s.Id == result.First().SubjectId).First();
+                    foreach(var s in batch)
+                    {
+                        if(result.Contains(s.Id))
+                        {
+                            s.Journal = new Journal(_journalEntries.Find(je => je.SubjectId == s.Id).ToList());
+                            return s;
+                        }
+                    }
                     //Get full journal
-                    foundStep.Journal = new Journal(_journalEntries.Find(je => je.SubjectId == foundStep.Id).ToList());
-                    return foundStep;
+                    //foundStep.Journal = new Journal(_journalEntries.Find(je => je.SubjectId == foundStep.Id).ToList());
+                    //return foundStep;
                 }
                 page++;
             }

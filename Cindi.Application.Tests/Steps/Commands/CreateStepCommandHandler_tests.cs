@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Steps.Commands;
+using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
@@ -28,11 +29,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             {
                 await handler.Handle(new CreateStepCommand()
                 {
-                    TemplateReference = new Domain.ValueObjects.TemplateReference()
-                    {
-                        Name = FibonacciSampleData.StepTemplate.Name,
-                        Version = FibonacciSampleData.StepTemplate.Version
-                    }
+                    StepTemplateId = FibonacciSampleData.StepTemplate.Id
+                   
                 }, new System.Threading.CancellationToken());
             });
         }
@@ -43,18 +41,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Name, FibonacciSampleData.StepTemplate.Version)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object);
 
             var commandResult = await handler.Handle(new CreateStepCommand()
             {
-                TemplateReference = new Domain.ValueObjects.TemplateReference()
-                {
-                    Name = FibonacciSampleData.StepTemplate.Name,
-                    Version = FibonacciSampleData.StepTemplate.Version
-                },
+                StepTemplateId = FibonacciSampleData.StepTemplate.Id,
                 Inputs = new Dictionary<string, object>()
                 {
                     { "n-1", 1 } ,
@@ -72,18 +66,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Name, FibonacciSampleData.StepTemplate.Version)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
-                TemplateReference = new Domain.ValueObjects.TemplateReference()
-                {
-                    Name = FibonacciSampleData.StepTemplate.Name,
-                    Version = FibonacciSampleData.StepTemplate.Version
-                }
+                StepTemplateId = FibonacciSampleData.StepTemplate.Id
             }, new System.Threading.CancellationToken()));
         }
 
@@ -93,18 +83,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Name, FibonacciSampleData.StepTemplate.Version)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
-                TemplateReference = new Domain.ValueObjects.TemplateReference()
-                {
-                    Name = FibonacciSampleData.StepTemplate.Name,
-                    Version = FibonacciSampleData.StepTemplate.Version
-                },
+                StepTemplateId = FibonacciSampleData.StepTemplate.Id,
                 Inputs = new Dictionary<string, object>()
                 {
                     { "n-1", 1 } ,
@@ -120,18 +106,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Name, FibonacciSampleData.StepTemplate.Version)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
-                TemplateReference = new Domain.ValueObjects.TemplateReference()
-                {
-                    Name = FibonacciSampleData.StepTemplate.Name,
-                    Version = FibonacciSampleData.StepTemplate.Version
-                },
+                StepTemplateId = FibonacciSampleData.StepTemplate.Id,
                 Inputs = new Dictionary<string, object>()
                 {
                     { "n-1", 1 } 

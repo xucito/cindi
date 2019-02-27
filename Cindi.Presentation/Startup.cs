@@ -25,6 +25,7 @@ using Cindi.Application.Interfaces;
 using Cindi.Persistence;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.CreateStep;
+using Cindi.Application.Services.ClusterState;
 
 namespace Cindi.Presentation
 {
@@ -51,6 +52,8 @@ namespace Cindi.Presentation
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
             services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
+
+            services.AddSingleton(cs => new ClusterStateService());
 
             services.AddSwaggerGen(c =>
             {

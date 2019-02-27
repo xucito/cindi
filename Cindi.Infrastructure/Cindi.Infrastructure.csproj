@@ -25,4 +25,8 @@
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="NewFolder\" />
+  </ItemGroup>
+
 </Project>
