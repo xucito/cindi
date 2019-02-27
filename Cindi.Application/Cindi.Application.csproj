@@ -1,14 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Sequences\Commands\" />
-    <Folder Include="Sequences\Queries\" />
-    <Folder Include="SequenceTemplates\Commands\" />
-    <Folder Include="SequenceTemplates\Queries\" />
+    <Folder Include="Sequences\Commands\CreateSequence\" />
+    <Folder Include="Sequences\Queries\GetSequence\" />
+    <Folder Include="Sequences\Queries\GetSequences\" />
+    <Folder Include="SequenceTemplates\Commands\CreateSequenceTemplate\" />
+    <Folder Include="SequenceTemplates\Queries\GetSequenceTemplate\" />
+    <Folder Include="SequenceTemplates\Queries\GetSequenceTemplates\" />
   </ItemGroup>
 
   <ItemGroup>

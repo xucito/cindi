@@ -27,6 +27,8 @@ using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Persistence.Cluster;
+using Cindi.Presentation.Transformers;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Cindi.Presentation
 {
@@ -48,7 +50,12 @@ namespace Cindi.Presentation
             services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
             services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc(options =>
+            {
+                options.Conventions.Add(new RouteTokenTransformerConvention(
+                                new SlugifyParameterTransformer()));
+            }
+            ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));

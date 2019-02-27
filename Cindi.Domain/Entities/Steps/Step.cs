@@ -98,14 +98,14 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Output from task, the output name is the dictionary key and the value is Dictionary value
         /// </summary>
-        public List<DynamicData> Outputs { get { return Journal.GetLatestValueOrDefault<List<DynamicData>>("outputs", new List<DynamicData>()); } }
+        public Dictionary<string, object> Outputs { get { return Journal.GetLatestValueOrDefault<Dictionary<string, object>>("outputs", new Dictionary<string, object>()); } }
 
         /// <summary>
         /// Combined with Status can be used to evaluate dependencies
         /// </summary>
-        //public int StatusCode { get; set; }
+        public int StatusCode { get { return Journal.GetLatestValueOrDefault<int>("statuscode", 0); } }
 
-        //public string Log { get; set; }
+        public string[] Logs { get { return Journal.GetLatestValueOrDefault<string[]>("logs", new string[0]); } }
 
         public bool IsComplete
         {

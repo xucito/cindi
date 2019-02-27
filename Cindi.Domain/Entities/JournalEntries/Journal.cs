@@ -24,17 +24,24 @@ namespace Cindi.Domain.Entities.JournalEntries
 
         public T GetLatestValueOrDefault<T>(string fieldName, T defaultValue)
         {
-            foreach (var entry in journalEntries.Reverse())
+            try
             {
-                foreach (var update in entry.Value.Updates)
+                foreach (var entry in journalEntries.Reverse())
                 {
-                    if (update.FieldName == fieldName)
+                    foreach (var update in entry.Value.Updates)
                     {
-                        return (T)update.Value;
+                        if (update.FieldName == fieldName)
+                        {
+                            return (T)update.Value;
+                        }
                     }
                 }
+                return defaultValue;
             }
-            return defaultValue;
+            catch (Exception e)
+            {
+                throw e;
+            }
         }
 
         public int GetNextChainId()

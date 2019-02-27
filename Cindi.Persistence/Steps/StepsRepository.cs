@@ -116,7 +116,7 @@ namespace Cindi.Persistence.Steps
                             //Pull latest chain and if the chain is now showing unassigned do not return it
                             var fullStep = await GetStepAsync(s);
                             //s.Journal = new Journal(_journalEntries.Find(je => je.SubjectId == s.Id).ToList());
-                            if (fullStep.Status == StepStatuses.Unassigned)
+                            if (fullStep.Status == status)
                             {
                                 return fullStep;
                             }

@@ -16,10 +16,10 @@ using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Controllers
 {
-    public class Step_TemplatesController : BaseController
+    public class StepTemplatesController : BaseController
     {
 
-        public Step_TemplatesController(ILoggerFactory logger) : base(logger.CreateLogger<Step_TemplatesController>())
+        public StepTemplatesController(ILoggerFactory logger) : base(logger.CreateLogger<StepTemplatesController>())
         {
         }
 

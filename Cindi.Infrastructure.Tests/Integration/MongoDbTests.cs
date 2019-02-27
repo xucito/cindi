@@ -30,7 +30,25 @@ namespace Cindi.Infrastructure.Tests.Integration
         public async void CreateStep()
         {
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
-            await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+            var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+
+            await stepsRepository.InsertJournalEntryAsync(new JournalEntry()
+            {
+                SubjectId = createdStep.Id,
+                ChainId = 0,
+                Entity = JournalEntityTypes.Step,
+                RecordedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Override
+                    }
+                }
+            });
+
             var steps = await stepsRepository.GetStepsAsync(0, 1000);
 
             Assert.NotEmpty(steps);
@@ -46,6 +64,23 @@ namespace Cindi.Infrastructure.Tests.Integration
         {
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
             var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+            await stepsRepository.InsertJournalEntryAsync(new JournalEntry()
+            {
+                SubjectId = createdStep.Id,
+                ChainId = 0,
+                Entity = JournalEntityTypes.Step,
+                RecordedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Override
+                    }
+                }
+            });
+
             var step = await stepsRepository.GetStepAsync(createdStep.Id);
 
             Assert.NotNull(step);
@@ -109,6 +144,25 @@ namespace Cindi.Infrastructure.Tests.Integration
         {
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
             var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+            await stepsRepository.InsertJournalEntryAsync(new JournalEntry()
+            {
+                SubjectId = createdStep.Id,
+                ChainId = 0,
+                Entity = JournalEntityTypes.Step,
+                RecordedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Override
+                    }
+                }
+            });
+
+
+
             var step = await stepsRepository.GetStepAsync(createdStep.Id);
             var clusterStateService = new ClusterStateService();
             var state = clusterStateService.GetLastStepAssignmentCheckpoints(new string[] { FibonacciSampleData.StepTemplate.Id });
@@ -161,6 +215,101 @@ namespace Cindi.Infrastructure.Tests.Integration
             Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Warning, state));
             Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Error, state));
             Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Successful, state));
+        }
+
+        [Fact]
+        public async void CompleteStep()
+        {
+            await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
+            var createdStep = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
+            await stepsRepository.InsertJournalEntryAsync(new JournalEntry()
+            {
+                SubjectId = createdStep.Id,
+                ChainId = 0,
+                Entity = JournalEntityTypes.Step,
+                RecordedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Override
+                    }
+                }
+            });
+
+
+
+            var step = await stepsRepository.GetStepAsync(createdStep.Id);
+            var clusterStateService = new ClusterStateService();
+            var state = clusterStateService.GetLastStepAssignmentCheckpoints(new string[] { FibonacciSampleData.StepTemplate.Id });
+
+            Assert.NotNull(step);
+            Assert.Equal(StepStatuses.Unassigned, step.Status);
+
+            await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                Entity = JournalEntityTypes.Step,
+                SubjectId = step.Id,
+                RecordedOn = DateTime.UtcNow,
+                ChainId = 1,
+                Updates = new List<Domain.ValueObjects.Update>()
+                {
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "status",
+                        Value = StepStatuses.Assigned,
+                    }
+
+                }
+            });
+
+            Assert.Null(await stepsRepository.GetStepsAsync(StepStatuses.Unassigned, state));
+            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Assigned, state));
+
+            await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                Entity = JournalEntityTypes.Step,
+                SubjectId = step.Id,
+                RecordedOn = DateTime.UtcNow,
+                ChainId = 2,
+                Updates = new List<Domain.ValueObjects.Update>()
+                {
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "status",
+                        Value = StepStatuses.Successful,
+                    },
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "outputs",
+                        Value = new Dictionary<string, object>(){{"n-1", 3 }, {"n-2", 4} },
+                    },
+                    new Update()
+                    {
+                        Type = UpdateType.Override,
+                        FieldName = "statuscode",
+                        Value = 1,
+                    },
+                    new Update()
+                    {
+                        Type = UpdateType.Append,
+                        FieldName = "logs",
+                        Value = new string[]{ "This is a test." },
+                    }
+                }
+            });
+
+            Assert.NotNull(await stepsRepository.GetStepsAsync(StepStatuses.Successful, state));
+            var completedStep = await stepsRepository.GetStepAsync(step.Id);
+            Assert.NotEmpty(completedStep.Logs);
+            Assert.NotEmpty(completedStep.Outputs);
+            Assert.Equal(1, completedStep.StatusCode);
+            Assert.Equal(StepStatuses.Successful, completedStep.Status);
         }
 
         public Task DisposeAsync()
