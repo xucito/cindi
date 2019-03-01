@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Persistence.SequenceTemplates;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;

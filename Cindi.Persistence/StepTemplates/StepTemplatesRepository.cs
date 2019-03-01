@@ -68,7 +68,7 @@ namespace Cindi.Persistence.StepTemplates
 
         public async Task<StepTemplate> GetStepTemplateAsync(string id)
         {
-            return (await _stepTemplates.FindAsync(st => st.Id.ToLower() == id)).FirstOrDefault();
+            return (await _stepTemplates.FindAsync(st => st.Id.ToLower() == id.ToLower())).FirstOrDefault();
         }
 
         public async Task<List<StepTemplate>> GetStepTemplatesAsync(int page, int size)

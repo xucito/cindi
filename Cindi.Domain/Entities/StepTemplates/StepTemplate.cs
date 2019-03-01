@@ -29,6 +29,9 @@ namespace Cindi.Domain.Entities.StepTemplates
             }
         }
 
+        public string Name { get { return Id.Split(':')[0]; } }
+        public string Version { get { return Id.Split(':')[1]; } }
+
         public string Description { get; set; }
 
         /// <summary>
@@ -132,7 +135,7 @@ namespace Cindi.Domain.Entities.StepTemplates
             return true;
         }
 
-        public Step GenerateStep(string stepTemplateId, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, string sequenceId = null)
+        public Step GenerateStep(string stepTemplateId, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, Guid? sequenceId = null)
         {
             var newStep = new Step();
             newStep.Name = name;
@@ -186,7 +189,7 @@ namespace Cindi.Domain.Entities.StepTemplates
             newStep.Tests = stepTestTemplateIds;
             newStep.StepRefId = stepRefId;
             newStep.SequenceId = sequenceId;
-            newStep.CreatedOn = DateTime.Now;
+            newStep.CreatedOn = DateTime.UtcNow;
             return newStep;
         }
 

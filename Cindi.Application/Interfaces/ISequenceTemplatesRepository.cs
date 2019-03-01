@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Cindi.Domain.Entities.SequencesTemplates;
 
-namespace Cindi.Persistence.SequenceTemplates
+namespace Cindi.Application.Interfaces
 {
     public interface ISequenceTemplatesRepository
     {

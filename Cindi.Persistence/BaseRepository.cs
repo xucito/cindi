@@ -25,7 +25,7 @@ namespace Cindi.Persistence
         {
             BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
-            BsonClassMap.RegisterClassMap<JournalEntry>(je => JournalEntriesMap.Register(je));
+            BsonClassMap.RegisterClassMap<JournalEntry>(je => JournalEntriesClassMap.Register(je));
         }
     }
 }

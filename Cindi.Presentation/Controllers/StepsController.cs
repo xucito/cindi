@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.AssignStep;
+using Cindi.Application.Steps.Commands.CompleteStep;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Steps.Queries;
 using Cindi.Application.Steps.Queries.GetStep;
@@ -12,6 +13,7 @@ using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
+using Cindi.Presentation.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -46,7 +48,7 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpPost]
-        [Route("assignment-request")]
+        [Route("assignment-requests")]
         public async Task<IActionResult> GetNextStep(AssignStepCommand command)
         {
             var result = await Mediator.Send(command);
@@ -61,11 +63,20 @@ namespace Cindi.Presentation.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("assignment")]
-        public async Task<IActionResult> CompleteAssignment(AssignStepCommand command)
+        [HttpPut]
+        [Route("{id}")]
+        public async Task<IActionResult> CompleteAssignment(Guid id, CompleteStepVM commandVM)
         {
-            var result = await Mediator.Send(command);
+            var completeStepCommand = new CompleteStepCommand()
+            {
+                Id = id,
+                Status = commandVM.Status.ToLower(),
+                StatusCode = commandVM.StatusCode,
+                Logs = commandVM.Logs,
+                Outputs = commandVM.Outputs
+            };
+
+            var result = await Mediator.Send(completeStepCommand);
             if (result.ObjectRefId != "")
             {
                 var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
@@ -86,8 +97,6 @@ namespace Cindi.Presentation.Controllers
                 Size = size
             }));
         }
-
-        [HttpPost]
 
         [HttpGet]
         [Route("{id}")]

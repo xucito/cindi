@@ -31,7 +31,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var checkpoints = _clusterStateService.GetLastStepAssignmentCheckpoints(request.CompatibleStepTemplateIds);
+            var checkpoints = _clusterStateService.GetLastStepAssignmentCheckpoints(request.StepTemplateIds);
 
             var assignedStepSuccessfully = false;
             Step unassignedStep = null;

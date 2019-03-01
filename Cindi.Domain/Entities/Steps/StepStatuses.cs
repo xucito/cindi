@@ -15,6 +15,18 @@ namespace Cindi.Domain.Entities.Steps
         public const string Successful = "successful";
         public const string Warning = "warning";
         public const string Error = "error";
+        public const string Unknown = "unknown";
+
+        private static Dictionary<string, int> _priorityDictionary = new Dictionary<string, int>()
+        {
+            {Error,1 },
+            {Warning,2 },
+            {Successful,3 },
+            {Assigned,4 },
+            {Suspended, 4 },
+            {Unassigned,5 },
+            {Unknown,6 }
+        };
 
         public static string[] AllStatuses = new string[]{
             Suspended,
@@ -22,7 +34,8 @@ namespace Cindi.Domain.Entities.Steps
             Assigned,
             Successful,
             Warning,
-            Error
+            Error,
+            Unknown
         };
 
         public static bool IsCompleteStatus(string status)
@@ -36,6 +49,19 @@ namespace Cindi.Domain.Entities.Steps
             return false;
         }
 
+        public static string GetHighestPriority(string[] statuses)
+        {
+            string highestPriority = Unknown;
+            foreach (var status in statuses)
+            {
+                if (_priorityDictionary[status] < _priorityDictionary[highestPriority])
+                {
+                    highestPriority = status;
+                }
+            }
+            return highestPriority;
+        }
+
         public static bool IsValid(string value)
         {
             if (value == Unassigned ||
@@ -43,7 +69,9 @@ namespace Cindi.Domain.Entities.Steps
                 value == Successful ||
                 value == Warning ||
                 value == Error ||
-                value == Suspended)
+                value == Suspended ||
+                value == Unknown
+                )
             {
                 return true;
             }

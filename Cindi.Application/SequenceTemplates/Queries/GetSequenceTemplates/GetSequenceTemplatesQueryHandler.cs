@@ -1,7 +1,7 @@
-﻿using Cindi.Application.Results;
+﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Results;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.SequencesTemplates;
-using Cindi.Persistence.SequenceTemplates;
 using MediatR;
 using System;
 using System.Collections.Generic;

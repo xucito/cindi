@@ -24,22 +24,20 @@ namespace Cindi.Domain.Entities.Steps
             //SuspendedTimes = new List<DateTime>();
             Journal = new Journal(new List<JournalEntry>());
         }
-        
+
 
         public string Name { get; set; }
-
         public string Description { get; set; }
 
         /// <summary>
         /// The sequence this step belongs to 
         /// </summary>
-        public string SequenceId { get; set; }
+        public Guid? SequenceId { get; set; }
 
         /// <summary>
         /// Used to map to a specific step in a sequence
         /// </summary>
         public int? StepRefId { get; set; }
-
         public List<string> Tests { get; set; }
         public List<StepTestResult> TestResults { get { return Journal.GetLatestValueOrDefault<List<StepTestResult>>("testresults", new List<StepTestResult>()); } }
 
@@ -87,9 +85,10 @@ namespace Cindi.Domain.Entities.Steps
             get
             {
                 var status = Journal.GetLatestValueOrDefault<string>("status", null);
-                if(status == null)
+                if (status == null)
                 {
-                    throw new InvalidStepStatusInputException("Status for step " + Id + " was not found.");
+                    return StepStatuses.Unknown;
+                    //throw new InvalidStepStatusInputException("Status for step " + Id + " was not found.");
                 }
                 return status;
             }
@@ -105,7 +104,20 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public int StatusCode { get { return Journal.GetLatestValueOrDefault<int>("statuscode", 0); } }
 
-        public string[] Logs { get { return Journal.GetLatestValueOrDefault<string[]>("logs", new string[0]); } }
+        public string[] Logs
+        {
+            get
+            {
+                List<string> allLogs = new List<string>();
+                var foundValue = Journal.GetLatestValueOrDefault<string>("logs", "");
+                    if (foundValue != "")
+                {
+                    allLogs.Add(foundValue);
+                }
+                return allLogs.ToArray();
+                ;
+            }
+        }
 
         public bool IsComplete
         {

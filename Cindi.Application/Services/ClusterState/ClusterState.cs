@@ -9,5 +9,6 @@ namespace Cindi.Application.Services.ClusterState
         public const string DefaultId = "State";
         public string Id { get; } = DefaultId;
         public Dictionary<string, DateTime> StepAssignmentCheckpoints = new Dictionary<string, DateTime>();
+        public Dictionary<string, DateTime> LockedLogicBlocks = new Dictionary<string, DateTime>();
     }
 }

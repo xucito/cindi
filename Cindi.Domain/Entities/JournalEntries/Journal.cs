@@ -46,6 +46,10 @@ namespace Cindi.Domain.Entities.JournalEntries
 
         public int GetNextChainId()
         {
+            if (journalEntries.Count() == 0)
+            {
+                return 0;
+            }
             return journalEntries.Last().Key + 1;
         }
 

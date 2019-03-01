@@ -18,11 +18,35 @@ namespace Cindi.Application.Services.ClusterState
             _clusterRepository = clusterRepository;
 
             state = _clusterRepository.GetClusterState().GetAwaiter().GetResult();
+
+            if(state == null)
+            {
+                state = new ClusterState();
+            }
         }
 
         public ClusterStateService()
         {
             state = new ClusterState();
+        }
+
+        public bool IsLogicBlockLocked(string logicBlockId)
+        {
+            if(state.LockedLogicBlocks.ContainsKey(logicBlockId))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public void LockLogicBlock(string logicBlockId)
+        {
+            state.LockedLogicBlocks.Add(logicBlockId, DateTime.UtcNow);
+        }
+
+        public void UnlockLogicBlock(string logicBlockId)
+        {
+            state.LockedLogicBlocks.Remove(logicBlockId);
         }
 
         public Dictionary<string, DateTime?> GetLastStepAssignmentCheckpoints(string[] stepTemplateIds)

@@ -14,6 +14,9 @@ namespace Cindi.Domain.Entities.SequencesTemplates
     {
         public string Id { get; set; }
 
+        public string Name { get { return Id.Split(':')[0]; } }
+        public string Version { get { return Id.Split(':')[1]; } }
+
         public SequenceTemplate()
         {
             this.LogicBlocks = new List<LogicBlock>();
@@ -28,6 +31,32 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
         public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
+
+        public static bool ValidateMapping(Mapping map, bool isStartingMapping = false)
+        {
+            if (isStartingMapping)
+            {
+                if (map.OutputReferences.Count() == 0 || map.OutputReferences.Count() > 1)
+                {
+                    throw new InvalidMappingException("All starting mappings must have one output reference as the sequence output is always available");
+                }
+
+                foreach (var reference in map.OutputReferences)
+                {
+                    if (reference.StepRefId != -1)
+                    {
+                        throw new InvalidMappingException("All starting mappings must be mapping from step -1 to step 0");
+                    }
+                }
+            }
+
+            if (map.DefaultValue != null && map.OutputReferences != null && map.OutputReferences.Count() > 0)
+            {
+                throw new InvalidMappingException("Both Value and Output reference are specified for mapping " + map.StepInputId);
+            }
+
+            return true;
+        }
     }
 
     public class LogicBlock
@@ -113,7 +142,7 @@ namespace Cindi.Domain.Entities.SequencesTemplates
 
     public class DefaultValue
     {
-        public DynamicData Value { get; set; }
+        public object Value { get; set; }
         public int Priority = 99999999;
     }
 

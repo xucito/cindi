@@ -45,7 +45,10 @@ Specific Exception
 
 # URL Conventions
 
-URLs use Snake Casing i.e. api/step_templates
+https://restfulapi.net/resource-naming/
+
+URLs use Snake Casing i.e. api/step-templates
+
 
 Reference: https://google.github.io/styleguide/jsoncstyleguide.xml
 
@@ -59,3 +62,5 @@ The Body of requests does uses snake-casing for field names:
 	"outputDefinitions": ""
 }
 ```
+
+www://api/step-templates?query-word=testWord&

@@ -29,6 +29,8 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Persistence.Cluster;
 using Cindi.Presentation.Transformers;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Cindi.Persistence.SequenceTemplates;
+using Cindi.Persistence.Sequences;
 
 namespace Cindi.Presentation
 {
@@ -60,6 +62,8 @@ namespace Cindi.Presentation
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
             services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
+            services.AddTransient<ISequencesRepository, SequencesRepository>(s => new SequencesRepository(MongoClient));
+            services.AddTransient<ISequenceTemplatesRepository, SequenceTemplatesRepository>(s => new SequenceTemplatesRepository(MongoClient));
             services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
 
             services.AddSingleton<ClusterStateService>();

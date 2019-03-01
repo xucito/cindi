@@ -1,4 +1,5 @@
-﻿using Cindi.Domain.Entities.SequencesTemplates;
+﻿using Cindi.Application.Interfaces;
+using Cindi.Domain.Entities.SequencesTemplates;
 using Cindi.Domain.Entities.StepTemplates;
 using MongoDB.Driver;
 using System;
@@ -8,14 +9,24 @@ using System.Threading.Tasks;
 
 namespace Cindi.Persistence.SequenceTemplates
 {
-    public class SequenceTemplatesRepository : ISequenceTemplatesRepository
+    public class SequenceTemplatesRepository : BaseRepository, ISequenceTemplatesRepository
     {
-        public readonly IMongoCollection<SequenceTemplate> _sequenceTemplate;
+        public IMongoCollection<SequenceTemplate> _sequenceTemplate;
 
-        public SequenceTemplatesRepository(string mongoDbConnectionString, string databaseName)
+        public SequenceTemplatesRepository(string mongoDbConnectionString, string databaseName) : base(mongoDbConnectionString, databaseName)
         {
             var client = new MongoClient(mongoDbConnectionString);
-            var database = client.GetDatabase(databaseName);
+            SetCollection(client);
+        }
+        
+        public SequenceTemplatesRepository(IMongoClient client) : base(client)
+        {
+            SetCollection(client);
+        }
+
+        private void SetCollection(IMongoClient client)
+        {
+            var database = client.GetDatabase(DatabaseName);
             _sequenceTemplate = database.GetCollection<SequenceTemplate>("SequenceTemplates");
         }
 

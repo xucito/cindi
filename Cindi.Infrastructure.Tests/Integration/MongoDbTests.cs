@@ -1,8 +1,11 @@
 ﻿using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.ValueObjects;
 using Cindi.Persistence;
+using Cindi.Persistence.Sequences;
+using Cindi.Persistence.SequenceTemplates;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
 using Cindi.Test.Global.TestData;
@@ -12,6 +15,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using static Cindi.Test.Global.TestData.FibonacciSampleData;
 
 namespace Cindi.Infrastructure.Tests.Integration
 {
@@ -20,6 +24,8 @@ namespace Cindi.Infrastructure.Tests.Integration
         public string TestDBId;
         public StepTemplatesRepository stepTemplatesRepository;
         public StepsRepository stepsRepository;
+        public SequenceTemplatesRepository sequenceTemplatesRepository;
+        public SequencesRepository sequenceRepository;
 
         public MongoDb_Tests(MongoDBFixture fixture)
         {
@@ -312,6 +318,53 @@ namespace Cindi.Infrastructure.Tests.Integration
             Assert.Equal(StepStatuses.Successful, completedStep.Status);
         }
 
+        [Fact]
+        public async void CreateSequence()
+        {
+            FibonacciSequenceData data = new FibonacciSequenceData(5);
+            await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplate);
+
+            var newSequence =  await sequenceRepository.InsertSequenceAsync(new Domain.Entities.Sequences.Sequence()
+            {
+                SequenceTemplateId = data.sequenceTemplate.Id,
+                Inputs = new Dictionary<string, object>(),
+                CreatedOn = DateTime.UtcNow,
+                Id = Guid.NewGuid()
+            });
+
+            await sequenceRepository.InsertJournalEntryAsync(new JournalEntry()
+            {
+                SubjectId = newSequence.Id,
+                ChainId = 0,
+                Entity = JournalEntityTypes.Sequence,
+                RecordedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = SequenceStatuses.Started,
+                        Type = UpdateType.Override
+                    }
+                }
+            });
+
+            Assert.NotNull(await sequenceRepository.GetSequenceAsync(newSequence.Id));
+            Assert.Single((await sequenceRepository.GetSequencesAsync()));
+            Assert.Equal(SequenceStatuses.Started, (await sequenceRepository.GetSequenceAsync(newSequence.Id)).Status);
+            Assert.Equal(SequenceStatuses.Started, (await sequenceRepository.GetSequencesAsync())[0].Status);
+        }
+
+        [Fact]
+        public async void CreateSequenceTemplate()
+        {
+            FibonacciSequenceData data = new FibonacciSequenceData(5);
+            await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplateWithInputs);
+
+            Assert.NotNull(await sequenceTemplatesRepository.GetSequenceTemplateAsync(data.sequenceTemplate.Id));
+            Assert.NotEmpty(await sequenceTemplatesRepository.GetSequenceTemplatesAsync());
+        }
+
         public Task DisposeAsync()
         {
             var client = new MongoClient(GlobalTestSettings.CindiDBConnectionString);
@@ -325,6 +378,8 @@ namespace Cindi.Infrastructure.Tests.Integration
             //BaseRepository.RegisterClassMaps();
             stepTemplatesRepository = new StepTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
             stepsRepository = new StepsRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
+            sequenceTemplatesRepository = new SequenceTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
+            sequenceRepository = new SequencesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
             return Task.CompletedTask;
         }
     }

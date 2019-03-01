@@ -1,0 +1,6 @@
+<div class="container">
+  <div *ngIf="IsNewStep">
+    <h1>New Step: {{ selectedTemplateName }}</h1>
+    <div *ngIf="inputs != null"><app-forms [inputs]="inputs"></app-forms></div>
+  </div>
+</div>

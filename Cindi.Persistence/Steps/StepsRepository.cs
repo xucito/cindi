@@ -143,7 +143,7 @@ namespace Cindi.Persistence.Steps
             };
 
             var steps = (await _steps.FindAsync(filter, options)).ToList();
-            List<Task<Step>> tasks = new List<Task<Step>>();
+
             var builder = Builders<JournalEntry>.Filter;
             var journalFilter = builder.In("SubjectId", steps.Select(s => s.Id));
             var journals = (await _journalEntries.FindAsync(journalFilter)).ToList();
@@ -151,13 +151,6 @@ namespace Cindi.Persistence.Steps
             foreach (var step in steps)
             {
                 step.Journal = new Journal(journals.Where(j => j.SubjectId == step.Id).ToList());
-                /*  tasks.Add(Task.Run(async () =>
-                  {
-                      var temp = step;
-                      temp.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
-                      return temp;
-                  }));
-                  */
             };
 
             return steps;
