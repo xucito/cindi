@@ -2,6 +2,7 @@
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Exceptions.Sequences;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,8 @@ namespace Cindi.Persistence.Sequences
         private IMongoCollection<JournalEntry> _sequenceJournalEntries;
         private IMongoCollection<JournalEntry> _stepJournalEntries;
         private IMongoCollection<Step> _steps;
+        private IMongoCollection<SequenceMetadata> _sequenceMetadata;
+
         public SequencesRepository(string mongoDbConnectionString, string databaseName) : base(mongoDbConnectionString, databaseName)
         {
             var client = new MongoClient(mongoDbConnectionString);
@@ -51,6 +54,7 @@ namespace Cindi.Persistence.Sequences
             _sequenceJournalEntries = database.GetCollection<JournalEntry>("SequenceEntries");
             _steps = database.GetCollection<Step>("Steps");
             _stepJournalEntries = database.GetCollection<JournalEntry>("StepEntries");
+            _sequenceMetadata = database.GetCollection<SequenceMetadata>("_Sequences");
         }
 
         public long CountSequences() { return _sequence.EstimatedDocumentCount(); }
@@ -68,30 +72,80 @@ namespace Cindi.Persistence.Sequences
             return foundSequence;
         }
 
-        public async Task<List<Sequence>> GetSequencesAsync(int page = 0, int size = 10)
+        public async Task<List<Sequence>> GetSequencesAsync(Guid[] sequenceIds)
         {
-            FilterDefinition<Sequence> filter = FilterDefinition<Sequence>.Empty;
-            FindOptions<Sequence> options = new FindOptions<Sequence>
-            {
-                BatchSize = size,
-                NoCursorTimeout = false,
-                Skip = page,
-                Limit = size
-            };
-
-            var sequences = (await _sequence.FindAsync(filter, options)).ToList();
+            var builder = Builders<Sequence>.Filter;
+            var sequenceFilter = builder.In("Id", sequenceIds);
+            var sequences = (await _sequence.FindAsync(sequenceFilter)).ToList();
 
 
-            var builder = Builders<JournalEntry>.Filter;
-            var journalFilter = builder.In("SubjectId", sequences.Select(s => s.Id));
+            var journalBuilder = Builders<JournalEntry>.Filter;
+            var journalFilter = journalBuilder.In("SubjectId", sequences.Select(s => s.Id));
             var journals = (await _sequenceJournalEntries.FindAsync(journalFilter)).ToList();
-
 
             foreach (var sequence in sequences)
             {
                 sequence.Journal = new Journal(journals.Where(j => j.SubjectId == sequence.Id).ToList());
             };
+
             return sequences;
+        }
+
+        public async Task<List<Sequence>> GetSequencesAsync(int size = 10, int page = 0, string status = null, string[] sequenceTemplateIds = null)
+        {
+            if (status != null && !SequenceStatuses.IsValid(status))
+            {
+                throw new InvalidSequenceStatusException(status + " is not a valid step status entry.");
+            }
+
+            var builder = Builders<SequenceMetadata>.Filter;
+            var filters = new List<FilterDefinition<SequenceMetadata>>();
+            var ignoreFilters = true;
+
+            if (sequenceTemplateIds != null)
+            {
+                filters.Add(builder.In("SequenceId", sequenceTemplateIds));
+                ignoreFilters = false;
+            }
+            if (status != null)
+            {
+                filters.Add(builder.Eq("Status", status));
+                ignoreFilters = false;
+            }
+
+            var stepMetadataFilter = builder.And(filters);
+
+            if (ignoreFilters)
+            {
+                stepMetadataFilter = FilterDefinition<SequenceMetadata>.Empty; ;
+            }
+
+            var sort = Builders<SequenceMetadata>.Sort.Ascending("CreatedOn");
+            FindOptions<SequenceMetadata> options = new FindOptions<SequenceMetadata>
+            {
+                BatchSize = size,
+                NoCursorTimeout = false,
+                Skip = page,
+                Limit = size,
+                Sort = sort
+            };
+
+            var validSequences = (await _sequenceMetadata.FindAsync(stepMetadataFilter, options)).ToList();
+
+            return await GetSequencesAsync(validSequences.Select(vs => vs.SequenceId).ToArray());
+        }
+
+        public async Task<bool> UpsertSequenceMetadataAsync(Guid sequenceId)
+        {
+            var sequenceToUpdate = await GetSequenceAsync(sequenceId);
+
+            var replaceResult = await _sequenceMetadata.ReplaceOneAsync(
+                    doc => doc.SequenceId == sequenceId,
+                    sequenceToUpdate.Metadata,
+                    new UpdateOptions { IsUpsert = true }
+                    );
+
+            return replaceResult.IsAcknowledged;
         }
 
         public async Task<int> GetNextChainId(Guid subjectId)

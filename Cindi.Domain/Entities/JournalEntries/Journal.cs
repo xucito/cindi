@@ -44,6 +44,28 @@ namespace Cindi.Domain.Entities.JournalEntries
             }
         }
 
+        public List<UpdateRecord> GetAllUpdates(string fieldName)
+        {
+            var updates = new List<UpdateRecord>();
+
+
+            foreach (var entry in journalEntries.Reverse())
+            {
+                foreach (var update in entry.Value.Updates)
+                {
+                    if (update.FieldName == fieldName)
+                    {
+                        updates.Add(new UpdateRecord()
+                        {
+                            Update = update,
+                            RecordedOn = entry.Value.RecordedOn
+                        });
+                    }
+                }
+            }
+            return updates;
+        }
+
         public int GetNextChainId()
         {
             if (journalEntries.Count() == 0)

@@ -50,9 +50,9 @@ namespace Cindi.Domain.Entities.SequencesTemplates
                 }
             }
 
-            if (map.DefaultValue != null && map.OutputReferences != null && map.OutputReferences.Count() > 0)
+            if (map.DefaultValue == null && (map.OutputReferences == null || map.OutputReferences.Count() == 0))
             {
-                throw new InvalidMappingException("Both Value and Output reference are specified for mapping " + map.StepInputId);
+                throw new InvalidMappingException("Both Value and Output reference are not specified for mapping " + map.StepInputId);
             }
 
             return true;

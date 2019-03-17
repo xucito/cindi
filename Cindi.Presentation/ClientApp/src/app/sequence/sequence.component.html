@@ -9,11 +9,6 @@
                 <mat-cell *matCellDef="let element"> {{element.id}} </mat-cell>
             </ng-container>
 
-            <ng-container matColumnDef="type">
-                <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
-                <mat-cell *matCellDef="let element"> {{element.type}} </mat-cell>
-            </ng-container>
-
             <ng-container matColumnDef="value">
                 <mat-header-cell *matHeaderCellDef> Value </mat-header-cell>
                 <mat-cell *matCellDef="let element"> {{element.value}} </mat-cell>
@@ -31,16 +26,11 @@
             <div class="row">
                 <div class="col-sm-12">
                     <h2>Inputs</h2>
-                    <mat-table #table class="tb" *ngIf="runStep != undefined" [dataSource]="runStep.inputs">
+                    <mat-table #table class="tb" *ngIf="runStep != undefined  && runStep.inputs != undefined" [dataSource]="selectedStepInputs">
                         <!-- Name Column -->
                         <ng-container matColumnDef="id">
                             <mat-header-cell *matHeaderCellDef> Id </mat-header-cell>
                             <mat-cell *matCellDef="let element"> {{element.id}} </mat-cell>
-                        </ng-container>
-
-                        <ng-container matColumnDef="type">
-                            <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
-                            <mat-cell *matCellDef="let element"> {{element.type}} </mat-cell>
                         </ng-container>
 
                         <ng-container matColumnDef="value">
@@ -56,16 +46,11 @@
             <div class="row">
                 <div class="col-sm-12">
                     <h2>Outputs</h2>
-                    <mat-table #table class="tb" *ngIf="runStep != undefined" [dataSource]="runStep.outputs">
+                    <mat-table #table class="tb" *ngIf="runStep != undefined && runStep.outputs != undefined" [dataSource]="selectedStepOutputs">
                         <!-- Name Column -->
                         <ng-container matColumnDef="id">
                             <mat-header-cell *matHeaderCellDef> Id </mat-header-cell>
                             <mat-cell *matCellDef="let element"> {{element.id}} </mat-cell>
-                        </ng-container>
-
-                        <ng-container matColumnDef="type">
-                            <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
-                            <mat-cell *matCellDef="let element"> {{element.type}} </mat-cell>
                         </ng-container>
 
                         <ng-container matColumnDef="value">
@@ -78,7 +63,7 @@
                     </mat-table>
                 </div>
             </div>
-            <div class="container" *ngIf="sequence != undefined">
+            <div class="container" *ngIf="sequence != undefined && runStep != undefined">
                 {{runStep.log | json}}
             </div>
         </div>

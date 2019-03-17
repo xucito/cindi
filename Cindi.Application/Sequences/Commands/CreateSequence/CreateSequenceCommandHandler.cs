@@ -59,7 +59,10 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
             var createdSequence = await _sequencesRepository.InsertSequenceAsync(new Domain.Entities.Sequences.Sequence()
             {
                 Id = Guid.NewGuid(),
-                SequenceTemplateId = request.SequenceTemplateId
+                SequenceTemplateId = request.SequenceTemplateId,
+                Inputs = request.Inputs,
+                CreatedOn = DateTime.UtcNow,
+                Name = request.Name
             });
 
             await _sequencesRepository.InsertJournalEntryAsync(new JournalEntry()
@@ -133,8 +136,13 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                             }
                         }
                     });
+
+                    await _stepsRepository.UpsertStepMetadataAsync(newStep.Id);
                 }
             }
+
+
+            await _sequencesRepository.UpsertSequenceMetadataAsync(createdSequence.Id);
 
             stopwatch.Stop();
 

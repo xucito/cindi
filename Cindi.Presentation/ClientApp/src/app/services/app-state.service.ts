@@ -26,8 +26,8 @@ export class AppStateService {
 
   refreshStepTemplateData(): Observable<any[]> {
     return this._nodeData.GetStepTemplates().pipe(map(result => {
-      this.allStepTemplates.next(result);
-      return result;
+      this.allStepTemplates.next(result.result);
+      return result.result;
     }));
   }
 

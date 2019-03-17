@@ -28,7 +28,7 @@ export class SequenceTemplatesComponent implements OnInit {
     this.sequenceTemplates$ = this.nodeData
       .GetSequenceTemplates()
       .subscribe(result => {
-        this.sequenceTemplates = result;
+        this.sequenceTemplates = result.result;
       });
 
     let test = this._router.url;

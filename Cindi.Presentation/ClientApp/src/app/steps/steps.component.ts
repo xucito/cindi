@@ -37,10 +37,10 @@ export class StepsComponent implements OnInit, OnDestroy {
         this.nodeData.GetSteps("successful"),
         this.nodeData.GetSteps("error")
       ).subscribe(result => {
-        this.unassignedSteps = result[0].sort((a, b) => a.id - b.id);
-        this.assignedSteps = result[1].sort((a, b) => a.id - b.id);
-        this.successfulSteps = result[2].sort((a, b) => a.id - b.id);
-        this.erroredSteps = result[3].sort((a, b) => a.id - b.id);
+        this.unassignedSteps = result[0].result.sort((a, b) => a.id - b.id);
+        this.assignedSteps = result[1].result.sort((a, b) => a.id - b.id);
+        this.successfulSteps = result[2].result.sort((a, b) => a.id - b.id);
+        this.erroredSteps = result[3].result.sort((a, b) => a.id - b.id);
         // this.steps$.unsubscribe();
       });
     }

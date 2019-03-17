@@ -29,7 +29,7 @@ export class StepTemplatesComponent implements OnInit, OnDestroy {
   updateData() {
     if (this.templates$ === undefined || this.templates$.closed) {
       this.templates$ = this.nodeData.GetStepTemplates().subscribe(result => {
-        this.templates = result;
+        this.templates = result.result;
       });
     }
   }

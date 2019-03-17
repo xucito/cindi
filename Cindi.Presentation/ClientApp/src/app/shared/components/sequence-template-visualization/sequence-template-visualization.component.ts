@@ -163,7 +163,7 @@ export class SequenceTemplateVisualizationComponent implements OnInit {
           })};
           if (nodes.filter(n => n.id == substep.stepRefId).length == 0) {
             var foundStepTemplate = this._appState.getStepTemplateDef(
-              substep.stepTemplateReference
+              substep.stepTemplateId
             );
             let step = this.getStep(substep.stepRefId);
             if (foundStepTemplate == undefined) {
@@ -171,6 +171,7 @@ export class SequenceTemplateVisualizationComponent implements OnInit {
                 id: "" + substep.stepRefId,
                 label:
                   "" +
+                  substep.stepTemplateId + "|" +
                   substep.stepRefId +
                   (step != undefined ? "| step: " + step.id : ""),
                 data: {

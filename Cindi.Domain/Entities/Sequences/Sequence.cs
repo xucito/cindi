@@ -1,4 +1,5 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Sequences;
 using Cindi.Domain.ValueObjects;
 using System;
@@ -23,6 +24,8 @@ namespace Cindi.Domain.Entities.Sequences
         /// </summary>
         public Dictionary<string, object> Inputs { get; set; }
 
+        public List<Step> Steps { get; set; }
+
         public Journal Journal { get; set; }
 
         public string Status
@@ -35,6 +38,21 @@ namespace Cindi.Domain.Entities.Sequences
                     throw new InvalidSequenceStatusException("Status for sequence " + Id + " was not found.");
                 }
                 return status;
+            }
+        }
+
+        public SequenceMetadata Metadata
+        {
+            get
+            {
+                return
+                new SequenceMetadata()
+                {
+                SequenceId = Id,
+                CreatedOn = CreatedOn,
+                SequenceTemplateId = SequenceTemplateId,
+                Status = Status
+                };
             }
         }
     }

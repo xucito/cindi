@@ -1,4 +1,5 @@
 ﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
@@ -11,6 +12,7 @@ using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,12 +31,16 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public ISequencesRepository _sequencesRepository;
         public ClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
+        private CindiClusterOptions _option;
+
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             ISequenceTemplatesRepository sequenceTemplateRepository,
             ISequencesRepository sequencesRepository,
             ClusterStateService clusterStateService,
-            ILogger<CompleteStepCommandHandler> logger)
+            ILogger<CompleteStepCommandHandler> logger,
+            IOptionsMonitor<CindiClusterOptions> options
+            )
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
@@ -42,6 +48,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _sequencesRepository = sequencesRepository;
             _clusterStateService = clusterStateService;
             Logger = logger;
+            _option = options.CurrentValue;
+            options.OnChange((change) =>
+            {
+                _option = change;
+            });
         }
 
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
@@ -51,14 +62,52 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             var stepToComplete = await _stepsRepository.GetStepAsync(request.Id);
 
-            if (!StepStatuses.IsCompleteStatus(request.Status))
-            {
-                throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");
-            }
+
 
             if (stepToComplete.IsComplete)
             {
                 throw new InvalidStepStatusInputException("Step " + request.Id + " is already complete with status " + stepToComplete.Status + ".");
+            }
+
+            if (request.Status == StepStatuses.Suspended)
+            {
+                await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+                {
+                    Entity = JournalEntityTypes.Step,
+                    SubjectId = stepToComplete.Id,
+                    RecordedOn = DateTime.UtcNow,
+                    ChainId = stepToComplete.Journal.GetNextChainId(),
+                    Updates = new List<Domain.ValueObjects.Update>()
+                        {
+                            new Update()
+                            {
+                                Type = UpdateType.Override,
+                                FieldName = "status",
+                                Value = request.Status,
+                            },
+                            new Update()
+                            {
+                                Type = UpdateType.Override,
+                                FieldName = "suspendedUntil",
+                                Value = request.SuspendFor == null ?DateTime.UtcNow.AddMilliseconds( _option.DefaultSuspensionTime) : DateTime.UtcNow.AddMilliseconds(DateTimeMathsUtility.GetMs(request.SuspendFor))
+                            }
+                        }
+                });
+                await _stepsRepository.UpsertStepMetadataAsync(stepToComplete.Id);
+
+
+                return new CommandResult()
+                {
+                    ObjectRefId = request.Id.ToString(),
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    Type = CommandResultTypes.Update
+                };
+            }
+
+
+            if (!StepStatuses.IsCompleteStatus(request.Status))
+            {
+                throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");
             }
 
             await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
@@ -89,14 +138,16 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             },
                             new Update()
                             {
-                                Type = UpdateType.Override,
+                                Type = UpdateType.Append,
                                 FieldName = "logs",
-                                Value = request.Logs,
+                                Value = request.Log,
                             }
                         }
             });
 
             var updatedStep = await _stepsRepository.GetStepAsync(request.Id);
+            await _stepsRepository.UpsertStepMetadataAsync(updatedStep.Id);
+
             if (updatedStep.SequenceId != null)
             {
                 //Keep track of whether a step has been added
@@ -286,8 +337,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                             Type = UpdateType.Override
                                         }
                                     }
-                                                    });
+                                });
                                 addedStep = true;
+                                await _stepsRepository.UpsertStepMetadataAsync(newlyCreatedStep.Id);
                             }
                         }
                         _clusterStateService.UnlockLogicBlock("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock.Id);
@@ -298,37 +350,35 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Check if there are no longer any steps that are unassigned or assigned
 
 
-                if (!addedStep)
+                var sequenceStatus = sequence.Status;
+                sequenceSteps = await _sequencesRepository.GetSequenceStepsAsync(updatedStep.SequenceId.Value);
+                var highestStatus = StepStatuses.GetHighestPriority(sequenceSteps.Select(s => s.Status).ToArray());
+
+                var newSequenceStatus = SequenceStatuses.ConvertStepStatusToSequenceStatus(highestStatus);
+
+                if (newSequenceStatus != sequence.Status)
                 {
-                    var sequenceStatus = sequence.Status;
-                    sequenceSteps = await _sequencesRepository.GetSequenceStepsAsync(updatedStep.SequenceId.Value);
-
-                    var highestStatus = StepStatuses.GetHighestPriority(sequenceSteps.Select(s => s.Status).ToArray());
-
-                    var newSequenceStatus = SequenceStatuses.ConvertStepStatusToSequenceStatus(highestStatus);
-
-                    if (newSequenceStatus != sequence.Status)
+                    await _sequencesRepository.InsertJournalEntryAsync(
+                    new JournalEntry()
                     {
-                        await _sequencesRepository.InsertJournalEntryAsync(
-                        new JournalEntry()
+                        Entity = JournalEntityTypes.Sequence,
+                        ChainId = await _sequencesRepository.GetNextChainId(sequence.Id),
+                        SubjectId = sequence.Id,
+                        RecordedOn = DateTime.UtcNow,
+                        Updates = new List<Update>()
                         {
-                            Entity = JournalEntityTypes.Sequence,
-                            ChainId = await _sequencesRepository.GetNextChainId(sequence.Id),
-                            SubjectId = sequence.Id,
-                            RecordedOn = DateTime.UtcNow,
-                            Updates = new List<Update>()
-                            {
                                 new Update()
                                 {
                                     FieldName = "status",
                                     Type = UpdateType.Override,
                                     Value = newSequenceStatus
                                 }
-                            }
                         }
-                        );
                     }
+                 );
+                    await _sequencesRepository.UpsertSequenceMetadataAsync(sequence.Id);
                 }
+
             }
 
             return new CommandResult()

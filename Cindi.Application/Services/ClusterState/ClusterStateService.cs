@@ -1,4 +1,5 @@
 ﻿using Cindi.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,28 +12,35 @@ namespace Cindi.Application.Services.ClusterState
         private ClusterState state;
         private IClusterRepository _clusterRepository;
         private Thread SaveThread;
+        private ILogger<ClusterStateService> _logger;
+        private bool changeDetected = false;
+        static readonly object _locker = new object();
 
-        public ClusterStateService(IClusterRepository clusterRepository)
+        public ClusterStateService(IClusterRepository clusterRepository, ILogger<ClusterStateService> logger)
         {
             state = new ClusterState();
             _clusterRepository = clusterRepository;
 
             state = _clusterRepository.GetClusterState().GetAwaiter().GetResult();
 
-            if(state == null)
+            _logger = logger;
+
+            if (state == null)
             {
+                _logger.LogWarning("Existing cluster state not found. Creating new state.");
                 state = new ClusterState();
             }
-        }
+            else
+            {
+                _logger.LogInformation("Existing cluster state found. Loading existing state.");
+            }
 
-        public ClusterStateService()
-        {
-            state = new ClusterState();
+            SaveState();
         }
 
         public bool IsLogicBlockLocked(string logicBlockId)
         {
-            if(state.LockedLogicBlocks.ContainsKey(logicBlockId))
+            if (state.LockedLogicBlocks.ContainsKey(logicBlockId))
             {
                 return true;
             }
@@ -41,51 +49,27 @@ namespace Cindi.Application.Services.ClusterState
 
         public void LockLogicBlock(string logicBlockId)
         {
-            state.LockedLogicBlocks.Add(logicBlockId, DateTime.UtcNow);
+            lock (_locker)
+            {
+                state.LockedLogicBlocks.Add(logicBlockId, DateTime.UtcNow);
+                changeDetected = true;
+            }
         }
 
         public void UnlockLogicBlock(string logicBlockId)
         {
-            state.LockedLogicBlocks.Remove(logicBlockId);
-        }
-
-        public Dictionary<string, DateTime?> GetLastStepAssignmentCheckpoints(string[] stepTemplateIds)
-        {
-            var foundDateTimes = new Dictionary<string, DateTime?>();
-
-            foreach (var templateId in stepTemplateIds)
+            lock (_locker)
             {
-                if (state.StepAssignmentCheckpoints.ContainsKey(templateId))
-                {
-                    foundDateTimes.Add(templateId, state.StepAssignmentCheckpoints[templateId]);
-                }
-                else
-                {
-                    foundDateTimes.Add(templateId, null);
-                }
+                state.LockedLogicBlocks.Remove(logicBlockId);
+                changeDetected = true;
             }
-            return foundDateTimes;
         }
 
-        public void UpdateStepAssignmentCheckpoints(Dictionary<string, DateTime> updates)
+        public ClusterState GetState()
         {
-            foreach (var update in updates)
-            {
-                if (state.StepAssignmentCheckpoints.ContainsKey(update.Key))
-                {
-                    if (state.StepAssignmentCheckpoints[update.Key] < update.Value)
-                    {
-                        state.StepAssignmentCheckpoints[update.Key] = update.Value;
-                    }
-                }
-                else
-                {
-                    state.StepAssignmentCheckpoints.Add(update.Key, update.Value);
-                }
-            }
-
-            SaveState();
+            return state;
         }
+
 
         public void SaveState()
         {
@@ -95,28 +79,40 @@ namespace Cindi.Application.Services.ClusterState
                 {
                     SaveThread = new Thread(async () =>
                     {
-                        await _clusterRepository.SaveClusterState(state);
+                        while (true)
+                        {
+                            if (changeDetected)
+                            {
+                                lock (_locker)
+                                {
+                                    _logger.LogInformation("Saving cluster state...");
+                                    _clusterRepository.SaveClusterState(state).GetAwaiter().GetResult();
+                                    Thread.Sleep(100);
+                                    changeDetected = false;
+                                }
+                            }
+                        }
                     });
                     SaveThread.Start();
                 }
             }
         }
 
-        public void UpdateStepAssignmentCheckpoint(string stepTemplateId, DateTime updatedTime)
+        public void ChangeAssignmentEnabled(bool newState)
         {
-            if (state.StepAssignmentCheckpoints.ContainsKey(stepTemplateId))
+            lock (_locker)
             {
-                if (state.StepAssignmentCheckpoints[stepTemplateId] < updatedTime)
+                if (newState != state.AssignmentEnabled)
                 {
-                    state.StepAssignmentCheckpoints[stepTemplateId] = updatedTime;
+                    state.AssignmentEnabled = newState;
+                    changeDetected = true;
                 }
             }
-            else
-            {
-                state.StepAssignmentCheckpoints.Add(stepTemplateId, updatedTime);
-            }
+        }
 
-            SaveState();
+        public bool IsAssignmentEnabled()
+        {
+            return state.AssignmentEnabled;
         }
     }
 }

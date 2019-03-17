@@ -11,5 +11,6 @@ namespace Cindi.Application.Sequences.Queries.GetSequences
     {
         public int Page { get; set; }
         public int Size { get; set; }
+        public string Status { get; set; }
     }
 }

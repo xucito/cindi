@@ -5,7 +5,7 @@ export function ConvertStepTemplateToInputs(stepTemplate: any): InputBase<any>[]
 {
 	let inputs: InputBase<any>[] = [];
 	Object.keys(stepTemplate.inputDefinitions).forEach(element => {
-		if(stepTemplate.inputDefinitions[element].type == 0)
+		if(stepTemplate.inputDefinitions[element].type == 'int')
 		{
 			inputs.push(new IntInput({
 				id: element,

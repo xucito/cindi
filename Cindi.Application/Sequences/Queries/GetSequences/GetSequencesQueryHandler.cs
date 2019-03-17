@@ -25,7 +25,7 @@ namespace Cindi.Application.Sequences.Queries.GetSequences
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var foundSequences = await _sequencesRepository.GetSequencesAsync();
+            var foundSequences = await _sequencesRepository.GetSequencesAsync(request.Size, request.Page, request.Status);
 
             stopwatch.Stop();
             return new QueryResult<List<Sequence>>()

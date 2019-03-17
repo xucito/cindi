@@ -35,7 +35,11 @@ namespace Cindi.Application.Tests.Sequences.Commands
             await handler.Handle(new CreateSequenceCommand()
             {
                 SequenceTemplateId = data.sequenceTemplate.Id,
-                Inputs = new Dictionary<string, object>() { { "n-1", 1 } }
+                Inputs = new Dictionary<string, object>() {
+                    { "n-1", 1 },
+                    { "n-2", 1 },
+                    { "n-3", 1 }
+                }
             }, new System.Threading.CancellationToken());
         }
 

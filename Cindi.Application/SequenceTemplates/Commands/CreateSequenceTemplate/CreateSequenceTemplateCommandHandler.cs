@@ -33,6 +33,18 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            var existingSequenceTemplate = await _sequenceTemplatesRepository.GetSequenceTemplateAsync(request.Name + ":" + request.Version);
+
+            if(existingSequenceTemplate != null)
+            {
+                return new CommandResult()
+                {
+                    ObjectRefId = existingSequenceTemplate.Id,
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    Type = CommandResultTypes.None
+                };
+            }
+
             //Check that all step templates exists
             foreach (var lg in request.LogicBlocks)
             {

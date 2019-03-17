@@ -54,7 +54,7 @@ namespace Cindi.Domain.Entities.Steps
             string highestPriority = Unknown;
             foreach (var status in statuses)
             {
-                if (_priorityDictionary[status] < _priorityDictionary[highestPriority])
+                if (_priorityDictionary[status] > _priorityDictionary[highestPriority])
                 {
                     highestPriority = status;
                 }

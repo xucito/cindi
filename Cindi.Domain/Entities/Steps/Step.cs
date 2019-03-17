@@ -104,18 +104,16 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public int StatusCode { get { return Journal.GetLatestValueOrDefault<int>("statuscode", 0); } }
 
-        public string[] Logs
+        public List<StepLog> Logs
         {
             get
             {
                 List<string> allLogs = new List<string>();
-                var foundValue = Journal.GetLatestValueOrDefault<string>("logs", "");
-                    if (foundValue != "")
+                return Journal.GetAllUpdates("logs").Select(l => new StepLog()
                 {
-                    allLogs.Add(foundValue);
-                }
-                return allLogs.ToArray();
-                ;
+                    Message = (string)l.Update.Value,
+                    RecordOn = l.RecordedOn
+                }).ToList();
             }
         }
 
@@ -133,6 +131,36 @@ namespace Cindi.Domain.Entities.Steps
         }
 
         public Journal Journal { get; set; }
+
+        public StepMetadata Metadata { get {
+                return new StepMetadata()
+                {
+                    StepId = Id,
+                    Status = Status,
+                    StepTemplateId = StepTemplateId,
+                    CreatedOn = DateTime.UtcNow
+                };
+            } }
+
+        public DateTime? SuspendedUntil
+        {
+            get
+            {
+                var lastAction = Journal.GetLatestAction("suspendedUntil");
+
+                if(lastAction == null)
+                {
+                    return null;
+                }
+
+                var lastSuspension = (DateTime)lastAction.Update.Value;
+                if (Status == StepStatuses.Suspended)
+                {
+                    return lastSuspension;
+                }
+                return null;
+            }
+        }
     }
 
 

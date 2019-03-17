@@ -59,6 +59,8 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 }
             });
 
+            await _stepsRepository.UpsertStepMetadataAsync(step.Id);
+
             stopwatch.Stop();
             return new CommandResult()
             {

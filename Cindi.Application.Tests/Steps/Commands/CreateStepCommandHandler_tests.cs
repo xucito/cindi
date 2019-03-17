@@ -3,10 +3,12 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.CompleteStep;
 using Cindi.Application.Steps.Commands.CreateStep;
+using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Sequences;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
+using Cindi.Domain.ValueObjects;
 using Cindi.Test.Global.MockInterfaces;
 using Cindi.Test.Global.TestData;
 using Microsoft.Extensions.Logging;
@@ -192,6 +194,25 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void CompleteStepWithSequence()
         {
             var TestSequence = FibonacciSampleData.Sequence;
+            TestSequence.Journal = new Domain.Entities.JournalEntries.Journal(new List<Domain.Entities.JournalEntries.JournalEntry>() {
+                new Domain.Entities.JournalEntries.JournalEntry()
+                {
+                        SubjectId = TestSequence.Id,
+                        ChainId = 0,
+                        Entity = JournalEntityTypes.Sequence,
+                        RecordedOn = DateTime.UtcNow,
+                        Updates = new List<Update>()
+                        {
+                            new Update()
+                            {
+                                FieldName = "status",
+                                Value = StepStatuses.Unassigned,
+                                Type = UpdateType.Override
+                            }
+                        }
+                }
+            });
+
             var TestStep = FibonacciSampleData.Step;
             TestStep.SequenceId = TestSequence.Id;
             TestStep.StepRefId = 0;
@@ -216,7 +237,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(), mockLogger.Object);
 
-            Assert.Equal(TestStep.Id.ToString(),(await handler.Handle(new CompleteStepCommand()
+            Assert.Equal(TestStep.Id.ToString(), (await handler.Handle(new CompleteStepCommand()
             {
                 Id = TestStep.Id,
                 Outputs = new Dictionary<string, object>()

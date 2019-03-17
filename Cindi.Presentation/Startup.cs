@@ -31,6 +31,9 @@ using Cindi.Presentation.Transformers;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Cindi.Persistence.SequenceTemplates;
 using Cindi.Persistence.Sequences;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Cindi.Application.Options;
+using Cindi.Application.Services.ClusterMonitor;
 
 namespace Cindi.Presentation
 {
@@ -39,15 +42,18 @@ namespace Cindi.Presentation
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            MongoClient = new MongoClient(Configuration.GetValue<string>("ConnectionStrings:CindiDB"));
+            MongoClient = new MongoClient(Configuration.GetValue<string>("DBConnectionString"));
+            EnableUI = Configuration.GetValue<bool>("EnableUI");
         }
 
         public IConfiguration Configuration { get; }
         public IMongoClient MongoClient { get; set; }
+        public bool EnableUI { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<IMediator, Mediator>();
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
             services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
@@ -59,39 +65,81 @@ namespace Cindi.Presentation
             }
             ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
+            services.Configure<CindiClusterOptions>(option => new CindiClusterOptions
+            {
+                DefaultSuspensionTime = Configuration.GetValue<double>("DefaultSuspensionTimeMs"),
+                DbConnectionString = Configuration.GetValue<string>("DBConnectionString")
+            });
+
+            if (EnableUI)
+            {
+                services.AddSpaStaticFiles(configuration =>
+                {
+                    configuration.RootPath = "ClientApp/dist";
+                });
+            }
+
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
             services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
             services.AddTransient<ISequencesRepository, SequencesRepository>(s => new SequencesRepository(MongoClient));
             services.AddTransient<ISequenceTemplatesRepository, SequenceTemplatesRepository>(s => new SequenceTemplatesRepository(MongoClient));
             services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
-
             services.AddSingleton<ClusterStateService>();
+            services.AddSingleton<ClusterMonitorService>();
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
             });
+
+
+            services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
+                                                                        .AllowAnyMethod()
+                                                                         .AllowAnyHeader()));
+
+
+            BaseRepository.RegisterClassMaps();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, 
+            IHostingEnvironment env,
+            ClusterMonitorService monitor)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            BaseRepository.RegisterClassMaps();
-
             app.UseSwagger();
+
+            app.UseCors("AllowAll");
+
 
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
-
+            
             app.UseMvc();
+
+            if (EnableUI)
+            {
+                app.UseSpaStaticFiles();
+                app.UseSpa(spa =>
+                {
+                    // To learn more about options for serving an Angular SPA from ASP.NET Core,
+                    // see https://go.microsoft.com/fwlink/?linkid=864501
+
+
+                    if (env.IsDevelopment())
+                    {
+                        spa.Options.SourcePath = "ClientApp";
+                        spa.UseAngularCliServer(npmScript: "start");
+                    }
+                });
+            }
         }
     }
 }

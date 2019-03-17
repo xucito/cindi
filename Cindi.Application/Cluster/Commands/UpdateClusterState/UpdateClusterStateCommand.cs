@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Cindi.Application.Cluster.Commands
+namespace Cindi.Application.Cluster.Commands.UpdateClusterState
 {
     public class UpdateClusterStateCommand: IRequest<CommandResult>
     {
-        public Dictionary<string, DateTime> StepTemplateAssignmentUpdates { get; set; }
+        public bool? AssignmentEnabled { get; set; } = true;
     }
 }

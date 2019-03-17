@@ -1,0 +1,16 @@
+version: '3'
+services:
+  cindi:
+    image: cindi:1.0
+    environment:
+      - "DBConnectionString=mongodb://mongodb:27017"
+    ports:
+      - 5021:80
+  mongodb:
+    image: mongo:latest
+    volumes:
+      - mongodata:/data/db
+    ports:
+      - 27017:27017
+volumes:
+  mongodata:

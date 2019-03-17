@@ -13,5 +13,6 @@ namespace Cindi.Domain.Enums
         public const string ErrorMessage = "errorMessage";
         public const string Decimal = "decimal";
         public const string DateTime = "dateTime";
+        public const string Secret = "secret";
     }
 }

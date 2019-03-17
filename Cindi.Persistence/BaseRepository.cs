@@ -1,6 +1,8 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
+using Cindi.Persistence.Sequences;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
 using MongoDB.Bson.Serialization;
@@ -23,9 +25,11 @@ namespace Cindi.Persistence
 
         public static void RegisterClassMaps()
         {
-            BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));
+            BsonClassMap.RegisterClassMap<SequenceMetadata>(cm => SequencesClassMap.Register(cm));
+            BsonClassMap.RegisterClassMap<StepMetadata>(cm => StepsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<JournalEntry>(je => JournalEntriesClassMap.Register(je));
+            BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));
         }
     }
 }

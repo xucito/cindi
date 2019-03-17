@@ -17,9 +17,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8894F407
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Infrastructure.Tests", "Cindi.Infrastructure.Tests\Cindi.Infrastructure.Tests.csproj", "{D9BD42DF-F19F-4292-8430-65627681EDBA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Application.Tests", "Cindi.Application.Tests\Cindi.Application.Tests.csproj", "{037169DF-9C00-40DD-AB0F-046DF0A9BB37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Application.Tests", "Cindi.Application.Tests\Cindi.Application.Tests.csproj", "{037169DF-9C00-40DD-AB0F-046DF0A9BB37}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Test.Global", "Cindi.Test.Data\Cindi.Test.Global.csproj", "{C8C8E1E6-894C-4F6B-BE12-30CC1FF244CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Test.Global", "Cindi.Test.Data\Cindi.Test.Global.csproj", "{C8C8E1E6-894C-4F6B-BE12-30CC1FF244CA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Domain.Tests", "Cindi.Domain.Tests\Cindi.Domain.Tests.csproj", "{7B551066-A476-4CD1-8C8F-E2AD9E96521E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +61,10 @@ Global
 		{C8C8E1E6-894C-4F6B-BE12-30CC1FF244CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8C8E1E6-894C-4F6B-BE12-30CC1FF244CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8C8E1E6-894C-4F6B-BE12-30CC1FF244CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B551066-A476-4CD1-8C8F-E2AD9E96521E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B551066-A476-4CD1-8C8F-E2AD9E96521E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B551066-A476-4CD1-8C8F-E2AD9E96521E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B551066-A476-4CD1-8C8F-E2AD9E96521E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

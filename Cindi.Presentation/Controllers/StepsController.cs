@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.Steps.Commands;
+using Cindi.Application.Steps.Commands.AppendStepLog;
 using Cindi.Application.Steps.Commands.AssignStep;
 using Cindi.Application.Steps.Commands.CompleteStep;
 using Cindi.Application.Steps.Commands.CreateStep;
@@ -12,6 +13,7 @@ using Cindi.Application.Steps.Queries.GetStep;
 using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
+using Cindi.Domain.Utilities;
 using Cindi.Presentation.Results;
 using Cindi.Presentation.ViewModels;
 using Microsoft.AspNetCore.Http;
@@ -30,14 +32,36 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreateStepCommand command)
+        public async Task<IActionResult> Create(CreateStepCommand command, bool? wait_for_completion, string timeout = "30s")
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             try
             {
                 var result = await Mediator.Send(command);
-                return Ok(new HttpCommandResult<Step>("step", result, null));
+
+                Step step = (await Mediator.Send(new GetStepQuery()
+                {
+                    Id = new Guid(result.ObjectRefId)
+                })).Result;
+
+
+                if (wait_for_completion.HasValue && wait_for_completion.Value)
+                {
+                    var ms = DateTimeMathsUtility.GetMs(timeout);
+
+                    while (!StepStatuses.IsCompleteStatus(step.Status) && stopwatch.ElapsedMilliseconds < ms)
+                    {
+                        step = (await Mediator.Send(new GetStepQuery()
+                        {
+                            Id = new Guid(result.ObjectRefId)
+                        })).Result;
+                    }
+
+                }
+
+
+                return Ok(new HttpCommandResult<Step>("step", result, step));
             }
             catch (BaseException e)
             {
@@ -63,6 +87,27 @@ namespace Cindi.Presentation.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("{id}/logs")]
+        public async Task<IActionResult> AddLog(Guid id, AppendStepLogVM command)
+        {
+            var appendCommand = new AppendStepLogCommand()
+            {
+                StepId = id,
+                Log = command.Log
+            };
+            var result = await Mediator.Send(appendCommand);
+            if (result.ObjectRefId != "")
+            {
+                var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
+            }
+            else
+            {
+                return Ok(new HttpCommandResult<Step>("", result, null));
+            }
+        }
+
         [HttpPut]
         [Route("{id}")]
         public async Task<IActionResult> CompleteAssignment(Guid id, CompleteStepVM commandVM)
@@ -72,7 +117,7 @@ namespace Cindi.Presentation.Controllers
                 Id = id,
                 Status = commandVM.Status.ToLower(),
                 StatusCode = commandVM.StatusCode,
-                Logs = commandVM.Logs,
+                Log = commandVM.Logs,
                 Outputs = commandVM.Outputs
             };
 
@@ -89,12 +134,13 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string status = null)
         {
             return Ok(await Mediator.Send(new GetStepsQuery()
             {
                 Page = page,
-                Size = size
+                Size = size,
+                Status = status
             }));
         }
 

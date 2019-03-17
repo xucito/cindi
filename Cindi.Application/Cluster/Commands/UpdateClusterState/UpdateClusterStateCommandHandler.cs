@@ -3,11 +3,12 @@ using Cindi.Application.Services.ClusterState;
 using MediatR;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cindi.Application.Cluster.Commands
+namespace Cindi.Application.Cluster.Commands.UpdateClusterState
 {
     public class UpdateClusterStateCommandHandler : IRequestHandler<UpdateClusterStateCommand, CommandResult>
     {
@@ -20,12 +21,19 @@ namespace Cindi.Application.Cluster.Commands
 
         public async Task<CommandResult> Handle(UpdateClusterStateCommand request, CancellationToken cancellationToken)
         {
-            if(request.StepTemplateAssignmentUpdates != null)
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            if (request.AssignmentEnabled != null)
             {
-                _state.UpdateStepAssignmentCheckpoints(request.StepTemplateAssignmentUpdates);
+                _state.ChangeAssignmentEnabled(request.AssignmentEnabled.Value);
             }
 
-            return new CommandResult() { };
+            return new CommandResult()
+            {
+                ElapsedMs = stopwatch.ElapsedMilliseconds,
+                Type = CommandResultTypes.Update
+            };
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Cindi.Persistence.Steps
 {
-   public static class StepsClassMap
+    public static class StepsClassMap
     {
         /*public static void Register(BsonClassMap<JournalEntry> cm)
         {
@@ -16,7 +16,12 @@ namespace Cindi.Persistence.Steps
             cm.SetIgnoreExtraElements(true);
             //cm.SetIdMember(cm.GetMemberMap(c => c.Id)).SetIdGenerator(CombGuidGenerator.Instance); 
         }*/
-
+        public static void Register(BsonClassMap<StepMetadata> sm)
+        {
+            sm.AutoMap();
+            sm.MapIdMember(c => c.StepId);
+            //cm.SetIdMember(cm.GetMemberMap(c => c.Id)).SetIdGenerator(CombGuidGenerator.Instance); 
+        }
 
         public static void Register(BsonClassMap<Step> cm)
         {

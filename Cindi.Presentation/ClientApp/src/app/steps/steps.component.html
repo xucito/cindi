@@ -12,13 +12,13 @@
       <!-- Name Column -->
       <ng-container matColumnDef="name">
         <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
-        <mat-cell *matCellDef="let element"> {{ element.name }} </mat-cell>
+        <mat-cell *matCellDef="let element"> {{ element.name != null ? element.name : "" }} </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="templateId">
         <mat-header-cell *matHeaderCellDef> Template </mat-header-cell>
         <mat-cell *matCellDef="let element">
-          {{ element.templateId }}
+          {{ element.stepTemplateId }}
         </mat-cell>
       </ng-container>
 
@@ -44,13 +44,13 @@
       <!-- Name Column -->
       <ng-container matColumnDef="name">
         <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
-        <mat-cell *matCellDef="let element"> {{ element.name }} </mat-cell>
+        <mat-cell *matCellDef="let element"> {{ element.name != null ? element.name : "" }}</mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="templateId">
         <mat-header-cell *matHeaderCellDef> Template </mat-header-cell>
         <mat-cell *matCellDef="let element">
-          {{ element.stepTemplateReference.name }}
+          {{ element.stepTemplateId }}
         </mat-cell>
       </ng-container>
 
@@ -78,13 +78,13 @@
       <!-- Name Column -->
       <ng-container matColumnDef="name">
         <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
-        <mat-cell *matCellDef="let element"> {{ element.name }} </mat-cell>
+        <mat-cell *matCellDef="let element">  {{ element.name != null ? element.name : "" }} </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="templateId">
         <mat-header-cell *matHeaderCellDef> Template </mat-header-cell>
         <mat-cell *matCellDef="let element">
-          {{ element.stepTemplateReference.name }}
+          {{ element.stepTemplateId }}
         </mat-cell>
       </ng-container>
 
@@ -109,13 +109,13 @@
       <!-- Name Column -->
       <ng-container matColumnDef="name">
         <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
-        <mat-cell *matCellDef="let element"> {{ element.name }} </mat-cell>
+        <mat-cell *matCellDef="let element">  {{ element.name != null ? element.name : "" }} </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="templateId">
         <mat-header-cell *matHeaderCellDef> Template </mat-header-cell>
         <mat-cell *matCellDef="let element">
-          {{ element.stepTemplateReference.name }}
+          {{ element.stepTemplateId }}
         </mat-cell>
       </ng-container>
 

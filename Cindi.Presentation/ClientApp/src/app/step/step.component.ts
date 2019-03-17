@@ -33,7 +33,7 @@ export class StepComponent implements OnInit {
       this.$StepTemplate= _nodeData.GetStepTemplate(this.selectedTemplateName, this.selectedTemplateVersion).subscribe(
         (result) => {
           console.log(result);
-          this.stepTemplate = result;
+          this.stepTemplate = result.result;
           this.inputs = ConvertStepTemplateToInputs(this.stepTemplate);
         }
       );

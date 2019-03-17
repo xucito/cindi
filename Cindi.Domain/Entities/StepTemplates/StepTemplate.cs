@@ -89,7 +89,7 @@ namespace Cindi.Domain.Entities.StepTemplates
                 return false;
             }
 
-            if (stepTemplate.OutputDefinitions.Count() != OutputDefinitions.Count())
+            if ((stepTemplate.OutputDefinitions == null && OutputDefinitions == null)|| (stepTemplate.OutputDefinitions.Count() != OutputDefinitions.Count()))
             {
                 exception = new ConflictingStepTemplateException("Found existing template with conflicting inputs, the number of inputs is different.");
                 return false;

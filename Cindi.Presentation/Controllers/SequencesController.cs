@@ -40,12 +40,13 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string status = null)
         {
             return Ok(await Mediator.Send(new GetSequencesQuery()
             {
                 Page = page,
-                Size = size
+                Size = size,
+                Status = status
             }));
         }
 

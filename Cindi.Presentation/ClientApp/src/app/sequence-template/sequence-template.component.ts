@@ -25,7 +25,7 @@ export class SequenceTemplateComponent implements OnInit {
       this.template = _appState.selectedSequenceTemplate;
       if (this.template == undefined) {
         _nodeData.GetSequenceTemplates().subscribe(result => {
-          this.template = result.filter(r => r.name == this.selectedId)[0];
+          this.template = result.result.filter(r => r.name == this.selectedId)[0];
           this.sequenceInputs = Object.keys(this.template.inputDefinitions).map(
             n => {
               return {

@@ -9,6 +9,7 @@ using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,37 +32,33 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var checkpoints = _clusterStateService.GetLastStepAssignmentCheckpoints(request.StepTemplateIds);
-
-            var assignedStepSuccessfully = false;
-            Step unassignedStep = null;
-            var dateChecked = DateTime.UtcNow;
-            do
+            if (_clusterStateService.IsAssignmentEnabled())
             {
-                unassignedStep = await _stepsRepository.GetStepsAsync(StepStatuses.Unassigned, checkpoints);
-
-                if (unassignedStep != null)
+                var assignedStepSuccessfully = false;
+                Step unassignedStep = null;
+                var dateChecked = DateTime.UtcNow;
+                do
                 {
-                    //unassignedStep = await _stepsRepository.GetStepAsync(unassignedStep.Id);
+                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds)).FirstOrDefault();
 
-                    try
+                    if (unassignedStep != null)
                     {
-                        //This should not throw a error externally, the server should loop to the next one and log a error
-                        if (unassignedStep.Status != StepStatuses.Unassigned)
+                        try
                         {
-                            throw new InvalidStepQueueException("You cannot assign step " + unassignedStep.Id + " as it is not unassigned.");
-                        }
+                            //This should not throw a error externally, the server should loop to the next one and log a error
+                            if (unassignedStep.Status != StepStatuses.Unassigned)
+                            {
+                                throw new InvalidStepQueueException("You cannot assign step " + unassignedStep.Id + " as it is not unassigned.");
+                            }
 
-                        _clusterStateService.UpdateStepAssignmentCheckpoint(unassignedStep.StepTemplateId, unassignedStep.CreatedOn);
 
-
-                        await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
-                        {
-                            Entity = JournalEntityTypes.Step,
-                            SubjectId = unassignedStep.Id,
-                            RecordedOn = DateTime.UtcNow,
-                            ChainId = unassignedStep.Journal.GetNextChainId(),
-                            Updates = new List<Domain.ValueObjects.Update>()
+                            await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+                            {
+                                Entity = JournalEntityTypes.Step,
+                                SubjectId = unassignedStep.Id,
+                                RecordedOn = DateTime.UtcNow,
+                                ChainId = unassignedStep.Journal.GetNextChainId(),
+                                Updates = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
                             {
@@ -71,35 +68,42 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             }
 
                         }
-                        });
+                            });
 
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.Message);
+                            //throw e;
+                        }
+                        assignedStepSuccessfully = true;
+                        await _stepsRepository.UpsertStepMetadataAsync(unassignedStep.Id);
                     }
-                    catch (Exception e)
+                    else
                     {
-                        Console.WriteLine(e.Message);
-                        //throw e;
+                        assignedStepSuccessfully = true;
                     }
-                    assignedStepSuccessfully = true;
                 }
-                else
+                while (!assignedStepSuccessfully);
+
+                stopwatch.Stop();
+                return new CommandResult()
                 {
-                    assignedStepSuccessfully = true;
-                    //Reflect that all the templates were checked with no template found.
-                    foreach (var point in checkpoints)
-                    {
-                        _clusterStateService.UpdateStepAssignmentCheckpoint(point.Key, dateChecked);
-                    }
-                }
+                    ObjectRefId = unassignedStep != null ? unassignedStep.Id.ToString() : "",
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    Type = CommandResultTypes.Update
+                };
             }
-            while (!assignedStepSuccessfully);
-
-            stopwatch.Stop();
-            return new CommandResult()
+            else
             {
-                ObjectRefId = unassignedStep != null ? unassignedStep.Id.ToString(): "",
-                ElapsedMs = stopwatch.ElapsedMilliseconds,
-                Type = CommandResultTypes.Update
-            };
+                return new CommandResult()
+                {
+                    ObjectRefId = "",
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    Type = CommandResultTypes.None
+                };
+            }
+
         }
     }
 }

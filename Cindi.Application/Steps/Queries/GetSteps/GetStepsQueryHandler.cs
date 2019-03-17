@@ -24,8 +24,8 @@ namespace Cindi.Application.Steps.Queries.GetSteps
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var steps = await _stepsRepository.GetStepsAsync(request.Page, request.Size);
-            var stepCount = _stepsRepository.CountSteps();
+            var steps = await _stepsRepository.GetStepsAsync(request.Size, request.Page, request.Status);
+            var stepCount = _stepsRepository.CountSteps(request.Status);
             stopwatch.Stop();
 
             return new QueryResult<List<Step>>()

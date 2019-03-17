@@ -12,7 +12,7 @@ namespace Cindi.Application.Results
             get { return _type; }
             set
             {
-                if(value != CommandResultTypes.Update && value != CommandResultTypes.Create)
+                if(value != CommandResultTypes.Update && value != CommandResultTypes.Create && value != CommandResultTypes.None)
                 {
                     throw new InvalidCommandResultException(value);
                 }
@@ -27,5 +27,6 @@ namespace Cindi.Application.Results
     {
         public static string Update = "update";
         public static string Create = "insert";
+        public static string None = "none";
     }
 }

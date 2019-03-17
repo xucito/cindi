@@ -25,9 +25,9 @@ export class SequencesComponent implements OnInit {
     private _route: ActivatedRoute,
     private _appState: AppStateService
   )  {
-    this.sequences$ = nodeData.GetSequences('started').subscribe(
+    this.sequences$ = nodeData.GetSequences().subscribe(
       (result) => {
-        this.sequences = result;
+        this.sequences = result.result;
         this.sequences = this.sequences.sort(function(obj1, obj2) {
           // Ascending: first age less than the previous
           return obj1.id - obj2.id;
