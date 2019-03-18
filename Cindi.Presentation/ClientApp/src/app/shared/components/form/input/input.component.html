@@ -1,59 +1,78 @@
 <div [formGroup]="form" class="form-group w-100">
-  <label [attr.for]="input.id">{{ input.id }}</label>
-  <p>{{input.description}}</p>
-  <div [ngSwitch]="input.type">
-    <input
-      *ngSwitchCase="InputDataType.Int"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
-    />
-
-    <input
-      *ngSwitchCase="InputDataType.String"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
-    />
-
-    <select
-      *ngSwitchCase="InputDataType.Bool"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
+  <div class="form-group">
+    <label [attr.for]="input.id"
+      ><b>{{ input.id }}</b></label
     >
-      <option value="true">True</option>
-      <option value="false">False</option>
-    </select>
+    <div [ngSwitch]="input.type">
+      <input
+        *ngSwitchCase="InputDataType.Int"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [readonly]="readOnly"
+      />
+      <input
+        *ngSwitchCase="InputDataType.String"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [readonly]="readOnly"
+      />
 
-    <textarea
-      *ngSwitchCase="InputDataType.Object"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
-      rows="10"
-    ></textarea>
+      <input
+        *ngSwitchCase="InputDataType.Secret"
+        type="password"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [readonly]="readOnly"
+      />
 
-    <input
-      *ngSwitchCase="InputDataType.ErrorMessage"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
-    />
+      <select
+        *ngSwitchCase="InputDataType.Bool"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [disabled]="readOnly"
+      >
+        <option value="true">True</option>
+        <option value="false">False</option>
+      </select>
 
-    <input
-      *ngSwitchCase="InputDataType.Decimal"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
-    />
+      <textarea
+        *ngSwitchCase="InputDataType.Object"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        rows="10"
+        [readonly]="readOnly"
+      ></textarea>
 
-    <input
-      *ngSwitchCase="InputDataType.DateTime"
-      class="form-control"
-      [formControlName]="input.id"
-      [id]="input.id"
-    />
+      <input
+        *ngSwitchCase="InputDataType.ErrorMessage"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [readonly]="readOnly"
+      />
+
+      <input
+        *ngSwitchCase="InputDataType.Decimal"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [readonly]="readOnly"
+      />
+
+      <input
+        *ngSwitchCase="InputDataType.DateTime"
+        class="form-control"
+        [formControlName]="input.id"
+        [id]="input.id"
+        [readonly]="readOnly"
+      />
+      <small id="emailHelp" class="form-text text-muted">{{ input.description }}</small>
+    </div>
   </div>
   <!--
   <div class="errorMessage" *ngIf="!isValid">{{input.id}} is required</div>

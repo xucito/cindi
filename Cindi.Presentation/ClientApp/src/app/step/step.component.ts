@@ -17,6 +17,8 @@ export class StepComponent implements OnInit {
   selectedTemplateVersion;
   $StepTemplate: Subscription;
   stepTemplate;
+  $step: Subscription;
+  step: any;
   inputs: InputBase<any>[];
   constructor(
     private _route: ActivatedRoute,
@@ -26,17 +28,36 @@ export class StepComponent implements OnInit {
       this.selectedId = p.id;
       if (this.selectedId == "new") {
         this.IsNewStep = true;
-      }
 
-      this.selectedTemplateName = p.templateName;
-      this.selectedTemplateVersion = p.version;
-      this.$StepTemplate= _nodeData.GetStepTemplate(this.selectedTemplateName, this.selectedTemplateVersion).subscribe(
-        (result) => {
-          console.log(result);
-          this.stepTemplate = result.result;
-          this.inputs = ConvertStepTemplateToInputs(this.stepTemplate);
-        }
-      );
+        this.selectedTemplateName = p.templateName;
+        this.selectedTemplateVersion = p.version;
+        this.$StepTemplate = _nodeData
+          .GetStepTemplate(
+            this.selectedTemplateName,
+            this.selectedTemplateVersion
+          )
+          .subscribe(result => {
+            console.log(result);
+            this.stepTemplate = result.result;
+            this.inputs = ConvertStepTemplateToInputs(this.stepTemplate);
+          });
+      } else {
+        this.$step = _nodeData
+          .GetStep(this.selectedId)
+          .subscribe(stepResult => {
+            this.step = stepResult.result;
+            this.$StepTemplate = _nodeData
+              .GetStepTemplate(
+                this.step.stepTemplateId.split(':')[0],
+                this.step.stepTemplateId.split(':')[1]
+              )
+              .subscribe(result => {
+                console.log(result);
+                this.stepTemplate = result.result;
+                this.inputs = ConvertStepTemplateToInputs(this.stepTemplate, this.step);
+              });
+          });
+      }
     });
   }
 

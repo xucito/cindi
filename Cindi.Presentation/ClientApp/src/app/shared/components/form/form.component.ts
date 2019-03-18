@@ -15,6 +15,8 @@ export class FormsComponent implements OnInit {
   form: FormGroup;
   payLoad = '';
  
+  @Input() readOnly: boolean = false; 
+
   constructor(private qcs: InputControlServiceService) {  }
  
   ngOnInit() {

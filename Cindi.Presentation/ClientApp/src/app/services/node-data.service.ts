@@ -16,6 +16,10 @@ export class NodeDataService {
     return this.http.get(this.baseUrl + this.api + "steps?status=" + status);
   }
 
+  GetStep(stepId: string): Observable<any> {
+    return this.http.get(this.baseUrl + this.api + "steps/" + stepId);
+  }
+
   GetStepTemplates(): Observable<any> {
     return this.http.get(this.baseUrl + this.api + "step-templates");
   }

@@ -2,5 +2,44 @@
   <div *ngIf="IsNewStep">
     <h1>New Step: {{ selectedTemplateName }}</h1>
     <div *ngIf="inputs != null"><app-forms [inputs]="inputs"></app-forms></div>
+    {{ inputs | json }}
+  </div>
+
+  <div *ngIf="!IsNewStep && step != undefined">
+    <div *ngIf="inputs != null" class="row">
+      <div class="col-sm-6">
+        <mat-card>
+          <mat-card-header>
+            <!--<div mat-card-avatar class="example-header-image"></div> -->
+            <mat-card-title
+              ><h1>{{ step.name }}</h1></mat-card-title
+            >
+            <mat-card-subtitle>{{ step.stepTemplateId }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <app-forms [readOnly]="true" [inputs]="inputs"></app-forms>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="col-sm-6">
+        <mat-card>
+          <mat-card-header>
+            <!--<div mat-card-avatar class="example-header-image"></div> -->
+            <mat-card-title><h1>Logs</h1></mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item *ngFor="let log of step.logs">
+                <mat-icon mat-list-icon>info</mat-icon>
+                <h4 mat-line>{{ log.recordOn }}</h4>
+                <p mat-line>{{ log.message }}</p>
+                <!--{{ log.message }}-->
+              </mat-list-item>
+              <mat-divider></mat-divider>
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
   </div>
 </div>

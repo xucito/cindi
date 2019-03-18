@@ -6,7 +6,9 @@ import {
   MatButtonModule,
   MatTableModule,
   MatIconModule,
-  MatProgressBarModule
+  MatProgressBarModule,
+  MatListModule,
+  MatFormFieldModule
 } from "@angular/material";
 import {MatCardModule} from '@angular/material/card';
 import { SequenceVisualizationComponent } from "./components/sequence-visualization/sequence-visualization.component";
@@ -31,7 +33,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     MatCardModule,
     FormsModule,
     MatProgressBarModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatFormFieldModule
   ],
   exports: [
     SequenceTemplateVisualizationComponent,
@@ -42,7 +45,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     MatIconModule,
     FormsComponent,
     MatCardModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatListModule,
+    MatFormFieldModule
     //MatSidenavModule
   ],
   declarations: [

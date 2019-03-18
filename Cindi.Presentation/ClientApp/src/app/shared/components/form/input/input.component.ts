@@ -14,6 +14,7 @@ export class InputComponent{
   constructor(){
   }
 
+  @Input() readOnly: boolean = false; 
   @Input() input: InputBase<any>;
   @Input() form: FormGroup;
   get isValid() { return this.form.controls[this.input.id].valid; }

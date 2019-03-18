@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from "@angular/core";
 import { NodeDataService } from "../services/node-data.service";
 import { Subscription, Observable, forkJoin } from "rxjs";
 import { MatSort, MatTableDataSource } from "@angular/material";
+import { Router, ActivatedRoute } from "@angular/router";
 @Component({
   selector: "app-steps",
   templateUrl: "./steps.component.html",
@@ -18,7 +19,9 @@ export class StepsComponent implements OnInit, OnDestroy {
 
   statusCodes = ["Unassigned", "Assigned", "Successful", "Warning", "Error"];
 
-  constructor(private nodeData: NodeDataService) {}
+  constructor(private nodeData: NodeDataService,
+  private router: Router,
+private activatedRoute: ActivatedRoute) {}
 
   ngOnInit() {
     const _thisObject = this;
@@ -60,5 +63,10 @@ export class StepsComponent implements OnInit, OnDestroy {
         console.log("Complete");
         this.updateData();
       });
+  }
+
+  selectRow(row)
+  {
+    this.router.navigate(["./" + row.id], {relativeTo: this.activatedRoute})
   }
 }
