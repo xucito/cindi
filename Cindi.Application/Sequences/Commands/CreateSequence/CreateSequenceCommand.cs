@@ -11,5 +11,6 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
         public string Name { get; set; }
         public string SequenceTemplateId { get; set; }
         public Dictionary<string, object> Inputs { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

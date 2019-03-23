@@ -4,6 +4,7 @@ using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.SequencesTemplates;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.SequenceTemplates;
 using Cindi.Domain.Utilities;
@@ -70,7 +71,8 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                 SubjectId = createdSequence.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Sequence,
-                RecordedOn = DateTime.UtcNow,
+                CreatedBy = SystemUsers.QUEUE_MANAGER,
+                CreatedOn = DateTime.UtcNow,
                 Updates = new List<Update>()
                 {
                     new Update()
@@ -90,16 +92,14 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
             {
                 foreach (var subBlock in block.SubsequentSteps)
                 {
-                    // Create a new step template
                     var newStep = new Step()
                     {
                         SequenceId = createdSequence.Id,
-                        //SequenceTemplateId = sequenceInput.SequenceTemplateReference.TemplateId,
                         StepRefId = subBlock.StepRefId,
                         Inputs = new Dictionary<string, object>(),
                         StepTemplateId = subBlock.StepTemplateId,
-                        CreatedOn = DateTime.UtcNow
-                        //template.StartingStepTemplateId
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = SystemUsers.QUEUE_MANAGER,
                     };
 
                     foreach (var mapping in subBlock.Mappings)
@@ -125,7 +125,8 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                         SubjectId = newStep.Id,
                         ChainId = 0,
                         Entity = JournalEntityTypes.Step,
-                        RecordedOn = DateTime.UtcNow,
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = SystemUsers.QUEUE_MANAGER,
                         Updates = new List<Update>()
                         {
                             new Update()

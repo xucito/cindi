@@ -147,7 +147,7 @@ outputHeaders: string[] = [];
   private LoadLogs(logs: any) {
     this.content = "";
     logs.forEach(log => {
-      this.content += "\n " + "<" + log.recordedOn + ">: " + log.message;
+      this.content += "\n " + "<" + log.createdOn + ">: " + log.message;
     });
   }
 

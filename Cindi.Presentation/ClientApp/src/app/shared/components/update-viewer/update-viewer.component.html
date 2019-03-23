@@ -1,6 +1,6 @@
 <mat-list>
   <div #test *ngFor="let entry of _journal.entries">
-    <h3 mat-subheader>{{ entry.recordedOn }}</h3>
+    <h3 mat-subheader>{{ entry.createdOn }}</h3>
     <mat-list-item *ngFor="let update of entry.updates">
       <mat-icon mat-list-icon>folder</mat-icon>
       <h4 mat-line>{{ update.fieldName }}</h4>

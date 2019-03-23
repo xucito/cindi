@@ -10,7 +10,7 @@ using Cindi.Domain.Exceptions.Global;
 
 namespace Cindi.Domain.Entities.SequencesTemplates
 {
-    public class SequenceTemplate
+    public class SequenceTemplate: TrackedEntity
     {
         public string Id { get; set; }
 

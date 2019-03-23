@@ -10,5 +10,6 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
     {
         public Guid StepId { get; set; }
         public string Log { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

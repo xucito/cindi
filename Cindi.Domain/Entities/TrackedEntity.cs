@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Cindi.Domain.ValueObjects.Journal
+namespace Cindi.Domain.Entities
 {
-    public class UpdateRecord
+    public class TrackedEntity
     {
+        public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
-        public Update Update { get; set; }
     }
 }

@@ -18,5 +18,6 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
         public string Description { get; set; }
         public List<LogicBlock> LogicBlocks { get; set; }
         public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

@@ -43,7 +43,8 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedBy = request.CreatedBy,
+                CreatedOn = DateTime.UtcNow,
                 ChainId = step.Journal.GetNextChainId(),
                 Updates = new List<Domain.ValueObjects.Update>()
                         {

@@ -38,7 +38,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             }
 
             var step = await _stepsRepository.InsertStepAsync(
-                resolvedTemplate.GenerateStep(request.StepTemplateId, request.Name, request.Description, request.Inputs, request.Tests)
+                resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests)
                 );
 
 
@@ -47,7 +47,8 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 SubjectId = step.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Step,
-                RecordedOn = DateTime.UtcNow,
+                CreatedBy = request.CreatedBy,
+                CreatedOn = DateTime.UtcNow,
                 Updates = new List<Update>()
                 {
                     new Update()

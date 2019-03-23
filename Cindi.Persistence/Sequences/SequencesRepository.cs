@@ -151,7 +151,7 @@ namespace Cindi.Persistence.Sequences
         public async Task<int> GetNextChainId(Guid subjectId)
         {
             var filter = Builders<JournalEntry>.Filter.Eq(x => x.SubjectId, subjectId);
-            var nextChain = (await _sequenceJournalEntries.FindAsync(filter)).ToList().OrderBy(je => je.RecordedOn);
+            var nextChain = (await _sequenceJournalEntries.FindAsync(filter)).ToList().OrderBy(je => je.CreatedOn);
             if (nextChain.Count() == 0)
             {
                 return 0;

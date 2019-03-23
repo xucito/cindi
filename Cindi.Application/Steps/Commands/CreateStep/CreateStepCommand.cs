@@ -24,5 +24,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         public Dictionary<string, object> Inputs { get; set; }
 
         public List<string> Tests { get; set; }
+
+        public string CreatedBy { get; set; }
     }
 }

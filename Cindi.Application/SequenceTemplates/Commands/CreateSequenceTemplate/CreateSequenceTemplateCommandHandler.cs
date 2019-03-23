@@ -199,7 +199,9 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
                 Id = request.Name + ":" + request.Version,
                 Description = request.Description,
                 InputDefinitions = request.InputDefinitions,
-                LogicBlocks = request.LogicBlocks
+                LogicBlocks = request.LogicBlocks,
+                CreatedBy = request.CreatedBy,
+                CreatedOn = DateTime.UtcNow
             });
 
             stopwatch.Stop();

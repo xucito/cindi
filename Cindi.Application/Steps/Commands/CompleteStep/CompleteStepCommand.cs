@@ -14,5 +14,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public int StatusCode { get; set; }
         public string Log { get; set; }
         public string SuspendFor { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

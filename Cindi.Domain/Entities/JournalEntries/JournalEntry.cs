@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.JournalEntries
 {
-    public class JournalEntry
+    public class JournalEntry: TrackedEntity
     {
         private string _entity;
         public string Entity
@@ -23,7 +23,6 @@ namespace Cindi.Domain.Entities.JournalEntries
             }
         }
         public Guid SubjectId { get; set; }
-        public DateTime RecordedOn { get; set; }
         public string Id { get { return _entity + ":" + SubjectId + ":" + ChainId; } }
         public int ChainId { get; set; }
         public List<Update> Updates { get; set; }

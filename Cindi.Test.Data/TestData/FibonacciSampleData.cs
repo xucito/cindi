@@ -130,7 +130,8 @@ namespace Cindi.Test.Global.TestData
             {
                 {"n-2","1" },
                 {"n-1","2" }
-            }
+            },
+            CreatedBy = "testUser@email.com"
         };
 
         public static readonly Sequence Sequence = new Sequence()

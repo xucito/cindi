@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Domain.Entities.Steps
 {
-    public class Step
+    public class Step: TrackedEntity
     {
         public Step()
         {
@@ -54,9 +54,6 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public Dictionary<string, object> Inputs { get; set; }
 
-
-        public DateTime CreatedOn { get; set; }
-
         /*  public DateTime AssignedOn { get; set; }
 
           /// <summary>
@@ -74,7 +71,7 @@ namespace Cindi.Domain.Entities.Steps
                 var lastStatusAction = Journal.GetLatestAction("status");
                 if (lastStatusAction != null && StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
                 {
-                    return lastStatusAction.RecordedOn;
+                    return lastStatusAction.CreatedOn;
                 }
                 return null;
             }
@@ -112,8 +109,8 @@ namespace Cindi.Domain.Entities.Steps
                 return Journal.GetAllUpdates("logs").Select(l => new StepLog()
                 {
                     Message = (string)l.Update.Value,
-                    RecordedOn = l.RecordedOn
-                }).OrderBy(l => l.RecordedOn).ToList();
+                    CreatedOn = l.CreatedOn
+                }).OrderBy(l => l.CreatedOn).ToList();
             }
         }
 

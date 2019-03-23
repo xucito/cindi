@@ -2,6 +2,7 @@
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.ValueObjects;
 using Cindi.Persistence;
 using Cindi.Persistence.Sequences;
@@ -43,7 +44,8 @@ namespace Cindi.Infrastructure.Tests.Integration
                 SubjectId = createdStep.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Step,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = "testUser@email.com",
                 Updates = new List<Update>()
                 {
                     new Update()
@@ -64,6 +66,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             Assert.Empty(steps[0].Outputs);
             Assert.Equal(StepStatuses.Unassigned, steps[0].Status);
             Assert.False(steps[0].IsComplete);
+            Assert.Equal("testUser@email.com", steps[0].CreatedBy);
         }
 
         [Fact]
@@ -76,7 +79,8 @@ namespace Cindi.Infrastructure.Tests.Integration
                 SubjectId = createdStep.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Step,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = "testUser@email.com",
                 Updates = new List<Update>()
                 {
                     new Update()
@@ -95,12 +99,14 @@ namespace Cindi.Infrastructure.Tests.Integration
             Assert.NotNull(step);
             Assert.Equal(StepStatuses.Unassigned, step.Status);
             Assert.False(step.IsComplete);
+            Assert.Equal("testUser@email.com", step.CreatedBy);
 
             await stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = SystemUsers.QUEUE_MANAGER,
                 ChainId = 1,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
@@ -123,7 +129,8 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = SystemUsers.QUEUE_MANAGER,
                 ChainId = 2,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
@@ -158,7 +165,7 @@ namespace Cindi.Infrastructure.Tests.Integration
                 SubjectId = createdStep.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Step,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 Updates = new List<Update>()
                 {
                     new Update()
@@ -184,7 +191,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 ChainId = 1,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
@@ -205,7 +212,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 ChainId = 2,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
@@ -235,7 +242,7 @@ namespace Cindi.Infrastructure.Tests.Integration
                 SubjectId = createdStep.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Step,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 Updates = new List<Update>()
                 {
                     new Update()
@@ -255,7 +262,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 ChainId = 1,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
@@ -278,7 +285,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 ChainId = 2,
                 Updates = new List<Domain.ValueObjects.Update>()
                 {
@@ -323,12 +330,14 @@ namespace Cindi.Infrastructure.Tests.Integration
             FibonacciSequenceData data = new FibonacciSequenceData(5);
             await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplate);
 
+            var id = Guid.NewGuid();
+
             var newSequence =  await sequenceRepository.InsertSequenceAsync(new Domain.Entities.Sequences.Sequence()
             {
                 SequenceTemplateId = data.sequenceTemplate.Id,
                 Inputs = new Dictionary<string, object>(),
                 CreatedOn = DateTime.UtcNow,
-                Id = Guid.NewGuid()
+                Id = id
             });
 
             await sequenceRepository.InsertJournalEntryAsync(new JournalEntry()
@@ -336,7 +345,7 @@ namespace Cindi.Infrastructure.Tests.Integration
                 SubjectId = newSequence.Id,
                 ChainId = 0,
                 Entity = JournalEntityTypes.Sequence,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
                 Updates = new List<Update>()
                 {
                     new Update()
@@ -347,6 +356,8 @@ namespace Cindi.Infrastructure.Tests.Integration
                     }
                 }
             });
+
+            await sequenceRepository.UpsertSequenceMetadataAsync(id);
 
             Assert.NotNull(await sequenceRepository.GetSequenceAsync(newSequence.Id));
             Assert.Single((await sequenceRepository.GetSequencesAsync()));

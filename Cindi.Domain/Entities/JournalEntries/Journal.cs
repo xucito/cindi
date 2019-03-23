@@ -58,7 +58,7 @@ namespace Cindi.Domain.Entities.JournalEntries
                         updates.Add(new UpdateRecord()
                         {
                             Update = update,
-                            RecordedOn = entry.Value.RecordedOn
+                            CreatedOn = entry.Value.CreatedOn
                         });
                     }
                 }
@@ -86,7 +86,7 @@ namespace Cindi.Domain.Entities.JournalEntries
                         return new UpdateRecord()
                         {
                             Update = update,
-                            RecordedOn = entry.Value.RecordedOn
+                            CreatedOn = entry.Value.CreatedOn
                         };
                     }
                 }

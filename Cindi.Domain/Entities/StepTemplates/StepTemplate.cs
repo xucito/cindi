@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.StepTemplates
 {
-    public class StepTemplate
+    public class StepTemplate: TrackedEntity
     {
         // Will always be set to Name:Version
         private string _id { get; set; }
@@ -79,8 +79,6 @@ namespace Cindi.Domain.Entities.StepTemplates
             }
         }
 
-        public DateTime CreatedOn { get; set; }
-
         public bool IsEqual(StepTemplate stepTemplate, out BaseException exception)
         {
             if (stepTemplate.InputDefinitions.Count() != InputDefinitions.Count())
@@ -135,13 +133,14 @@ namespace Cindi.Domain.Entities.StepTemplates
             return true;
         }
 
-        public Step GenerateStep(string stepTemplateId, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, Guid? sequenceId = null)
+        public Step GenerateStep(string stepTemplateId, string createdBy, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, Guid? sequenceId = null)
         {
             var newStep = new Step();
             newStep.Name = name;
             newStep.Description = description;
             newStep.StepTemplateId = stepTemplateId;
             newStep.Inputs = new Dictionary<string, object>();
+            newStep.CreatedBy = createdBy;
 
             if (inputs != null)
             {

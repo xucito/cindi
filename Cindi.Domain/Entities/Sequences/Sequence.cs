@@ -12,11 +12,10 @@ namespace Cindi.Domain.Entities.Sequences
     /// <summary>
     /// Immutable reference to a sequence
     /// </summary>
-    public class Sequence
+    public class Sequence: TrackedEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public DateTime CreatedOn { get; set; }
         public string SequenceTemplateId { get; set; }
 
         /// <summary>

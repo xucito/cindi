@@ -281,7 +281,7 @@ namespace Cindi.Persistence.Steps
         public async Task<int> GetNextChainId(Guid subjectId)
         {
             var filter = Builders<JournalEntry>.Filter.Eq(x => x.SubjectId, subjectId);
-            return (await _journalEntries.FindAsync(filter)).ToList().OrderBy(je => je.RecordedOn).Last().ChainId + 1;
+            return (await _journalEntries.FindAsync(filter)).ToList().OrderBy(je => je.CreatedOn).Last().ChainId + 1;
         }
 
         public async Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry)

@@ -3,6 +3,7 @@ using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
 using MediatR;
@@ -56,7 +57,8 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             {
                                 Entity = JournalEntityTypes.Step,
                                 SubjectId = unassignedStep.Id,
-                                RecordedOn = DateTime.UtcNow,
+                                CreatedBy = SystemUsers.QUEUE_MANAGER,
+                                CreatedOn = DateTime.UtcNow,
                                 ChainId = unassignedStep.Journal.GetNextChainId(),
                                 Updates = new List<Domain.ValueObjects.Update>()
                         {

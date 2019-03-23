@@ -5,6 +5,7 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Sequences;
 using Cindi.Domain.Exceptions.SequenceTemplates;
 using Cindi.Domain.Exceptions.Steps;
@@ -55,6 +56,24 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             });
         }
 
+        public CompleteStepCommandHandler(IStepsRepository stepsRepository,
+            IStepTemplatesRepository stepTemplatesRepository,
+            ISequenceTemplatesRepository sequenceTemplateRepository,
+            ISequencesRepository sequencesRepository,
+            ClusterStateService clusterStateService,
+            ILogger<CompleteStepCommandHandler> logger,
+            CindiClusterOptions options
+            )
+        {
+            _stepsRepository = stepsRepository;
+            _stepTemplatesRepository = stepTemplatesRepository;
+            _sequenceTemplateRepository = sequenceTemplateRepository;
+            _sequencesRepository = sequencesRepository;
+            _clusterStateService = clusterStateService;
+            Logger = logger;
+            _option = options;
+        }
+
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
@@ -75,7 +94,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 {
                     Entity = JournalEntityTypes.Step,
                     SubjectId = stepToComplete.Id,
-                    RecordedOn = DateTime.UtcNow,
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = request.CreatedBy,
                     ChainId = stepToComplete.Journal.GetNextChainId(),
                     Updates = new List<Domain.ValueObjects.Update>()
                         {
@@ -114,7 +134,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = stepToComplete.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = request.CreatedBy,
                 ChainId = stepToComplete.Journal.GetNextChainId(),
                 Updates = new List<Domain.ValueObjects.Update>()
                         {
@@ -259,7 +280,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 {
                                     StepTemplateId = substep.StepTemplateId,
                                     StepRefId = substep.StepRefId,
-                                    SequenceId = updatedStep.SequenceId
+                                    SequenceId = updatedStep.SequenceId,
+                                    CreatedBy = SystemUsers.QUEUE_MANAGER
                                 };
 
                                 foreach (var mapping in substep.Mappings)
@@ -327,7 +349,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     SubjectId = newlyCreatedStep.Id,
                                     ChainId = 0,
                                     Entity = JournalEntityTypes.Step,
-                                    RecordedOn = DateTime.UtcNow,
+                                    CreatedOn = DateTime.UtcNow,
+                                    CreatedBy = SystemUsers.QUEUE_MANAGER,
                                     Updates = new List<Update>()
                                     {
                                         new Update()
@@ -364,7 +387,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         Entity = JournalEntityTypes.Sequence,
                         ChainId = await _sequencesRepository.GetNextChainId(sequence.Id),
                         SubjectId = sequence.Id,
-                        RecordedOn = DateTime.UtcNow,
+                        CreatedBy = request.CreatedBy,
+                        CreatedOn = DateTime.UtcNow,
                         Updates = new List<Update>()
                         {
                                 new Update()

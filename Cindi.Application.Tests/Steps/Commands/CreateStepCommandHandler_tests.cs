@@ -1,4 +1,5 @@
 ﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Options;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.CompleteStep;
@@ -12,6 +13,7 @@ using Cindi.Domain.ValueObjects;
 using Cindi.Test.Global.MockInterfaces;
 using Cindi.Test.Global.TestData;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -23,6 +25,12 @@ namespace Cindi.Application.Tests.Steps.Commands
 {
     public class CreateStepCommandHandler_Tests
     {
+
+        static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
+        {
+            DefaultSuspensionTime = 0
+        };
+
         [Fact]
         public async void DetectMissingTemplate()
         {
@@ -138,9 +146,12 @@ namespace Cindi.Application.Tests.Steps.Commands
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
             stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
 
+
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
 
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(), mockLogger.Object);
+            Mock<IClusterRepository> clusterRepository = new Mock<IClusterRepository>();
+            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(clusterRepository.Object, mockStateLogger.Object), mockLogger.Object, cindiClusterOptions);
 
             var completeResult = await handler.Handle(new CompleteStepCommand()
             {
@@ -151,7 +162,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 },
                 Status = StepStatuses.Successful,
                 StatusCode = 0,
-                Logs = "TEST"
+                Log = "TEST"
             }, new System.Threading.CancellationToken());
 
             Assert.Equal(TestStep.Id.ToString(), completeResult.ObjectRefId);
@@ -174,7 +185,9 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
 
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(), mockLogger.Object);
+            Mock<IClusterRepository> clusterRepository = new Mock<IClusterRepository>();
+            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(clusterRepository.Object, mockStateLogger.Object), mockLogger.Object, cindiClusterOptions);
 
             await Assert.ThrowsAsync<MissingSequenceException>(async () => await handler.Handle(new CompleteStepCommand()
             {
@@ -185,7 +198,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 },
                 Status = StepStatuses.Successful,
                 StatusCode = 0,
-                Logs = "TEST"
+                Log = "TEST"
             }, new System.Threading.CancellationToken()));
 
         }
@@ -200,7 +213,8 @@ namespace Cindi.Application.Tests.Steps.Commands
                         SubjectId = TestSequence.Id,
                         ChainId = 0,
                         Entity = JournalEntityTypes.Sequence,
-                        RecordedOn = DateTime.UtcNow,
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = "testuser@email.com",
                         Updates = new List<Update>()
                         {
                             new Update()
@@ -234,8 +248,9 @@ namespace Cindi.Application.Tests.Steps.Commands
 
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
-
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(), mockLogger.Object);
+            Mock<IClusterRepository> clusterRepository = new Mock<IClusterRepository>();
+            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(clusterRepository.Object, mockStateLogger.Object), mockLogger.Object, cindiClusterOptions);
 
             Assert.Equal(TestStep.Id.ToString(), (await handler.Handle(new CompleteStepCommand()
             {
@@ -246,7 +261,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 },
                 Status = StepStatuses.Successful,
                 StatusCode = 0,
-                Logs = "TEST"
+                Log = "TEST"
             }, new System.Threading.CancellationToken())).ObjectRefId);
 
         }

@@ -52,7 +52,8 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
             {
                 Entity = JournalEntityTypes.Step,
                 SubjectId = step.Id,
-                RecordedOn = DateTime.UtcNow,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = request.CreatedBy,
                 ChainId = step.Journal.GetNextChainId(),
                 Updates = new List<Domain.ValueObjects.Update>()
                         {
