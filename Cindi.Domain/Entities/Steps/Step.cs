@@ -112,8 +112,8 @@ namespace Cindi.Domain.Entities.Steps
                 return Journal.GetAllUpdates("logs").Select(l => new StepLog()
                 {
                     Message = (string)l.Update.Value,
-                    RecordOn = l.RecordedOn
-                }).ToList();
+                    RecordedOn = l.RecordedOn
+                }).OrderBy(l => l.RecordedOn).ToList();
             }
         }
 

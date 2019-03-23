@@ -9,19 +9,18 @@ import { Router, ActivatedRoute } from "@angular/router";
   styleUrls: ["./steps.component.css"]
 })
 export class StepsComponent implements OnInit, OnDestroy {
-  public unassignedSteps: any[];
-  public assignedSteps: any[];
-  public successfulSteps: any[];
+  public steps: any[];
   private steps$: Subscription;
-  public erroredSteps: any[];
-  columnsToDisplay = ["id", "name", "templateId", "status"];
+  columnsToDisplay = ["id", "name", "templateId", "status", "copy"];
   run: any;
 
   statusCodes = ["Unassigned", "Assigned", "Successful", "Warning", "Error"];
 
-  constructor(private nodeData: NodeDataService,
-  private router: Router,
-private activatedRoute: ActivatedRoute) {}
+  constructor(
+    private nodeData: NodeDataService,
+    private router: Router,
+    private activatedRoute: ActivatedRoute
+  ) {}
 
   ngOnInit() {
     const _thisObject = this;
@@ -34,16 +33,8 @@ private activatedRoute: ActivatedRoute) {}
 
   updateData() {
     if (this.steps$ == undefined || this.steps$.closed) {
-      this.steps$ = forkJoin(
-        this.nodeData.GetSteps("unassigned"),
-        this.nodeData.GetSteps("assigned"),
-        this.nodeData.GetSteps("successful"),
-        this.nodeData.GetSteps("error")
-      ).subscribe(result => {
-        this.unassignedSteps = result[0].result.sort((a, b) => a.id - b.id);
-        this.assignedSteps = result[1].result.sort((a, b) => a.id - b.id);
-        this.successfulSteps = result[2].result.sort((a, b) => a.id - b.id);
-        this.erroredSteps = result[3].result.sort((a, b) => a.id - b.id);
+      this.steps$ = forkJoin(this.nodeData.GetSteps()).subscribe(result => {
+        this.steps = result[0].result.sort((a, b) => a.id - b.id);
         // this.steps$.unsubscribe();
       });
     }
@@ -65,8 +56,21 @@ private activatedRoute: ActivatedRoute) {}
       });
   }
 
-  selectRow(row)
-  {
-    this.router.navigate(["./" + row.id], {relativeTo: this.activatedRoute})
+  cloneStep(row) {
+    this.router.navigate(
+      [
+        "./new",
+        {
+          templateName: row.stepTemplateId.split(":")[0],
+          version: row.stepTemplateId.split(":")[1],
+          clonedId: row.id
+        }
+      ],
+      { relativeTo: this.activatedRoute }
+    );
+  }
+
+  selectRow(row) {
+    this.router.navigate(["./" + row.id], { relativeTo: this.activatedRoute });
   }
 }

@@ -12,8 +12,12 @@ export class NodeDataService {
     @Inject('BASE_URL') private baseUrl: string*/
   ) {}
 
-  GetSteps(status: string): Observable<any> {
-    return this.http.get(this.baseUrl + this.api + "steps?status=" + status);
+  GetSteps(status: string = ""): Observable<any> {
+    if (status != "")
+      return this.http.get(this.baseUrl + this.api + "steps?status=" + status);
+    else {
+      return this.http.get(this.baseUrl + this.api + "steps?status=" + status);
+    }
   }
 
   GetStep(stepId: string): Observable<any> {

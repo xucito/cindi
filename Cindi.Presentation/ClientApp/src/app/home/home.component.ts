@@ -9,7 +9,9 @@ import { Subscription } from "rxjs";
 })
 export class HomeComponent implements OnDestroy {
   ngOnDestroy(): void {
-    this.stats$.unsubscribe();
+    if (this.stats$ != undefined) {
+      this.stats$.unsubscribe();
+    }
   }
   stats$: Subscription;
   stats: any;
@@ -24,20 +26,16 @@ export class HomeComponent implements OnDestroy {
   }
 
   UpdateData() {
-    this.stats$ = this._nodeData.GetStats().subscribe(
-      (result) => {
-        this.stats = result.result;
-      }
-    );
+    this.stats$ = this._nodeData.GetStats().subscribe(result => {
+      this.stats = result.result;
+    });
   }
 
-  GetStepStats(status)
-  {
-    if(this.stats != undefined)
-    {
+  GetStepStats(status) {
+    if (this.stats != undefined) {
       return this.stats.steps[status];
     }
 
-    return '?'
+    return "?";
   }
 }

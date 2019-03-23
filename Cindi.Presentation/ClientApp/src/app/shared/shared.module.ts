@@ -20,6 +20,13 @@ import { OutletComponent } from './components/outlet/outlet.component';
 import { FormsComponent } from './components/form/form.component';
 import { InputComponent } from './components/form/input/input.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import 'codemirror/mode/shell/shell';
+import './modes/console';
+import { StepProgressBarComponent } from './components/step-progress-bar/step-progress-bar.component';
+import { UpdateViewerComponent } from './components/update-viewer/update-viewer.component';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -34,7 +41,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     FormsModule,
     MatProgressBarModule,
     ReactiveFormsModule,
-    MatFormFieldModule
+    CodemirrorModule,
+    MatListModule
   ],
   exports: [
     SequenceTemplateVisualizationComponent,
@@ -47,7 +55,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     MatCardModule,
     MatProgressBarModule,
     MatListModule,
-    MatFormFieldModule
+    CodemirrorModule,
+    StepProgressBarComponent,
+    UpdateViewerComponent
     //MatSidenavModule
   ],
   declarations: [
@@ -55,7 +65,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     SequenceTemplateVisualizationComponent,
     OutletComponent,
     FormsComponent,
-    InputComponent
+    InputComponent,
+    StepProgressBarComponent,
+    UpdateViewerComponent
   ]
 })
 export class SharedModule {}

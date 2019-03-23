@@ -20,6 +20,7 @@ import { SequenceComponent } from "./sequence/sequence.component";
 import { StepComponent } from "./step/step.component";
 import { StatusCardComponent } from './home/components/status-card/status-card.component';
 import { LoadingBarService } from "./services/loading-bar.service";
+
 @NgModule({
   declarations: [
     AppComponent,

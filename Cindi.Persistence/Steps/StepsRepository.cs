@@ -77,7 +77,7 @@ namespace Cindi.Persistence.Steps
                 stepMetadataFilter = FilterDefinition<StepMetadata>.Empty; ;
             }
 
-            var sort = Builders<StepMetadata>.Sort.Ascending("CreatedOn");
+            var sort = Builders<StepMetadata>.Sort.Descending("CreatedOn");
             FindOptions<StepMetadata> options = new FindOptions<StepMetadata>
             {
                 BatchSize = size,
