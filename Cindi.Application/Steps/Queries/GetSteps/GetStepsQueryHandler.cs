@@ -5,6 +5,7 @@ using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +25,7 @@ namespace Cindi.Application.Steps.Queries.GetSteps
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var steps = await _stepsRepository.GetStepsAsync(request.Size, request.Page, request.Status);
+            var steps = (await _stepsRepository.GetStepsAsync(request.Size, request.Page, request.Status)).OrderByDescending(s => s.CreatedOn).ToList();
             var stepCount = _stepsRepository.CountSteps(request.Status);
             stopwatch.Stop();
 
@@ -34,7 +35,6 @@ namespace Cindi.Application.Steps.Queries.GetSteps
                 Count = stepCount,
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };
-
         }
     }
 }

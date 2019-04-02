@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { NodeDataService } from "./node-data.service";
 import { Observable, BehaviorSubject } from "rxjs";
-import { map, filter, catchError, mergeMap } from 'rxjs/operators';
+import { map, filter, catchError, mergeMap } from "rxjs/operators";
 import { StepTemplateReference } from "../models/step-template-reference";
 @Injectable()
 export class AppStateService {
@@ -9,14 +9,21 @@ export class AppStateService {
   selectedSequence: any[];
   allStepTemplates: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
   lastLoadedTemplates: Date;
+  currentUser: BehaviorSubject<any> = new BehaviorSubject(undefined);
 
-  constructor(private _nodeData: NodeDataService) {}
+  constructor(private _nodeData: NodeDataService) {
+    this.setCurrentUser(JSON.parse(localStorage.getItem("currentUser")));
+  }
 
   setSelectedSequenceTemplate(sequenceTemplate) {
     this.selectedSequenceTemplate = sequenceTemplate;
   }
 
-  setSelectedSequence(sequence){
+  setCurrentUser(user) {
+    this.currentUser.next(user);
+  }
+
+  setSelectedSequence(sequence) {
     this.selectedSequence = sequence;
   }
 
@@ -25,16 +32,18 @@ export class AppStateService {
   }
 
   refreshStepTemplateData(): Observable<any[]> {
-    return this._nodeData.GetStepTemplates().pipe(map(result => {
-      this.allStepTemplates.next(result.result);
-      return result.result;
-    }));
+    return this._nodeData.GetStepTemplates().pipe(
+      map(result => {
+        this.allStepTemplates.next(result.result);
+        return result.result;
+      })
+    );
   }
 
   getStepTemplateDef(stepTemplate: StepTemplateReference) {
     if (this.allStepTemplates.value.length > 0) {
       var result = this.allStepTemplates.value.filter(
-        s => (s.name == stepTemplate.name && s.version == stepTemplate.version) 
+        s => s.name == stepTemplate.name && s.version == stepTemplate.version
       );
 
       if (result.length == 1) {

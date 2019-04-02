@@ -38,42 +38,14 @@
           <span class="glyphicon glyphicon-th-list"></span> Sequence Templates
         </a>
       </li>
+      <li class="nav-item">
+        <a [routerLink]="['sequence-templates']" (click)="collapse()">
+          <i class="material-icons">
+            account_circle
+          </i>
+          <span class="glyphicon glyphicon-th-list"></span> {{ username }}
+        </a>
+      </li>
     </ul>
   </div>
 </nav>
-
-<!--
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-
-
-    <a class="navbar-brand" href="#">Navbar</a>
-
-    <ul class='nav navbar-nav'>
-        <li [routerLinkActive]='["link-active"]' [routerLinkActiveOptions]='{ exact: true }'>
-            <a [routerLink]='["/"]' (click)='collapse()'>
-                <span class='glyphicon glyphicon-home'></span> Home
-            </a>
-        </li>
-        <li [routerLinkActive]='["link-active"]'>
-            <a [routerLink]='["/steps"]' (click)='collapse()'>
-                <span class='glyphicon glyphicon-education'></span> Steps
-            </a>
-        </li>
-
-        <li [routerLinkActive]='["link-active"]'>
-            <a [routerLink]='["sequences"]' (click)='collapse()'>
-                <span class='glyphicon glyphicon-th-list'></span> Sequences
-            </a>
-        </li>
-        <li [routerLinkActive]='["link-active"]'>
-            <a [routerLink]='["step-templates"]' (click)='collapse()'>
-                <span class='glyphicon glyphicon-th-list'></span> Step Templates
-            </a>
-        </li>
-        <li [routerLinkActive]='["link-active"]'>
-            <a [routerLink]='["sequence-templates"]' (click)='collapse()'>
-                <span class='glyphicon glyphicon-th-list'></span> Sequence Templates
-            </a>
-        </li>
-    </ul>
-</nav>-->

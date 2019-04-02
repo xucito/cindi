@@ -5,6 +5,7 @@ using Cindi.Application.Sequences.Queries.GetSequenceSteps;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
+using Cindi.Presentation.Utility;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -28,6 +29,7 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
+                command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
                 return Ok(new HttpCommandResult<Sequence>("step", result, null));
             }

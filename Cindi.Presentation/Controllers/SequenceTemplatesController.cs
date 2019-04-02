@@ -6,6 +6,7 @@ using Cindi.Domain.Entities.SequencesTemplates;
 using Cindi.Domain.Exceptions;
 using Cindi.Persistence;
 using Cindi.Presentation.Results;
+using Cindi.Presentation.Utility;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,7 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
+                command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
                 return Ok(new HttpCommandResult<SequenceTemplate>("/api/sequenceTemplate/" + command.Name + "/" + command.Version, result, null));
             }

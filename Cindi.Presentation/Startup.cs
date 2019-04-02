@@ -34,6 +34,14 @@ using Cindi.Persistence.Sequences;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Cindi.Application.Options;
 using Cindi.Application.Services.ClusterMonitor;
+using Microsoft.AspNetCore.Authentication;
+using Cindi.Presentation.Authentication;
+using Cindi.Persistence.Users;
+using Swashbuckle.AspNetCore.Filters;
+using Cindi.Application.Cluster.Commands.InitializeCluster;
+using Cindi.Persistence.BotKeys;
+using Cindi.Presentation.Middleware;
+using Cindi.Domain.Exceptions.Utility;
 
 namespace Cindi.Presentation
 {
@@ -55,8 +63,8 @@ namespace Cindi.Presentation
         {
             services.AddScoped<IMediator, Mediator>();
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
-            services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
-            services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
+            // services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
+            // services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
 
             services.AddMvc(options =>
             {
@@ -85,28 +93,88 @@ namespace Cindi.Presentation
             services.AddTransient<ISequencesRepository, SequencesRepository>(s => new SequencesRepository(MongoClient));
             services.AddTransient<ISequenceTemplatesRepository, SequenceTemplatesRepository>(s => new SequenceTemplatesRepository(MongoClient));
             services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
+            services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
+            services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
             services.AddSingleton<ClusterStateService>();
             services.AddSingleton<ClusterMonitorService>();
+
+
+
+            //Authentication
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "smart";
+                    options.DefaultChallengeScheme = "smart";
+                })
+                .AddPolicyScheme("smart","SMART",options =>
+                {
+                    options.ForwardDefaultSelector = context =>
+                    {
+                        var authHeader = context.Request.Headers["botKey"];
+                        if(authHeader.FirstOrDefault() != null)
+                        {
+                            return "bot";
+                        }
+
+                        return "basic";
+                    };
+                })
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("basic", null)
+                .AddScheme<AuthenticationSchemeOptions, BotAuthenticationHandler>("bot", null);
 
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
+                c.AddSecurityDefinition("Basic", new BasicAuthScheme { Type = "basic" });
+                c.DocumentFilter<BasicAuthenticationFilter>();
             });
-
 
             services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
                                                                         .AllowAnyMethod()
                                                                          .AllowAnyHeader()));
 
-
             BaseRepository.RegisterClassMaps();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, 
+        public void Configure(IApplicationBuilder app,
             IHostingEnvironment env,
-            ClusterMonitorService monitor)
+            ClusterStateService service,
+            ClusterMonitorService monitor,
+            IMediator mediator,
+            ILogger<Startup> logger)
         {
+
+            var key = Configuration.GetValue<string>("EncryptionKey");
+            if (key != null)
+            {
+                if (ClusterStateService.Initialized)
+                {
+                    logger.LogWarning("Loading key in configuration file, this is not recommended for production.");
+                    try
+                    {
+                        service.SetEncryptionKey(key);
+                        logger.LogInformation("Successfully applied encryption key.");
+                    }
+                    catch (InvalidPrivateKeyException e)
+                    {
+                        logger.LogError("Failed to apply stored key. Key does not match registered encryption hash.");
+                    }
+                }
+                else
+                {
+                    logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
+                    var setPassword = Configuration.GetValue<string>("DefaultPassword");
+                    mediator.Send(new InitializeClusterCommand()
+                    {
+                        DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                        Name = Configuration.GetValue<string>("ClusterName")
+                    });
+                }
+            }
+
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -114,14 +182,18 @@ namespace Cindi.Presentation
 
             app.UseSwagger();
 
-            app.UseCors("AllowAll");
-
-
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                //c.OAuthUseBasicAuthenticationWithAccessCodeGrant();
             });
-            
+
+            app.UseCindiClusterPipeline();
+
+            app.UseAuthentication();
+
+            app.UseCors("AllowAll");
+
             app.UseMvc();
 
             if (EnableUI)

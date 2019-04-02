@@ -4,13 +4,18 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.Cluster.Commands;
+using Cindi.Application.Cluster.Commands.InitializeCluster;
+using Cindi.Application.Cluster.Commands.SetEncryptionKey;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Cindi.Application.Cluster.Queries;
 using Cindi.Application.Cluster.Queries.GetClusterState;
 using Cindi.Application.Cluster.Queries.GetClusterStats;
+using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Exceptions;
+using Cindi.Domain.Exceptions.Utility;
 using Cindi.Presentation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -22,6 +27,37 @@ namespace Cindi.Presentation.Controllers
     {
         public ClusterController(ILoggerFactory logger) : base(logger.CreateLogger<SequencesController>())
         {
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> InitializeCluster(InitializeClusterCommand command)
+        {
+            if (ClusterStateService.Initialized == false)
+            {
+                var result = await Mediator.Send(command);
+                return Ok(new HttpCommandResult<NewClusterResult>("", result, result.Result));
+            }
+            else
+            {
+                return BadRequest("Cluster is already initialized");
+            }
+        }
+
+        [HttpPut("encryption-key")]
+        public async Task<IActionResult> RegisterKey(SetEncryptionKeyCommand command)
+        {
+            try
+            {
+                await Mediator.Send(command);
+
+                return Ok();
+
+            }
+            catch (InvalidPrivateKeyException e)
+            {
+                return BadRequest("Key is not matching...");
+            }
         }
 
         [HttpPut("state")]

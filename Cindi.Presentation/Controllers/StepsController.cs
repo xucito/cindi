@@ -15,15 +15,16 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
 using Cindi.Domain.Utilities;
 using Cindi.Presentation.Results;
+using Cindi.Presentation.Utility;
 using Cindi.Presentation.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace Cindi.Presentation.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [Authorize]
     public class StepsController : BaseController
     {
         public StepsController(ILoggerFactory logger) : base(logger.CreateLogger<StepsController>())
@@ -38,6 +39,7 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
+                command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
 
                 Step step = (await Mediator.Send(new GetStepQuery()
@@ -75,6 +77,7 @@ namespace Cindi.Presentation.Controllers
         [Route("assignment-requests")]
         public async Task<IActionResult> GetNextStep(AssignStepCommand command)
         {
+            command.Id = ClaimsUtility.GetId(User);
             var result = await Mediator.Send(command);
             if (result.ObjectRefId != "")
             {
@@ -94,7 +97,8 @@ namespace Cindi.Presentation.Controllers
             var appendCommand = new AppendStepLogCommand()
             {
                 StepId = id,
-                Log = command.Log
+                Log = command.Log,
+                CreatedBy = ClaimsUtility.GetId(User)
             };
             var result = await Mediator.Send(appendCommand);
             if (result.ObjectRefId != "")
@@ -118,7 +122,8 @@ namespace Cindi.Presentation.Controllers
                 Status = commandVM.Status.ToLower(),
                 StatusCode = commandVM.StatusCode,
                 Log = commandVM.Logs,
-                Outputs = commandVM.Outputs
+                Outputs = commandVM.Outputs,
+                CreatedBy = ClaimsUtility.GetId(User)
             };
 
             var result = await Mediator.Send(completeStepCommand);

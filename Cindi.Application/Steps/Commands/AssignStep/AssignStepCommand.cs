@@ -9,5 +9,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
     public class AssignStepCommand : IRequest<CommandResult>
     {
         public string[] StepTemplateIds;
+        public string Id;
     }
 }

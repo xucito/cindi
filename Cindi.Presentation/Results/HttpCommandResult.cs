@@ -19,5 +19,14 @@ namespace Cindi.Presentation.Results
             ObjectRefId = result.ObjectRefId;
             Result = returnObject;
         }
+
+        public HttpCommandResult(string href, CommandResult<T> result, T returnObject)
+        {
+            HRef = href;
+            Type = result.Type;
+            ElapsedMs = result.ElapsedMs;
+            ObjectRefId = result.ObjectRefId;
+            Result = returnObject;
+        }
     }
 }

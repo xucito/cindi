@@ -17,15 +17,22 @@ export class AppComponent {
   bufferValue = 75;
   isLoading = false;
   loadingBar$: Subscription;
+  user$: Subscription;
+  user: any;
 
   constructor(
     private _appState: AppStateService,
     private loadingBar: LoadingBarService
   ) {
-    _appState.refreshStepTemplateData().subscribe(result => {});
+    //_appState.refreshStepTemplateData().subscribe(result => {});
     this.loadingBar$ = loadingBar.IsLoading.subscribe(
       (result) => {
         this.isLoading = result;
+      }
+    )
+    this.user$ = _appState.currentUser.subscribe(
+      (user) => {
+        this.user = user;
       }
     )
   }

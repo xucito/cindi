@@ -13,6 +13,7 @@ namespace Cindi.Application.Cluster.Queries.GetClusterState
     public class GetClusterStateQueryHandler : IRequestHandler<GetClusterStateQuery, QueryResult<ClusterState>>
     {
         ClusterStateService _clusterStateService;
+
         public GetClusterStateQueryHandler(ClusterStateService clusterStateService)
         {
             _clusterStateService = clusterStateService;

@@ -8,11 +8,12 @@ namespace Cindi.Application.Results
     public class CommandResult
     {
         private string _type;
-        public string Type {
+        public string Type
+        {
             get { return _type; }
             set
             {
-                if(value != CommandResultTypes.Update && value != CommandResultTypes.Create && value != CommandResultTypes.None)
+                if (value != CommandResultTypes.Update && value != CommandResultTypes.Create && value != CommandResultTypes.None)
                 {
                     throw new InvalidCommandResultException(value);
                 }
@@ -21,6 +22,11 @@ namespace Cindi.Application.Results
         }
         public long ElapsedMs { get; set; }
         public string ObjectRefId { get; set; }
+    }
+
+    public class CommandResult<T>: CommandResult
+    {
+        public T Result { get; set; }
     }
 
     public static class CommandResultTypes

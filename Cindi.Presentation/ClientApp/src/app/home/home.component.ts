@@ -8,11 +8,7 @@ import { Subscription } from "rxjs";
   styleUrls: ["./home.component.css"]
 })
 export class HomeComponent implements OnDestroy {
-  ngOnDestroy(): void {
-    if (this.stats$ != undefined) {
-      this.stats$.unsubscribe();
-    }
-  }
+
   stats$: Subscription;
   stats: any;
   run: any;
@@ -26,7 +22,7 @@ export class HomeComponent implements OnDestroy {
   }
 
   UpdateData() {
-    this.stats$ = this._nodeData.GetStats().subscribe(result => {
+    this._nodeData.GetStats().subscribe(result => {
       this.stats = result.result;
     });
   }
@@ -37,5 +33,13 @@ export class HomeComponent implements OnDestroy {
     }
 
     return "?";
+  }
+
+
+  ngOnDestroy(): void {
+    if (this.stats$ != undefined) {
+      this.stats$.unsubscribe();
+    }
+    clearInterval(this.run);
   }
 }

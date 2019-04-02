@@ -9,5 +9,6 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
     public class UpdateClusterStateCommand: IRequest<CommandResult>
     {
         public bool? AssignmentEnabled { get; set; } = true;
+        public bool? AutoRegistrationEnabled { get; set; }
     }
 }

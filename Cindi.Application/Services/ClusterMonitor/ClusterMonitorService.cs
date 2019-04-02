@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Steps.Commands.UnassignStep;
+﻿using Cindi.Application.Services.ClusterState;
+using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Steps;
 using MediatR;
@@ -22,6 +23,8 @@ namespace Cindi.Application.Services.ClusterMonitor
             var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
+
+            _logger.LogInformation("Starting clean up service...");
             Start();
         }
 
@@ -34,12 +37,10 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public void Start()
         {
-
             checkSuspendedStepsThread = new Thread(async () =>
             {
-                while (true)
+                while (true && ClusterStateService.Initialized)
                 {
-                    _logger.LogInformation("Cleaning up suspended steps...");
                     var page = 0;
                     long stepPosition = 0;
                     long totalSteps = 0;
@@ -69,7 +70,10 @@ namespace Cindi.Application.Services.ClusterMonitor
                         }
                     }
                     while (stepPosition < totalSteps);
-                    _logger.LogInformation("Cleaned " + cleanedCount + " steps");
+                    if (cleanedCount > 0)
+                    {
+                        _logger.LogInformation("Cleaned " + cleanedCount + " steps");
+                    }
                     Thread.Sleep(1000);
                 }
             });

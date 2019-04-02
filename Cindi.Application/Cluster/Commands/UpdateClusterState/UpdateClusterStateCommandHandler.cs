@@ -29,6 +29,11 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
                 _state.ChangeAssignmentEnabled(request.AssignmentEnabled.Value);
             }
 
+            if(request.AutoRegistrationEnabled != null)
+            {
+                _state.SetAllowAutoRegistration(request.AutoRegistrationEnabled.Value);
+            }
+
             return new CommandResult()
             {
                 ElapsedMs = stopwatch.ElapsedMilliseconds,

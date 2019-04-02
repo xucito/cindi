@@ -18,5 +18,6 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
         public bool AllowDynamicInputs = false;
         public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
         public Dictionary<string, DynamicDataDescription> OutputDefinitions { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

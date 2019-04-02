@@ -5,6 +5,7 @@ using Cindi.Application.StepTemplates.Queries.GetStepTemplates;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
+using Cindi.Presentation.Utility;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,7 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
+                command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
                 return Ok(new HttpCommandResult<StepTemplate>("/api/steptemplates/" + command.Name + "/" + command.Version, result, null));
             }
