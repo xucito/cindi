@@ -1,5 +1,13 @@
 ﻿using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -11,23 +19,33 @@ namespace Cindi.Domain.Tests.Utilities
     public class SecurityUtility_Tests
     {
         [Fact]
-        public void AsymetricalEncryption()
+        public void AsymetricalEncryption1024()
         {
+            var pair = SecurityUtility.GenerateRSAKeyPair();
+            var badPair = SecurityUtility.GenerateRSAKeyPair();
             var testString = "THIS IS A TEST STRING";
-            var csp = new RSACryptoServiceProvider(2048);
-            var privKey = SecurityUtility.ConvertRSAKeyToString(csp.ExportParameters(true));
-            var pubKey = SecurityUtility.ConvertRSAKeyToString(csp.ExportParameters(false));
-            var encryptedText = SecurityUtility.AsymmetricallyEncryptText(pubKey, testString);
-            Assert.NotEqual(testString, encryptedText);
-            var unencryptedText = SecurityUtility.AsymmetricallyDecryptText(privKey, encryptedText);
-            Assert.Equal(unencryptedText, testString);
 
-            var fakeRSACryptoProvider = new RSACryptoServiceProvider(2048);
-            var fakePrivKey = SecurityUtility.ConvertRSAKeyToString(fakeRSACryptoProvider.ExportParameters(true));
+            var encryptedText = SecurityUtility.RsaEncryptWithPublic(testString, pair.PublicKey);
+            var decryptedText = SecurityUtility.RsaDecryptWithPrivate(encryptedText, pair.PrivateKey);
 
+            Assert.Equal(testString, decryptedText);
+            Assert.NotEqual(encryptedText, testString);
+            Assert.Throws<Org.BouncyCastle.Crypto.InvalidCipherTextException>(() => SecurityUtility.RsaDecryptWithPrivate(encryptedText, badPair.PrivateKey));
+        }
 
-            Assert.Throws<InvalidPrivateKeyException>(() => SecurityUtility.AsymmetricallyDecryptText(fakePrivKey, encryptedText));
-            Assert.Throws<InvalidPrivateKeyException>(() => SecurityUtility.AsymmetricallyDecryptText("NOT VALID RSA STRING", encryptedText));
+        [Fact]
+        public void AsymetricalEncryption2048()
+        {
+            var pair = SecurityUtility.GenerateRSAKeyPair(2048);
+            var badPair = SecurityUtility.GenerateRSAKeyPair(2048);
+            var testString = "THIS IS A TEST STRING";
+
+            var encryptedText = SecurityUtility.RsaEncryptWithPublic(testString, pair.PublicKey);
+            var decryptedText = SecurityUtility.RsaDecryptWithPrivate(encryptedText, pair.PrivateKey);
+
+            Assert.Equal(testString, decryptedText);
+            Assert.NotEqual(encryptedText, testString);
+            Assert.Throws<Org.BouncyCastle.Crypto.InvalidCipherTextException>(() => SecurityUtility.RsaDecryptWithPrivate(encryptedText, badPair.PrivateKey));
         }
 
         [Fact]

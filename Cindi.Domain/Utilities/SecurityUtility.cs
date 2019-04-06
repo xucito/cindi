@@ -7,6 +7,20 @@ using System.Text;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using RSACryptoServiceProviderExtensions;
 using Cindi.Domain.Exceptions.Utility;
+using System.Linq;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Encodings;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.OpenSsl;
+using Cindi.Domain.ValueObjects;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.X509;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Crypto.Parameters;
+using PemWriter = Org.BouncyCastle.OpenSsl.PemWriter;
 
 namespace Cindi.Domain.Utilities
 {
@@ -140,57 +154,114 @@ namespace Cindi.Domain.Utilities
 
         public static string AsymmetricallyEncryptText(string pubKeyString, string text)
         {
-            UnicodeEncoding byteConverter = new UnicodeEncoding();
-            byte[] dataToEncrypt = byteConverter.GetBytes(text);
-            var publicKey = ConvertStringToRSAKey(pubKeyString);
-            byte[] encryptedData;
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048))
-            {
-                rsa.ImportParameters(publicKey);
-                encryptedData = rsa.Encrypt(dataToEncrypt, false);
-            }
-
-            return Convert.ToBase64String(encryptedData);
-        }
-
-        public static string ConvertRSAKeyToString(RSAParameters key)
-        {
-            var sw = new System.IO.StringWriter();
-            var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-            xs.Serialize(sw, key);
-            return sw.ToString();
-        }
-
-        public static RSAParameters ConvertStringToRSAKey(string keyStringRepresentation)
-        {
-            RSAParameters key;
-            {
-                var sr = new System.IO.StringReader(keyStringRepresentation);
-                var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-                key = (RSAParameters)xs.Deserialize(sr);
-            }
-            return key;
+            return RsaEncryptWithPublic(text, pubKeyString);
         }
 
         public static string AsymmetricallyDecryptText(string privateKeyString, string cypherText)
         {
-            byte[] decryptedData; using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048))
+            return RsaDecryptWithPrivate(cypherText, privateKeyString);
+        }
+
+        //https://www.rahulsingla.com/comment/219809
+        public static RSAEncodedKeyPair GenerateRSAKeyPair(int strength = 1024)
+        {
+            RsaKeyPairGenerator g = new RsaKeyPairGenerator();
+
+            g.Init(new KeyGenerationParameters(new SecureRandom(), strength));
+            var pair = g.GenerateKeyPair();
+
+            string privateKey = "";
+            string publicKey = "";
+
+            using (var sw = new System.IO.StringWriter())
             {
-                try
-                {
-                    RSAParameters privateKey = ConvertStringToRSAKey(privateKeyString);
-                    rsa.ImportParameters(privateKey);
-                    var bytesCypherText = Convert.FromBase64String(cypherText);
-                    decryptedData = rsa.Decrypt(bytesCypherText, false);
-                    UnicodeEncoding byteConverter = new UnicodeEncoding();
-                    return byteConverter.GetString(decryptedData);
-                }
-                catch (Exception e)
-                {
-                    throw new InvalidPrivateKeyException(e.Message);
-                }
+                var pw = new PemWriter(sw);
+                pw.WriteObject(pair.Private);
+                privateKey = sw.ToString();
             }
 
+            using (var sw = new System.IO.StringWriter())
+            {
+                var pw = new PemWriter(sw);
+                pw.WriteObject(pair.Public);
+                publicKey = sw.ToString();
+            }
+
+            return new RSAEncodedKeyPair()
+            {
+                PrivateKey = privateKey,
+                PublicKey = publicKey
+            };
+        }
+
+        //https://stackoverflow.com/questions/28086321/c-sharp-bouncycastle-rsa-encryption-with-public-private-keys
+        public static string RsaEncryptWithPublic(string clearText, string publicKey)
+        {
+            var bytesToEncrypt = Encoding.UTF8.GetBytes(clearText);
+
+            var encryptEngine = new Pkcs1Encoding(new RsaEngine());
+
+            using (var txtreader = new StringReader(publicKey))
+            {
+                var keyParameter = (AsymmetricKeyParameter)new PemReader(txtreader).ReadObject();
+
+                encryptEngine.Init(true, keyParameter);
+            }
+
+            var encrypted = Convert.ToBase64String(encryptEngine.ProcessBlock(bytesToEncrypt, 0, bytesToEncrypt.Length));
+            return encrypted;
+        }
+
+        public static string RsaDecryptWithPrivate(string base64Input, string privateKey)
+        {
+            var trimmedKey = privateKey;
+            var bytesToDecrypt = Convert.FromBase64String(base64Input);
+
+            AsymmetricCipherKeyPair keyPair;
+            var decryptEngine = new Pkcs1Encoding(new RsaEngine());
+
+            using (var txtreader = new StringReader(trimmedKey))
+            {
+                keyPair = (AsymmetricCipherKeyPair)new PemReader(txtreader).ReadObject();
+                decryptEngine.Init(false, keyPair.Private);
+            }
+
+            var decrypted = Encoding.UTF8.GetString(decryptEngine.ProcessBlock(bytesToDecrypt, 0, bytesToDecrypt.Length));
+            return decrypted;
+        }
+
+        public static string RsaDecryptWithPublic(string base64Input, string publicKey)
+        {
+            var bytesToDecrypt = Convert.FromBase64String(base64Input);
+
+            var decryptEngine = new Pkcs1Encoding(new RsaEngine());
+
+            using (var txtreader = new StringReader(publicKey))
+            {
+                var keyParameter = (AsymmetricKeyParameter)new PemReader(txtreader).ReadObject();
+
+                decryptEngine.Init(false, keyParameter);
+            }
+
+            var decrypted = Encoding.UTF8.GetString(decryptEngine.ProcessBlock(bytesToDecrypt, 0, bytesToDecrypt.Length));
+            return decrypted;
+        }
+
+        public static string RsaEncryptWithPrivate(string clearText, string privateKey)
+        {
+            var bytesToEncrypt = Encoding.UTF8.GetBytes(clearText);
+
+            var encryptEngine = new Pkcs1Encoding(new RsaEngine());
+
+            using (var txtreader = new StringReader(privateKey))
+            {
+                var keyPair = (AsymmetricCipherKeyPair)new PemReader(txtreader).ReadObject();
+
+                encryptEngine.Init(true, keyPair.Private);
+            }
+
+            var encrypted = Convert.ToBase64String(encryptEngine.ProcessBlock(bytesToEncrypt, 0, bytesToEncrypt.Length));
+            return encrypted;
         }
     }
 }

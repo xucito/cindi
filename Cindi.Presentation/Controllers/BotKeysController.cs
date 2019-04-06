@@ -48,7 +48,7 @@ namespace Cindi.Presentation.Controllers
 
             return Ok(new HttpCommandResult<NewBotKeyVM>("", keyCreationResult, new NewBotKeyVM() {
                 BotName = key.Result.BotName,
-                EncryptedSecretIdKey = SecurityUtility.AsymmetricallyEncryptText(key.Result.PublicEncryptionKey, keyCreationResult.ObjectRefId)
+                IdKey = keyCreationResult.ObjectRefId
             }));
         }
     }

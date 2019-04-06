@@ -35,7 +35,8 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                 PublicEncryptionKey = request.PublicEncryptionKey,
                 BotName = request.BotKeyName,
                 Id = Guid.NewGuid(),
-                IsDisabled = false
+                IsDisabled = false,
+                Nonce = 0
             });
 
             return new CommandResult<string>()

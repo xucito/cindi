@@ -12,5 +12,6 @@ namespace Cindi.Domain.Entities.BotKeys
         public byte[] HashedIdKeySalt { get; set; }
         public string PublicEncryptionKey { get; set; }
         public bool IsDisabled { get; set; }
+        public double Nonce { get; set; } = 0;
     }
 }

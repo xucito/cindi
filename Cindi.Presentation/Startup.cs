@@ -107,19 +107,28 @@ namespace Cindi.Presentation
                     options.DefaultAuthenticateScheme = "smart";
                     options.DefaultChallengeScheme = "smart";
                 })
-                .AddPolicyScheme("smart","SMART",options =>
-                {
-                    options.ForwardDefaultSelector = context =>
-                    {
-                        var authHeader = context.Request.Headers["botKey"];
-                        if(authHeader.FirstOrDefault() != null)
-                        {
-                            return "bot";
-                        }
+                .AddPolicyScheme("smart", "SMART", options =>
+                  {
+                      options.ForwardDefaultSelector = context =>
+                      {
+                          var authHeader = context.Request.Headers["botKey"];
+                          if (authHeader.FirstOrDefault() != null)
+                          {
+                              return "bot";
+                          }
+                          else if(context.Request.Method == "OPTIONS")
+                          {
+                              return "options";
+                          }
+                          else if (context.Request.Path == "/api/bot-keys" && context.Request.Method == "POST")
+                          {
+                              return "options";
+                          }
 
-                        return "basic";
-                    };
-                })
+                          return "basic";
+                      };
+                  })
+                .AddScheme<AuthenticationSchemeOptions, OptionsAuthenticationHandler>("options", null)
                 .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("basic", null)
                 .AddScheme<AuthenticationSchemeOptions, BotAuthenticationHandler>("bot", null);
 
@@ -145,7 +154,6 @@ namespace Cindi.Presentation
             IMediator mediator,
             ILogger<Startup> logger)
         {
-
             var key = Configuration.GetValue<string>("EncryptionKey");
             if (key != null)
             {

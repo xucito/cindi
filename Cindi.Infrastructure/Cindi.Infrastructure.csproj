@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Cindi.Application\Cindi.Application.csproj" />
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
   </ItemGroup>
 

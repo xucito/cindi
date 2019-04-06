@@ -69,7 +69,8 @@ namespace Cindi.Presentation.Authentication
 
             var claims = new[] {
                 new Claim("username", user.Username.ToString()),
-                new Claim("id", user.Username.ToString())
+                new Claim("id", user.Username.ToString()),
+                new Claim("authenticationType", "user")
             };
             var identity = new ClaimsIdentity(claims, Scheme.Name);
             var principal = new ClaimsPrincipal(identity);

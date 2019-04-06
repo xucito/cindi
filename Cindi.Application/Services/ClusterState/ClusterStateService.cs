@@ -23,7 +23,11 @@ namespace Cindi.Application.Services.ClusterState
         private ILogger<ClusterStateService> _logger;
         private bool changeDetected = false;
         static readonly object _locker = new object();
-        public static SecureString _encryptionKey { get; set; }
+        public static string EncryptionKey
+        {
+            get { return _encryptionKey; }
+        }
+        private static string _encryptionKey { get; set; }
         private IMediator _mediator { get; set; }
         private Thread _initThread { get; set; }
         private static bool _initialized { get; set; }
@@ -56,6 +60,7 @@ namespace Cindi.Application.Services.ClusterState
 
             changeDetected = true;
             ForceStateSave();
+            InitializeSaveThread();
         }
 
         public bool IsEncryptionKeyValid(string key)
@@ -67,12 +72,7 @@ namespace Cindi.Application.Services.ClusterState
         {
             if(SecurityUtility.IsMatchingHash(key, state.EncryptionKeyHash, state.EncryptionKeySalt))
             {
-                _encryptionKey = new SecureString();
-
-                foreach (char c in key)
-                {
-                    _encryptionKey.AppendChar(c);
-                }
+                _encryptionKey = key;
             }
             else
             {
@@ -99,12 +99,7 @@ namespace Cindi.Application.Services.ClusterState
             state.EncryptionKeyHash = SecurityUtility.OneWayHash(passPhrase, salt);
             state.EncryptionKeySalt = salt;
 
-            _encryptionKey = new SecureString();
-
-            foreach (char c in passPhrase)
-            {
-                _encryptionKey.AppendChar(c);
-            }
+            _encryptionKey = passPhrase;
 
             //Initialize the cluster
             state.Initialized = true;
@@ -156,7 +151,7 @@ namespace Cindi.Application.Services.ClusterState
             }
         }
 
-        public void SaveState()
+        public void InitializeSaveThread()
         {
             if (_clusterRepository != null)
             {

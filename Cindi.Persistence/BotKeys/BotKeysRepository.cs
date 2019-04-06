@@ -48,6 +48,20 @@ namespace Cindi.Persistence.BotKeys
             return validUsers;
         }
 
+        public async Task<BotKey> UpdateBotKey (BotKey updatedKey)
+        {
+            var result = await _keys.ReplaceOneAsync((keys) => keys.Id == updatedKey.Id, updatedKey);
+
+            if(result.IsAcknowledged)
+            {
+                return updatedKey;
+            }
+            else
+            {
+                throw new Exception("Bot Key update failed.");
+            }
+        }
+
         public async Task<BotKey> GetBotKeyAsync(Guid id)
         {
             var keys = await _keys.FindAsync(u => u.Id == id);

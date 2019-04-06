@@ -7,7 +7,7 @@ namespace Cindi.Presentation.ViewModels
 {
     public class NewBotKeyVM
     {
-        public string EncryptedSecretIdKey { get; set; }
+        public string IdKey { get; set; }
         public string BotName { get; set; }
     }
 }

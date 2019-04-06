@@ -11,5 +11,6 @@ namespace Cindi.Application.Interfaces
         Task<BotKey> GetBotKeyAsync(Guid id);
         Task<List<BotKey>> GetBotKeysAsync(int size = 10, int page = 0);
         Task<BotKey> InsertBotKeyAsync(BotKey key);
+        Task<BotKey> UpdateBotKey(BotKey updatedKey);
     }
 }
