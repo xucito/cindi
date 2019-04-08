@@ -1,0 +1,22 @@
+{
+	"Name":"Fibonacci_stepTemplate",
+"Version":"0",
+   "AllowDynamicInputs" : false,
+   "Description" : null,
+   "InputDefinitions" : {
+	   "n-2" : {
+		   "Description" : "",
+		   "Type" : "int"
+	   },
+	   "n-1" : {
+		   "Description" : "",
+		   "Type" : "int"
+	   }
+   },
+   "OutputDefinitions" : {
+	   "n" : {
+		   "Description" : "",
+		   "Type" : "int"
+	   }
+   }
+}

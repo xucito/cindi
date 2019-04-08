@@ -1,0 +1,37 @@
+<div class="container">
+  <h1>Sequence Templates</h1>
+  <div class="table-bordered">
+    <mat-table #table [dataSource]="sequenceTemplates">
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.name }} </mat-cell>
+      </ng-container>
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="version">
+        <mat-header-cell *matHeaderCellDef> Version </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.version }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="visualize">
+        <mat-header-cell *matHeaderCellDef> </mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <button mat-icon-button [matMenuTriggerFor]="appMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
+      <mat-row
+        (click)="selectSequence(row)"
+        *matRowDef="let row; columns: columnsToDisplay"
+      ></mat-row>
+    </mat-table>
+  </div>
+
+  <mat-menu #appMenu="matMenu">
+    <button mat-menu-item>Visualize</button> <button mat-menu-item>Run</button>
+  </mat-menu>
+</div>

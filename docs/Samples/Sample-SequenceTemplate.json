@@ -1,0 +1,235 @@
+{
+	"Name" : "SimpleSequence",
+        "Version": "0",
+	"Description" : null,
+	"LogicBlocks" : [
+		{
+			"_id" : 0,
+			"Condition" : "OR",
+			"PrerequisiteSteps" : [ ],
+			"SubsequentSteps" : [
+				{
+					"Description" : null,
+					"StepTemplateId" : "Fibonacci_stepTemplate:0",
+					"Mappings" : [
+						{
+							"OutputReferences" : null,
+							"Description" : null,
+							"DefaultValue" : {
+								"Priority" : 99999999,
+								"Value" : 1
+							},
+							"StepInputId" : "n-1"
+						},
+						{
+							"OutputReferences" : null,
+							"Description" : null,
+							"DefaultValue" : {
+								"Priority" : 99999999,
+								"Value" : 1
+							},
+							"StepInputId" : "n-2"
+						}
+					],
+					"IsPriority" : false,
+					"StepRefId" : 0
+				}
+			]
+		},
+		{
+			"_id" : 0,
+			"Condition" : "AND",
+			"PrerequisiteSteps" : [
+				{
+					"StepRefId" : 0,
+					"Description" : null,
+					"StepTemplateReferenceId" : null,
+					"Status" : "successful",
+					"StatusCode" : 0
+				}
+			],
+			"SubsequentSteps" : [
+				{
+					"Description" : null,
+					"StepTemplateId" : "Fibonacci_stepTemplate:0",
+					"Mappings" : [
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 0,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-2"
+						},
+						{
+							"OutputReferences" : null,
+							"Description" : null,
+							"DefaultValue" : {
+								"Priority" : 99999999,
+								"Value" : 1
+							},
+							"StepInputId" : "n-1"
+						}
+					],
+					"IsPriority" : false,
+					"StepRefId" : 1
+				}
+			]
+		},
+		{
+			"_id" : 0,
+			"Condition" : "AND",
+			"PrerequisiteSteps" : [
+				{
+					"StepRefId" : 1,
+					"Description" : null,
+					"StepTemplateReferenceId" : null,
+					"Status" : "successful",
+					"StatusCode" : 0
+				}
+			],
+			"SubsequentSteps" : [
+				{
+					"Description" : null,
+					"StepTemplateId" : "Fibonacci_stepTemplate:0",
+					"Mappings" : [
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 1,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-2"
+						},
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 0,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-1"
+						}
+					],
+					"IsPriority" : false,
+					"StepRefId" : 2
+				}
+			]
+		},
+		{
+			"_id" : 0,
+			"Condition" : "AND",
+			"PrerequisiteSteps" : [
+				{
+					"StepRefId" : 2,
+					"Description" : null,
+					"StepTemplateReferenceId" : null,
+					"Status" : "successful",
+					"StatusCode" : 0
+				}
+			],
+			"SubsequentSteps" : [
+				{
+					"Description" : null,
+					"StepTemplateId" : "Fibonacci_stepTemplate:0",
+					"Mappings" : [
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 2,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-2"
+						},
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 1,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-1"
+						}
+					],
+					"IsPriority" : false,
+					"StepRefId" : 3
+				}
+			]
+		},
+		{
+			"_id" : 0,
+			"Condition" : "AND",
+			"PrerequisiteSteps" : [
+				{
+					"StepRefId" : 3,
+					"Description" : null,
+					"StepTemplateReferenceId" : null,
+					"Status" : "successful",
+					"StatusCode" : 0
+				}
+			],
+			"SubsequentSteps" : [
+				{
+					"Description" : null,
+					"StepTemplateId" : "Fibonacci_stepTemplate:0",
+					"Mappings" : [
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 3,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-2"
+						},
+						{
+							"OutputReferences" : [
+								{
+									"StepRefId" : 2,
+									"OutputId" : "n",
+									"Priority" : 0
+								}
+							],
+							"Description" : null,
+							"DefaultValue" : null,
+							"StepInputId" : "n-1"
+						}
+					],
+					"IsPriority" : false,
+					"StepRefId" : 4
+				}
+			]
+		}
+	],
+	"InputDefinitions" : {
+		"n-1" : {
+			"Description" : null,
+			"Type" : "int"
+		},
+		"n-2" : {
+			"Description" : null,
+			"Type" : "int"
+		}
+	}
+}

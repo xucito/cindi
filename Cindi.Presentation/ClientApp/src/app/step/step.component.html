@@ -1,0 +1,85 @@
+<div class="container">
+  <div *ngIf="IsNewStep">
+    <h1>New Step: {{ selectedTemplateName }}</h1>
+    <div *ngIf="inputs != null">
+      <app-forms [inputs]="inputs" (onSubmit)="submit($event)"></app-forms>
+    </div>
+  </div>
+
+  <div *ngIf="!IsNewStep && step != undefined">
+    <step-progress-bar [step]="step"></step-progress-bar>
+
+    <div *ngIf="inputs != null" class="row">
+      <div class="col-sm-6">
+        <mat-card>
+          <mat-card-header>
+            <!--<div mat-card-avatar class="example-header-image"></div> -->
+            <mat-card-title
+              ><h1>{{ step.name }}</h1></mat-card-title
+            >
+            <mat-card-subtitle>{{ step.stepTemplateId }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <app-forms [readOnly]="true" [inputs]="inputs"></app-forms>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="col-sm-6">
+        <div class="row">
+          <div class="col-sm-12">
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title><h1>Logs</h1></mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <ngx-codemirror
+                  [(ngModel)]="content"
+                  [options]="{
+                    lineNumbers: true,
+                    theme: 'material',
+                    mode: ''
+                  }"
+                ></ngx-codemirror>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title><h1>Journal</h1></mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <update-viewer [journal]="step.journal"></update-viewer>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <mat-card>
+              <mat-card-header>
+                <mat-card-title><h1>Output</h1></mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <table class="p-1">
+                  <tr *ngFor="let header of outputHeaders">
+                    <td>
+                      <span>{{ header }}</span>
+                    </td>
+                    <td>
+                      <span>
+                        {{ step.outputs[header] }}
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

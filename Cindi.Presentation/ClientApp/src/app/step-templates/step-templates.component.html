@@ -1,0 +1,27 @@
+<div class="container">
+  <br />
+  <h1>Step Templates</h1>
+  <div class="table-bordered">
+    <mat-table #table [dataSource]="templates">
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+        <mat-cell *matCellDef="let element">{{ element.name }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="version">
+        <mat-header-cell *matHeaderCellDef>Version</mat-header-cell>
+        <mat-cell *matCellDef="let element">{{ element.version }}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="start">
+        <mat-header-cell *matHeaderCellDef>Start</mat-header-cell>
+        <mat-cell *matCellDef="let element"> <button class="btn btn-primary" (click)="createStep(element.name, element.version)">Start</button> </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: columnsToDisplay"></mat-row>
+    </mat-table>
+  </div>
+  <button mat-button>Add Template</button>
+</div>
