@@ -2,6 +2,7 @@
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
@@ -30,17 +31,19 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public IStepTemplatesRepository _stepTemplatesRepository;
         public ISequenceTemplatesRepository _sequenceTemplateRepository;
         public ISequencesRepository _sequencesRepository;
-        public ClusterStateService _clusterStateService;
+        public IClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
+        private IMediator _mediator;
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             ISequenceTemplatesRepository sequenceTemplateRepository,
             ISequencesRepository sequencesRepository,
-            ClusterStateService clusterStateService,
+            IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
-            IOptionsMonitor<CindiClusterOptions> options
+            IOptionsMonitor<CindiClusterOptions> options,
+            IMediator mediator
             )
         {
             _stepsRepository = stepsRepository;
@@ -54,13 +57,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             {
                 _option = change;
             });
+            _mediator = mediator;
         }
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             ISequenceTemplatesRepository sequenceTemplateRepository,
             ISequencesRepository sequencesRepository,
-            ClusterStateService clusterStateService,
+            IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options
             )
@@ -80,8 +84,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             stopwatch.Start();
 
             var stepToComplete = await _stepsRepository.GetStepAsync(request.Id);
-
-
 
             if (stepToComplete.IsComplete)
             {
@@ -128,6 +130,23 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             if (!StepStatuses.IsCompleteStatus(request.Status))
             {
                 throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");
+            }
+
+            var stepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(stepToComplete.StepTemplateId);
+
+            //Encrypt outputs
+            List<string> keysToChange = new List<string>();
+            foreach (var output in request.Outputs)
+            {
+                if (output.Key == InputDataTypes.Secret)
+                {
+                    keysToChange.Add(output.Key);
+                }
+            }
+
+            foreach (var key in keysToChange)
+            {
+                request.Outputs[key] = SecurityUtility.SymmetricallyEncrypt((string)request.Outputs[key], ClusterStateService.GetEncryptionKey());
             }
 
             await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
@@ -343,6 +362,15 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 }
 
                                 //Add the step TODO, add step priority
+                                await _mediator.Send(new CreateStepCommand()
+                                {
+                                    StepTemplateId = newStep.StepTemplateId,
+                                    CreatedBy = SystemUsers.QUEUE_MANAGER,
+                                    Description = newStep.Description,
+                                    Inputs = newStep.Inputs,
+                                    Name = newStep.Name,
+                                    Tests = newStep.Tests
+                                });/*
                                 var newlyCreatedStep = await _stepsRepository.InsertStepAsync(newStep);//, null, (substep.IsPriority));
                                 await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
                                 {
@@ -360,9 +388,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                             Type = UpdateType.Override
                                         }
                                     }
-                                });
+                                });*/
                                 addedStep = true;
-                                await _stepsRepository.UpsertStepMetadataAsync(newlyCreatedStep.Id);
+                                //await _stepsRepository.UpsertStepMetadataAsync(newlyCreatedStep.Id);
                             }
                         }
                         _clusterStateService.UnlockLogicBlock("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock.Id);

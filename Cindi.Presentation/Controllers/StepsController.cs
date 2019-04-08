@@ -77,12 +77,11 @@ namespace Cindi.Presentation.Controllers
         [Route("assignment-requests")]
         public async Task<IActionResult> GetNextStep(AssignStepCommand command)
         {
-            command.Id = ClaimsUtility.GetId(User);
+            command.BotId = new Guid(ClaimsUtility.GetId(User));
             var result = await Mediator.Send(command);
             if (result.ObjectRefId != "")
             {
-                var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
-                return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
+                return Ok(new HttpCommandResult<Step>("step", result, result.Result));
             }
             else
             {

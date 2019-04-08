@@ -53,6 +53,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                             Size = 1000,
                             Status = StepStatuses.Suspended
                         });
+
                         totalSteps = steps.Count.Value;
                         stepPosition += steps.Count.Value;
                         page++;

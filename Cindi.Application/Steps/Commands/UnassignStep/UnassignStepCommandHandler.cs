@@ -45,7 +45,13 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
 
             if(step.Status != StepStatuses.Suspended)
             {
-                throw new InvalidStepStatusInputException("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
+                Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
+                return new CommandResult()
+                {
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    ObjectRefId = step.Id.ToString(),
+                    Type = CommandResultTypes.None
+                };
             }
 
            await  _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()

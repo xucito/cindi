@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Results;
+﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using MediatR;
 using System;
@@ -12,9 +13,9 @@ namespace Cindi.Application.Cluster.Queries.GetClusterState
 {
     public class GetClusterStateQueryHandler : IRequestHandler<GetClusterStateQuery, QueryResult<ClusterState>>
     {
-        ClusterStateService _clusterStateService;
+        IClusterStateService _clusterStateService;
 
-        public GetClusterStateQueryHandler(ClusterStateService clusterStateService)
+        public GetClusterStateQueryHandler(IClusterStateService clusterStateService)
         {
             _clusterStateService = clusterStateService;
         }

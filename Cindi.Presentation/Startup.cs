@@ -95,7 +95,8 @@ namespace Cindi.Presentation
             services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
             services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
             services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
-            services.AddSingleton<ClusterStateService>();
+            services.AddSingleton<IClusterStateService,ClusterStateService>();
+           // services.AddSingleton<ClusterStateService>();
             services.AddSingleton<ClusterMonitorService>();
 
 
@@ -149,7 +150,7 @@ namespace Cindi.Presentation
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app,
             IHostingEnvironment env,
-            ClusterStateService service,
+            IClusterStateService service,
             ClusterMonitorService monitor,
             IMediator mediator,
             ILogger<Startup> logger)

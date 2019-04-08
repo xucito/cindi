@@ -1,8 +1,11 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.StepTemplates;
+using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
@@ -14,18 +17,20 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Steps.Commands.CreateStep
 {
-    public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult>
+    public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
         private readonly IStepsRepository _stepsRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
+        private readonly IClusterStateService _clusterStateService;
 
-        public CreateStepCommandHandler(IStepsRepository stepsRepository, IStepTemplatesRepository steptemplatesRepository)
+        public CreateStepCommandHandler(IStepsRepository stepsRepository, IStepTemplatesRepository steptemplatesRepository, IClusterStateService service)
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = steptemplatesRepository;
+            _clusterStateService = service;
         }
 
-        public async Task<CommandResult> Handle(CreateStepCommand request, CancellationToken cancellationToken)
+        public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -37,12 +42,15 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
+            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests);
+
+            newStep.EncryptStepSecrets(EncryptionProtocol.AES256, resolvedTemplate, ClusterStateService.GetEncryptionKey());
+
             var step = await _stepsRepository.InsertStepAsync(
-                resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests)
+                newStep
                 );
 
-
-            await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
+            var update = new JournalEntry()
             {
                 SubjectId = step.Id,
                 ChainId = 0,
@@ -58,16 +66,22 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                         Type = UpdateType.Override
                     }
                 }
-            });
+            };
+
+
+            await _stepsRepository.InsertJournalEntryAsync(update);
+
+            step.Journal.Entries.Add(update);
 
             await _stepsRepository.UpsertStepMetadataAsync(step.Id);
 
             stopwatch.Stop();
-            return new CommandResult()
+            return new CommandResult<Step>()
             {
                 ObjectRefId = step.Id.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
-                Type = CommandResultTypes.Create
+                Type = CommandResultTypes.Create,
+                Result = step
             };
         }
     }

@@ -1,6 +1,10 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.StepTests;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
+using Cindi.Domain.Exceptions.Utility;
+using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using Cindi.Domain.ValueObjects.Journal;
 using Newtonsoft.Json;
@@ -11,10 +15,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Cindi.Domain.Utilities.SecurityUtility;
 
 namespace Cindi.Domain.Entities.Steps
 {
-    public class Step: TrackedEntity
+    public class Step : TrackedEntity
     {
         public Step()
         {
@@ -129,7 +134,10 @@ namespace Cindi.Domain.Entities.Steps
 
         public Journal Journal { get; set; }
 
-        public StepMetadata Metadata { get {
+        public StepMetadata Metadata
+        {
+            get
+            {
                 return new StepMetadata()
                 {
                     StepId = Id,
@@ -137,7 +145,8 @@ namespace Cindi.Domain.Entities.Steps
                     StepTemplateId = StepTemplateId,
                     CreatedOn = DateTime.UtcNow
                 };
-            } }
+            }
+        }
 
         public DateTime? SuspendedUntil
         {
@@ -145,7 +154,7 @@ namespace Cindi.Domain.Entities.Steps
             {
                 var lastAction = Journal.GetLatestAction("suspendedUntil");
 
-                if(lastAction == null)
+                if (lastAction == null)
                 {
                     return null;
                 }
@@ -156,6 +165,93 @@ namespace Cindi.Domain.Entities.Steps
                     return lastSuspension;
                 }
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="protocol"></param>
+        /// <param name="stepTemplate"></param>
+        /// <param name="key"></param>
+        /// <param name="usePublicKey">Only used for AES Encryption, false is private</param>
+        public void EncryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
+        {
+            List<string> keysToEncrypt = new List<string>();
+            foreach (var input in Inputs)
+            {
+                if (stepTemplate.GetInputType(input.Key) == InputDataTypes.Secret)
+                {
+                    keysToEncrypt.Add(input.Key);
+                }
+            }
+
+            switch (protocol)
+            {
+                case EncryptionProtocol.AES256:
+                    foreach (var key in keysToEncrypt)
+                    {
+                        Inputs[key] = SecurityUtility.SymmetricallyEncrypt((string)Inputs[key], encryptionKey);
+                    }
+                    break;
+                case EncryptionProtocol.RSA:
+                    if (usePublicKey)
+                    {
+                        foreach (var key in keysToEncrypt)
+                        {
+                            Inputs[key] = SecurityUtility.RsaEncryptWithPublic((string)Inputs[key], encryptionKey);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var key in keysToEncrypt)
+                        {
+                            Inputs[key] = SecurityUtility.RsaEncryptWithPrivate((string)Inputs[key], encryptionKey);
+                        }
+                    }
+                    break;
+                default:
+                    throw new InvalidEncryptionProtocolException();
+            }
+        }
+
+        public void DecryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
+        {
+            List<string> keysToEncrypt = new List<string>();
+            foreach (var input in Inputs)
+            {
+                if (stepTemplate.GetInputType(input.Key) == InputDataTypes.Secret)
+                {
+                    keysToEncrypt.Add(input.Key);
+                }
+            }
+
+            switch (protocol)
+            {
+                case EncryptionProtocol.AES256:
+                    foreach (var key in keysToEncrypt)
+                    {
+                        Inputs[key] = SecurityUtility.SymmetricallyDecrypt((string)Inputs[key], encryptionKey);
+                    }
+                    break;
+                case EncryptionProtocol.RSA:
+                    if (usePublicKey)
+                    {
+                        foreach (var key in keysToEncrypt)
+                        {
+                            Inputs[key] = SecurityUtility.RsaDecryptWithPublic((string)Inputs[key], encryptionKey);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var key in keysToEncrypt)
+                        {
+                            Inputs[key] = SecurityUtility.RsaDecryptWithPrivate((string)Inputs[key], encryptionKey);
+                        }
+                    }
+                    break;
+                default:
+                    throw new InvalidEncryptionProtocolException();
             }
         }
     }

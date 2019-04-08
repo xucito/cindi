@@ -1,4 +1,5 @@
 ﻿using Cindi.Application.Results;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
@@ -8,7 +9,7 @@ using System.Text;
 
 namespace Cindi.Application.Steps.Commands.CreateStep
 {
-    public class CreateStepCommand: IRequest<CommandResult>
+    public class CreateStepCommand: IRequest<CommandResult<Step>>
     {
         public string Name { get; set; }
         public string Description { get; set; }

@@ -18,13 +18,13 @@ namespace Cindi.Application.Cluster.Commands.InitializeCluster
         IUsersRepository _usersRepository;
         ILogger<InitializeClusterCommandHandler> _logger;
         private IMediator _mediator;
-        private ClusterStateService _clusterState;
+        private IClusterStateService _clusterState;
 
         public InitializeClusterCommandHandler(
         ILogger<InitializeClusterCommandHandler> logger,
         IUsersRepository usersRepository,
         IMediator mediator,
-        ClusterStateService clusterState)
+        IClusterStateService clusterState)
         {
             _mediator = mediator;
             _usersRepository = usersRepository;

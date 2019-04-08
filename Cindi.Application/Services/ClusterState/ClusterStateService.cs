@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace Cindi.Application.Services.ClusterState
 {
-    public class ClusterStateService
+    public class ClusterStateService : IClusterStateService
     {
         private ClusterState state;
         private IClusterRepository _clusterRepository;
@@ -23,10 +23,6 @@ namespace Cindi.Application.Services.ClusterState
         private ILogger<ClusterStateService> _logger;
         private bool changeDetected = false;
         static readonly object _locker = new object();
-        public static string EncryptionKey
-        {
-            get { return _encryptionKey; }
-        }
         private static string _encryptionKey { get; set; }
         private IMediator _mediator { get; set; }
         private Thread _initThread { get; set; }
@@ -63,6 +59,11 @@ namespace Cindi.Application.Services.ClusterState
             InitializeSaveThread();
         }
 
+        public static Func<string> GetEncryptionKey = () =>
+        {
+            return _encryptionKey;
+        };
+
         public bool IsEncryptionKeyValid(string key)
         {
             return SecurityUtility.IsMatchingHash(key, state.EncryptionKeyHash, state.EncryptionKeySalt);
@@ -79,6 +80,11 @@ namespace Cindi.Application.Services.ClusterState
                 throw new InvalidPrivateKeyException("Key is not matching the cluster's decryption key.");
             }
         }
+
+        /*public string GetEncryptionKey()
+        {
+            return EncryptionKey;
+        }*/
 
         public void SetClusterName(string newName)
         {

@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.SequencesTemplates;
@@ -25,14 +26,17 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
         private ISequencesRepository _sequencesRepository;
         private ISequenceTemplatesRepository _sequenceTemplatesRepository;
         private IStepsRepository _stepsRepository;
+        private IMediator _mediator;
 
         public CreateSequenceCommandHandler(ISequencesRepository sequencesRepository,
             ISequenceTemplatesRepository sequenceTemplatesRepository,
-            IStepsRepository stepsRepository)
+            IStepsRepository stepsRepository,
+            IMediator mediator)
         {
             _sequencesRepository = sequencesRepository;
             _sequenceTemplatesRepository = sequenceTemplatesRepository;
             _stepsRepository = stepsRepository;
+            _mediator = mediator;
         }
         public async Task<CommandResult> Handle(CreateSequenceCommand request, CancellationToken cancellationToken)
         {
@@ -116,9 +120,17 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                         }
                     }
 
+                    await _mediator.Send(new CreateStepCommand()
+                    {
+                        StepTemplateId = newStep.StepTemplateId,
+                        CreatedBy = SystemUsers.QUEUE_MANAGER,
+                        Description = newStep.Description,
+                        Inputs = newStep.Inputs,
+                        Name = newStep.Name,
+                        Tests = newStep.Tests
+                    });
 
-
-                    newStep = await _stepsRepository.InsertStepAsync(newStep);
+                  /*  newStep = await _stepsRepository.InsertStepAsync(newStep);
 
                     await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
                     {
@@ -138,7 +150,7 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                         }
                     });
 
-                    await _stepsRepository.UpsertStepMetadataAsync(newStep.Id);
+                    await _stepsRepository.UpsertStepMetadataAsync(newStep.Id); */
                 }
             }
 

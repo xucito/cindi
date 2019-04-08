@@ -192,6 +192,18 @@ namespace Cindi.Domain.Entities.StepTemplates
             return newStep;
         }
 
+        public string GetInputType(string input)
+        {
+            foreach(var inputDef in InputDefinitions)
+            {
+                if(inputDef.Key.ToLower() == input.ToLower())
+                {
+                    return inputDef.Value.Type;
+                }
+            }
+            throw new InputDefinitionNotFoundException("Input " + input + " does not exist in step template " + Id);
+        }
+
         private bool IsStepInputValid(KeyValuePair<string, object> input)
         {
             try

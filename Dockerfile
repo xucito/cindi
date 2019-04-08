@@ -33,7 +33,32 @@ RUN dotnet publish -c Release -o out Cindi.Presentation.csproj
 
 FROM base AS final
 
+# Configure mongodb
+RUN echo nameserver 8.8.8.8 > /etc/resolv.conf
+
+RUN apt update
+
+RUN apt install gnupg -y
+
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+
+RUN echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+
+RUN apt-get update
+
+RUN apt-get install -y mongodb-org
+
+COPY ./docker/startup.sh /etc/init.d/startup.sh
+
+#RUN awk '{ sub("\r$", ""); print }' /etc/init.d/startup.sh > /etc/init.d/startup.sh
+
+RUN chmod +x /etc/init.d/startup.sh && mkdir /data && mkdir /data/db
+
 WORKDIR /app
 COPY --from=build /app/out .
 
-ENTRYPOINT ["dotnet", "Cindi.Presentation.dll"]
+#CMD /etc/init.d/startup.sh
+#ENTRYPOINT ["dotnet", "Cindi.Presentation.dll"]
+ENTRYPOINT ["/etc/init.d/startup.sh"]
+
+#CMD ["sleep", "1d"]

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.BotKeys.Commands.CreateBotKeyCommand;
 using Cindi.Application.BotKeys.Queries.GetBotKey;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Utilities;
@@ -21,8 +22,8 @@ namespace Cindi.Presentation.Controllers
     [AllowAnonymous]
     public class BotKeysController : BaseController
     {
-        ClusterStateService _clusterState;
-        public BotKeysController(ILoggerFactory logger, ClusterStateService clusterState) : base(logger.CreateLogger<BotKeysController>())
+        IClusterStateService _clusterState;
+        public BotKeysController(ILoggerFactory logger, IClusterStateService clusterState) : base(logger.CreateLogger<BotKeysController>())
         {
             _clusterState = clusterState;
         }

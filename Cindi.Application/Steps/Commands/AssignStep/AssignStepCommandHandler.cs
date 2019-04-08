@@ -5,6 +5,7 @@ using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
+using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
@@ -17,18 +18,24 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Steps.Commands.AssignStep
 {
-    public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, CommandResult>
+    public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, CommandResult<Step>>
     {
         private readonly IStepsRepository _stepsRepository;
-        private readonly ClusterStateService _clusterStateService;
-
-        public AssignStepCommandHandler(IStepsRepository stepsRepository, ClusterStateService stateService)
+        private readonly IClusterStateService _clusterStateService;
+        private IStepTemplatesRepository _stepTemplateRepository;
+        private IBotKeysRepository _botKeysRepository;
+        public AssignStepCommandHandler(
+            IStepsRepository stepsRepository,
+            IClusterStateService stateService,
+            IStepTemplatesRepository stepTemplateRepository,
+            IBotKeysRepository botKeysRepository)
         {
             _stepsRepository = stepsRepository;
             _clusterStateService = stateService;
-
+            _stepTemplateRepository = stepTemplateRepository;
+            _botKeysRepository = botKeysRepository;
         }
-        public async Task<CommandResult> Handle(AssignStepCommand request, CancellationToken cancellationToken)
+        public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -61,7 +68,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                 CreatedOn = DateTime.UtcNow,
                                 ChainId = unassignedStep.Journal.GetNextChainId(),
                                 Updates = new List<Domain.ValueObjects.Update>()
-                        {
+                            {
                             new Update()
                             {
                                 Type = UpdateType.Override,
@@ -88,17 +95,30 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 }
                 while (!assignedStepSuccessfully);
 
+                if (unassignedStep != null)
+                {
+                    var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
+                    var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
+
+                    //Decrypt the step
+                    unassignedStep.DecryptStepSecrets(EncryptionProtocol.AES256, template, ClusterStateService.GetEncryptionKey());
+
+                    //Encrypt the step
+                    unassignedStep.EncryptStepSecrets(EncryptionProtocol.RSA, template, botkey.PublicEncryptionKey, true);
+                }
+
                 stopwatch.Stop();
-                return new CommandResult()
+                return new CommandResult<Step>()
                 {
                     ObjectRefId = unassignedStep != null ? unassignedStep.Id.ToString() : "",
                     ElapsedMs = stopwatch.ElapsedMilliseconds,
-                    Type = CommandResultTypes.Update
+                    Type = CommandResultTypes.Update,
+                    Result = unassignedStep != null ? unassignedStep : null
                 };
             }
             else
             {
-                return new CommandResult()
+                return new CommandResult<Step>()
                 {
                     ObjectRefId = "",
                     ElapsedMs = stopwatch.ElapsedMilliseconds,

@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Results;
+﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Exceptions.Utility;
 using MediatR;
@@ -13,9 +14,9 @@ namespace Cindi.Application.Cluster.Commands.SetEncryptionKey
 {
     public class SetEncryptionKeyCommandHandler : IRequestHandler<SetEncryptionKeyCommand, CommandResult>
     {
-        ClusterStateService _clusterStateService;
+        IClusterStateService _clusterStateService;
 
-        public SetEncryptionKeyCommandHandler(ClusterStateService clusterStateService)
+        public SetEncryptionKeyCommandHandler(IClusterStateService clusterStateService)
         {
             _clusterStateService = clusterStateService;
         }

@@ -93,7 +93,6 @@ namespace Cindi.Persistence.Steps
 
             // Do one more inmemory check
             return allSteps.Where(s => status == null ? true : s.Status == status).ToList();
-
         }
 
         public async Task<List<Step>> GetStepsAsync(Guid[] stepIds)

@@ -3,6 +3,7 @@ using Cindi.Application.Sequences.Commands.CreateSequence;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Test.Global.TestData;
+using MediatR;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,8 @@ namespace Cindi.Application.Tests.Sequences.Commands
 {
     public class CreateSequenceCommandHandler_tests
     {
+        Mock<IMediator> _mediator = new Mock<IMediator>();
+
         [Fact]
         public async void DetectMissingSequenceTemplate()
         {
@@ -30,7 +33,7 @@ namespace Cindi.Application.Tests.Sequences.Commands
             sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
 
-            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object);
+            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, _mediator.Object);
 
             await handler.Handle(new CreateSequenceCommand()
             {
@@ -52,7 +55,7 @@ namespace Cindi.Application.Tests.Sequences.Commands
             sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
 
-            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object);
+            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, _mediator.Object);
 
             await Assert.ThrowsAsync<MissingInputException>(async () => await handler.Handle(new CreateSequenceCommand()
             {
