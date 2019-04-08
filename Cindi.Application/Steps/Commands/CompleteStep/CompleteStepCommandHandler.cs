@@ -134,6 +134,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             var stepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(stepToComplete.StepTemplateId);
 
+            if(request.Outputs == null)
+            {
+                request.Outputs = new Dictionary<string, object>();
+            }
+
             //Encrypt outputs
             List<string> keysToChange = new List<string>();
             foreach (var output in request.Outputs)
