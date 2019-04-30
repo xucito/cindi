@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using AutoMapper;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,8 @@ namespace Cindi.Presentation.Controllers
     public abstract class BaseController : Controller
     {
         private IMediator _mediator;
+        private IMapper _mapper;
+        protected IMapper Mapper => _mapper ?? (_mapper = (IMapper)HttpContext.RequestServices.GetService(typeof(IMapper)));
 
         protected IMediator Mediator => _mediator ?? (_mediator = (IMediator)HttpContext.RequestServices.GetService(typeof(IMediator)));
 

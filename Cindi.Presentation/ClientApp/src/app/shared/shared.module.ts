@@ -9,7 +9,9 @@ import {
   MatProgressBarModule,
   MatListModule,
   MatFormFieldModule,
-  MatProgressSpinnerModule
+  MatProgressSpinnerModule,
+  MatDialogModule,
+  MatBottomSheetModule
 } from "@angular/material";
 import { MatCardModule } from "@angular/material/card";
 import { SequenceVisualizationComponent } from "./components/sequence-visualization/sequence-visualization.component";
@@ -27,6 +29,8 @@ import "codemirror/mode/shell/shell";
 import "./modes/console";
 import { StepProgressBarComponent } from "./components/step-progress-bar/step-progress-bar.component";
 import { UpdateViewerComponent } from "./components/update-viewer/update-viewer.component";
+import { SecretModalComponent } from "./components/modals/secret-modal/secret-modal.component";
+import { AddUsersModalComponent } from './components/modals/add-users-modal/add-users-modal.component';
 
 @NgModule({
   imports: [
@@ -43,7 +47,9 @@ import { UpdateViewerComponent } from "./components/update-viewer/update-viewer.
     MatProgressBarModule,
     ReactiveFormsModule,
     CodemirrorModule,
-    MatListModule
+    MatListModule,
+    MatBottomSheetModule,
+    MatDialogModule
   ],
   exports: [
     SequenceTemplateVisualizationComponent,
@@ -60,7 +66,10 @@ import { UpdateViewerComponent } from "./components/update-viewer/update-viewer.
     StepProgressBarComponent,
     UpdateViewerComponent,
     MatFormFieldModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatBottomSheetModule,
+    SecretModalComponent,
+    MatDialogModule
     //MatSidenavModule
   ],
   declarations: [
@@ -70,7 +79,10 @@ import { UpdateViewerComponent } from "./components/update-viewer/update-viewer.
     FormsComponent,
     InputComponent,
     StepProgressBarComponent,
-    UpdateViewerComponent
-  ]
+    UpdateViewerComponent,
+    SecretModalComponent,
+    AddUsersModalComponent
+  ],
+  entryComponents: []
 })
 export class SharedModule {}

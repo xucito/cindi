@@ -7,6 +7,7 @@ import { AppStateService } from "../services/app-state.service";
   providedIn: "root"
 })
 export class AuthenticationService {
+
   constructor(private http: HttpClient, private appState: AppStateService) {}
 
   login(username: string, password: string) {
@@ -18,7 +19,7 @@ export class AuthenticationService {
     };
 
     return this.http
-      .get<any>(environment.apiUrl + "/api/users", requestOptions)
+      .get<any>(environment.apiUrl + "/api/users/me", requestOptions)
       .pipe(
         map(result => {
           let user = result.result;
@@ -26,8 +27,9 @@ export class AuthenticationService {
           if (user) {
             // store user details and basic auth credentials in local storage
             // to keep user logged in between page refreshes
-            user.authdata = window.btoa(username + ":" + password);
+            let AuthData = window.btoa(username + ":" + password);
             localStorage.setItem("currentUser", JSON.stringify(user));
+            localStorage.setItem("authToken", AuthData);
             this.appState.setCurrentUser(user);
           }
 
@@ -39,5 +41,6 @@ export class AuthenticationService {
   logout() {
     // remove user from local storage to log user out
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("authToken");
   }
 }

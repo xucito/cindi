@@ -87,7 +87,9 @@ namespace Cindi.Domain.Entities.StepTemplates
                 return false;
             }
 
-            if ((stepTemplate.OutputDefinitions == null && OutputDefinitions == null)|| (stepTemplate.OutputDefinitions.Count() != OutputDefinitions.Count()))
+            if ((stepTemplate.OutputDefinitions == null && OutputDefinitions != null) ||
+                (stepTemplate.OutputDefinitions != null && OutputDefinitions == null)
+                || (stepTemplate.OutputDefinitions.Count() != OutputDefinitions.Count()))
             {
                 exception = new ConflictingStepTemplateException("Found existing template with conflicting inputs, the number of inputs is different.");
                 return false;
@@ -173,11 +175,11 @@ namespace Cindi.Domain.Entities.StepTemplates
 
                     if (AllowDynamicInputs && !InputDefinitions.ContainsKey(input.Key))
                     {
-                        newStep.Inputs.Add(input.Key, input.Value);
+                        newStep.Inputs.Add(input.Key.ToLower(), input.Value);
                     }
                     else
                     {
-                        newStep.Inputs.Add(input.Key, input.Value);
+                        newStep.Inputs.Add(input.Key.ToLower(), input.Value);
                     }
                 }
             }

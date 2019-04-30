@@ -2,7 +2,7 @@
   <form (ngSubmit)="submit()" [formGroup]="form" >
  
     <div *ngFor="let input of inputs" class="form-row">
-      <app-input [readOnly]="readOnly" [input]="input" [form]="form" class="w-100"></app-input>
+      <app-input (onInputAction)="actionInput($event)" [readOnly]="readOnly" [input]="input" [form]="form" class="w-100"></app-input>
     </div>
  
     <div class="form-row" *ngIf="!readOnly">

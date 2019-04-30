@@ -6,10 +6,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Cindi.Application.Users.Commands.CreateUserCommand;
 using Cindi.Application.Users.Queries.GetUserQuery;
+using Cindi.Application.Users.Queries.GetUsers;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
 using Cindi.Presentation.Utility;
+using Cindi.Presentation.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -24,13 +26,15 @@ namespace Cindi.Presentation.Controllers
         {
 
         }
+
         // GET: api/<controller>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(int page = 0, int size = 100)
         {
             var username = ClaimsUtility.GetUsername(User);
-            var user = await Mediator.Send(new GetUserQuery() {
-                Username = username
+            var user = await Mediator.Send(new GetUsersQuery() {
+                Page = page,
+                Size = size
             });
 
             return Ok(user);
@@ -43,15 +47,32 @@ namespace Cindi.Presentation.Controllers
             return "value";
         }
 
+        [HttpGet("me")]
+        public async Task<IActionResult> Get()
+        {
+            var username = ClaimsUtility.GetUsername(User);
+            var user = await Mediator.Send(new GetUserQuery()
+            {
+                Username = username
+            });
+
+            return Ok(new HttpQueryResult<User, UserVM>(user,Mapper.Map<UserVM>(user.Result)));
+        }
+
         // POST api/<controller>
         [HttpPost]
-        public async Task<IActionResult> Post(CreateUserCommand command)
+        public async Task<IActionResult> Post(CreateUserVM request)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             try
             {
-                command.CreatedBy = ClaimsUtility.GetId(User);
+                var command = new CreateUserCommand()
+                {
+                    Username = request.Username,
+                    Password = request.Password,
+                    CreatedBy = ClaimsUtility.GetId(User)
+                };
                 var result = await Mediator.Send(command);
                 return Ok(new HttpCommandResult<User>("user", result, null));
             }

@@ -31,6 +31,11 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
+                if(command.OutputDefinitions == null)
+                {
+                    command.OutputDefinitions = new Dictionary<string, Domain.ValueObjects.DynamicDataDescription>();
+                }
+
                 command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
                 return Ok(new HttpCommandResult<StepTemplate>("/api/steptemplates/" + command.Name + "/" + command.Version, result, null));

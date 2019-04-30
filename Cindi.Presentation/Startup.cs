@@ -42,6 +42,7 @@ using Cindi.Application.Cluster.Commands.InitializeCluster;
 using Cindi.Persistence.BotKeys;
 using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
+using AutoMapper;
 
 namespace Cindi.Presentation
 {
@@ -65,7 +66,7 @@ namespace Cindi.Presentation
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             // services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
             // services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
-
+            services.AddAutoMapper();
             services.AddMvc(options =>
             {
                 options.Conventions.Add(new RouteTokenTransformerConvention(
@@ -144,6 +145,7 @@ namespace Cindi.Presentation
                                                                         .AllowAnyMethod()
                                                                          .AllowAnyHeader()));
 
+
             BaseRepository.RegisterClassMaps();
         }
 
@@ -171,16 +173,27 @@ namespace Cindi.Presentation
                         logger.LogError("Failed to apply stored key. Key does not match registered encryption hash.");
                     }
                 }
-                else
+            }
+
+
+            if (!ClusterStateService.Initialized)
+            {
+                if (key != null)
                 {
                     logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
-                    var setPassword = Configuration.GetValue<string>("DefaultPassword");
-                    mediator.Send(new InitializeClusterCommand()
-                    {
-                        DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
-                        Name = Configuration.GetValue<string>("ClusterName")
-                    });
+                    service.SetEncryptionKey(key);
                 }
+                else
+                {
+                    logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
+                }
+
+                var setPassword = Configuration.GetValue<string>("DefaultPassword");
+                mediator.Send(new InitializeClusterCommand()
+                {
+                    DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                    Name = Configuration.GetValue<string>("ClusterName")
+                });
             }
 
 

@@ -24,10 +24,9 @@ namespace Cindi.Application.Services.ClusterState
         private bool changeDetected = false;
         static readonly object _locker = new object();
         private static string _encryptionKey { get; set; }
-        private IMediator _mediator { get; set; }
+        //private IMediator _mediator { get; set; }
         private Thread _initThread { get; set; }
-        private static bool _initialized { get; set; }
-        public static bool Initialized { get { return _initialized; } }
+        public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
 
         public ClusterStateService(IClusterRepository clusterRepository, ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider)
@@ -37,7 +36,7 @@ namespace Cindi.Application.Services.ClusterState
 
             state = _clusterRepository.GetClusterState().GetAwaiter().GetResult();
 
-            _initialized = state == null ? false : state.Initialized;
+            Initialized = state == null ? false : state.Initialized;
 
             _logger = logger;
 
@@ -51,8 +50,8 @@ namespace Cindi.Application.Services.ClusterState
                 Console.WriteLine("Existing cluster state found with name " + state.Id + ". Loading existing state.");
             }
 
-            var sp = serviceProvider.CreateScope().ServiceProvider;
-            _mediator = sp.GetService<IMediator>();
+            //var sp = serviceProvider.CreateScope().ServiceProvider;
+           // _mediator = sp.GetService<IMediator>();
 
             changeDetected = true;
             ForceStateSave();
@@ -71,13 +70,20 @@ namespace Cindi.Application.Services.ClusterState
 
         public void SetEncryptionKey(string key)
         {
-            if(SecurityUtility.IsMatchingHash(key, state.EncryptionKeyHash, state.EncryptionKeySalt))
+            if (state.EncryptionKeyHash == null)
             {
-                _encryptionKey = key;
+                GenerateEncryptionKey(key);
             }
             else
             {
-                throw new InvalidPrivateKeyException("Key is not matching the cluster's decryption key.");
+                if (SecurityUtility.IsMatchingHash(key, state.EncryptionKeyHash, state.EncryptionKeySalt))
+                {
+                    _encryptionKey = key;
+                }
+                else
+                {
+                    throw new InvalidPrivateKeyException("Key is not matching the cluster's decryption key.");
+                }
             }
         }
 
@@ -91,15 +97,15 @@ namespace Cindi.Application.Services.ClusterState
             state.Id = newName;
             ForceStateSave();
         }
-        
-        public string GenerateEncryptionKey()
+
+        public string GenerateEncryptionKey(string key)
         {
             if(state.EncryptionKeyHash != null)
             {
                 throw new InvalidClusterStateException("Encryption key already exists.");
             }
 
-            var passPhrase = SecurityUtility.RandomString(32, false);
+            var passPhrase = key == null ? SecurityUtility.RandomString(32, false): key;
             var salt = SecurityUtility.GenerateSalt(128);
 
             state.EncryptionKeyHash = SecurityUtility.OneWayHash(passPhrase, salt);
@@ -109,7 +115,6 @@ namespace Cindi.Application.Services.ClusterState
 
             //Initialize the cluster
             state.Initialized = true;
-            _initialized = true;
             ForceStateSave();
 
             return passPhrase;

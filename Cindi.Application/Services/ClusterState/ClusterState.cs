@@ -16,7 +16,7 @@ namespace Cindi.Application.Services.ClusterState
         public string EncryptionKeyHash { get; set; }
         public byte[] EncryptionKeySalt { get; set; }
 
-        public bool AllowAutoRegistration { get; set; }
+        public bool AllowAutoRegistration { get; set; } = true;
         public bool Initialized { get; set; } = false;
     }
 }

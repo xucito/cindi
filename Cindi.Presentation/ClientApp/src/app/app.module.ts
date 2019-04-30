@@ -24,6 +24,10 @@ import { LoginComponent } from "./login/login.component";
 import { AuthGuard } from "./auth/auth.guard";
 import { BasicAuthInterceptor } from "./auth/basic-auth.interceptor";
 import { ErrorInterceptor } from "./auth/error.interceptor";
+import { SecretModalComponent } from "./shared/components/modals/secret-modal/secret-modal.component";
+import { MatDialogRef, MatDialogModule } from "@angular/material";
+import { UsersComponent } from "./users/users.component";
+import { AddUsersModalComponent } from "./shared/components/modals/add-users-modal/add-users-modal.component";
 
 @NgModule({
   declarations: [
@@ -38,13 +42,15 @@ import { ErrorInterceptor } from "./auth/error.interceptor";
     SequenceComponent,
     StepComponent,
     StatusCardComponent,
-    LoginComponent
+    LoginComponent,
+    UsersComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: "ng-cli-universal" }),
     HttpClientModule,
     FormsModule,
     SharedModule,
+    MatDialogModule,
     RouterModule.forRoot([
       {
         path: "",
@@ -85,6 +91,10 @@ import { ErrorInterceptor } from "./auth/error.interceptor";
           { path: ":id", component: SequenceTemplateComponent }
         ],
         canActivate: [AuthGuard]
+      },
+      {
+        path: "users",
+        component: UsersComponent
       }
     ]),
     BrowserAnimationsModule
@@ -102,8 +112,10 @@ import { ErrorInterceptor } from "./auth/error.interceptor";
       provide: HTTP_INTERCEPTORS,
       useClass: ErrorInterceptor,
       multi: true
-    }
+    },
+    { provide: MatDialogRef, useValue: {} }
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  entryComponents: [SecretModalComponent, AddUsersModalComponent]
 })
 export class AppModule {}

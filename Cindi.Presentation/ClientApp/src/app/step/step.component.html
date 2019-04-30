@@ -2,7 +2,7 @@
   <div *ngIf="IsNewStep">
     <h1>New Step: {{ selectedTemplateName }}</h1>
     <div *ngIf="inputs != null">
-      <app-forms [inputs]="inputs" (onSubmit)="submit($event)"></app-forms>
+      <app-forms [inputs]="inputs" (onInputAction)="actionInput($event)" (onSubmit)="submit($event)"></app-forms>
     </div>
   </div>
 
@@ -20,7 +20,7 @@
             <mat-card-subtitle>{{ step.stepTemplateId }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <app-forms [readOnly]="true" [inputs]="inputs"></app-forms>
+            <app-forms [readOnly]="true" (onInputAction)="actionInput($event)" [inputs]="inputs"></app-forms>
           </mat-card-content>
         </mat-card>
       </div>
@@ -39,6 +39,7 @@
                     theme: 'material',
                     mode: ''
                   }"
+                  [preserveScrollPosition]="true"
                 ></ngx-codemirror>
               </mat-card-content>
             </mat-card>

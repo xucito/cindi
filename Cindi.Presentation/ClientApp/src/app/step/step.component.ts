@@ -5,6 +5,10 @@ import { Subscription } from "rxjs";
 import { InputBase } from "../shared/components/form/input/input-base";
 import { ConvertStepTemplateToInputs, IsStepComplete } from "../shared/utility";
 import { FormsComponent } from "../shared/components/form/form.component";
+import { AppStateService } from "../services/app-state.service";
+import { InputAction } from "../shared/components/form/input/input-action";
+import { MatBottomSheet, MatDialog } from "@angular/material";
+import { SecretModalComponent } from "../shared/components/modals/secret-modal/secret-modal.component";
 
 @Component({
   selector: "app-step",
@@ -38,14 +42,21 @@ export class StepComponent implements OnInit, OnDestroy {
   params$: Subscription;
 
   run$;
+  currentUser: string;
+  currentUser$: Subscription;
   @ViewChild(FormsComponent)
   form: FormsComponent;
   clonedId: string;
   constructor(
     private _route: ActivatedRoute,
     private _router: Router,
-    private _nodeData: NodeDataService
+    private _nodeData: NodeDataService,
+    private _appStateService: AppStateService,
+    public dialog: MatDialog
   ) {
+    this.currentUser$ = _appStateService.currentUser.subscribe(user => {
+      this.currentUser = _appStateService.currentUser.value;
+    });
     this.params$ = _route.params.subscribe(p => {
       this.selectedId = p.id;
       if (this.selectedId == "new") {
@@ -68,7 +79,8 @@ export class StepComponent implements OnInit, OnDestroy {
                 .subscribe(stepResult => {
                   this.inputs = ConvertStepTemplateToInputs(
                     this.stepTemplate,
-                    stepResult.result
+                    stepResult.result,
+                    this.currentUser
                   );
                 });
             } else {
@@ -81,10 +93,10 @@ export class StepComponent implements OnInit, OnDestroy {
           .subscribe(stepResult => {
             this.step = stepResult.result;
             const _thisObject = this;
-            this.outputHeaders = this.getOutputKeys(this.step)
+            this.outputHeaders = this.getOutputKeys(this.step);
             this.run$ = setInterval(function() {
               _thisObject.loadLogs();
-              this.outputHeaders = this.getOutputKeys(this.step)
+              this.outputHeaders = this.getOutputKeys(this.step);
               console.log("Just refreshed steps");
             }, 2000);
             this.$StepTemplate = _nodeData
@@ -97,23 +109,23 @@ export class StepComponent implements OnInit, OnDestroy {
                 this.stepTemplate = result.result;
                 this.inputs = ConvertStepTemplateToInputs(
                   this.stepTemplate,
-                  this.step
+                  this.step,
+                  this.currentUser
                 );
               });
           });
       }
     });
   }
-outputHeaders: string[] = [];
+  outputHeaders: string[] = [];
   payload: any;
 
   submission$: Subscription;
 
-  getOutputKeys(step: any): string[]
-  {
+  getOutputKeys(step: any): string[] {
     let outputs = [];
-    for (let key of Object.keys(step.outputs)) { 
-      outputs.push(key)
+    for (let key of Object.keys(step.outputs)) {
+      outputs.push(key);
     }
     return outputs;
   }
@@ -153,4 +165,22 @@ outputHeaders: string[] = [];
 
   _thisObject;
   ngOnInit() {}
+
+  actionInput(event: InputAction) {
+    switch (event.action) {
+      case "unencrypt":
+        this._nodeData.GetSecret(this.clonedId == undefined ? this.step.id: this.clonedId, event.inputId).subscribe(
+          (result) => {
+            console.log(event);
+            const dialogRef = this.dialog.open(SecretModalComponent, {
+              width: '250px',
+              data: {
+                secret: result.result
+              }
+            });
+          }
+        )
+        break;
+    }
+  }
 }

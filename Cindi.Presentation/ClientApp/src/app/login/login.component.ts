@@ -18,11 +18,9 @@ export class LoginComponent implements OnInit {
     private route: ActivatedRoute,
     private appState: AppStateService
   ) {
-    this.params$ = route.queryParams.subscribe(
-      (params) => {
-        this.redirectUrl = params['returnUrl'];
-      }
-    )
+    this.params$ = route.queryParams.subscribe(params => {
+      this.redirectUrl = params["returnUrl"];
+    });
   }
   username: string;
   password: string;
@@ -32,7 +30,7 @@ export class LoginComponent implements OnInit {
   login(): void {
     this.login$ = this.auth.login(this.username, this.password).subscribe(
       result => {
-        this.router.navigate([this.redirectUrl])
+        this.router.navigate([this.redirectUrl]);
       },
       err => {
         alert("Invalid credentials");

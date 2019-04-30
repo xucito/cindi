@@ -39,6 +39,11 @@
         </a>
       </li>
       <li class="nav-item">
+        <a [routerLink]="['users']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Users
+        </a>
+      </li>
+      <li class="nav-item">
         <a [routerLink]="['sequence-templates']" (click)="collapse()">
           <i class="material-icons">
             account_circle

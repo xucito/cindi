@@ -2,6 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter } from "@angular/core";
 import { InputControlServiceService } from "./input-control-service.service";
 import { InputBase } from "./input/input-base";
 import { FormGroup } from "@angular/forms";
+import { InputAction } from "./input/input-action";
 
 @Component({
   selector: "app-forms",
@@ -11,6 +12,7 @@ import { FormGroup } from "@angular/forms";
 })
 export class FormsComponent implements OnInit {
   @Output() onSubmit: EventEmitter<any> = new EventEmitter();
+  @Output() onInputAction: EventEmitter<InputAction> = new EventEmitter();
 
   _inputs: InputBase<any>[] = [];
 
@@ -35,5 +37,10 @@ export class FormsComponent implements OnInit {
 
   submit() {
     this.onSubmit.emit(this.form.value);
+  }
+
+  actionInput(event) {
+   // console.log(event);
+    this.onInputAction.emit(event);
   }
 }

@@ -43,9 +43,11 @@ namespace Cindi.Application.Cluster.Commands.InitializeCluster
                 Password = request.DefaultPassword
             });
 
-            var key = _clusterState.GenerateEncryptionKey();
+            string key = "";
 
-            _clusterState.SetClusterName(request.Name);
+            //_clusterState.SetClusterName(request.Name);
+
+            ClusterStateService.Initialized = true;
 
             return new CommandResult<NewClusterResult>()
             {

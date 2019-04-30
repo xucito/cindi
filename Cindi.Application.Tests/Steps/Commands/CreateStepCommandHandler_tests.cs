@@ -229,8 +229,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             var newStep = stepTemplate.GenerateStep(stepTemplate.Id, "", "", "", new Dictionary<string, object>() {
                 {"secret", "This is a test"}
             });
-
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
+            newStep.EncryptStepSecrets(Domain.Enums.EncryptionProtocol.AES256, stepTemplate, ClusterStateService.GetEncryptionKey());
+            Mock <IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
@@ -354,6 +354,12 @@ namespace Cindi.Application.Tests.Steps.Commands
                 Log = "TEST"
             }, new System.Threading.CancellationToken())).ObjectRefId);
 
+        }
+
+        [Fact]
+        public async void StepIsAlwaysCreatedWithLowerCaseInputs()
+        {
+            Assert.True(false);
         }
     }
 }

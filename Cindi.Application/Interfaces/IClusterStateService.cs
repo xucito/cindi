@@ -8,7 +8,7 @@ namespace Cindi.Application.Interfaces
 
         void ChangeAssignmentEnabled(bool newState);
         void ForceStateSave();
-        string GenerateEncryptionKey();
+        string GenerateEncryptionKey(string key = null);
         ClusterState GetState();
         void InitializeSaveThread();
         bool IsAssignmentEnabled();

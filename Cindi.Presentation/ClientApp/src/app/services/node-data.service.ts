@@ -2,6 +2,7 @@ import { Component, Inject, Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { environment } from "../../environments/environment";
+import { AuthenticationService } from "../auth/authentication.service";
 
 @Injectable()
 export class NodeDataService {
@@ -9,7 +10,8 @@ export class NodeDataService {
   private baseUrl = environment.apiUrl; //'http://10.10.10.24:5021/';//'http://localhost:5021/';//'http://10.10.10.24:5021/';// //'http://10.10.10.24:5021/';// 'http://10.10.10.17:5021/';// 'http://localhost:5021/'; //
 
   constructor(
-    private http: HttpClient /*,
+    private http: HttpClient,
+    /*,
     @Inject('BASE_URL') private baseUrl: string*/
   ) {}
 
@@ -64,5 +66,17 @@ export class NodeDataService {
 
   GetStats(): Observable<any> {
     return this.http.get(this.baseUrl + this.api + "cluster/stats");
+  }
+
+  GetSecret(stepId: string, fieldName: string): Observable<any>{
+    return this.http.get(this.baseUrl + this.api + "encryption/steps/"  + stepId + "/fields/" + fieldName);
+  }
+
+  GetUsers(): Observable<any>{
+    return this.http.get(this.baseUrl + this.api + "users")
+  }
+
+  PostUser(user: any){
+    return this.http.post(this.baseUrl + this.api + "users", user);
   }
 }

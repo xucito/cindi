@@ -3,15 +3,18 @@ export class InputBase<T> {
 	id: string;
 	type: number;
 	description: string;
+	additionalOptions: any;
 	constructor(options: {
 		id?: string,
 		type?: number,
 		value?: T,
-		description?: string
+		description?: string,
+		additionalOptions? : any
 	  } = {}) {
 	  this.value = options.value;
 	   this.type = options.type;
 	   this.id = options.id;
 	   this.description = options.description;
+	   this.additionalOptions = options.additionalOptions;
 	}
 }
