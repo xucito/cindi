@@ -51,9 +51,9 @@ namespace Cindi.Persistence.Sequences
         {
             var database = client.GetDatabase(DatabaseName);
             _sequence = database.GetCollection<Sequence>("Sequences");
-            _sequenceJournalEntries = database.GetCollection<JournalEntry>("SequenceEntries");
+            _sequenceJournalEntries = database.GetCollection<JournalEntry>("JournalEntries");
             _steps = database.GetCollection<Step>("Steps");
-            _stepJournalEntries = database.GetCollection<JournalEntry>("StepEntries");
+            _stepJournalEntries = database.GetCollection<JournalEntry>("JournalEntries");
             _sequenceMetadata = database.GetCollection<SequenceMetadata>("_Sequences");
         }
 

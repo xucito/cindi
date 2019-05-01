@@ -12,7 +12,12 @@ namespace Cindi.Persistence.Sequences
         {
             sm.AutoMap();
             sm.MapIdMember(c => c.SequenceId);
-            //cm.SetIdMember(cm.GetMemberMap(c => c.Id)).SetIdGenerator(CombGuidGenerator.Instance); 
+        }
+
+        public static void Register(BsonClassMap<Sequence> sm)
+        {
+            sm.AutoMap();
+            sm.UnmapMember(c => c.Journal);
         }
     }
 }

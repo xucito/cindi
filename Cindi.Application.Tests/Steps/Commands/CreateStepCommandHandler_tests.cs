@@ -361,5 +361,11 @@ namespace Cindi.Application.Tests.Steps.Commands
         {
             Assert.True(false);
         }
+
+        [Fact]
+        public async void StoreReferenceValuesInOriginalGivenFormat()
+        {
+            Assert.True(false);
+        }
     }
 }

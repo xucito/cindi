@@ -25,7 +25,7 @@ namespace Cindi.Domain.Entities.Sequences
 
         public List<Step> Steps { get; set; }
 
-        public Journal Journal { get; set; }
+        public new Journal Journal { get; set; }
 
         public string Status
         {

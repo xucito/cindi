@@ -132,7 +132,7 @@ namespace Cindi.Domain.Entities.Steps
             }
         }
 
-        public Journal Journal { get; set; }
+        public new Journal Journal { get; set; }
 
         public StepMetadata Metadata
         {

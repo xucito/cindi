@@ -29,4 +29,11 @@ namespace Cindi.Presentation.Results
             Result = returnObject;
         }
     }
+
+    public class HttpCommandResult<Z, T> : HttpCommandResult<T>
+    {
+        public HttpCommandResult(string href, CommandResult<Z> queryResult, T mappedResponse): base(href, queryResult, mappedResponse)
+        {
+        }
+    }
 }

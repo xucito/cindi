@@ -43,6 +43,7 @@ using Cindi.Persistence.BotKeys;
 using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
 using AutoMapper;
+using Cindi.Persistence.GlobalValues;
 
 namespace Cindi.Presentation
 {
@@ -97,7 +98,8 @@ namespace Cindi.Presentation
             services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
             services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
             services.AddSingleton<IClusterStateService,ClusterStateService>();
-           // services.AddSingleton<ClusterStateService>();
+            services.AddSingleton<IGlobalValuesRepository, GlobalValuesRepository>(s => new GlobalValuesRepository(MongoClient));
+            // services.AddSingleton<ClusterStateService>();
             services.AddSingleton<ClusterMonitorService>();
 
 

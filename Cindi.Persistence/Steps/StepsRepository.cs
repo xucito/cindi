@@ -45,7 +45,7 @@ namespace Cindi.Persistence.Steps
             var database = client.GetDatabase(DatabaseName);
             _steps = database.GetCollection<Step>("Steps");
             _stepMetadata = database.GetCollection<StepMetadata>("_Steps");
-            _journalEntries = database.GetCollection<JournalEntry>("StepEntries");
+            _journalEntries = database.GetCollection<JournalEntry>("JournalEntries");
         }
 
         public async Task<List<Step>> GetStepsAsync(int size = 10, int page = 0, string status = null, string[] stepTemplateIds = null)
