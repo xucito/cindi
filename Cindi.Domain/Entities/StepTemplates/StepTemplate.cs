@@ -1,8 +1,11 @@
-﻿using Cindi.Domain.Entities.Steps;
+﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
+using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -12,32 +15,79 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.StepTemplates
 {
-    public class StepTemplate: TrackedEntity
+    public class StepTemplate : TrackedEntity
     {
-        // Will always be set to Name:Version
-        private string _id { get; set; }
+        public StepTemplate(string id,
+            string description,
+            bool allowDynamicInputs,
+            Dictionary<string, DynamicDataDescription> inputDefinitions,
+            Dictionary<string, DynamicDataDescription> outputDefinitions,
+            string CreatedBy,
+            DateTime CreatedOn) : base(
+            new Journal(new JournalEntry()
+            {
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "id",
+                        Value = id,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "description",
+                        Value = description,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "allowdynamicinputs",
+                        Value = allowDynamicInputs,
+                        Type = UpdateType.Create
+                    },
+                   new Update()
+                    {
+                        FieldName = "inputdefinitions",
+                        Value = inputDefinitions,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "outputdefinitions",
+                        Value = outputDefinitions,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdon",
+                        Value = CreatedOn,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdby",
+                        Value = CreatedBy,
+                        Type = UpdateType.Create
+                    }
+                }
+            })
+            )
+        {
 
-        public string Id { get { return _id; } set {
-                if(value.Count(c => c == ':') == 1)
-                {
-                    _id = value;
-                }
-                else
-                {
-                    throw new InvalidIdException("Step template Id " + value + " is invalid.");
-                }
-            }
         }
+
+        public string Id { get; private set; }
 
         public string Name { get { return Id.Split(':')[0]; } }
         public string Version { get { return Id.Split(':')[1]; } }
 
-        public string Description { get; set; }
+        public string Description { get; private set; }
 
         /// <summary>
         /// Dynamic inputs will default type string
         /// </summary>
-        public bool AllowDynamicInputs = false;
+        public bool AllowDynamicInputs { get; private set; }
 
         /*public TemplateReference Reference
         {
@@ -50,7 +100,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; private set; }
 
         /// <summary>
         ///  Output from task, the output name is the dictionary key and the type is Dictionary value
@@ -60,7 +110,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         ///    value: number
         ///  }
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> OutputDefinitions { get; set; }
+        public Dictionary<string, DynamicDataDescription> OutputDefinitions { get; private set; }
 
         /// <summary>
         /// Checks whether the step matches the step definition
@@ -135,35 +185,30 @@ namespace Cindi.Domain.Entities.StepTemplates
             return true;
         }
 
-        public Step GenerateStep(string stepTemplateId, string createdBy, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, Guid? sequenceId = null)
+        public Step GenerateStep(string stepTemplateId, string createdBy, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, int? stepRefId = null, Guid? sequenceId = null, string encryptionKey = "")
         {
-            var newStep = new Step();
-            newStep.Name = name;
-            newStep.Description = description;
-            newStep.StepTemplateId = stepTemplateId;
-            newStep.Inputs = new Dictionary<string, object>();
-            newStep.CreatedBy = createdBy;
+            var verifiedInputs = new Dictionary<string, object>();
 
             if (inputs != null)
             {
-                if(inputs.Count() > InputDefinitions.Count() && !AllowDynamicInputs)
+                if (inputs.Count() > InputDefinitions.Count() && !AllowDynamicInputs)
                 {
                     throw new InvalidStepInputException("Too many step inputs for step template " + Id + " were given, expected " + InputDefinitions.Count() + " got " + inputs.Count());
                 }
 
-                if(InputDefinitions.Count() > inputs.Count())
+                if (InputDefinitions.Count() > inputs.Count())
                 {
                     string missingInputs = "";
-                    foreach(var id in InputDefinitions)
+                    foreach (var id in InputDefinitions)
                     {
-                        if(!inputs.Select(i => i.Key).Contains(id.Key))
+                        if (!inputs.Select(i => i.Key).Contains(id.Key))
                         {
                             missingInputs += id.Key + " ";
                         }
                     }
                     throw new InvalidStepInputException("Missing step inputs for step template " + Id + ", expected " + InputDefinitions.Count() + " got " + inputs.Count() + " missing ");
                 }
-                
+
                 foreach (var input in inputs)
                 {
                     var foundTemplate = InputDefinitions.Where(tp => tp.Key == input.Key).FirstOrDefault();
@@ -173,13 +218,16 @@ namespace Cindi.Domain.Entities.StepTemplates
                         throw new InvalidStepInputException("Step input " + input.Key + " is not found in the template definition.");
                     }
 
-                    if (AllowDynamicInputs && !InputDefinitions.ContainsKey(input.Key))
+                    if ((AllowDynamicInputs && !InputDefinitions.ContainsKey(input.Key)) || InputDefinitions.ContainsKey(input.Key))
                     {
-                        newStep.Inputs.Add(input.Key.ToLower(), input.Value);
-                    }
-                    else
-                    {
-                        newStep.Inputs.Add(input.Key.ToLower(), input.Value);
+                        if (InputDefinitions.ContainsKey(input.Key) && InputDefinitions[input.Key].Type == InputDataTypes.Secret)
+                        {
+                            verifiedInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, encryptionKey));
+                        }
+                        else
+                        {
+                            verifiedInputs.Add(input.Key.ToLower(), input.Value);
+                        }
                     }
                 }
             }
@@ -187,18 +235,16 @@ namespace Cindi.Domain.Entities.StepTemplates
             {
                 throw new InvalidStepInputException("No inputs were specified however step template " + Id + " has " + InputDefinitions.Count() + " inputs.");
             }
-            newStep.Tests = stepTestTemplateIds;
-            newStep.StepRefId = stepRefId;
-            newStep.SequenceId = sequenceId;
-            newStep.CreatedOn = DateTime.UtcNow;
+
+            var newStep = new Step(name, description, stepTemplateId, createdBy, Guid.NewGuid(), verifiedInputs, encryptionKey, stepRefId, sequenceId);
             return newStep;
         }
 
         public string GetInputType(string input)
         {
-            foreach(var inputDef in InputDefinitions)
+            foreach (var inputDef in InputDefinitions)
             {
-                if(inputDef.Key.ToLower() == input.ToLower())
+                if (inputDef.Key.ToLower() == input.ToLower())
                 {
                     return inputDef.Value.Type;
                 }

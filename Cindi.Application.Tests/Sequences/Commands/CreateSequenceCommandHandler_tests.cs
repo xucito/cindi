@@ -21,8 +21,21 @@ namespace Cindi.Application.Tests.Sequences.Commands
         [Fact]
         public async void DetectMissingSequenceTemplate()
         {
-
+            Assert.True(false);
         }
+
+        [Fact]
+        public async void PassSequenceIdToNewStep()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void PassStepRefIdToNewStep()
+        {
+            Assert.True(false);
+        }
+
 
         [Fact]
         public async void DetectExtraInput()

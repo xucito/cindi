@@ -27,17 +27,19 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var result = await _stepTemplateRepository.InsertAsync(new StepTemplate()
-            {
-                Id = request.Name + ":" + request.Version,
-                AllowDynamicInputs = request.AllowDynamicInputs,
-                InputDefinitions = request.InputDefinitions,
-                OutputDefinitions = request.OutputDefinitions
-            });
+            var stepTemplateId = await _stepTemplateRepository.InsertAsync(new StepTemplate(
+             request.Name + ":" + request.Version,
+             request.Description,
+             request.AllowDynamicInputs,
+             request.InputDefinitions,
+             request.OutputDefinitions,
+             request.CreatedBy,
+             DateTime.UtcNow
+             ));
 
             stopwatch.Stop();
             return new CommandResult() {
-                ObjectRefId = result.Id,
+                ObjectRefId = stepTemplateId,
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
             };

@@ -26,16 +26,19 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
         private ISequencesRepository _sequencesRepository;
         private ISequenceTemplatesRepository _sequenceTemplatesRepository;
         private IStepsRepository _stepsRepository;
+        private IStepTemplatesRepository _stepTemplatesRepository;
         private IMediator _mediator;
 
         public CreateSequenceCommandHandler(ISequencesRepository sequencesRepository,
             ISequenceTemplatesRepository sequenceTemplatesRepository,
             IStepsRepository stepsRepository,
+            IStepTemplatesRepository stepTemplatesRepository,
             IMediator mediator)
         {
             _sequencesRepository = sequencesRepository;
             _sequenceTemplatesRepository = sequenceTemplatesRepository;
             _stepsRepository = stepsRepository;
+            _stepTemplatesRepository = stepTemplatesRepository;
             _mediator = mediator;
         }
         public async Task<CommandResult> Handle(CreateSequenceCommand request, CancellationToken cancellationToken)
@@ -61,32 +64,14 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                 }
             }
 
-            var createdSequence = await _sequencesRepository.InsertSequenceAsync(new Domain.Entities.Sequences.Sequence()
-            {
-                Id = Guid.NewGuid(),
-                SequenceTemplateId = request.SequenceTemplateId,
-                Inputs = request.Inputs,
-                CreatedOn = DateTime.UtcNow,
-                Name = request.Name
-            });
-
-            await _sequencesRepository.InsertJournalEntryAsync(new JournalEntry()
-            {
-                SubjectId = createdSequence.Id,
-                ChainId = 0,
-                Entity = JournalEntityTypes.Sequence,
-                CreatedBy = SystemUsers.QUEUE_MANAGER,
-                CreatedOn = DateTime.UtcNow,
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = SequenceStatuses.Started,
-                        Type = UpdateType.Override
-                    }
-                }
-            });
+            var createdSequenceId = await _sequencesRepository.InsertSequenceAsync(new Domain.Entities.Sequences.Sequence(
+                Guid.NewGuid(),
+                request.SequenceTemplateId,
+                request.Inputs,
+                request.Name,
+                request.CreatedBy,
+                DateTime.UtcNow
+            ));
 
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Count() == 0).ToList();
 
@@ -96,15 +81,10 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
             {
                 foreach (var subBlock in block.SubsequentSteps)
                 {
-                    var newStep = new Step()
-                    {
-                        SequenceId = createdSequence.Id,
-                        StepRefId = subBlock.StepRefId,
-                        Inputs = new Dictionary<string, object>(),
-                        StepTemplateId = subBlock.StepTemplateId,
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                    };
+                    var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.StepTemplateId);
+
+                    var verifiedInputs = new Dictionary<string, object>();
+
 
                     foreach (var mapping in subBlock.Mappings)
                     {
@@ -112,22 +92,23 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                         if ((mapping.DefaultValue != null && (mapping.OutputReferences == null || mapping.OutputReferences.Count() == 0)) || (mapping.DefaultValue != null && mapping.OutputReferences.First() != null && mapping.DefaultValue.Priority > mapping.OutputReferences.First().Priority))
                         {
                             // Change the ID to match the output
-                            newStep.Inputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
+                            verifiedInputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
                         }
                         else if (mapping.OutputReferences != null)
                         {
-                            newStep.Inputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(request.Inputs, mapping.OutputReferences.First().OutputId).Value);
+                            verifiedInputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(request.Inputs, mapping.OutputReferences.First().OutputId).Value);
                         }
                     }
 
                     await _mediator.Send(new CreateStepCommand()
                     {
-                        StepTemplateId = newStep.StepTemplateId,
+                        StepTemplateId = subBlock.StepTemplateId,
                         CreatedBy = SystemUsers.QUEUE_MANAGER,
-                        Description = newStep.Description,
-                        Inputs = newStep.Inputs,
-                        Name = newStep.Name,
-                        Tests = newStep.Tests
+                        Description = null,
+                        Inputs = verifiedInputs,
+                        SequenceId = createdSequenceId,
+                        StepRefId = subBlock.StepRefId,
+                        Name = null
                     });
 
                   /*  newStep = await _stepsRepository.InsertStepAsync(newStep);
@@ -155,13 +136,13 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
             }
 
 
-            await _sequencesRepository.UpsertSequenceMetadataAsync(createdSequence.Id);
+            await _sequencesRepository.UpsertSequenceMetadataAsync(createdSequenceId);
 
             stopwatch.Stop();
 
             return new CommandResult()
             {
-                ObjectRefId = createdSequence.Id.ToString(),
+                ObjectRefId = createdSequenceId.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
             };

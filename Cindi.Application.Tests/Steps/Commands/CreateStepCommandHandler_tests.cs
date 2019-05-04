@@ -73,7 +73,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
 
@@ -98,7 +98,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
 
@@ -115,7 +115,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
 
@@ -138,7 +138,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
@@ -160,9 +160,9 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
             Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
             stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
-
+            stepsRepository.Setup(s => s.UpdateStep(TestStep)).Returns(Task.FromResult(true));
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
 
@@ -197,7 +197,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
             Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
             stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
@@ -230,8 +230,8 @@ namespace Cindi.Application.Tests.Steps.Commands
                 {"secret", "This is a test"}
             });
             newStep.EncryptStepSecrets(Domain.Enums.EncryptionProtocol.AES256, stepTemplate, ClusterStateService.GetEncryptionKey());
-            Mock <IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep));
+            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
+            stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep.Id));
 
             var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
 
@@ -297,15 +297,12 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void CompleteStepWithSequence()
         {
             var TestSequence = FibonacciSampleData.Sequence;
-            TestSequence.Journal = new Domain.Entities.JournalEntries.Journal(new List<Domain.Entities.JournalEntries.JournalEntry>() {
+            TestSequence.Journal = new Domain.Entities.JournalEntries.Journal(
                 new Domain.Entities.JournalEntries.JournalEntry()
                 {
-                        SubjectId = TestSequence.Id,
-                        ChainId = 0,
-                        Entity = JournalEntityTypes.Sequence,
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = "testuser@email.com",
-                        Updates = new List<Update>()
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = "testuser@email.com",
+                    Updates = new List<Update>()
                         {
                             new Update()
                             {
@@ -315,7 +312,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                             }
                         }
                 }
-            });
+           );
 
             var TestStep = FibonacciSampleData.Step;
             TestStep.SequenceId = TestSequence.Id;
@@ -323,7 +320,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
             stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
 
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
@@ -364,6 +361,12 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         [Fact]
         public async void StoreReferenceValuesInOriginalGivenFormat()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void AssignIdOnCreation()
         {
             Assert.True(false);
         }

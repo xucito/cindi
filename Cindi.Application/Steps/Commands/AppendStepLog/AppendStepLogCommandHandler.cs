@@ -39,23 +39,25 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                 throw new InvalidStepStatusException("Cannot append log to step, step status is complete with " + step.Status);
             }
 
-            await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
             {
-                Entity = JournalEntityTypes.Step,
-                SubjectId = step.Id,
                 CreatedBy = request.CreatedBy,
                 CreatedOn = DateTime.UtcNow,
-                ChainId = step.Journal.GetNextChainId(),
                 Updates = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
                             {
                                 Type = UpdateType.Append,
                                 FieldName = "logs",
-                                Value = request.Log,
+                                Value = new StepLog(){
+                                    CreatedOn = DateTime.UtcNow,
+                                    Message = request.Log
+                                },
                             }
                         }
             });
+
+            await _stepsRepository.UpdateStep(step);
 
             return new CommandResult()
             {

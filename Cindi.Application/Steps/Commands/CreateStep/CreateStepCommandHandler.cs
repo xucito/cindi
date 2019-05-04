@@ -42,46 +42,19 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
-            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests);
+            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.StepRefId, request.SequenceId, ClusterStateService.GetEncryptionKey() );
 
-            newStep.EncryptStepSecrets(EncryptionProtocol.AES256, resolvedTemplate, ClusterStateService.GetEncryptionKey());
-
-            var step = await _stepsRepository.InsertStepAsync(
+            var createdStepId = await _stepsRepository.InsertStepAsync(
                 newStep
                 );
-
-            var update = new JournalEntry()
-            {
-                SubjectId = step.Id,
-                ChainId = 0,
-                Entity = JournalEntityTypes.Step,
-                CreatedBy = request.CreatedBy,
-                CreatedOn = DateTime.UtcNow,
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = StepStatuses.Unassigned,
-                        Type = UpdateType.Override
-                    }
-                }
-            };
-
-
-            await _stepsRepository.InsertJournalEntryAsync(update);
-
-            step.Journal.Entries.Add(update);
-
-            await _stepsRepository.UpsertStepMetadataAsync(step.Id);
 
             stopwatch.Stop();
             return new CommandResult<Step>()
             {
-                ObjectRefId = step.Id.ToString(),
+                ObjectRefId = createdStepId.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create,
-                Result = step
+                Result = newStep
             };
         }
     }

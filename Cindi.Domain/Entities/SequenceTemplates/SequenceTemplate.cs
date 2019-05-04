@@ -7,30 +7,82 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Global;
+using Cindi.Domain.Entities.JournalEntries;
 
 namespace Cindi.Domain.Entities.SequencesTemplates
 {
     public class SequenceTemplate: TrackedEntity
     {
-        public string Id { get; set; }
+        public SequenceTemplate(
+            string id, 
+            string description,
+            Dictionary<string, DynamicDataDescription> inputDefinitions,
+            List<LogicBlock> logicBlocks,
+            string createdBy,
+            DateTime createdOn
+            ) : base(
+            new Journal(new JournalEntry()
+            {
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "id",
+                        Value = id,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "description",
+                        Value = description,
+                        Type = UpdateType.Create
+                    },
+                   new Update()
+                    {
+                        FieldName = "inputdefinitions",
+                        Value = inputDefinitions,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "logicblocks",
+                        Value = logicBlocks,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdon",
+                        Value = createdOn,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdby",
+                        Value = createdBy,
+                        Type = UpdateType.Create
+                    }
+                }
+            }))
+            {
 
+        }
+
+        public string Id { get; private set;  }
         public string Name { get { return Id.Split(':')[0]; } }
         public string Version { get { return Id.Split(':')[1]; } }
 
         public SequenceTemplate()
         {
             this.LogicBlocks = new List<LogicBlock>();
-            // this.StartingMapping = new List<Mapping>();
         }
 
-        public string Description { get; set; }
-        public List<LogicBlock> LogicBlocks { get; set; }
-        //  public TemplateReference StartingStepTemplateReference { get; set; }
-        //   public List<Mapping> StartingMapping { get; set; }
+        public string Description { get; private set;  }
+        public List<LogicBlock> LogicBlocks { get; private set;  }
+
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; private set;  }
 
         public static bool ValidateMapping(Mapping map, bool isStartingMapping = false)
         {

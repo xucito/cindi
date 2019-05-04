@@ -14,31 +14,77 @@ namespace Cindi.Domain.Entities.Sequences
     /// </summary>
     public class Sequence: TrackedEntity
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string SequenceTemplateId { get; set; }
+        public Sequence(
+            Guid id,
+            string sequenceTemplateId,
+            Dictionary<string, object> inputs,
+            string name,
+            string createdBy,
+            DateTime createdOn
+            ) : base(
+            new Journal(new JournalEntry()
+            {
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "id",
+                        Value = id,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "sequencetemplateid",
+                        Value = sequenceTemplateId,
+                        Type = UpdateType.Create
+                    },
+                   new Update()
+                    {
+                        FieldName = "inputs",
+                        Value = inputs,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "name",
+                        Value = name,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdon",
+                        Value = createdOn,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdby",
+                        Value = createdBy,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = SequenceStatuses.Started,
+                        Type = UpdateType.Create
+                    }
+                }
+            })
+            )
+        {
+
+        }
+
+        public Guid Id { get; private set; }
+        public string Name { get; private set; }
+        public string SequenceTemplateId { get; private set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
-        public Dictionary<string, object> Inputs { get; set; }
+        public Dictionary<string, object> Inputs { get; private set; }
 
-        public List<Step> Steps { get; set; }
-
-        public new Journal Journal { get; set; }
-
-        public string Status
-        {
-            get
-            {
-                var status = Journal.GetLatestValueOrDefault<string>("status", null);
-                if (status == null)
-                {
-                    throw new InvalidSequenceStatusException("Status for sequence " + Id + " was not found.");
-                }
-                return status;
-            }
-        }
+        public string Status { get; private set; }
 
         public SequenceMetadata Metadata
         {

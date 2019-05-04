@@ -60,13 +60,10 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             }
 
 
-                            await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+                            unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
                             {
-                                Entity = JournalEntityTypes.Step,
-                                SubjectId = unassignedStep.Id,
                                 CreatedBy = SystemUsers.QUEUE_MANAGER,
                                 CreatedOn = DateTime.UtcNow,
-                                ChainId = unassignedStep.Journal.GetNextChainId(),
                                 Updates = new List<Domain.ValueObjects.Update>()
                             {
                             new Update()
@@ -79,6 +76,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                         }
                             });
 
+                            await _stepsRepository.UpdateStep(unassignedStep);
                         }
                         catch (Exception e)
                         {
@@ -86,7 +84,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             //throw e;
                         }
                         assignedStepSuccessfully = true;
-                        await _stepsRepository.UpsertStepMetadataAsync(unassignedStep.Id);
                     }
                     else
                     {

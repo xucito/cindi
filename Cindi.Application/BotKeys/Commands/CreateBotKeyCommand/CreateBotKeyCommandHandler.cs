@@ -41,7 +41,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 
             return new CommandResult<string>()
             {
-                ObjectRefId = key.Id.ToString(),
+                ObjectRefId = key.ToString(),
                 Type = CommandResultTypes.Create,
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Result = plainTextKey

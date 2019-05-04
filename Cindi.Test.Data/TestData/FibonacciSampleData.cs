@@ -122,7 +122,7 @@ namespace Cindi.Test.Global.TestData
             }
         };
 
-        public static readonly Step Step = new Step()
+        public static readonly Step Step = new Step(new Domain.Entities.JournalEntries.Journal)
         {
             Id = Guid.NewGuid(),
             StepTemplateId = StepTemplate.Id,
@@ -131,7 +131,22 @@ namespace Cindi.Test.Global.TestData
                 {"n-2","1" },
                 {"n-1","2" }
             },
-            CreatedBy = "testUser@email.com"
+            CreatedBy = "testUser@email.com",
+            Journal = new Domain.Entities.JournalEntries.Journal(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                CreatedBy = "testUser@email.com",
+                CreatedOn = DateTime.UtcNow,
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Override
+                    }
+                }
+            }),
+            Status = StepStatuses.Unassigned
         };
 
         public static readonly Sequence Sequence = new Sequence()

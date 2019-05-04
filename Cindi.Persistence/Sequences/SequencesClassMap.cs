@@ -17,7 +17,6 @@ namespace Cindi.Persistence.Sequences
         public static void Register(BsonClassMap<Sequence> sm)
         {
             sm.AutoMap();
-            sm.UnmapMember(c => c.Journal);
         }
     }
 }

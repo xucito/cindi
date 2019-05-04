@@ -4,8 +4,9 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.Steps
 {
-    public class StepLog: TrackedEntity
+    public class StepLog
     {
         public string Message { get; set; }
+        public DateTime CreatedOn { get; set; }
     }
 }

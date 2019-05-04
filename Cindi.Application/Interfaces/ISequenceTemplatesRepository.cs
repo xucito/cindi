@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cindi.Domain.Entities.SequencesTemplates;
 
@@ -8,7 +9,7 @@ namespace Cindi.Application.Interfaces
     {
         Task<SequenceTemplate> GetSequenceTemplateAsync(string sequenceTemplateId);
         Task<List<SequenceTemplate>> GetSequenceTemplatesAsync(int page = 0, int size = 10);
-        Task<SequenceTemplate> InsertSequenceTemplateAsync(SequenceTemplate sequenceTemplate);
+        Task<string> InsertSequenceTemplateAsync(SequenceTemplate sequenceTemplate);
         long CountSequenceTemplates();
     }
 }

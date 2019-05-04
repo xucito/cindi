@@ -35,15 +35,6 @@ namespace Cindi.Persistence.Sequences
         {
             var steps = (await _steps.FindAsync(s => s.SequenceId != null && s.SequenceId.Value == sequenceId)).ToList();
 
-            var builder = Builders<JournalEntry>.Filter;
-            var journalFilter = builder.In("SubjectId", steps.Select(s => s.Id));
-            var journals = (await _stepJournalEntries.FindAsync(journalFilter)).ToList();
-
-            foreach (var step in steps)
-            {
-                step.Journal = new Journal(journals.Where(j => j.SubjectId == step.Id).ToList());
-            };
-
             return steps;
         }
 
@@ -59,16 +50,15 @@ namespace Cindi.Persistence.Sequences
 
         public long CountSequences() { return _sequence.EstimatedDocumentCount(); }
 
-        public async Task<Sequence> InsertSequenceAsync(Sequence Sequence)
+        public async Task<Guid> InsertSequenceAsync(Sequence Sequence)
         {
             await _sequence.InsertOneAsync(Sequence);
-            return Sequence;
+            return Sequence.Id;
         }
 
         public async Task<Sequence> GetSequenceAsync(Guid SequenceId)
         {
             var foundSequence = (await _sequence.FindAsync(s => s.Id == SequenceId)).FirstOrDefault();
-            foundSequence.Journal = new Journal((await _sequenceJournalEntries.FindAsync(je => je.SubjectId == foundSequence.Id)).ToList());
             return foundSequence;
         }
 
@@ -78,17 +68,27 @@ namespace Cindi.Persistence.Sequences
             var sequenceFilter = builder.In("Id", sequenceIds);
             var sequences = (await _sequence.FindAsync(sequenceFilter)).ToList();
 
-
-            var journalBuilder = Builders<JournalEntry>.Filter;
-            var journalFilter = journalBuilder.In("SubjectId", sequences.Select(s => s.Id));
-            var journals = (await _sequenceJournalEntries.FindAsync(journalFilter)).ToList();
-
-            foreach (var sequence in sequences)
-            {
-                sequence.Journal = new Journal(journals.Where(j => j.SubjectId == sequence.Id).ToList());
-            };
-
             return sequences;
+        }
+
+        public async Task<bool> UpdateSequence(Sequence sequence)
+        {
+            var result = await _sequence.ReplaceOneAsync(
+                  doc => doc.Id == sequence.Id,
+                  sequence,
+                  new UpdateOptions
+                  {
+                      IsUpsert = false
+                  });
+
+            if (result.IsAcknowledged)
+            {
+                return true;
+            }
+            else
+            {
+                throw new SequenceUpdateFailureException("Update of sequence " + sequence.Id + " failed.");
+            }
         }
 
         public async Task<List<Sequence>> GetSequencesAsync(int size = 10, int page = 0, string status = null, string[] sequenceTemplateIds = null)
@@ -139,6 +139,8 @@ namespace Cindi.Persistence.Sequences
         {
             var sequenceToUpdate = await GetSequenceAsync(sequenceId);
 
+            var md = sequenceToUpdate.Metadata;
+
             var replaceResult = await _sequenceMetadata.ReplaceOneAsync(
                     doc => doc.SequenceId == sequenceId,
                     sequenceToUpdate.Metadata,
@@ -146,23 +148,6 @@ namespace Cindi.Persistence.Sequences
                     );
 
             return replaceResult.IsAcknowledged;
-        }
-
-        public async Task<int> GetNextChainId(Guid subjectId)
-        {
-            var filter = Builders<JournalEntry>.Filter.Eq(x => x.SubjectId, subjectId);
-            var nextChain = (await _sequenceJournalEntries.FindAsync(filter)).ToList().OrderBy(je => je.CreatedOn);
-            if (nextChain.Count() == 0)
-            {
-                return 0;
-            }
-            return nextChain.Last().ChainId + 1;
-        }
-
-        public async Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry)
-        {
-            await _sequenceJournalEntries.InsertOneAsync(entry);
-            return entry;
         }
     }
 }

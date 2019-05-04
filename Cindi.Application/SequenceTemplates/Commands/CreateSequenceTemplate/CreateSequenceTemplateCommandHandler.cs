@@ -194,20 +194,19 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
             }
 
 
-            var createdSequenceTemplate = await _sequenceTemplatesRepository.InsertSequenceTemplateAsync(new Domain.Entities.SequencesTemplates.SequenceTemplate()
-            {
-                Id = request.Name + ":" + request.Version,
-                Description = request.Description,
-                InputDefinitions = request.InputDefinitions,
-                LogicBlocks = request.LogicBlocks,
-                CreatedBy = request.CreatedBy,
-                CreatedOn = DateTime.UtcNow
-            });
+            var createdSequenceTemplateId = await _sequenceTemplatesRepository.InsertSequenceTemplateAsync(new Domain.Entities.SequencesTemplates.SequenceTemplate(
+                request.Name + ":" + request.Version,
+                request.Description,
+                request.InputDefinitions,
+                request.LogicBlocks,
+                request.CreatedBy,
+                DateTime.UtcNow
+            ));
 
             stopwatch.Stop();
             return new CommandResult()
             {
-                ObjectRefId = createdSequenceTemplate.Id,
+                ObjectRefId = createdSequenceTemplateId.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
             };

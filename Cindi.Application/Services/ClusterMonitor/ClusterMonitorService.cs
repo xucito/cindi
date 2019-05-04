@@ -39,43 +39,51 @@ namespace Cindi.Application.Services.ClusterMonitor
         {
             checkSuspendedStepsThread = new Thread(async () =>
             {
-                while (true && ClusterStateService.Initialized)
+                while (true)
                 {
-                    var page = 0;
-                    long stepPosition = 0;
-                    long totalSteps = 0;
-                    int cleanedCount = 0;
-                    do
+                    //Do not run if it is uninitialized
+                    if (ClusterStateService.Initialized)
                     {
-                        var steps = await _mediator.Send(new GetStepsQuery
+                        var page = 0;
+                        long stepPosition = 0;
+                        long totalSteps = 0;
+                        int cleanedCount = 0;
+                        do
                         {
-                            Page = 0,
-                            Size = 1000,
-                            Status = StepStatuses.Suspended
-                        });
-
-                        totalSteps = steps.Count.Value;
-                        stepPosition += steps.Count.Value;
-                        page++;
-
-                        foreach (var step in steps.Result)
-                        {
-                            if (step.SuspendedUntil < DateTime.UtcNow)
+                            var steps = await _mediator.Send(new GetStepsQuery
                             {
-                                await _mediator.Send(new UnassignStepCommand
+                                Page = 0,
+                                Size = 1000,
+                                Status = StepStatuses.Suspended
+                            });
+
+                            totalSteps = steps.Count.Value;
+                            stepPosition += steps.Count.Value;
+                            page++;
+
+                            foreach (var step in steps.Result)
+                            {
+                                if (step.SuspendedUntil < DateTime.UtcNow)
                                 {
-                                    StepId = step.Id
-                                });
-                                cleanedCount++;
+                                    await _mediator.Send(new UnassignStepCommand
+                                    {
+                                        StepId = step.Id
+                                    });
+                                    cleanedCount++;
+                                }
                             }
                         }
+                        while (stepPosition < totalSteps);
+                        if (cleanedCount > 0)
+                        {
+                            _logger.LogInformation("Cleaned " + cleanedCount + " steps");
+                        }
+                        Thread.Sleep(1000);
                     }
-                    while (stepPosition < totalSteps);
-                    if (cleanedCount > 0)
+                    else
                     {
-                        _logger.LogInformation("Cleaned " + cleanedCount + " steps");
+                        Thread.Sleep(3000);
                     }
-                    Thread.Sleep(1000);
                 }
             });
 

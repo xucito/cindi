@@ -54,13 +54,10 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                 };
             }
 
-           await  _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+            step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
             {
-                Entity = JournalEntityTypes.Step,
-                SubjectId = step.Id,
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = request.CreatedBy,
-                ChainId = step.Journal.GetNextChainId(),
                 Updates = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
@@ -73,7 +70,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                         }
             });
 
-            await _stepsRepository.UpsertStepMetadataAsync(step.Id);
+            await _stepsRepository.UpdateStep(step);
 
             return new CommandResult()
             {

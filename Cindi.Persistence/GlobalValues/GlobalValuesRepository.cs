@@ -43,10 +43,6 @@ namespace Cindi.Persistence.GlobalValues
         public async Task<GlobalValue> GetGlobalValueAsync(string globalValueName)
         {
             var globalValue = (await _globalValues.FindAsync(s => s.Name == globalValueName)).FirstOrDefault();
-            if (globalValue != null)
-            {
-                globalValue.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == globalValue.Id)).ToList());
-            }
             return globalValue;
         }
 
@@ -70,18 +66,6 @@ namespace Cindi.Persistence.GlobalValues
             };
 
             var validGlobalValues = (await _globalValues.FindAsync(FilterDefinition<GlobalValue>.Empty, options)).ToList();
-
-            if (validGlobalValues.Count > 0)
-            {
-                var journalBuilder = Builders<JournalEntry>.Filter;
-                var journalFilter = journalBuilder.In("SubjectId", validGlobalValues.Select(s => s.Id));
-                var journals = (await _journalEntries.FindAsync(journalFilter)).ToList();
-
-                foreach (var gv in validGlobalValues)
-                {
-                    gv.Journal = new Journal(journals.Where(j => j.SubjectId == gv.Id).ToList());
-                };
-            }
 
             return validGlobalValues;
         }

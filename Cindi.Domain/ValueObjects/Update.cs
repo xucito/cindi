@@ -13,6 +13,8 @@ namespace Cindi.Domain.ValueObjects
 
     public static class UpdateType
     {
+        // This value should not have any pre-existing record
+        public const string Create = "create";
         // Update existing data
         public const string Override = "override";
         // Append data to a record

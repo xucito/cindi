@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using static Cindi.Domain.Utilities.SecurityUtility;
@@ -23,41 +25,108 @@ namespace Cindi.Domain.Entities.Steps
     {
         public Step()
         {
-            Inputs = new Dictionary<string, object>();
-            //Outputs = new List<DynamicData>();
-            Tests = new List<string>();
-            //SuspendedTimes = new List<DateTime>();
-            Journal = new Journal(new List<JournalEntry>());
+        }
+
+        public Step(Journal journal) : base(journal)
+        {
+        }
+
+        public Step(string name = "", string description = "", string stepTemplateId = "", string createdBy = "", Guid? id = null, Dictionary<string, object> inputs = null, string encryptionString = "", int? stepRefId = null, Guid? sequenceId = null) : base(
+            new Journal(new JournalEntry()
+            {
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "status",
+                        Value = StepStatuses.Unassigned,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "name",
+                        Value = name,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "description",
+                        Value = description,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "steptemplateid",
+                        Value = stepTemplateId,
+                        Type = UpdateType.Create
+                    },
+                   new Update()
+                    {
+                        FieldName = "createdby",
+                        Value = createdBy,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "id",
+                        Value = Guid.NewGuid(),
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdon",
+                        Value = DateTime.UtcNow,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "steprefid",
+                        Value = stepRefId,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "sequenceid",
+                        Value = sequenceId,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "inputs",
+                        Value = inputs,
+                        Type = UpdateType.Create
+                    }
+                }
+            })
+            )
+        {
+
+
         }
 
 
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Name { get; private set; }
+        public string Description { get; private set; }
 
         /// <summary>
         /// The sequence this step belongs to 
         /// </summary>
-        public Guid? SequenceId { get; set; }
+        public Guid? SequenceId { get; private set; }
 
         /// <summary>
         /// Used to map to a specific step in a sequence
         /// </summary>
-        public int? StepRefId { get; set; }
-        public List<string> Tests { get; set; }
-        public List<StepTestResult> TestResults { get { return Journal.GetLatestValueOrDefault<List<StepTestResult>>("testresults", new List<StepTestResult>()); } }
+        public int? StepRefId { get; private set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
 
         [Required]
-        public string StepTemplateId { get; set; }
+        public string StepTemplateId { get; private set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
-        public Dictionary<string, object> Inputs { get; set; }
+        public Dictionary<string, object> Inputs { get; private set; }
 
         /*  public DateTime AssignedOn { get; set; }
 
@@ -69,104 +138,32 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Completed is the date the step is moved to a completed queue
         /// </summary>
-        public DateTime? CompletedOn
-        {
-            get
-            {
-                var lastStatusAction = Journal.GetLatestAction("status");
-                if (lastStatusAction != null && StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
-                {
-                    return lastStatusAction.CreatedOn;
-                }
-                return null;
-            }
-        }
+        public DateTime? CompletedOn { get; private set; }
 
-        public string Status
-        {
-            get
-            {
-                var status = Journal.GetLatestValueOrDefault<string>("status", null);
-                if (status == null)
-                {
-                    return StepStatuses.Unknown;
-                    //throw new InvalidStepStatusInputException("Status for step " + Id + " was not found.");
-                }
-                return status;
-            }
-        }
+        public string Status { get; private set; }
 
         /// <summary>
         /// Output from task, the output name is the dictionary key and the value is Dictionary value
         /// </summary>
-        public Dictionary<string, object> Outputs { get { return Journal.GetLatestValueOrDefault<Dictionary<string, object>>("outputs", new Dictionary<string, object>()); } }
+        public Dictionary<string, object> Outputs { get; private set; }
 
         /// <summary>
         /// Combined with Status can be used to evaluate dependencies
         /// </summary>
-        public int StatusCode { get { return Journal.GetLatestValueOrDefault<int>("statuscode", 0); } }
+        public int StatusCode { get; private set; }
 
-        public List<StepLog> Logs
+        public List<StepLog> Logs { get; private set; }
+
+        public bool IsComplete()
         {
-            get
+            if (Status != null && StepStatuses.IsCompleteStatus((string)Status))
             {
-                List<string> allLogs = new List<string>();
-                return Journal.GetAllUpdates("logs").Select(l => new StepLog()
-                {
-                    Message = (string)l.Update.Value,
-                    CreatedOn = l.CreatedOn
-                }).OrderBy(l => l.CreatedOn).ToList();
+                return true;
             }
+            return false;
         }
 
-        public bool IsComplete
-        {
-            get
-            {
-                var lastStatusAction = Journal.GetLatestAction("status");
-                if (lastStatusAction != null && StepStatuses.IsCompleteStatus((string)lastStatusAction.Update.Value))
-                {
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        public new Journal Journal { get; set; }
-
-        public StepMetadata Metadata
-        {
-            get
-            {
-                return new StepMetadata()
-                {
-                    StepId = Id,
-                    Status = Status,
-                    StepTemplateId = StepTemplateId,
-                    CreatedOn = DateTime.UtcNow
-                };
-            }
-        }
-
-        public DateTime? SuspendedUntil
-        {
-            get
-            {
-                var lastAction = Journal.GetLatestAction("suspendedUntil");
-
-                if (lastAction == null)
-                {
-                    return null;
-                }
-
-                var lastSuspension = (DateTime)lastAction.Update.Value;
-                if (Status == StepStatuses.Suspended)
-                {
-                    return lastSuspension;
-                }
-                return null;
-            }
-        }
+        public DateTime? SuspendedUntil { get; private set; }
 
         /// <summary>
         /// 
@@ -255,16 +252,4 @@ namespace Cindi.Domain.Entities.Steps
             }
         }
     }
-
-
-
-    /*
-    public class DataTypes
-    {
-        public static string Int { get { return "int"; } }
-        public static string String { get { return "string"; } }
-        public static string Bool { get { return "bool"; } }
-        public static string Object { get { return "object"; } }
-    };*/
-
 }

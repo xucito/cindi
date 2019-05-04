@@ -8,25 +8,26 @@ namespace Cindi.Domain.Entities.JournalEntries
 {
     public class Journal
     {
-        private SortedList<int, JournalEntry> journalEntries;
+        public SortedDictionary<int, JournalEntry> JournalEntries;
 
-        public Journal(List<JournalEntry> entries)
+        public Journal()
         {
-            journalEntries = new SortedList<int, JournalEntry>();
-
-            foreach (var entry in entries)
-            {
-                journalEntries.Add(entry.ChainId, entry);
-            }
+            JournalEntries = new SortedDictionary<int, JournalEntry>();
         }
 
-        public List<JournalEntry> Entries { get { return journalEntries.Select(je => je.Value).ToList(); } }
+        public Journal(JournalEntry startingEntry)
+        {
+            JournalEntries = new SortedDictionary<int, JournalEntry>();
+            AddJournalEntry(startingEntry);
+        }
+
+        public List<JournalEntry> Entries { get { return JournalEntries.Select(je => je.Value).ToList(); } }
 
         public T GetLatestValueOrDefault<T>(string fieldName, T defaultValue)
         {
             try
             {
-                foreach (var entry in journalEntries.Reverse())
+                foreach (var entry in JournalEntries.Reverse())
                 {
                     foreach (var update in entry.Value.Updates)
                     {
@@ -49,7 +50,7 @@ namespace Cindi.Domain.Entities.JournalEntries
             var updates = new List<UpdateRecord>();
 
 
-            foreach (var entry in journalEntries.Reverse())
+            foreach (var entry in JournalEntries.Reverse())
             {
                 foreach (var update in entry.Value.Updates)
                 {
@@ -68,16 +69,21 @@ namespace Cindi.Domain.Entities.JournalEntries
 
         public int GetNextChainId()
         {
-            if (journalEntries.Count() == 0)
+            if (JournalEntries.Count() == 0)
             {
                 return 0;
             }
-            return journalEntries.Last().Key + 1;
+            return JournalEntries.Last().Key + 1;
+        }
+
+        public void AddJournalEntry(JournalEntry newEntry)
+        {
+            JournalEntries.Add(JournalEntries.Count(), newEntry);
         }
 
         public UpdateRecord GetLatestAction(string fieldName)
         {
-            foreach (var entry in journalEntries.Reverse())
+            foreach (var entry in JournalEntries.Reverse())
             {
                 foreach (var update in entry.Value.Updates)
                 {

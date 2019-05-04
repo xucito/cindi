@@ -6,26 +6,11 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.JournalEntries
 {
-    public class JournalEntry: TrackedEntity
+    public class JournalEntry
     {
-        private string _entity;
-        public string Entity
-        {
-            get { return _entity; }
-            set
-            {
-                if (value != JournalEntityTypes.Step
-                     && value != JournalEntityTypes.Sequence)
-                {
-                    throw new InvalidJournalEntryEntityTypeException("Entity type " + value + " is not a valid entity.");
-                }
-                _entity = value;
-            }
-        }
-        public Guid SubjectId { get; set; }
-        public string Id { get { return _entity + ":" + SubjectId + ":" + ChainId; } }
-        public int ChainId { get; set; }
         public List<Update> Updates { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
 
         public JournalEntry()
         {}

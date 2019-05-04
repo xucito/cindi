@@ -124,9 +124,12 @@ export class StepComponent implements OnInit, OnDestroy {
 
   getOutputKeys(step: any): string[] {
     let outputs = [];
+    if(step.outputs != undefined)
+    {
     for (let key of Object.keys(step.outputs)) {
       outputs.push(key);
     }
+  }
     return outputs;
   }
 

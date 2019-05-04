@@ -19,5 +19,6 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
         public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
         public Dictionary<string, DynamicDataDescription> OutputDefinitions { get; set; }
         public string CreatedBy { get; set; }
+        public string Description { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Users;
 using Cindi.Persistence.GlobalValues;
+using Cindi.Persistence.Journals;
 using Cindi.Persistence.Sequences;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
@@ -31,10 +32,10 @@ namespace Cindi.Persistence
         {
             BsonClassMap.RegisterClassMap<SequenceMetadata>(cm => SequencesClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<Sequence>(seq => SequencesClassMap.Register(seq));
-            BsonClassMap.RegisterClassMap<StepMetadata>(cm => StepsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
-            BsonClassMap.RegisterClassMap<JournalEntry>(je => JournalEntriesClassMap.Register(je));
+            BsonClassMap.RegisterClassMap<Journal>(je => JournalsClassMap.Register(je));
             BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));
+            BsonClassMap.RegisterClassMap<StepLog>(cm => StepLogsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<User>(u => UsersClassMap.Register(u));
             BsonClassMap.RegisterClassMap<GlobalValue>(gv => GlobalValuesClassMap.Register(gv));
         }

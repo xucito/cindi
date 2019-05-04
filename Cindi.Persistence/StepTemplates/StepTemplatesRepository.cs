@@ -35,13 +35,12 @@ namespace Cindi.Persistence.StepTemplates
             _stepTemplates = database.GetCollection<StepTemplate>("StepTemplates");
         }
 
-        public async Task<StepTemplate> InsertAsync(StepTemplate stepTemplate)
+        public async Task<string> InsertAsync(StepTemplate stepTemplate)
         {
             try
             {
-                stepTemplate.CreatedOn = DateTime.UtcNow;
                 await _stepTemplates.InsertOneAsync(stepTemplate);
-                return stepTemplate;
+                return stepTemplate.Id;
             }
             catch (MongoDB.Driver.MongoWriteException e)
             {
@@ -55,7 +54,7 @@ namespace Cindi.Persistence.StepTemplates
                         throw comparisonException;
                     }
 
-                    return existingTemplate;
+                    return existingTemplate.Id;
                 }
                 throw e;
             }

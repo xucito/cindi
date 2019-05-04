@@ -11,13 +11,14 @@ using MongoDB.Bson.Serialization;
 using Cindi.Domain.ValueObjects;
 using MongoDB.Bson;
 using Cindi.Domain.Exceptions.Steps;
+using Cindi.Domain.Exceptions.JournalEntries;
 
 namespace Cindi.Persistence.Steps
 {
     public class StepsRepository : BaseRepository, IStepsRepository
     {
         private IMongoCollection<Step> _steps;
-        private IMongoCollection<StepMetadata> _stepMetadata;
+        //private IMongoCollection<StepMetadata> _stepMetadata;
         private IMongoCollection<JournalEntry> _journalEntries;
 
         public long CountSteps(string status = null)
@@ -26,7 +27,7 @@ namespace Cindi.Persistence.Steps
             {
                 return _steps.EstimatedDocumentCount();
             }
-            return _stepMetadata.Find(sm => sm.Status == status).CountDocuments();
+            return _steps.Find(sm => sm.Status == status).CountDocuments();
         }
 
         public StepsRepository(string mongoDbConnectionString, string databaseName) : base(mongoDbConnectionString, databaseName)
@@ -44,7 +45,7 @@ namespace Cindi.Persistence.Steps
         {
             var database = client.GetDatabase(DatabaseName);
             _steps = database.GetCollection<Step>("Steps");
-            _stepMetadata = database.GetCollection<StepMetadata>("_Steps");
+          //  _stepMetadata = database.GetCollection<StepMetadata>("_Steps");
             _journalEntries = database.GetCollection<JournalEntry>("JournalEntries");
         }
 
@@ -55,8 +56,8 @@ namespace Cindi.Persistence.Steps
                 throw new InvalidStepStatusInputException(status + " is not a valid step status entry.");
             }
 
-            var builder = Builders<StepMetadata>.Filter;
-            var filters = new List<FilterDefinition<StepMetadata>>();
+            var builder = Builders<Step>.Filter;
+            var filters = new List<FilterDefinition<Step>>();
             var ignoreFilters = true;
 
             if (stepTemplateIds != null)
@@ -70,15 +71,15 @@ namespace Cindi.Persistence.Steps
                 ignoreFilters = false;
             }
 
-            var stepMetadataFilter = builder.And(filters);
+            var stepFilter = builder.And(filters);
 
             if (ignoreFilters)
             {
-                stepMetadataFilter = FilterDefinition<StepMetadata>.Empty; ;
+                stepFilter = FilterDefinition<Step>.Empty; ;
             }
 
-            var sort = Builders<StepMetadata>.Sort.Descending("CreatedOn");
-            FindOptions<StepMetadata> options = new FindOptions<StepMetadata>
+            var sort = Builders<Step>.Sort.Descending("CreatedOn");
+            FindOptions<Step> options = new FindOptions<Step>
             {
                 BatchSize = size,
                 NoCursorTimeout = false,
@@ -87,12 +88,7 @@ namespace Cindi.Persistence.Steps
                 Sort = sort
             };
 
-            var validSteps = (await _stepMetadata.FindAsync(stepMetadataFilter, options)).ToList();
-
-            var allSteps = await GetStepsAsync(validSteps.Select(vs => vs.StepId).ToArray());
-
-            // Do one more inmemory check
-            return allSteps.Where(s => status == null ? true : s.Status == status).ToList();
+            return (await _steps.FindAsync(stepFilter, options)).ToList();
         }
 
         public async Task<List<Step>> GetStepsAsync(Guid[] stepIds)
@@ -101,155 +97,40 @@ namespace Cindi.Persistence.Steps
             var stepFilter = builder.In("Id", stepIds);
             var steps = (await _steps.FindAsync(stepFilter)).ToList();
 
-
-            var journalBuilder = Builders<JournalEntry>.Filter;
-            var journalFilter = journalBuilder.In("SubjectId", steps.Select(s => s.Id));
-            var journals = (await _journalEntries.FindAsync(journalFilter)).ToList();
-
-            foreach (var step in steps)
-            {
-                step.Journal = new Journal(journals.Where(j => j.SubjectId == step.Id).ToList());
-            };
-
             return steps;
         }
-
-        public async Task<Step> DeepSearchForStepAssignment(string status, Dictionary<string, DateTime?> stepFilters)
-        {
-            //var filter = Builders<Step>.Filter.In(x => x.StepTemplateId, stepTemplateIds);
-            if (!StepStatuses.IsValid(status))
-            {
-                throw new InvalidStepStatusInputException(status + " is not a valid step status entry.");
-            }
-
-            var searchArray = new BsonArray();
-
-            foreach (var templateId in stepFilters)
-            {
-                var innerArray = new BsonArray { new BsonDocument { { "StepTemplateId", templateId.Key } } };
-                if (templateId.Value != null)
-                {
-                    innerArray.Add(new BsonDocument { { "CreatedOn", new BsonDocument { { "$gt", templateId.Value } } } });
-                }
-                searchArray.Add(new BsonDocument { { "$and", innerArray } });
-            }
-
-            var stepFilter = new BsonDocument { { "$or", searchArray } };
-
-            var matchingSteps = _steps.Find(stepFilter).SortBy(s => s.CreatedOn).Project(projection => projection.Id).ToList();
-
-            //Add cursor here
-            var batch = new List<Guid>();
-            var page = 0;
-            var size = 100;
-            var totalRecordCount = matchingSteps.Count();
-            var searchedRecord = 0;
-
-            while (searchedRecord < totalRecordCount)
-            {
-                batch = matchingSteps.Skip(page).Take(size).ToList();
-                searchedRecord += batch.Count();
-                var projectStatus = new BsonDocument[] {
-                new BsonDocument {
-                    { "$match", new BsonDocument("$expr", new BsonDocument{ { "$in", new BsonArray { "$SubjectId", new BsonArray(batch.Select(s => s)) } } } )}  } ,
-                    new BsonDocument {{ "$project", new BsonDocument(new Dictionary<string, object> {
-                    { "_id", "$SubjectId" } ,
-                     { "SubjectId", "$SubjectId" } ,
-                    { "Updates", new BsonDocument {{"$filter",
-                            new BsonDocument { {"input", "$Updates" },
-                                { "as","item"},
-                                { "cond", new BsonDocument() { { "$eq", new BsonArray() {
-                                    "$$item.FieldName",
-                                    "status"
-                    } } } } } } } },
-                    { "RecordedOn", "$RecordedOn" }
-                }) } } ,
-
-                new BsonDocument{{"$sort", new BsonDocument("RecordedOn",1)}},
-                new BsonDocument{{"$group", new BsonDocument{
-                    { "_id","$SubjectId" },
-                    { "Status", new BsonDocument("$last","$Updates")},
-                    {"SubjectId", new BsonDocument("$last", "$SubjectId") }
-                } } },
-                new BsonDocument{{ "$match", new BsonDocument("Status.0.Value", status) }},
-                };
-
-                var createBuckets = new BsonDocument { { "$bucket", new BsonDocument { { "groupBy", "$SubjectId" }, { "boundaries", new BsonArray() { 0, 5, 10 } } } } };
-
-                var result = _journalEntries.Aggregate<JournalEntry>(projectStatus).ToList().Select(je => je.SubjectId);//.AppendStage<JournalEntry>(projectStatus).ToList();
-
-                if (result.Count() > 0)
-                {
-                    //Always take the first element
-                    foreach (var s in batch)
-                    {
-                        if (result.Contains(s))
-                        {
-                            var fullStep = await GetStepAsync(s);
-                            if (fullStep.Status == status)
-                            {
-                                return fullStep;
-                            }
-                        }
-                    }
-                }
-                page++;
-            }
-            return null;//result;
-        }
-
-        /*public async Task<List<Step>> GetStepsAsync(int page = 0, int size = 10)
-        {
-            FilterDefinition<Step> filter = FilterDefinition<Step>.Empty;
-            FindOptions<Step> options = new FindOptions<Step>
-            {
-                BatchSize = size,
-                NoCursorTimeout = false,
-                Skip = page,
-                Limit = size
-            };
-
-            var steps = (await _steps.FindAsync(filter, options)).ToList();
-
-            var builder = Builders<JournalEntry>.Filter;
-            var journalFilter = builder.In("SubjectId", steps.Select(s => s.Id));
-            var journals = (await _journalEntries.FindAsync(journalFilter)).ToList();
-
-            foreach (var step in steps)
-            {
-                step.Journal = new Journal(journals.Where(j => j.SubjectId == step.Id).ToList());
-            };
-
-            return steps;
-        }*/
 
         public async Task<Step> GetStepAsync(Guid stepId)
         {
             var step = (await _steps.FindAsync(s => s.Id == stepId)).FirstOrDefault();
-            step.Journal = new Journal((await _journalEntries.FindAsync(je => je.SubjectId == step.Id)).ToList());
             return step;
         }
 
 
-        public async Task<Step> InsertStepAsync(Step step)
+        public async Task<Guid> InsertStepAsync(Step step)
         {
-            step.Id = Guid.NewGuid();
-            step.CreatedOn = DateTime.UtcNow;
             await _steps.InsertOneAsync(step);
-            return step;
+            return step.Id;
         }
 
-        public async Task<bool> UpsertStepMetadataAsync(Guid stepId)
+        public async Task<bool> UpdateStep(Step step)
         {
-            var stepToUpdate = await GetStepAsync(stepId);
+            var result = await _steps.ReplaceOneAsync(
+                  doc => doc.Id == step.Id,
+                  step,
+                  new UpdateOptions
+                  {
+                      IsUpsert = false
+                  });
 
-            var replaceResult = await _stepMetadata.ReplaceOneAsync(
-                    doc => doc.StepId == stepToUpdate.Id,
-                    stepToUpdate.Metadata,
-                    new UpdateOptions { IsUpsert = true }
-                    );
-
-            return replaceResult.IsAcknowledged;
+            if(result.IsAcknowledged)
+            {
+                return true;
+            }
+            else
+            {
+                throw new StepUpdateFailureException("Update of step " + step.Id + " failed.");
+            }
         }
 
         /*public async Task<JournalEntry> ReassignStepAsync(Guid stepId, string status)
@@ -276,17 +157,5 @@ namespace Cindi.Persistence.Steps
             return await InsertJournalEntryAsync(new JournalEntry() {
             });
         }*/
-
-        public async Task<int> GetNextChainId(Guid subjectId)
-        {
-            var filter = Builders<JournalEntry>.Filter.Eq(x => x.SubjectId, subjectId);
-            return (await _journalEntries.FindAsync(filter)).ToList().OrderBy(je => je.CreatedOn).Last().ChainId + 1;
-        }
-
-        public async Task<JournalEntry> InsertJournalEntryAsync(JournalEntry entry)
-        {
-            await _journalEntries.InsertOneAsync(entry);
-            return entry;
-        }
     }
 }

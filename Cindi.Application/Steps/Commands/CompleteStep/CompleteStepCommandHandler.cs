@@ -85,20 +85,17 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             var stepToComplete = await _stepsRepository.GetStepAsync(request.Id);
 
-            if (stepToComplete.IsComplete)
+            if (stepToComplete.IsComplete())
             {
                 throw new InvalidStepStatusInputException("Step " + request.Id + " is already complete with status " + stepToComplete.Status + ".");
             }
 
             if (request.Status == StepStatuses.Suspended)
             {
-                await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
+                stepToComplete.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
                 {
-                    Entity = JournalEntityTypes.Step,
-                    SubjectId = stepToComplete.Id,
                     CreatedOn = DateTime.UtcNow,
                     CreatedBy = request.CreatedBy,
-                    ChainId = stepToComplete.Journal.GetNextChainId(),
                     Updates = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
@@ -110,12 +107,12 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             new Update()
                             {
                                 Type = UpdateType.Override,
-                                FieldName = "suspendedUntil",
+                                FieldName = "suspendeduntil",
                                 Value = request.SuspendFor == null ?DateTime.UtcNow.AddMilliseconds( _option.DefaultSuspensionTime) : DateTime.UtcNow.AddMilliseconds(DateTimeMathsUtility.GetMs(request.SuspendFor))
                             }
                         }
                 });
-                await _stepsRepository.UpsertStepMetadataAsync(stepToComplete.Id);
+                await _stepsRepository.UpdateStep(stepToComplete);
 
 
                 return new CommandResult()
@@ -134,7 +131,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             var stepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(stepToComplete.StepTemplateId);
 
-            if(request.Outputs == null)
+            if (request.Outputs == null)
             {
                 request.Outputs = new Dictionary<string, object>();
             }
@@ -153,14 +150,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 request.Outputs[key] = SecurityUtility.SymmetricallyEncrypt((string)request.Outputs[key], ClusterStateService.GetEncryptionKey());
             }
 
-            await _stepsRepository.InsertJournalEntryAsync(new Domain.Entities.JournalEntries.JournalEntry()
-            {
-                Entity = JournalEntityTypes.Step,
-                SubjectId = stepToComplete.Id,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = request.CreatedBy,
-                ChainId = stepToComplete.Journal.GetNextChainId(),
-                Updates = new List<Domain.ValueObjects.Update>()
+            var finalUpdate = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
                             {
@@ -179,18 +169,28 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 Type = UpdateType.Override,
                                 FieldName = "statuscode",
                                 Value = request.StatusCode,
-                            },
+                            }
+                        };
+            if(request.Log != null)
+            {
+                finalUpdate.Add(
                             new Update()
                             {
                                 Type = UpdateType.Append,
                                 FieldName = "logs",
                                 Value = request.Log,
-                            }
-                        }
+                            });
+            }
+
+            stepToComplete.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+            {
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = request.CreatedBy,
+                Updates = finalUpdate
             });
 
-            var updatedStep = await _stepsRepository.GetStepAsync(request.Id);
-            await _stepsRepository.UpsertStepMetadataAsync(updatedStep.Id);
+            var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
+            var updatedStep = await _stepsRepository.GetStepAsync(stepToComplete.Id);
 
             if (updatedStep.SequenceId != null)
             {
@@ -299,13 +299,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             }
                             else
                             {
-                                var newStep = new Step()
-                                {
-                                    StepTemplateId = substep.StepTemplateId,
-                                    StepRefId = substep.StepRefId,
-                                    SequenceId = updatedStep.SequenceId,
-                                    CreatedBy = SystemUsers.QUEUE_MANAGER
-                                };
+
+                                var verifiedInputs = new Dictionary<string, object>();
 
                                 foreach (var mapping in substep.Mappings)
                                 {
@@ -321,7 +316,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     // If default value is higher priority
                                     else if (mapping.DefaultValue != null && (highestPriorityReference == null || highestPriorityReference.Priority < mapping.DefaultValue.Priority))
                                     {
-                                        newStep.Inputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
+                                        verifiedInputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
                                     }
                                     // If the step ref is not -1 it is a step in the array but the sequence
                                     else if (highestPriorityReference.StepRefId != -1)
@@ -344,7 +339,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                                     var outPutValue = DynamicDataUtility.GetData(parentStep.Outputs, highestPriorityReference.OutputId);
 
                                                     // Validate it is in the definition
-                                                    newStep.Inputs.Add(mapping.StepInputId, outPutValue.Value);
+                                                    verifiedInputs.Add(mapping.StepInputId, outPutValue.Value);
 
                                                 }
                                                 catch (Exception e)
@@ -360,20 +355,18 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     else
                                     {
                                         // Validate it is in the definition
-                                        newStep.Inputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(sequence.Inputs, highestPriorityReference.OutputId).Value);
+                                        verifiedInputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(sequence.Inputs, highestPriorityReference.OutputId).Value);
                                     }
 
                                 }
 
+
                                 //Add the step TODO, add step priority
                                 await _mediator.Send(new CreateStepCommand()
                                 {
-                                    StepTemplateId = newStep.StepTemplateId,
+                                    StepTemplateId = substep.StepTemplateId,
                                     CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                    Description = newStep.Description,
-                                    Inputs = newStep.Inputs,
-                                    Name = newStep.Name,
-                                    Tests = newStep.Tests
+                                    Inputs = verifiedInputs
                                 });/*
                                 var newlyCreatedStep = await _stepsRepository.InsertStepAsync(newStep);//, null, (substep.IsPriority));
                                 await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
@@ -413,12 +406,10 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                 if (newSequenceStatus != sequence.Status)
                 {
-                    await _sequencesRepository.InsertJournalEntryAsync(
+
+                    sequence.UpdateJournal(
                     new JournalEntry()
                     {
-                        Entity = JournalEntityTypes.Sequence,
-                        ChainId = await _sequencesRepository.GetNextChainId(sequence.Id),
-                        SubjectId = sequence.Id,
                         CreatedBy = request.CreatedBy,
                         CreatedOn = DateTime.UtcNow,
                         Updates = new List<Update>()
@@ -430,11 +421,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     Value = newSequenceStatus
                                 }
                         }
-                    }
-                 );
-                    await _sequencesRepository.UpsertSequenceMetadataAsync(sequence.Id);
-                }
+                    });
 
+                    await _sequencesRepository.UpdateSequence(sequence);
+                }
+                await _sequencesRepository.UpsertSequenceMetadataAsync(sequence.Id);
             }
 
             return new CommandResult()
