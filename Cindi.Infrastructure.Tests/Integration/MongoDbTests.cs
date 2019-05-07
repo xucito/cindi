@@ -240,25 +240,14 @@ namespace Cindi.Infrastructure.Tests.Integration
 
             var id = Guid.NewGuid();
 
-            var newSequence = new Domain.Entities.Sequences.Sequence()
+            var newSequence = new Domain.Entities.Sequences.Sequence(
+                id,
+                data.sequenceTemplate.Id,
+                new Dictionary<string, object>(),
+                "",
+                "",
+                DateTime.UtcNow)
             {
-                SequenceTemplateId = data.sequenceTemplate.Id,
-                Inputs = new Dictionary<string, object>(),
-                CreatedOn = DateTime.UtcNow,
-                Id = id,
-                Journal = new Journal(new JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = SequenceStatuses.Started,
-                        Type = UpdateType.Override
-                    }
-                }
-                })
             };
 
             var newSequenceId = await sequenceRepository.InsertSequenceAsync(newSequence);
@@ -288,25 +277,14 @@ namespace Cindi.Infrastructure.Tests.Integration
             await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplate);
 
             var id = Guid.NewGuid();
-            var newSequence = new Domain.Entities.Sequences.Sequence()
+            var newSequence = new Domain.Entities.Sequences.Sequence(
+                id,
+                data.sequenceTemplate.Id,
+                new Dictionary<string, object>(),
+                "",
+                "",
+                DateTime.UtcNow)
             {
-                SequenceTemplateId = data.sequenceTemplate.Id,
-                Inputs = new Dictionary<string, object>(),
-                CreatedOn = DateTime.UtcNow,
-                Id = id,
-                Journal = new Journal(new JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = SequenceStatuses.Started,
-                        Type = UpdateType.Override
-                    }
-                }
-                })
             };
 
             var newSequenceId = await sequenceRepository.InsertSequenceAsync(newSequence);

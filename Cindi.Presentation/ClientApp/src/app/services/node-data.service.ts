@@ -10,10 +10,10 @@ export class NodeDataService {
   private baseUrl = environment.apiUrl; //'http://10.10.10.24:5021/';//'http://localhost:5021/';//'http://10.10.10.24:5021/';// //'http://10.10.10.24:5021/';// 'http://10.10.10.17:5021/';// 'http://localhost:5021/'; //
 
   constructor(
-    private http: HttpClient,
-    /*,
+    private http: HttpClient
+  ) /*,
     @Inject('BASE_URL') private baseUrl: string*/
-  ) {}
+  {}
 
   GetSteps(status: string = ""): Observable<any> {
     if (status != "")
@@ -68,15 +68,30 @@ export class NodeDataService {
     return this.http.get(this.baseUrl + this.api + "cluster/stats");
   }
 
-  GetSecret(stepId: string, fieldName: string): Observable<any>{
-    return this.http.get(this.baseUrl + this.api + "encryption/steps/"  + stepId + "/fields/" + fieldName);
+  GetSecret(stepId: string, fieldName: string): Observable<any> {
+    return this.http.get(
+      this.baseUrl +
+        this.api +
+        "encryption/steps/" +
+        stepId +
+        "/fields/" +
+        fieldName
+    );
   }
 
-  GetUsers(): Observable<any>{
-    return this.http.get(this.baseUrl + this.api + "users")
+  GetUsers(): Observable<any> {
+    return this.http.get(this.baseUrl + this.api + "users");
   }
 
-  PostUser(user: any){
+  PostUser(user: any) {
     return this.http.post(this.baseUrl + this.api + "users", user);
+  }
+
+  GetGlobalValues(): Observable<any> {
+    return this.http.get(this.baseUrl + this.api + "global-values");
+  }
+
+  PostGlobalValues(gv: any): Observable<any> {
+    return this.http.post(this.baseUrl + this.api + "global-values", gv);
   }
 }

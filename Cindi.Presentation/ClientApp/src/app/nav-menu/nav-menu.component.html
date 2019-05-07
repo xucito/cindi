@@ -44,13 +44,19 @@
         </a>
       </li>
       <li class="nav-item">
+        <a [routerLink]="['global-values']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Global Values
+        </a>
+      </li>
+      <li class="nav-item">
         <a [routerLink]="['sequence-templates']" (click)="collapse()">
           <i class="material-icons">
             account_circle
           </i>
           <span class="glyphicon glyphicon-th-list"></span> {{ username }}
         </a>
-      </li>
+      </li>      
+
     </ul>
   </div>
 </nav>

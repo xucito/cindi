@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,8 +32,10 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
              request.Name + ":" + request.Version,
              request.Description,
              request.AllowDynamicInputs,
-             request.InputDefinitions,
-             request.OutputDefinitions,
+             request.InputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
+             entry => entry.Value),
+             request.OutputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
+             entry => entry.Value),
              request.CreatedBy,
              DateTime.UtcNow
              ));

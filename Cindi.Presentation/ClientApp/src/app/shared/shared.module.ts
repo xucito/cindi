@@ -31,6 +31,7 @@ import { StepProgressBarComponent } from "./components/step-progress-bar/step-pr
 import { UpdateViewerComponent } from "./components/update-viewer/update-viewer.component";
 import { SecretModalComponent } from "./components/modals/secret-modal/secret-modal.component";
 import { AddUsersModalComponent } from './components/modals/add-users-modal/add-users-modal.component';
+import { AddGlobalValueModalComponent } from './components/modals/add-global-value-modal/add-global-value-modal.component';
 
 @NgModule({
   imports: [
@@ -81,7 +82,8 @@ import { AddUsersModalComponent } from './components/modals/add-users-modal/add-
     StepProgressBarComponent,
     UpdateViewerComponent,
     SecretModalComponent,
-    AddUsersModalComponent
+    AddUsersModalComponent,
+    AddGlobalValueModalComponent
   ],
   entryComponents: []
 })

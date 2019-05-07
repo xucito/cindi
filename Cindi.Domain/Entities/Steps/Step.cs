@@ -212,44 +212,47 @@ namespace Cindi.Domain.Entities.Steps
             }
         }
 
-        public void DecryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
+        public void RemoveDelimiters()
         {
-            List<string> keysToEncrypt = new List<string>();
+            Dictionary<string, object> convertedInput = new Dictionary<string, object>();
+            
             foreach (var input in Inputs)
             {
-                if (stepTemplate.GetInputType(input.Key) == InputDataTypes.Secret)
+                if (input.Value is string && ((string)input.Value).Length > 1)
                 {
-                    keysToEncrypt.Add(input.Key);
-                }
-            }
-
-            switch (protocol)
-            {
-                case EncryptionProtocol.AES256:
-                    foreach (var key in keysToEncrypt)
+                    var convertedStringInput = (string)input.Value;
+                    if (convertedStringInput.Length > 2 && convertedStringInput[0] == '\\' && convertedStringInput[1] == '$')
                     {
-                        Inputs[key] = SecurityUtility.SymmetricallyDecrypt((string)Inputs[key], encryptionKey);
-                    }
-                    break;
-                case EncryptionProtocol.RSA:
-                    if (usePublicKey)
-                    {
-                        foreach (var key in keysToEncrypt)
-                        {
-                            Inputs[key] = SecurityUtility.RsaDecryptWithPublic((string)Inputs[key], encryptionKey);
-                        }
+                        convertedInput.Add(input.Key, convertedStringInput.Substring(1, convertedStringInput.Length - 1));
                     }
                     else
                     {
-                        foreach (var key in keysToEncrypt)
-                        {
-                            Inputs[key] = SecurityUtility.RsaDecryptWithPrivate((string)Inputs[key], encryptionKey);
-                        }
+                        convertedInput.Add(input.Key, input.Value);
                     }
-                    break;
-                default:
-                    throw new InvalidEncryptionProtocolException();
+                }
+                else
+                {
+                    convertedInput.Add(input.Key, input.Value);
+                }
             }
+
+            UpdateJournal(new JournalEntry()
+            {
+                Updates = new List<Update>()
+                {
+                    new Update()
+                    {
+                        FieldName = "inputs",
+                        Value = convertedInput,
+                        Type = UpdateType.Create
+                    }
+                }
+            });
+        }
+
+        public void DecryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
+        {
+            Inputs = InputDataUtility.DecryptDynamicData(stepTemplate, Inputs, protocol, encryptionKey, usePublicKey);
         }
     }
 }

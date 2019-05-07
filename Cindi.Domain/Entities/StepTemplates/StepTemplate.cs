@@ -17,6 +17,11 @@ namespace Cindi.Domain.Entities.StepTemplates
 {
     public class StepTemplate : TrackedEntity
     {
+        public StepTemplate(Journal journal): base (journal)
+        {
+
+        }
+
         public StepTemplate(string id,
             string description,
             bool allowDynamicInputs,
@@ -220,7 +225,7 @@ namespace Cindi.Domain.Entities.StepTemplates
 
                     if ((AllowDynamicInputs && !InputDefinitions.ContainsKey(input.Key)) || InputDefinitions.ContainsKey(input.Key))
                     {
-                        if (InputDefinitions.ContainsKey(input.Key) && InputDefinitions[input.Key].Type == InputDataTypes.Secret)
+                        if (InputDefinitions.ContainsKey(input.Key) && InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
                         {
                             verifiedInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, encryptionKey));
                         }

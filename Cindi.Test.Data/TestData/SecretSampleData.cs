@@ -9,23 +9,28 @@ namespace Cindi.Test.Global.TestData
 {
     public static class SecretSampleData
     {
-        public static readonly StepTemplate StepTemplate = new StepTemplate()
-        {
-            Id = "Pass_Password:0",
-            InputDefinitions = new Dictionary<string, DynamicDataDescription>(){
+        public static readonly StepTemplate StepTemplate = new StepTemplate(
+            "Pass_Password:0",
+            "",
+            false,
+            new Dictionary<string, DynamicDataDescription>(){
 
                         {"secret", new DynamicDataDescription(){
                             Type = InputDataTypes.Secret,
                             Description = ""
                         }}
                     },
-            OutputDefinitions = new Dictionary<string, DynamicDataDescription>()
+            new Dictionary<string, DynamicDataDescription>()
                     {
                          {"secret", new DynamicDataDescription(){
                             Type = InputDataTypes.Secret,
                             Description = ""
                         }},
-                    }
-        };
+                    },
+            "admin",
+            DateTime.UtcNow
+
+            )
+        { };
     }
 }

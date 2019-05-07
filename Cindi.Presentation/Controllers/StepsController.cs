@@ -122,7 +122,8 @@ namespace Cindi.Presentation.Controllers
                 StatusCode = commandVM.StatusCode,
                 Log = commandVM.Logs,
                 Outputs = commandVM.Outputs,
-                CreatedBy = ClaimsUtility.GetId(User)
+                CreatedBy = ClaimsUtility.GetId(User),
+                BotId = new Guid(ClaimsUtility.GetId(User))
             };
 
             var result = await Mediator.Send(completeStepCommand);

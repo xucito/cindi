@@ -45,8 +45,9 @@ namespace Cindi.Application.Tests.Sequences.Commands
             Mock<ISequenceTemplatesRepository> sequenceTemplatesRepository = new Mock<ISequenceTemplatesRepository>();
             sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
+            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
 
-            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, _mediator.Object);
+            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object);
 
             await handler.Handle(new CreateSequenceCommand()
             {
@@ -67,8 +68,8 @@ namespace Cindi.Application.Tests.Sequences.Commands
             Mock<ISequenceTemplatesRepository> sequenceTemplatesRepository = new Mock<ISequenceTemplatesRepository>();
             sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-
-            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, _mediator.Object);
+            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
+            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object);
 
             await Assert.ThrowsAsync<MissingInputException>(async () => await handler.Handle(new CreateSequenceCommand()
             {

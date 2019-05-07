@@ -15,5 +15,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public string Log { get; set; }
         public string SuspendFor { get; set; }
         public string CreatedBy { get; set; }
+        public Guid BotId { get; set; }
     }
 }

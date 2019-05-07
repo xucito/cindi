@@ -124,12 +124,11 @@ export class StepComponent implements OnInit, OnDestroy {
 
   getOutputKeys(step: any): string[] {
     let outputs = [];
-    if(step.outputs != undefined)
-    {
-    for (let key of Object.keys(step.outputs)) {
-      outputs.push(key);
+    if (step.outputs != undefined) {
+      for (let key of Object.keys(step.outputs)) {
+        outputs.push(key);
+      }
     }
-  }
     return outputs;
   }
 
@@ -172,17 +171,20 @@ export class StepComponent implements OnInit, OnDestroy {
   actionInput(event: InputAction) {
     switch (event.action) {
       case "unencrypt":
-        this._nodeData.GetSecret(this.clonedId == undefined ? this.step.id: this.clonedId, event.inputId).subscribe(
-          (result) => {
+        this._nodeData
+          .GetSecret(
+            this.clonedId == undefined ? this.step.id : this.clonedId,
+            event.inputId
+          )
+          .subscribe(result => {
             console.log(event);
             const dialogRef = this.dialog.open(SecretModalComponent, {
-              width: '250px',
+              width: "250px",
               data: {
                 secret: result.result
               }
             });
-          }
-        )
+          });
         break;
     }
   }

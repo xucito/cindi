@@ -35,7 +35,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private IMediator _mediator;
-
+        private IBotKeysRepository _botKeysRepository;
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             ISequenceTemplatesRepository sequenceTemplateRepository,
@@ -43,7 +43,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            IMediator mediator
+            IMediator mediator,
+            IBotKeysRepository botKeysRepository
             )
         {
             _stepsRepository = stepsRepository;
@@ -58,6 +59,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 _option = change;
             });
             _mediator = mediator;
+            _botKeysRepository = botKeysRepository;
         }
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
@@ -66,8 +68,10 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ISequencesRepository sequencesRepository,
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
-            CindiClusterOptions options
-            )
+            CindiClusterOptions options,
+            IMediator mediator,
+            IBotKeysRepository botKeysRepository
+    )
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
@@ -76,6 +80,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options;
+            _botKeysRepository = botKeysRepository;
         }
 
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
@@ -149,6 +154,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             {
                 request.Outputs[key] = SecurityUtility.SymmetricallyEncrypt((string)request.Outputs[key], ClusterStateService.GetEncryptionKey());
             }
+            var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
 
             var finalUpdate = new List<Domain.ValueObjects.Update>()
                         {
@@ -162,7 +168,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             {
                                 Type = UpdateType.Override,
                                 FieldName = "outputs",
-                                Value = request.Outputs,
+                                Value = InputDataUtility.EncryptDynamicData(stepTemplate,InputDataUtility.DecryptDynamicData(stepTemplate,request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true), EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey())
                             },
                             new Update()
                             {
@@ -178,7 +184,10 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             {
                                 Type = UpdateType.Append,
                                 FieldName = "logs",
-                                Value = request.Log,
+                                Value = new StepLog() {
+                                    CreatedOn = DateTime.UtcNow,
+                                    Message = request.Log
+                                },
                             });
             }
 
@@ -216,10 +225,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                 //Get all the logic blocks for all logic blocks containing the step that has been completed
                 var logicBlocks = sequenceTemplate.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Where(ps => ps.StepRefId == updatedStep.StepRefId).Count() > 0).ToList();
-
-                //Filter out the logic blocks with any of the subsequent StepRefIds
-                //logicBlocks = logicBlocks.Where(lb => sequence.Select(s => s.StepRefId).Where(srid => lb.SubsequentSteps.Select(lbss => lbss.StepRefId).Contains(srid)).Count() == 0).ToList();
-
+                
 
                 foreach (var logicBlock in logicBlocks)
                 {
@@ -366,28 +372,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 {
                                     StepTemplateId = substep.StepTemplateId,
                                     CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                    Inputs = verifiedInputs
-                                });/*
-                                var newlyCreatedStep = await _stepsRepository.InsertStepAsync(newStep);//, null, (substep.IsPriority));
-                                await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
-                                {
-                                    SubjectId = newlyCreatedStep.Id,
-                                    ChainId = 0,
-                                    Entity = JournalEntityTypes.Step,
-                                    CreatedOn = DateTime.UtcNow,
-                                    CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                    Updates = new List<Update>()
-                                    {
-                                        new Update()
-                                        {
-                                            FieldName = "status",
-                                            Value = StepStatuses.Unassigned,
-                                            Type = UpdateType.Override
-                                        }
-                                    }
-                                });*/
+                                    Inputs = verifiedInputs,
+                                    SequenceId = sequence.Id,
+                                    StepRefId = substep.StepRefId
+                                });
                                 addedStep = true;
-                                //await _stepsRepository.UpsertStepMetadataAsync(newlyCreatedStep.Id);
                             }
                         }
                         _clusterStateService.UnlockLogicBlock("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock.Id);
@@ -396,7 +385,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned
-
 
                 var sequenceStatus = sequence.Status;
                 sequenceSteps = await _sequencesRepository.GetSequenceStepsAsync(updatedStep.SequenceId.Value);

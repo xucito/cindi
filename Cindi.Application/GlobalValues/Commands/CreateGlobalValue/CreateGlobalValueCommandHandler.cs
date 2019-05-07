@@ -1,9 +1,11 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.GlobalValues;
+using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
@@ -38,13 +40,17 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 throw new InvalidGlobalValuesException("The global value name "+ request.Name +" is already in-use.");
             }
 
-            var createdGV = await _globalValuesRepository.InsertGlobalValue(new GlobalValue()
+            var createdGV = await _globalValuesRepository.InsertGlobalValue(new GlobalValue(
+                request.Name,
+                request.Type,
+                request.Description,
+                request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, ClusterStateService.GetEncryptionKey()): request.Value,
+                GlobalValueStatuses.Enabled,
+                Guid.NewGuid(),
+                request.CreatedBy,
+                DateTime.UtcNow
+                )
             {
-                Name = request.Name,
-                Status = GlobalValueStatuses.Enabled,
-                Type = request.Type,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = request.CreatedBy
             });
 
             stopwatch.Stop();

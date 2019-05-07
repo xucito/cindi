@@ -13,10 +13,11 @@ namespace Cindi.Test.Global.TestData
 {
     public static class FibonacciSampleData
     {
-        public static readonly StepTemplate StepTemplate = new StepTemplate()
-        {
-            Id = "Fibonacci_stepTemplate:0",
-            InputDefinitions = new Dictionary<string, DynamicDataDescription>(){
+        public static readonly StepTemplate StepTemplate = new StepTemplate(
+            "Fibonacci_stepTemplate:0",
+            "",
+            false,
+            new Dictionary<string, DynamicDataDescription>(){
                         {"n-2", new DynamicDataDescription(){
                             Type = InputDataTypes.Int,
                             Description = ""
@@ -27,19 +28,25 @@ namespace Cindi.Test.Global.TestData
                             Description = ""
                         }}
                     },
-            OutputDefinitions = new Dictionary<string, DynamicDataDescription>()
+            new Dictionary<string, DynamicDataDescription>()
                     {
                          {"n", new DynamicDataDescription(){
                             Type = InputDataTypes.Int,
                             Description = ""
                         }},
-                    }
+                    },
+            "admin",
+            DateTime.UtcNow
+
+            )
+        {
         };
 
-        public static readonly SequenceTemplate SequenceTemplate = new SequenceTemplate()
-        {
-            Id = "Fibonacci",
-            LogicBlocks = new List<LogicBlock>()
+        public static readonly SequenceTemplate SequenceTemplate = new SequenceTemplate(
+            "Fibonacci:0",
+            "",
+            new Dictionary<string, DynamicDataDescription>(),
+            new List<LogicBlock>()
             {
                 new LogicBlock()
                 {
@@ -119,42 +126,72 @@ namespace Cindi.Test.Global.TestData
                                    }
                          } }
                 }
-            }
+            },
+            "admin",
+            DateTime.UtcNow
+            )
+        {
         };
 
-        public static readonly Step Step = new Step(new Domain.Entities.JournalEntries.Journal)
+        public static Step Step
         {
-            Id = Guid.NewGuid(),
-            StepTemplateId = StepTemplate.Id,
-            Inputs = new Dictionary<string, object>()
+            get
             {
-                {"n-2","1" },
-                {"n-1","2" }
-            },
-            CreatedBy = "testUser@email.com",
-            Journal = new Domain.Entities.JournalEntries.Journal(new Domain.Entities.JournalEntries.JournalEntry()
-            {
-                CreatedBy = "testUser@email.com",
-                CreatedOn = DateTime.UtcNow,
-                Updates = new List<Update>()
-                {
+                return new Step(new Domain.Entities.JournalEntries.Journal(
+new Domain.Entities.JournalEntries.JournalEntry()
+{
+    Updates = new List<Update>()
+{
                     new Update()
+                    {
+                        FieldName = "id",
+                        Value = Guid.NewGuid(),
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "StepTemplateId",
+                        Value = StepTemplate.Id,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "inputs",
+                        Value = new Dictionary<string, object>()
+                        {
+                            {"n-2","1" },
+                            {"n-1","2" }
+                        },
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "createdby",
+                        Value = "testUser@email.com",
+                        Type = UpdateType.Create
+                    },
+                                        new Update()
                     {
                         FieldName = "status",
                         Value = StepStatuses.Unassigned,
-                        Type = UpdateType.Override
+                        Type = UpdateType.Create
                     }
-                }
-            }),
-            Status = StepStatuses.Unassigned
-        };
+}
+}
+))
+                {
+                };
+            }
+        }
 
-        public static readonly Sequence Sequence = new Sequence()
+        public static readonly Sequence Sequence = new Sequence(
+            Guid.NewGuid(),
+            SequenceTemplate.Id,
+            new Dictionary<string, object>(),
+            "",
+            "admin",
+            DateTime.UtcNow)
         {
-            Id = Guid.NewGuid(),
-            CreatedOn = DateTime.UtcNow,
-            SequenceTemplateId = SequenceTemplate.Id,
-            Inputs = new Dictionary<string, object>()
         };
 
         public class FibonacciSequenceData

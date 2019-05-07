@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
+using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.AssignStep;
@@ -15,6 +16,7 @@ using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using Cindi.Test.Global.MockInterfaces;
 using Cindi.Test.Global.TestData;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,6 +24,7 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -151,73 +154,6 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, new System.Threading.CancellationToken()));
         }
 
-        [Fact]
-        public async void CompleteStepWithNoSequence()
-        {
-            var TestStep = FibonacciSampleData.Step;
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
-            stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
-            stepsRepository.Setup(s => s.UpdateStep(TestStep)).Returns(Task.FromResult(true));
-
-            var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
-
-            Mock<IClusterRepository> clusterRepository = new Mock<IClusterRepository>();
-            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(clusterRepository.Object, mockStateLogger.Object, serviceScopeFactory.Object), mockLogger.Object, cindiClusterOptions);
-
-            var completeResult = await handler.Handle(new CompleteStepCommand()
-            {
-                Id = TestStep.Id,
-                Outputs = new Dictionary<string, object>()
-                {
-                    { "n", 0 }
-                },
-                Status = StepStatuses.Successful,
-                StatusCode = 0,
-                Log = "TEST"
-            }, new System.Threading.CancellationToken());
-
-            Assert.Equal(TestStep.Id.ToString(), completeResult.ObjectRefId);
-        }
-
-        [Fact]
-        public async void DetectMissingSequenceOnCompleteStep()
-        {
-            var TestSequence = FibonacciSampleData.Sequence;
-            var TestStep = FibonacciSampleData.Step;
-            TestStep.SequenceId = TestSequence.Id;
-
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
-            stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
-
-            var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
-
-            Mock<IClusterRepository> clusterRepository = new Mock<IClusterRepository>();
-            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(clusterRepository.Object, mockStateLogger.Object, serviceScopeFactory.Object), mockLogger.Object, cindiClusterOptions);
-
-            await Assert.ThrowsAsync<MissingSequenceException>(async () => await handler.Handle(new CompleteStepCommand()
-            {
-                Id = TestStep.Id,
-                Outputs = new Dictionary<string, object>()
-                {
-                    { "n", 0 }
-                },
-                Status = StepStatuses.Successful,
-                StatusCode = 0,
-                Log = "TEST"
-            }, new System.Threading.CancellationToken()));
-        }
 
         [Fact]
         public async void CreateStepWithSecret()
@@ -228,8 +164,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.Id);
             var newStep = stepTemplate.GenerateStep(stepTemplate.Id, "", "", "", new Dictionary<string, object>() {
                 {"secret", "This is a test"}
-            });
-            newStep.EncryptStepSecrets(Domain.Enums.EncryptionProtocol.AES256, stepTemplate, ClusterStateService.GetEncryptionKey());
+            },null,null,null, ClusterStateService.GetEncryptionKey());
+
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep.Id));
 
@@ -250,108 +186,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Assert.Equal("This is a test", SecurityUtility.SymmetricallyDecrypt((string)step.Result.Inputs["secret"], ClusterStateService.GetEncryptionKey()));
         }
 
-        [Fact]
-        public async void AssignStepWithSecret()
-        {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.Id)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
-            var testPhrase = "This is a test";
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.Id);
-            var newStep = stepTemplate.GenerateStep(stepTemplate.Id, "", "", "", new Dictionary<string, object>() {
-                {"secret", testPhrase}
-            });
-
-            newStep.EncryptStepSecrets(Domain.Enums.EncryptionProtocol.AES256, stepTemplate, ClusterStateService.GetEncryptionKey());
-
-            clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
-
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>())).Returns(Task.FromResult(new List<Step> { newStep }));
-
-            var testKey = SecurityUtility.GenerateRSAKeyPair();
-
-            Mock<IBotKeysRepository> keysRepository = new Mock<IBotKeysRepository>();
-            keysRepository.Setup(kr => kr.GetBotKeyAsync(It.IsAny<Guid>())).Returns(Task.FromResult(new BotKey()
-            {
-                PublicEncryptionKey = testKey.PublicKey
-            }));
-
-            var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object);
-
-            var result = await handler.Handle(new AssignStepCommand()
-            {
-            }, new System.Threading.CancellationToken());
-
-            var assignedStep = result.Result;
-
-            Assert.NotEqual(testPhrase, (string)result.Result.Inputs["secret"]);
-
-            var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
-            //Randomized padding is used
-            Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
-            //Decryption using private key should work
-            Assert.Equal(SecurityUtility.RsaDecryptWithPrivate(encryptionTestResult, testKey.PrivateKey), SecurityUtility.RsaDecryptWithPrivate((string)result.Result.Inputs["secret"], testKey.PrivateKey));
-        }
-
-        [Fact]
-        public async void CompleteStepWithSequence()
-        {
-            var TestSequence = FibonacciSampleData.Sequence;
-            TestSequence.Journal = new Domain.Entities.JournalEntries.Journal(
-                new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = "testuser@email.com",
-                    Updates = new List<Update>()
-                        {
-                            new Update()
-                            {
-                                FieldName = "status",
-                                Value = StepStatuses.Unassigned,
-                                Type = UpdateType.Override
-                            }
-                        }
-                }
-           );
-
-            var TestStep = FibonacciSampleData.Step;
-            TestStep.SequenceId = TestSequence.Id;
-            TestStep.StepRefId = 0;
-
-
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
-            stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
-
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            sequenceTemplateRepository.Setup(str => str.GetSequenceTemplateAsync(TestSequence.SequenceTemplateId)).Returns(Task.FromResult(FibonacciSampleData.SequenceTemplate));
-
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
-            sequenceRepository.Setup(sr => sr.GetSequenceAsync(TestSequence.Id)).Returns(Task.FromResult(TestSequence));
-            sequenceRepository.Setup(sr => sr.GetSequenceStepsAsync(TestSequence.Id)).Returns(Task.FromResult(new List<Step>() { TestStep }));
-
-
-            var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
-            Mock<IClusterRepository> clusterRepository = new Mock<IClusterRepository>();
-            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(clusterRepository.Object, mockStateLogger.Object, serviceScopeFactory.Object), mockLogger.Object, cindiClusterOptions);
-
-            Assert.Equal(TestStep.Id.ToString(), (await handler.Handle(new CompleteStepCommand()
-            {
-                Id = TestStep.Id,
-                Outputs = new Dictionary<string, object>()
-                {
-                    { "n", 0 }
-                },
-                Status = StepStatuses.Successful,
-                StatusCode = 0,
-                Log = "TEST"
-            }, new System.Threading.CancellationToken())).ObjectRefId);
-
-        }
+        
 
         [Fact]
         public async void StepIsAlwaysCreatedWithLowerCaseInputs()
@@ -367,6 +202,12 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         [Fact]
         public async void AssignIdOnCreation()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void DontEncryptReferenceSecrets()
         {
             Assert.True(false);
         }

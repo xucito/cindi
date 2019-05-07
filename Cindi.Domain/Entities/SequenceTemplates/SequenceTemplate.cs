@@ -13,6 +13,8 @@ namespace Cindi.Domain.Entities.SequencesTemplates
 {
     public class SequenceTemplate: TrackedEntity
     {
+        public SequenceTemplate(Journal journal): base(journal) { }
+
         public SequenceTemplate(
             string id, 
             string description,

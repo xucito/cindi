@@ -28,6 +28,8 @@ import { SecretModalComponent } from "./shared/components/modals/secret-modal/se
 import { MatDialogRef, MatDialogModule } from "@angular/material";
 import { UsersComponent } from "./users/users.component";
 import { AddUsersModalComponent } from "./shared/components/modals/add-users-modal/add-users-modal.component";
+import { GlobalValuesComponent } from './global-values/global-values.component';
+import { AddGlobalValueModalComponent } from "./shared/components/modals/add-global-value-modal/add-global-value-modal.component";
 
 @NgModule({
   declarations: [
@@ -43,7 +45,8 @@ import { AddUsersModalComponent } from "./shared/components/modals/add-users-mod
     StepComponent,
     StatusCardComponent,
     LoginComponent,
-    UsersComponent
+    UsersComponent,
+    GlobalValuesComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: "ng-cli-universal" }),
@@ -95,6 +98,10 @@ import { AddUsersModalComponent } from "./shared/components/modals/add-users-mod
       {
         path: "users",
         component: UsersComponent
+      },
+      {
+        path: "global-values",
+        component: GlobalValuesComponent
       }
     ]),
     BrowserAnimationsModule
@@ -116,6 +123,6 @@ import { AddUsersModalComponent } from "./shared/components/modals/add-users-mod
     { provide: MatDialogRef, useValue: {} }
   ],
   bootstrap: [AppComponent],
-  entryComponents: [SecretModalComponent, AddUsersModalComponent]
+  entryComponents: [SecretModalComponent, AddUsersModalComponent, AddGlobalValueModalComponent]
 })
 export class AppModule {}

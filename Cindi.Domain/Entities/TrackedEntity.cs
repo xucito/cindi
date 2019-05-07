@@ -1,5 +1,6 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.ValueObjects;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -66,6 +67,18 @@ namespace Cindi.Domain.Entities
                 list.Add(item);
             }
             return list;
+        }
+
+        public object Clone()
+        {
+            if (Object.ReferenceEquals(this, null))
+            {
+                return null;
+            }
+
+            var deserializeSettings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };
+
+            return JsonConvert.DeserializeObject<object>(JsonConvert.SerializeObject(this), deserializeSettings);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Cindi.Domain.Entities.SequencesTemplates;
+﻿using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.SequencesTemplates;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
@@ -28,21 +29,7 @@ namespace Cindi.Test.Global.TestData
         {
             var stepTemplate = FibonacciSampleData.StepTemplate;
 
-            var sequenceTemplate = new SequenceTemplate()
-            {
-                Id = "SimpleSequence:1"
-            };
 
-            sequenceTemplate.InputDefinitions = new Dictionary<string, DynamicDataDescription>()
-            {
-                {"n-1", new DynamicDataDescription()
-                {
-                    Type = InputDataTypes.Int
-                } },{"n-2", new DynamicDataDescription()
-                {
-                    Type = InputDataTypes.Int
-                } },
-            };
 
             List<LogicBlock> logicBlocks = new List<LogicBlock>();
 
@@ -147,8 +134,42 @@ namespace Cindi.Test.Global.TestData
                         });
             }
 
-            sequenceTemplate.LogicBlocks = logicBlocks;
-
+            var sequenceTemplate = new SequenceTemplate(
+                new Journal(new JournalEntry
+                {
+                    Updates = new List<Update> {
+                                    new Update()
+                                    {
+                                        Value = "SimpleSequence:1",
+                                        Type = UpdateType.Create,
+                                        FieldName = "id"
+                                    },
+                                    new Update()
+                                    {
+                                        Value = new Dictionary<string, DynamicDataDescription>()
+                                        {
+                                            {"n-1", new DynamicDataDescription()
+                                            {
+                                                Type = InputDataTypes.Int
+                                            } },{"n-2", new DynamicDataDescription()
+                                            {
+                                                Type = InputDataTypes.Int
+                                            } },
+                                        },
+                                        Type = UpdateType.Create,
+                                        FieldName = "inputdefinitions"
+                                    },
+                                    new Update()
+                                    {
+                                        Value = logicBlocks,
+                                        Type = UpdateType.Create,
+                                        FieldName = "logicblocks"
+                                    }
+                    }
+                }))
+                        {
+                        };
+            
             return sequenceTemplate;
         }
 
@@ -156,11 +177,6 @@ namespace Cindi.Test.Global.TestData
         {
             var stepTemplate = FibonacciSampleData.StepTemplate;
 
-            var sequenceTemplate = new SequenceTemplate()
-            {
-                Id = "SimpleSequence:1"
-            };
-
             List<LogicBlock> logicBlocks = new List<LogicBlock>();
 
             logicBlocks.Add(new LogicBlock()
@@ -264,7 +280,41 @@ namespace Cindi.Test.Global.TestData
                         });
             }
 
-            sequenceTemplate.LogicBlocks = logicBlocks;
+            var sequenceTemplate = new SequenceTemplate(
+                new Journal(new JournalEntry
+                {
+                    Updates = new List<Update> {
+                                    new Update()
+                                    {
+                                        Value = "SimpleSequence:1",
+                                        Type = UpdateType.Create,
+                                        FieldName = "id"
+                                    },
+                                    new Update()
+                                    {
+                                        Value = new Dictionary<string, DynamicDataDescription>()
+                                        {
+                                            {"n-1", new DynamicDataDescription()
+                                            {
+                                                Type = InputDataTypes.Int
+                                            } },{"n-2", new DynamicDataDescription()
+                                            {
+                                                Type = InputDataTypes.Int
+                                            } },
+                                        },
+                                        Type = UpdateType.Create,
+                                        FieldName = "inputdefinitions"
+                                    },
+                                    new Update()
+                                    {
+                                        Value = logicBlocks,
+                                        Type = UpdateType.Create,
+                                        FieldName = "logicblocks"
+                                    }
+                    }
+                }))
+            {
+            };
 
             return sequenceTemplate;
         }
