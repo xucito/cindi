@@ -233,12 +233,12 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
 
                     //Decrypt the step
-                    unassignedStep.DecryptStepSecrets(EncryptionProtocol.AES256, template, ClusterStateService.GetEncryptionKey());
+                    unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData( template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                     unassignedStep.RemoveDelimiters();
 
                     //Encrypt the step
-                    unassignedStep.EncryptStepSecrets(EncryptionProtocol.RSA, template, botkey.PublicEncryptionKey, true);
+                    unassignedStep.Inputs = DynamicDataUtility.EncryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
                 }
 
                 stopwatch.Stop();

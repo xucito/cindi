@@ -13,6 +13,11 @@ namespace Cindi.Domain.Entities.SequencesTemplates
 {
     public class SequenceTemplate: TrackedEntity
     {
+        public SequenceTemplate()
+        {
+            this.LogicBlocks = new List<LogicBlock>();
+        }
+
         public SequenceTemplate(Journal journal): base(journal) { }
 
         public SequenceTemplate(
@@ -69,22 +74,17 @@ namespace Cindi.Domain.Entities.SequencesTemplates
 
         }
 
-        public string Id { get; private set;  }
+        public string Id { get; set;  }
         public string Name { get { return Id.Split(':')[0]; } }
         public string Version { get { return Id.Split(':')[1]; } }
 
-        public SequenceTemplate()
-        {
-            this.LogicBlocks = new List<LogicBlock>();
-        }
-
-        public string Description { get; private set;  }
-        public List<LogicBlock> LogicBlocks { get; private set;  }
+        public string Description { get; set;  }
+        public List<LogicBlock> LogicBlocks { get; set;  }
 
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; private set;  }
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set;  }
 
         public static bool ValidateMapping(Mapping map, bool isStartingMapping = false)
         {

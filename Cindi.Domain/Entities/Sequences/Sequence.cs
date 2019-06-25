@@ -14,6 +14,7 @@ namespace Cindi.Domain.Entities.Sequences
     /// </summary>
     public class Sequence: TrackedEntity
     {
+        public Sequence() { }
         public Sequence(
             Guid id,
             string sequenceTemplateId,
@@ -75,16 +76,16 @@ namespace Cindi.Domain.Entities.Sequences
 
         }
 
-        public Guid Id { get; private set; }
-        public string Name { get; private set; }
-        public string SequenceTemplateId { get; private set; }
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string SequenceTemplateId { get; set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
-        public Dictionary<string, object> Inputs { get; private set; }
+        public Dictionary<string, object> Inputs { get; set; }
 
-        public string Status { get; private set; }
+        public string Status { get; set; }
 
         public SequenceMetadata Metadata
         {

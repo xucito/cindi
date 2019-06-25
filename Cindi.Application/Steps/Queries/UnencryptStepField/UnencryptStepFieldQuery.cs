@@ -11,5 +11,6 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
         public Guid StepId { get; set; }
         public string FieldName { get; set; }
         public string UserId { get; set; }
+        public string Type { get; set; }
     }
 }

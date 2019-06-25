@@ -292,6 +292,18 @@ namespace Cindi.Infrastructure.Tests.Integration
             Assert.NotNull(newSequence.Metadata);
         }
 
+        [Fact]
+        public async void EncryptInputsToDatabase()
+        {
+            Assert.False(true);
+        }
+
+        [Fact]
+        public async void EncryptOutputsToDatabase()
+        {
+            Assert.False(true);
+        }
+
         public Task DisposeAsync()
         {
             var client = new MongoClient(GlobalTestSettings.CindiDBConnectionString);

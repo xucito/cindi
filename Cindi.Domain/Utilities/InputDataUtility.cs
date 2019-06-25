@@ -1,8 +1,10 @@
 ﻿using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Utility;
+using Cindi.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Cindi.Domain.Utilities
@@ -35,76 +37,6 @@ namespace Cindi.Domain.Utilities
             return false;
         }
 
-        public static Dictionary<string, object> DecryptDynamicData(StepTemplate template, Dictionary<string, object> inputs, EncryptionProtocol protocol, string encryptionKey, bool usePublicKey = true)
-        {
-            Dictionary<string, object> decryptedData = new Dictionary<string, object>();
 
-            foreach (var input in inputs)
-            {
-                if (template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !IsInputReference(input, out _, out _))
-                {
-                    switch (protocol)
-                    {
-                        case EncryptionProtocol.AES256:
-                            decryptedData.Add(input.Key, SecurityUtility.SymmetricallyDecrypt((string)input.Value, encryptionKey));
-                            break;
-                        case EncryptionProtocol.RSA:
-                            if (usePublicKey)
-                            {
-                                decryptedData.Add(input.Key, SecurityUtility.RsaDecryptWithPublic((string)input.Value, encryptionKey));
-                            }
-                            else
-                            {
-                                decryptedData.Add(input.Key, SecurityUtility.RsaDecryptWithPrivate((string)input.Value, encryptionKey));
-                            }
-                            break;
-                        default:
-                            throw new InvalidEncryptionProtocolException();
-                    }
-                }
-                else
-                {
-                    decryptedData.Add(input.Key, input.Value);
-                }
-            }
-
-            return decryptedData;
-        }
-
-        public static Dictionary<string, object> EncryptDynamicData(StepTemplate template, Dictionary<string, object> inputs, EncryptionProtocol protocol, string encryptionKey, bool usePublicKey = true)
-        {
-            Dictionary<string, object> decryptedData = new Dictionary<string, object>();
-
-            foreach (var input in inputs)
-            {
-                if (template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !IsInputReference(input, out _, out _))
-                {
-                    switch (protocol)
-                    {
-                        case EncryptionProtocol.AES256:
-                            decryptedData.Add(input.Key, SecurityUtility.SymmetricallyEncrypt((string)input.Value, encryptionKey));
-                            break;
-                        case EncryptionProtocol.RSA:
-                            if (usePublicKey)
-                            {
-                                decryptedData.Add(input.Key, SecurityUtility.RsaEncryptWithPublic((string)input.Value, encryptionKey));
-                            }
-                            else
-                            {
-                                decryptedData.Add(input.Key, SecurityUtility.RsaEncryptWithPrivate((string)input.Value, encryptionKey));
-                            }
-                            break;
-                        default:
-                            throw new InvalidEncryptionProtocolException();
-                    }
-                }
-                else
-                {
-                    decryptedData.Add(input.Key, input.Value);
-                }
-            }
-
-            return decryptedData;
-        }
     }
 }

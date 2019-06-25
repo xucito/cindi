@@ -68,13 +68,13 @@ export class NodeDataService {
     return this.http.get(this.baseUrl + this.api + "cluster/stats");
   }
 
-  GetSecret(stepId: string, fieldName: string): Observable<any> {
+  GetSecret(stepId: string,type: string, fieldName: string): Observable<any> {
     return this.http.get(
       this.baseUrl +
         this.api +
         "encryption/steps/" +
         stepId +
-        "/fields/" +
+        "/"+type+"/" +
         fieldName
     );
   }

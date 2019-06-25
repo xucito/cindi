@@ -8,6 +8,8 @@ namespace Cindi.Domain.Entities.GlobalValues
 {
     public class GlobalValue: TrackedEntity
     {
+        public GlobalValue() { }
+
         public GlobalValue(Journal journal) : base(journal) { }
         
         public GlobalValue(string name,
@@ -78,16 +80,16 @@ namespace Cindi.Domain.Entities.GlobalValues
 
         }
 
-        public string Name { get; private set; }
+        public string Name { get; set; }
 
-        public string Type { get; private set; }
+        public string Type { get; set; }
 
-        public string Description { get; private set; }
+        public string Description { get; set; }
 
-        public object Value { get; private set; }
+        public object Value { get; set; }
 
-        public string Status { get; private set; }
+        public string Status { get; set; }
 
-        public Guid Id { get; private set; }
+        public Guid Id { get; set; }
     }
 }

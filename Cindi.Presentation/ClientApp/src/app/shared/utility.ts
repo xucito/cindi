@@ -36,6 +36,40 @@ export function ConvertStepTemplateToInputs(
   return inputs;
 }
 
+export function ConvertStepTemplateToOutputs(
+  stepTemplate: any,
+  step: any = undefined,
+  currentUser: any = undefined
+): InputBase<any>[] {
+  let outputs: InputBase<any>[] = [];
+  Object.keys(stepTemplate.outputDefinitions).forEach(element => {
+    if (element == "secret") {
+      outputs.push(
+        new SecretInput({
+          id: element,
+          type: stepTemplate.outputDefinitions[element].type,
+          description: stepTemplate.outputDefinitions[element].description,
+          value: step != undefined ? step.outputs[element] : undefined,
+          additionalOptions: {
+            isUnencryptable: currentUser != undefined && step.createdBy == currentUser.username
+          }
+        })
+      );
+    } else {
+      outputs.push(
+        new IntInput({
+          id: element,
+          type: stepTemplate.outputDefinitions[element].type,
+          description: stepTemplate.outputDefinitions[element].description,
+          value: step != undefined ? step.outputs[element] : undefined
+        })
+      );
+    }
+  });
+
+  return outputs;
+}
+
 export enum InputDataType {
   Int = "int",
   String = "string",

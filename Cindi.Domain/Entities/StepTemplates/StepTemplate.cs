@@ -17,6 +17,10 @@ namespace Cindi.Domain.Entities.StepTemplates
 {
     public class StepTemplate : TrackedEntity
     {
+        public StepTemplate()
+        {
+        }
+
         public StepTemplate(Journal journal): base (journal)
         {
 
@@ -82,17 +86,17 @@ namespace Cindi.Domain.Entities.StepTemplates
 
         }
 
-        public string Id { get; private set; }
+        public string Id { get; set; }
 
         public string Name { get { return Id.Split(':')[0]; } }
         public string Version { get { return Id.Split(':')[1]; } }
 
-        public string Description { get; private set; }
+        public string Description { get; set; }
 
         /// <summary>
         /// Dynamic inputs will default type string
         /// </summary>
-        public bool AllowDynamicInputs { get; private set; }
+        public bool AllowDynamicInputs { get; set; }
 
         /*public TemplateReference Reference
         {
@@ -105,7 +109,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; private set; }
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
 
         /// <summary>
         ///  Output from task, the output name is the dictionary key and the type is Dictionary value
@@ -115,7 +119,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         ///    value: number
         ///  }
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> OutputDefinitions { get; private set; }
+        public Dictionary<string, DynamicDataDescription> OutputDefinitions { get; set; }
 
         /// <summary>
         /// Checks whether the step matches the step definition

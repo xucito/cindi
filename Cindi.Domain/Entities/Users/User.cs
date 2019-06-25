@@ -9,6 +9,8 @@ namespace Cindi.Domain.Entities.Users
 {
     public class User: TrackedEntity
     {
+        public User() { }
+
         public User(
             string username,
             string hashedPassword,
@@ -63,10 +65,10 @@ namespace Cindi.Domain.Entities.Users
         { }
 
         [Key]
-        public string Username { get; private set; }
-        public string HashedPassword { get; private set; }
-        public string Email { get; private set; }
-        public byte[] Salt { get; private set; }
-        public bool IsDisabled { get; private set; }
+        public string Username { get; set; }
+        public string HashedPassword { get; set; }
+        public string Email { get; set; }
+        public byte[] Salt { get; set; }
+        public bool IsDisabled { get; set; }
     }
 }

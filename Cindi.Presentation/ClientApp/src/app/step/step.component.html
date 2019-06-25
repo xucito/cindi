@@ -64,18 +64,7 @@
                 <mat-card-title><h1>Output</h1></mat-card-title>
               </mat-card-header>
               <mat-card-content>
-                <table class="p-1">
-                  <tr *ngFor="let header of outputHeaders">
-                    <td>
-                      <span>{{ header }}</span>
-                    </td>
-                    <td>
-                      <span>
-                        {{ step.outputs[header] }}
-                      </span>
-                    </td>
-                  </tr>
-                </table>
+                  <app-forms [readOnly]="true" [inputs]="outputs" (onInputAction)="actionOutputs($event)"></app-forms>
               </mat-card-content>
             </mat-card>
           </div>

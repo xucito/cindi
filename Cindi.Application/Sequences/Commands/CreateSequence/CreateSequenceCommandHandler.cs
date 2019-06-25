@@ -41,6 +41,7 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
             _stepTemplatesRepository = stepTemplatesRepository;
             _mediator = mediator;
         }
+
         public async Task<CommandResult> Handle(CreateSequenceCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { NodeDataService } from "../services/node-data.service";
 import { Subscription } from "rxjs";
 import { InputBase } from "../shared/components/form/input/input-base";
-import { ConvertStepTemplateToInputs, IsStepComplete } from "../shared/utility";
+import { ConvertStepTemplateToInputs, IsStepComplete, ConvertStepTemplateToOutputs } from "../shared/utility";
 import { FormsComponent } from "../shared/components/form/form.component";
 import { AppStateService } from "../services/app-state.service";
 import { InputAction } from "../shared/components/form/input/input-action";
@@ -40,6 +40,7 @@ export class StepComponent implements OnInit, OnDestroy {
   inputs: InputBase<any>[];
   content: any;
   params$: Subscription;
+  outputs: InputBase<any>[] ;
 
   run$;
   currentUser: string;
@@ -82,9 +83,17 @@ export class StepComponent implements OnInit, OnDestroy {
                     stepResult.result,
                     this.currentUser
                   );
+                  this.outputs = ConvertStepTemplateToOutputs(
+                    this.stepTemplate,
+                    stepResult.result,
+                    this.currentUser
+                  );
                 });
             } else {
               this.inputs = ConvertStepTemplateToInputs(this.stepTemplate);
+              this.outputs = ConvertStepTemplateToOutputs(
+                this.stepTemplate
+              );
             }
           });
       } else {
@@ -110,6 +119,11 @@ export class StepComponent implements OnInit, OnDestroy {
                 this.inputs = ConvertStepTemplateToInputs(
                   this.stepTemplate,
                   this.step,
+                  this.currentUser
+                );
+                this.outputs = ConvertStepTemplateToOutputs(
+                  this.stepTemplate,
+                  stepResult.result,
                   this.currentUser
                 );
               });
@@ -174,6 +188,30 @@ export class StepComponent implements OnInit, OnDestroy {
         this._nodeData
           .GetSecret(
             this.clonedId == undefined ? this.step.id : this.clonedId,
+            "inputs",
+            event.inputId
+          )
+          .subscribe(result => {
+            console.log(event);
+            const dialogRef = this.dialog.open(SecretModalComponent, {
+              width: "250px",
+              data: {
+                secret: result.result
+              }
+            });
+          });
+        break;
+    }
+  }
+
+  
+  actionOutputs(event: InputAction) {
+    switch (event.action) {
+      case "unencrypt":
+        this._nodeData
+          .GetSecret(
+            this.clonedId == undefined ? this.step.id : this.clonedId,
+            "outputs",
             event.inputId
           )
           .subscribe(result => {

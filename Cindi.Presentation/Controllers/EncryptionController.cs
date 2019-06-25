@@ -17,8 +17,8 @@ namespace Cindi.Presentation.Controllers
         {
         }
 
-        [HttpGet("steps/{id}/fields/{fieldName}")]
-        public async Task<IActionResult> UnencryptStepSecret(Guid id, string fieldName)
+        [HttpGet("steps/{id}/{type}/{fieldName}")]
+        public async Task<IActionResult> UnencryptStepSecret(Guid id, string fieldName, string type)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -28,7 +28,8 @@ namespace Cindi.Presentation.Controllers
                 {
                     StepId = id,
                     FieldName = fieldName,
-                    UserId = ClaimsUtility.GetId(User)
+                    UserId = ClaimsUtility.GetId(User),
+                    Type = type.ToLower()
                 }));
             }
             catch (BaseException e)

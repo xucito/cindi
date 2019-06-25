@@ -141,21 +141,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 request.Outputs = new Dictionary<string, object>();
             }
 
-            List<string> keysToChange = new List<string>();
-            foreach (var output in request.Outputs)
-            {
-                if (output.Key == InputDataTypes.Secret)
-                {
-                    keysToChange.Add(output.Key);
-                }
-            }
-
-            foreach (var key in keysToChange)
-            {
-                request.Outputs[key] = SecurityUtility.SymmetricallyEncrypt((string)request.Outputs[key], ClusterStateService.GetEncryptionKey());
-            }
             var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
 
+            var unencryptedOuputs = DynamicDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
             var finalUpdate = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
@@ -168,7 +156,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             {
                                 Type = UpdateType.Override,
                                 FieldName = "outputs",
-                                Value = InputDataUtility.EncryptDynamicData(stepTemplate,InputDataUtility.DecryptDynamicData(stepTemplate,request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true), EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey())
+                                Value = DynamicDataUtility.EncryptDynamicData(stepTemplate.OutputDefinitions, unencryptedOuputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey())
                             },
                             new Update()
                             {

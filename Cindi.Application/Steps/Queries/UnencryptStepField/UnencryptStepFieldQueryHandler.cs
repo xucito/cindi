@@ -1,9 +1,12 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Utility;
+using Cindi.Domain.Utilities;
+using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -31,7 +34,12 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            if (request.Type != StepEncryptionTypes.Inputs && request.Type != StepEncryptionTypes.Outputs)
+            {
+                throw new InvalidUnencryptionRequestException("No such encryption type " + request.Type);
+            }
             var step = await _stepsRepository.GetStepAsync(request.StepId);
+
 
             if(step.CreatedBy != request.UserId)
             {
@@ -45,15 +53,15 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " does not exist on step template " + stepTemplate.Id);
             }
-
-            var input = stepTemplate.InputDefinitions[request.FieldName.ToLower()];
-
-            if(input.Type != InputDataTypes.Secret)
+            
+            DynamicDataDescription kv = request.Type == StepEncryptionTypes.Inputs ? stepTemplate.InputDefinitions[request.FieldName.ToLower()] : stepTemplate.OutputDefinitions[request.FieldName.ToLower()];
+            
+            if(kv.Type != InputDataTypes.Secret)
             {
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " is not a secret type.");
             }
 
-            step.DecryptStepSecrets(EncryptionProtocol.AES256, stepTemplate, ClusterStateService.GetEncryptionKey());
+            var decryptedInput = DynamicDataUtility.DecryptDynamicData(stepTemplate.InputDefinitions, request.Type == StepEncryptionTypes.Inputs ? step.Inputs : step.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey(), false);
 
             stopwatch.Stop();
 
@@ -61,7 +69,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Count = 1,
-                Result = (string)step.Inputs[request.FieldName.ToLower()]
+                Result = (string)decryptedInput[request.FieldName.ToLower()]
             };
         }
     }

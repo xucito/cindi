@@ -105,28 +105,28 @@ namespace Cindi.Domain.Entities.Steps
         }
 
 
-        public string Name { get; private set; }
-        public string Description { get; private set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
 
         /// <summary>
         /// The sequence this step belongs to 
         /// </summary>
-        public Guid? SequenceId { get; private set; }
+        public Guid? SequenceId { get; set; }
 
         /// <summary>
         /// Used to map to a specific step in a sequence
         /// </summary>
-        public int? StepRefId { get; private set; }
+        public int? StepRefId { get; set; }
 
-        public Guid Id { get; private set; }
+        public Guid Id { get; set; }
 
         [Required]
-        public string StepTemplateId { get; private set; }
+        public string StepTemplateId { get; set; }
 
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
-        public Dictionary<string, object> Inputs { get; private set; }
+        public Dictionary<string, object> Inputs { get; set; }
 
         /*  public DateTime AssignedOn { get; set; }
 
@@ -138,21 +138,21 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Completed is the date the step is moved to a completed queue
         /// </summary>
-        public DateTime? CompletedOn { get; private set; }
+        public DateTime? CompletedOn { get; set; }
 
-        public string Status { get; private set; }
+        public string Status { get; set; }
 
         /// <summary>
         /// Output from task, the output name is the dictionary key and the value is Dictionary value
         /// </summary>
-        public Dictionary<string, object> Outputs { get; private set; }
+        public Dictionary<string, object> Outputs { get; set; }
 
         /// <summary>
         /// Combined with Status can be used to evaluate dependencies
         /// </summary>
-        public int StatusCode { get; private set; }
+        public int StatusCode { get; set; }
 
-        public List<StepLog> Logs { get; private set; }
+        public List<StepLog> Logs { get; set; }
 
         public bool IsComplete()
         {
@@ -163,7 +163,7 @@ namespace Cindi.Domain.Entities.Steps
             return false;
         }
 
-        public DateTime? SuspendedUntil { get; private set; }
+        public DateTime? SuspendedUntil { get; set; }
 
         /// <summary>
         /// 
@@ -172,7 +172,7 @@ namespace Cindi.Domain.Entities.Steps
         /// <param name="stepTemplate"></param>
         /// <param name="key"></param>
         /// <param name="usePublicKey">Only used for AES Encryption, false is private</param>
-        public void EncryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
+        /*public void EncryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
         {
             List<string> keysToEncrypt = new List<string>();
             foreach (var input in Inputs)
@@ -210,7 +210,7 @@ namespace Cindi.Domain.Entities.Steps
                 default:
                     throw new InvalidEncryptionProtocolException();
             }
-        }
+        }*/
 
         public void RemoveDelimiters()
         {
@@ -250,9 +250,10 @@ namespace Cindi.Domain.Entities.Steps
             });
         }
 
-        public void DecryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
+        /*public void DecryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
         {
-            Inputs = InputDataUtility.DecryptDynamicData(stepTemplate, Inputs, protocol, encryptionKey, usePublicKey);
-        }
+            Inputs = InputDataUtility.DecryptDynamicData(stepTemplate.InputDefinitions, Inputs, protocol, encryptionKey, usePublicKey);
+            Outputs = InputDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, Inputs, protocol, encryptionKey, usePublicKey);
+        }*/
     }
 }
