@@ -15,7 +15,7 @@ namespace Cindi.Persistence.Steps
         public static void Register(BsonClassMap<Step> cm)
         {
             cm.AutoMap();
-            cm.MapIdMember(c => c.Id);
+          //  cm.MapIdMember(c => c.Id);
             //cm.SetIdMember(cm.GetMemberMap(c => c.Id));
             //cm.SetIgnoreExtraElements(true);
             /*cm.UnmapMember(c => c.Status);

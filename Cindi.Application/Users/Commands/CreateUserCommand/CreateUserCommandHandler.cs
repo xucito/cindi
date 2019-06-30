@@ -11,18 +11,29 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Diagnostics;
 using Cindi.Domain.Utilities;
+using Cindi.Domain.Entities.States;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Node;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node.Services;
 
 namespace Cindi.Application.Users.Commands.CreateUserCommand
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
         IUsersRepository _usersRepository;
+        IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
 
-        public CreateUserCommandHandler(IUsersRepository usersRepository,
-    ILogger<CreateUserCommandHandler> logger
+        public CreateUserCommandHandler(
+            IUsersRepository usersRepository,
+            ILogger<CreateUserCommandHandler> logger,
+            IServiceProvider prov,
+            IDataRouter router,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
     )
         {
             _usersRepository = usersRepository;
+            _node = (IConsensusCoreNode<CindiClusterState, IBaseRepository>)prov.GetService(typeof(IConsensusCoreNode<CindiClusterState, IBaseRepository>));
         }
 
         public async Task<CommandResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -31,20 +42,27 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
             stopwatch.Start();
 
             var salt = SecurityUtility.GenerateSalt(128);
-
-            var createdUser = await _usersRepository.InsertUserAsync(new Domain.Entities.Users.User(
+            Guid id = Guid.NewGuid();
+            var createdUser = await _node.Send(new WriteData()
+            {
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                Data = new Domain.Entities.Users.User(
                 request.Username.ToLower(),
                 SecurityUtility.OneWayHash(request.Password, salt),
                 request.Username.ToLower(),
                 salt,
                 request.CreatedBy,
-                DateTime.UtcNow
-            ));
+                DateTime.UtcNow,
+                id
+            ),
+
+            });
 
             return new CommandResult()
             {
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
-                ObjectRefId = createdUser.Username,
+                ObjectRefId = id.ToString(),
                 Type = CommandResultTypes.Create
             };
         }

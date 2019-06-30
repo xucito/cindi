@@ -44,11 +44,25 @@ using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
 using AutoMapper;
 using Cindi.Persistence.GlobalValues;
+using Cindi.Persistence.State;
+using ConsensusCore.Node.Utility;
+using SlugifyParameterTransformer = Cindi.Presentation.Transformers.SlugifyParameterTransformer;
+using ConsensusCore.Node;
+using ConsensusCore.Domain.Interfaces;
+using Cindi.Application.Services;
+using ConsensusCore.Node.Services;
+using System.Threading;
+using ConsensusCore.Node.Controllers;
+using ConsensusCore.Domain.Services;
+using Cindi.Domain.Entities.States;
 
 namespace Cindi.Presentation
 {
     public class Startup
     {
+
+        public Task BootstrapThread;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -63,17 +77,21 @@ namespace Cindi.Presentation
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            services.AddTransient<IDataRouter, CindiDataRouter>();
+            services.AddConsensusCore<CindiClusterState, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient));
+
             services.AddScoped<IMediator, Mediator>();
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
-            // services.AddMediatR(typeof(GetStepTemplatesQueryHandler).GetTypeInfo().Assembly);
             // services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
             services.AddAutoMapper();
+
             services.AddMvc(options =>
             {
                 options.Conventions.Add(new RouteTokenTransformerConvention(
                                 new SlugifyParameterTransformer()));
             }
-            ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            ).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.Configure<CindiClusterOptions>(option => new CindiClusterOptions
             {
@@ -89,6 +107,21 @@ namespace Cindi.Presentation
                 });
             }
 
+            var value = Configuration.GetSection("Cluster").GetValue<string>("Urls");
+            // Options
+            services.Configure<ClusterOptions>((action) =>
+            {
+                action.NodeUrls = Configuration.GetSection("Cluster").GetValue<string>("Urls").Split(",").ToList();
+                action.MinimumNodes = Configuration.GetSection("Cluster").GetValue<int>("MinimumNodes");
+                action.NumberOfShards = 1;
+                action.DataTransferTimeoutMs = 30000;
+            });
+
+            services.Configure<NodeOptions>((action) => new NodeOptions()
+            {
+                EnableLeader = true
+            });
+
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
             services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
@@ -97,10 +130,11 @@ namespace Cindi.Presentation
             services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
             services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
             services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
-            services.AddSingleton<IClusterStateService,ClusterStateService>();
+            services.AddSingleton<IClusterStateService, ClusterStateService>();
             services.AddSingleton<IGlobalValuesRepository, GlobalValuesRepository>(s => new GlobalValuesRepository(MongoClient));
             // services.AddSingleton<ClusterStateService>();
             services.AddSingleton<ClusterMonitorService>();
+
 
 
 
@@ -120,11 +154,15 @@ namespace Cindi.Presentation
                           {
                               return "bot";
                           }
-                          else if(context.Request.Method == "OPTIONS")
+                          else if (context.Request.Method == "OPTIONS")
                           {
                               return "options";
                           }
                           else if (context.Request.Path == "/api/bot-keys" && context.Request.Method == "POST")
+                          {
+                              return "options";
+                          }
+                          else if (context.Request.Path == "/api/node")
                           {
                               return "options";
                           }
@@ -156,8 +194,10 @@ namespace Cindi.Presentation
             IHostingEnvironment env,
             IClusterStateService service,
             ClusterMonitorService monitor,
-            IMediator mediator,
-            ILogger<Startup> logger)
+            ILogger<Startup> logger,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> node,
+            IMediator mediator, 
+            IServiceProvider serviceProvider)
         {
             var key = Configuration.GetValue<string>("EncryptionKey");
             if (key != null)
@@ -180,22 +220,34 @@ namespace Cindi.Presentation
 
             if (!ClusterStateService.Initialized)
             {
-                if (key != null)
-                {
-                    logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
-                    service.SetEncryptionKey(key);
-                }
-                else
-                {
-                    logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
-                }
+                 if (key != null)
+                 {
+                     logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
+                     service.SetEncryptionKey(key);
+                 }
+                 else
+                 {
+                     logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
+                 }
 
-                var setPassword = Configuration.GetValue<string>("DefaultPassword");
-                mediator.Send(new InitializeClusterCommand()
-                {
-                    DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
-                    Name = Configuration.GetValue<string>("ClusterName")
-                });
+                 var setPassword = Configuration.GetValue<string>("DefaultPassword");
+
+                 BootstrapThread = new Task(() =>
+                 {
+                     while (node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Green)
+                     {
+                         logger.LogInformation("Waiting for cluster to establish a quorum");
+                         Thread.Sleep(1000);
+                     }
+                     // Thread.Sleep(5000);
+                     var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+                     med.Send(new InitializeClusterCommand()
+                     {
+                         DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                         Name = Configuration.GetValue<string>("ClusterName")
+                     }).GetAwaiter().GetResult();
+                 });
+                 BootstrapThread.Start();
             }
 
 

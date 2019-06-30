@@ -90,5 +90,11 @@ namespace Cindi.Persistence.Users
             }
             return false;
         }
+
+        public async Task<User> GetUserAsync(Guid id)
+        {
+            var user = await _users.FindAsync(u => u.Id == id);
+            return user.FirstOrDefault();
+        }
     }
 }

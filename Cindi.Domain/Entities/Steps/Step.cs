@@ -118,7 +118,7 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public int? StepRefId { get; set; }
 
-        public Guid Id { get; set; }
+        //public new Guid Id { get; set; }
 
         [Required]
         public string StepTemplateId { get; set; }
@@ -215,7 +215,7 @@ namespace Cindi.Domain.Entities.Steps
         public void RemoveDelimiters()
         {
             Dictionary<string, object> convertedInput = new Dictionary<string, object>();
-            
+
             foreach (var input in Inputs)
             {
                 if (input.Value is string && ((string)input.Value).Length > 1)

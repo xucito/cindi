@@ -17,20 +17,23 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.1.0" />
+    <PackageReference Include="ConsensusCore.Domain" Version="1.0.0" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.0" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="4.5.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Cindi.Application\Cindi.Application.csproj" />
+    <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
     <ProjectReference Include="..\Cindi.Infrastructure\Cindi.Infrastructure.csproj" />
     <ProjectReference Include="..\Cindi.Persistence\Cindi.Persistence.csproj" />
   </ItemGroup>

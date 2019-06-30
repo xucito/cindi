@@ -1,5 +1,6 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.BaseClasses;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -10,7 +11,7 @@ using System.Text;
 
 namespace Cindi.Domain.Entities
 {
-    public class TrackedEntity
+    public class TrackedEntity: ShardData
     {
         public TrackedEntity() { }
 

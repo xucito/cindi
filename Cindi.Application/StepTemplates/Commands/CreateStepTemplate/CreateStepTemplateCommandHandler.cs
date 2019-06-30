@@ -1,6 +1,8 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
@@ -17,8 +19,9 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
         private readonly IStepTemplatesRepository _stepTemplateRepository;
+        
 
-        public CreateStepTemplateCommandHandler(IConfiguration configuration, IStepTemplatesRepository client)
+        public CreateStepTemplateCommandHandler(IConfiguration configuration, IStepTemplatesRepository client, ConsensusCoreNode<CindiClusterState,IStateRepository> node)
         {
             _stepTemplateRepository = client;
         }

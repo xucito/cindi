@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.Users
 {
-    public class User: TrackedEntity
+    public class User : TrackedEntity
     {
         public User() { }
 
@@ -17,12 +17,19 @@ namespace Cindi.Domain.Entities.Users
             string email,
             byte[] salt,
             string createdBy,
-            DateTime createdOn
+            DateTime createdOn,
+            Guid id
             ) : base(
             new Journal(new JournalEntry()
-        {
-            Updates = new List<Update>()
+            {
+                Updates = new List<Update>()
                 {
+                new Update()
+                    {
+                        FieldName = "id",
+                        Value = id,
+                        Type = UpdateType.Create
+                    },
                     new Update()
                     {
                         FieldName = "username",
@@ -62,7 +69,9 @@ namespace Cindi.Domain.Entities.Users
                 }
             })
             )
-        { }
+        {
+            Type = typeof(User).Name;
+        }
 
         [Key]
         public string Username { get; set; }

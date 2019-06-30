@@ -2,6 +2,9 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Users.Commands.CreateUserCommand;
+using Cindi.Domain.Entities.States;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -24,7 +27,8 @@ namespace Cindi.Application.Cluster.Commands.InitializeCluster
         ILogger<InitializeClusterCommandHandler> logger,
         IUsersRepository usersRepository,
         IMediator mediator,
-        IClusterStateService clusterState)
+        IClusterStateService clusterState
+        )
         {
             _mediator = mediator;
             _usersRepository = usersRepository;

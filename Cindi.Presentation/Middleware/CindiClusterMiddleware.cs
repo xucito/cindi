@@ -23,7 +23,11 @@ namespace Cindi.Presentation.Middleware
         {
             var path = context.Request.Path.ToString().ToLower();
             var method = context.Request.Method;
-            if (ClusterStateService.Initialized || path == "/api/cluster" && context.Request.Method == "POST")
+            if(path.Contains("/api/node"))
+            {
+                await _next(context);
+            }
+            else if (ClusterStateService.Initialized || path == "/api/cluster" && context.Request.Method == "POST")
             {
                 if (ClusterStateService.HasValidEncryptionKey == false && path != "/api/cluster/encryption-key")
                 {

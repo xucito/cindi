@@ -11,7 +11,7 @@ namespace Cindi.Persistence.Users
         public static void Register(BsonClassMap<User> cm)
         {
             cm.AutoMap();
-            cm.MapIdMember(c => c.Username);
+          //  cm.MapIdMember(c => c.Username);
             cm.SetIgnoreExtraElements(true);
         }
     }
