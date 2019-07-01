@@ -9,6 +9,7 @@ namespace Cindi.Domain.Entities.Users
 {
     public class User : TrackedEntity
     {
+
         public User() { }
 
         public User(

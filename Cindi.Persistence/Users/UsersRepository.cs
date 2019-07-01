@@ -13,7 +13,7 @@ namespace Cindi.Persistence.Users
     {
         private IMongoCollection<User> _users;
 
-        public long CountUsers() { return _users.EstimatedDocumentCount(); } 
+        public long CountUsers() { return _users.EstimatedDocumentCount(); }
 
         public UsersRepository(string mongoDbConnectionString, string databaseName) : base(mongoDbConnectionString, databaseName)
         {
@@ -30,6 +30,16 @@ namespace Cindi.Persistence.Users
         {
             var database = client.GetDatabase(DatabaseName);
             _users = database.GetCollection<User>("Users");
+
+            // var options = new CreateIndexOptions() { Unique = true };
+            //var field = new StringFieldDefinition<User>("username");
+            // var indexDefinition = new IndexKeysDefinitionBuilder<User>().Ascending(field);
+
+            var notificationLogBuilder = Builders<User>.IndexKeys;
+            var indexModel = new CreateIndexModel<User>(notificationLogBuilder.Text(x => x.Username));
+
+            //Create a index
+            _users.Indexes.CreateOne(indexModel);
         }
 
         public async Task<User> InsertUserAsync(User user)

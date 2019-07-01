@@ -239,13 +239,17 @@ namespace Cindi.Presentation
                          logger.LogInformation("Waiting for cluster to establish a quorum");
                          Thread.Sleep(1000);
                      }
-                     // Thread.Sleep(5000);
-                     var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
-                     med.Send(new InitializeClusterCommand()
+
+                     if (node.IsLeader)
                      {
-                         DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
-                         Name = Configuration.GetValue<string>("ClusterName")
-                     }).GetAwaiter().GetResult();
+                         // Thread.Sleep(5000);
+                         var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+                         med.Send(new InitializeClusterCommand()
+                         {
+                             DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                             Name = Configuration.GetValue<string>("ClusterName")
+                         }).GetAwaiter().GetResult();
+                     }
                  });
                  BootstrapThread.Start();
             }

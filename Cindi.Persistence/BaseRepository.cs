@@ -7,6 +7,7 @@ using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Users;
 using Cindi.Persistence.GlobalValues;
 using Cindi.Persistence.Journals;
+using Cindi.Persistence.NodeStorages;
 using Cindi.Persistence.Sequences;
 using Cindi.Persistence.Serializers;
 using Cindi.Persistence.Steps;
@@ -14,6 +15,7 @@ using Cindi.Persistence.StepTemplates;
 using Cindi.Persistence.TrackedEntities;
 using Cindi.Persistence.Users;
 using ConsensusCore.Domain.BaseClasses;
+using ConsensusCore.Domain.Services;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
@@ -26,7 +28,8 @@ namespace Cindi.Persistence
     {
         public string DatabaseName { get; } = "CindiDb";
 
-        public BaseRepository(string connectionString, string databaseName) {
+        public BaseRepository(string connectionString, string databaseName)
+        {
             DatabaseName = databaseName;
         }
 
@@ -43,7 +46,9 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<User>(u => UsersClassMap.Register(u));
             BsonClassMap.RegisterClassMap<GlobalValue>(gv => GlobalValuesClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<TrackedEntity>(gv => TrackedEntitiesClassMap.Register(gv));
+            BsonClassMap.RegisterClassMap<NodeStorage>(gv => NodeStorageClassMap.Register(gv));
             BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
+            BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
         }
     }
 }
