@@ -11,7 +11,7 @@ namespace Cindi.Persistence.GlobalValues
         public static void Register(BsonClassMap<GlobalValue> sm)
         {
             sm.AutoMap();
-            sm.MapIdMember(c => c.Id);
+           // sm.MapIdMember(c => c.Id);
             sm.MapMember(m => m.Name).SetIsRequired(true);
             sm.SetIgnoreExtraElements(true);
         }

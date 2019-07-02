@@ -8,9 +8,13 @@ namespace Cindi.Domain.Entities.GlobalValues
 {
     public class GlobalValue: TrackedEntity
     {
-        public GlobalValue() { }
+        public GlobalValue() {
+            ShardType = typeof(GlobalValue).Name;
+        }
 
-        public GlobalValue(Journal journal) : base(journal) { }
+        public GlobalValue(Journal journal) : base(journal) {
+            ShardType = typeof(GlobalValue).Name;
+        }
         
         public GlobalValue(string name,
             string type, 
@@ -77,7 +81,7 @@ namespace Cindi.Domain.Entities.GlobalValues
             })
             )
         {
-
+            ShardType = typeof(GlobalValue).Name;
         }
 
         public string Name { get; set; }
@@ -89,7 +93,5 @@ namespace Cindi.Domain.Entities.GlobalValues
         public object Value { get; set; }
 
         public string Status { get; set; }
-
-        public Guid Id { get; set; }
     }
 }

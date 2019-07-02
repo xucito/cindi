@@ -10,7 +10,7 @@ namespace Cindi.Application.Interfaces
         Task<bool> DeleteBotkey(Guid id);
         Task<BotKey> GetBotKeyAsync(Guid id);
         Task<List<BotKey>> GetBotKeysAsync(int size = 10, int page = 0);
-        Task<Guid> InsertBotKeyAsync(BotKey key);
-        Task<bool> UpdateBotKey(BotKey updatedKey);
+        Task<BotKey> InsertBotKeyAsync(BotKey key);
+        Task<BotKey> UpdateBotKey(BotKey updatedKey);
     }
 }

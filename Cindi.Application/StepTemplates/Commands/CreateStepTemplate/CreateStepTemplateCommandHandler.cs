@@ -30,8 +30,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-
-            var stepTemplateId = await _stepTemplateRepository.InsertAsync(new StepTemplate(
+            var newStepTemplate = new StepTemplate(
              request.Name + ":" + request.Version,
              request.Description,
              request.AllowDynamicInputs,
@@ -41,7 +40,8 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
              entry => entry.Value),
              request.CreatedBy,
              DateTime.UtcNow
-             ));
+             );
+            var stepTemplateId = await _stepTemplateRepository.InsertAsync();
 
             stopwatch.Stop();
             return new CommandResult() {

@@ -29,7 +29,8 @@ namespace Cindi.Persistence.Serializers
 
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, NodeStorage value)
         {
-            var jsonDocument = JsonConvert.SerializeObject(value);
+            NodeStorage tempCache = value;
+            var jsonDocument = JsonConvert.SerializeObject(tempCache);
             var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
 
             var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));

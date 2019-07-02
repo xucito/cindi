@@ -48,13 +48,12 @@ namespace Cindi.Persistence.BotKeys
             return validUsers;
         }
 
-        public async Task<bool> UpdateBotKey (BotKey updatedKey)
+        public async Task<BotKey> UpdateBotKey(BotKey updatedKey)
         {
             var result = await _keys.ReplaceOneAsync((keys) => keys.Id == updatedKey.Id, updatedKey);
-
-            if(result.IsAcknowledged)
+            if (result.IsAcknowledged)
             {
-                return true;
+                return updatedKey;
             }
             else
             {
@@ -68,12 +67,12 @@ namespace Cindi.Persistence.BotKeys
             return keys.FirstOrDefault();
         }
 
-        public async Task<Guid> InsertBotKeyAsync(BotKey key)
+        public async Task<BotKey> InsertBotKeyAsync(BotKey key)
         {
             try
             {
                 await _keys.InsertOneAsync(key);
-                return key.Id;
+                return key;
             }
             catch (MongoDB.Driver.MongoWriteException e)
             {

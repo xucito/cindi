@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Persistence.Cluster
 {
+    /*
     public class ClusterRepository : BaseRepository, IClusterRepository
     {
         private IMongoCollection<ClusterState> _state;
@@ -61,4 +62,5 @@ namespace Cindi.Persistence.Cluster
             return replaceResult.IsAcknowledged;
         }
     }
+        */
 }

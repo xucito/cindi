@@ -19,11 +19,12 @@ namespace Cindi.Domain.Entities.StepTemplates
     {
         public StepTemplate()
         {
+            ShardType = typeof(StepTemplate).Name;
         }
 
         public StepTemplate(Journal journal): base (journal)
         {
-
+            ShardType = typeof(StepTemplate).Name;
         }
 
         public StepTemplate(string id,
@@ -83,7 +84,7 @@ namespace Cindi.Domain.Entities.StepTemplates
             })
             )
         {
-
+            ShardType = typeof(StepTemplate).Name;
         }
 
         public string Id { get; set; }

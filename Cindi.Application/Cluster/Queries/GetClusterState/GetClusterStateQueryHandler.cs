@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Cluster.Queries.GetClusterState
 {
-    public class GetClusterStateQueryHandler : IRequestHandler<GetClusterStateQuery, QueryResult<ClusterState>>
+  /*  public class GetClusterStateQueryHandler : IRequestHandler<GetClusterStateQuery, QueryResult<ClusterState>>
     {
         IClusterStateService _clusterStateService;
 
@@ -34,5 +34,5 @@ namespace Cindi.Application.Cluster.Queries.GetClusterState
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };
         }
-    }
+    }*/
 }

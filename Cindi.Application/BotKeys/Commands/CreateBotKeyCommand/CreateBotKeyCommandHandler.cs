@@ -1,6 +1,10 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Utilities;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -14,10 +18,11 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
     public class CreateBotKeyCommandHandler : IRequestHandler<CreateBotKeyCommand, CommandResult<string>>
     {
         IBotKeysRepository _botKeyRepository;
-
-        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository )
+        IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
         {
             _botKeyRepository = botKeyRepository;
+            _node = node;
         }
 
         public async Task<CommandResult<string>> Handle(CreateBotKeyCommand request, CancellationToken cancellationToken)
@@ -27,21 +32,26 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
             byte[] salt = new byte[128 / 8];
 
             var plainTextKey = SecurityUtility.RandomString(32, false);
-
-            var key = await _botKeyRepository.InsertBotKeyAsync(new Domain.Entities.BotKeys.BotKey()
+            Guid keyId = Guid.NewGuid();
+            var key = (await _node.Send(new WriteData()
             {
-                HashedIdKey = SecurityUtility.OneWayHash(plainTextKey, salt),
-                HashedIdKeySalt = salt,
-                PublicEncryptionKey = request.PublicEncryptionKey,
-                BotName = request.BotKeyName,
-                Id = Guid.NewGuid(),
-                IsDisabled = false,
-                Nonce = 0
-            });
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                Data = new Domain.Entities.BotKeys.BotKey()
+                {
+                    HashedIdKey = SecurityUtility.OneWayHash(plainTextKey, salt),
+                    HashedIdKeySalt = salt,
+                    PublicEncryptionKey = request.PublicEncryptionKey,
+                    BotName = request.BotKeyName,
+                    Id = Guid.NewGuid(),
+                    IsDisabled = false,
+                    Nonce = 0
+                }
+            }));
 
             return new CommandResult<string>()
             {
-                ObjectRefId = key.ToString(),
+                ObjectRefId = keyId.ToString(),
                 Type = CommandResultTypes.Create,
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Result = plainTextKey

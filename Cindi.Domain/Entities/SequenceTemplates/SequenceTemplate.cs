@@ -11,17 +11,22 @@ using Cindi.Domain.Entities.JournalEntries;
 
 namespace Cindi.Domain.Entities.SequencesTemplates
 {
-    public class SequenceTemplate: TrackedEntity
+    public class SequenceTemplate : TrackedEntity
     {
         public SequenceTemplate()
         {
             this.LogicBlocks = new List<LogicBlock>();
+
+            ShardType = typeof(SequenceTemplate).Name;
         }
 
-        public SequenceTemplate(Journal journal): base(journal) { }
+        public SequenceTemplate(Journal journal) : base(journal)
+        {
+            ShardType = typeof(SequenceTemplate).Name;
+        }
 
         public SequenceTemplate(
-            string id, 
+            string id,
             string description,
             Dictionary<string, DynamicDataDescription> inputDefinitions,
             List<LogicBlock> logicBlocks,
@@ -70,21 +75,21 @@ namespace Cindi.Domain.Entities.SequencesTemplates
                     }
                 }
             }))
-            {
-
+        {
+            ShardType = typeof(SequenceTemplate).Name;
         }
 
-        public string Id { get; set;  }
+        public string Id { get; set; }
         public string Name { get { return Id.Split(':')[0]; } }
         public string Version { get { return Id.Split(':')[1]; } }
 
-        public string Description { get; set;  }
-        public List<LogicBlock> LogicBlocks { get; set;  }
+        public string Description { get; set; }
+        public List<LogicBlock> LogicBlocks { get; set; }
 
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
         /// </summary>
-        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set;  }
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
 
         public static bool ValidateMapping(Mapping map, bool isStartingMapping = false)
         {

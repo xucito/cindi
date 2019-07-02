@@ -71,7 +71,7 @@ namespace Cindi.Domain.Entities.Users
             })
             )
         {
-            Type = typeof(User).Name;
+            ShardType = typeof(User).Name;
         }
 
         [Key]

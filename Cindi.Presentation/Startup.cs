@@ -26,7 +26,6 @@ using Cindi.Persistence;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Services.ClusterState;
-using Cindi.Persistence.Cluster;
 using Cindi.Presentation.Transformers;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Cindi.Persistence.SequenceTemplates;
@@ -127,7 +126,7 @@ namespace Cindi.Presentation
             services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
             services.AddTransient<ISequencesRepository, SequencesRepository>(s => new SequencesRepository(MongoClient));
             services.AddTransient<ISequenceTemplatesRepository, SequenceTemplatesRepository>(s => new SequenceTemplatesRepository(MongoClient));
-            services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
+            // services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
             services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
             services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
@@ -162,7 +161,7 @@ namespace Cindi.Presentation
                           {
                               return "options";
                           }
-                          else if (context.Request.Path == "/api/node")
+                          else if (context.Request.Path.Value.Contains("/api/node"))
                           {
                               return "options";
                           }
@@ -196,64 +195,72 @@ namespace Cindi.Presentation
             ClusterMonitorService monitor,
             ILogger<Startup> logger,
             IConsensusCoreNode<CindiClusterState, IBaseRepository> node,
-            IMediator mediator, 
+            IMediator mediator,
             IServiceProvider serviceProvider)
         {
-            var key = Configuration.GetValue<string>("EncryptionKey");
-            if (key != null)
+            BootstrapThread = new Task(() =>
             {
-                if (ClusterStateService.Initialized)
+                while (node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Green)
                 {
-                    logger.LogWarning("Loading key in configuration file, this is not recommended for production.");
-                    try
+                    logger.LogInformation("Waiting for cluster to establish a quorum");
+                    Thread.Sleep(1000);
+                }
+
+                if(node.GetState().Initialized)
+                { }
+
+                ClusterStateService.Initialized = node.GetState().Initialized;
+
+                var key = Configuration.GetValue<string>("EncryptionKey");
+                if (key != null)
+                {
+                    if (ClusterStateService.Initialized)
                     {
-                        service.SetEncryptionKey(key);
-                        logger.LogInformation("Successfully applied encryption key.");
-                    }
-                    catch (InvalidPrivateKeyException e)
-                    {
-                        logger.LogError("Failed to apply stored key. Key does not match registered encryption hash.");
+                        logger.LogWarning("Loading key in configuration file, this is not recommended for production.");
+                        try
+                        {
+                            service.SetEncryptionKey(key);
+                            logger.LogInformation("Successfully applied encryption key.");
+                        }
+                        catch (InvalidPrivateKeyException e)
+                        {
+                            logger.LogError("Failed to apply stored key. Key does not match registered encryption hash.");
+                        }
                     }
                 }
-            }
 
 
-            if (!ClusterStateService.Initialized)
-            {
-                 if (key != null)
-                 {
-                     logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
-                     service.SetEncryptionKey(key);
-                 }
-                 else
-                 {
-                     logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
-                 }
+                if (!ClusterStateService.Initialized)
+                {
 
-                 var setPassword = Configuration.GetValue<string>("DefaultPassword");
+                    if (key != null)
+                    {
+                        logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
+                        service.SetEncryptionKey(key);
+                    }
+                    else
+                    {
+                        logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
+                    }
 
-                 BootstrapThread = new Task(() =>
-                 {
-                     while (node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Green)
-                     {
-                         logger.LogInformation("Waiting for cluster to establish a quorum");
-                         Thread.Sleep(1000);
-                     }
+                    var setPassword = Configuration.GetValue<string>("DefaultPassword");
 
-                     if (node.IsLeader)
-                     {
-                         // Thread.Sleep(5000);
-                         var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
-                         med.Send(new InitializeClusterCommand()
-                         {
-                             DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
-                             Name = Configuration.GetValue<string>("ClusterName")
-                         }).GetAwaiter().GetResult();
-                     }
-                 });
-                 BootstrapThread.Start();
-            }
 
+
+
+                    if (node.IsLeader)
+                    {
+                        // Thread.Sleep(5000);
+                        var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+                        med.Send(new InitializeClusterCommand()
+                        {
+                            DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                            Name = Configuration.GetValue<string>("ClusterName")
+                        }).GetAwaiter().GetResult();
+                    }
+                }
+            });
+            BootstrapThread.Start();
 
             if (env.IsDevelopment())
             {

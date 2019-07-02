@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Cindi.Application.Services.ClusterState
 {
-    public class ClusterState
+    /*public class ClusterState
     {
         public const string DefaultId = "State";
         public string Id { get; set; } = DefaultId;
@@ -18,5 +18,5 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool AllowAutoRegistration { get; set; } = true;
         public bool Initialized { get; set; } = false;
-    }
+    }*/
 }

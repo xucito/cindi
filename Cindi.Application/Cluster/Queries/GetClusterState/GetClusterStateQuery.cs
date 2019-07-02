@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Cindi.Application.Cluster.Queries.GetClusterState
 {
-    public class GetClusterStateQuery: IRequest<QueryResult<ClusterState>>
+  /*  public class GetClusterStateQuery: IRequest<QueryResult<ClusterState>>
     {
-    }
+    }*/
 }

@@ -48,7 +48,7 @@ namespace Cindi.Presentation.Controllers
             });
 
             return Ok(new HttpCommandResult<NewBotKeyVM>("", keyCreationResult, new NewBotKeyVM() {
-                BotName = key.Result.BotName,
+               // BotName = key.Result.BotName,
                 IdKey = keyCreationResult.ObjectRefId
             }));
         }

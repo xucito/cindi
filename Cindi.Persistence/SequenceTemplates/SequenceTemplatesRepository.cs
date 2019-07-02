@@ -32,10 +32,10 @@ namespace Cindi.Persistence.SequenceTemplates
 
         public long CountSequenceTemplates() { return _sequenceTemplate.EstimatedDocumentCount(); }
 
-        public async Task<string> InsertSequenceTemplateAsync(SequenceTemplate sequenceTemplate)
+        public async Task<SequenceTemplate> InsertSequenceTemplateAsync(SequenceTemplate sequenceTemplate)
         {
             await _sequenceTemplate.InsertOneAsync(sequenceTemplate);
-            return sequenceTemplate.Id;
+            return sequenceTemplate;
         }
 
         public async Task<SequenceTemplate> GetSequenceTemplateAsync(string sequenceTemplateId)

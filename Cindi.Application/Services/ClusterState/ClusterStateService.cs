@@ -2,8 +2,14 @@
 using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Users.Commands.CreateUserCommand;
+using Cindi.Domain.ClusterRPC;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
+using ConsensusCore.Domain.BaseClasses;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,29 +18,24 @@ using System.Collections.Generic;
 using System.Security;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Cindi.Application.Services.ClusterState
 {
     public class ClusterStateService : IClusterStateService
     {
-        private ClusterState state;
-        private IClusterRepository _clusterRepository;
-        private Thread SaveThread;
         private ILogger<ClusterStateService> _logger;
-        private bool changeDetected = false;
         static readonly object _locker = new object();
         private static string _encryptionKey { get; set; }
-        //private IMediator _mediator { get; set; }
         private Thread _initThread { get; set; }
         public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
+        public IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        CindiClusterState state { get { return _node.GetState(); } }
 
-        public ClusterStateService(IClusterRepository clusterRepository, ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider)
+        public ClusterStateService(ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
         {
-            state = new ClusterState();
-            _clusterRepository = clusterRepository;
-
-            state = _clusterRepository.GetClusterState().GetAwaiter().GetResult();
+            _node = node;
 
             Initialized = state == null ? false : state.Initialized;
 
@@ -43,19 +44,11 @@ namespace Cindi.Application.Services.ClusterState
             if (state == null)
             {
                 _logger.LogWarning("Existing cluster state not found. Creating new state.");
-                state = new ClusterState();
             }
             else
             {
                 Console.WriteLine("Existing cluster state found with name " + state.Id + ". Loading existing state.");
             }
-
-            //var sp = serviceProvider.CreateScope().ServiceProvider;
-           // _mediator = sp.GetService<IMediator>();
-
-            changeDetected = true;
-            ForceStateSave();
-            InitializeSaveThread();
         }
 
         public static Func<string> GetEncryptionKey = () =>
@@ -70,19 +63,23 @@ namespace Cindi.Application.Services.ClusterState
 
         public void SetEncryptionKey(string key)
         {
-            if (state.EncryptionKeyHash == null)
+            lock (_locker)
             {
-                GenerateEncryptionKey(key);
-            }
-            else
-            {
-                if (SecurityUtility.IsMatchingHash(key, state.EncryptionKeyHash, state.EncryptionKeySalt))
+                if (state.EncryptionKeyHash == null)
                 {
-                    _encryptionKey = key;
+                    GenerateEncryptionKeyAsync(key).GetAwaiter().GetResult();
                 }
                 else
                 {
-                    throw new InvalidPrivateKeyException("Key is not matching the cluster's decryption key.");
+                    if (SecurityUtility.IsMatchingHash(key, state.EncryptionKeyHash, state.EncryptionKeySalt))
+                    {
+                        _encryptionKey = key;
+                        Initialized = true;
+                    }
+                    else
+                    {
+                        throw new InvalidPrivateKeyException("Key is not matching the cluster's decryption key.");
+                    }
                 }
             }
         }
@@ -92,30 +89,60 @@ namespace Cindi.Application.Services.ClusterState
             return EncryptionKey;
         }*/
 
-        public void SetClusterName(string newName)
+        public async void SetClusterName(string newName)
         {
-            state.Id = newName;
-            ForceStateSave();
+            // state.Id = newName;
+            // ForceStateSave();
+            lock (_locker)
+            {
+                _node.Send(new ExecuteCommands()
+                {
+                    WaitForCommits = true,
+                    Commands = new List<BaseCommand>()
+                {
+                    new UpdateClusterDetails()
+                    {
+                        Id = newName
+                    }
+                }
+                }).GetAwaiter().GetResult();
+            }
         }
 
-        public string GenerateEncryptionKey(string key)
+        public async Task<string> GenerateEncryptionKeyAsync(string key)
         {
-            if(state.EncryptionKeyHash != null)
+            if (state.EncryptionKeyHash != null)
             {
                 throw new InvalidClusterStateException("Encryption key already exists.");
             }
 
-            var passPhrase = key == null ? SecurityUtility.RandomString(32, false): key;
+            var passPhrase = key == null ? SecurityUtility.RandomString(32, false) : key;
             var salt = SecurityUtility.GenerateSalt(128);
 
-            state.EncryptionKeyHash = SecurityUtility.OneWayHash(passPhrase, salt);
-            state.EncryptionKeySalt = salt;
+            lock (_locker)
+            {
+                _node.Send(new ExecuteCommands()
+                {
+                    WaitForCommits = true,
+                    Commands = new List<BaseCommand>()
+                {
+                    new UpdateClusterDetails()
+                    {
+                        EncryptionKeyHash =  SecurityUtility.OneWayHash(passPhrase, salt),
+                        EncryptionKeySalt = salt,
+                        Initialized = true
+                    }
+                }
+                }).GetAwaiter().GetResult();
+            }
+
+            Initialized = true;
 
             _encryptionKey = passPhrase;
 
             //Initialize the cluster
-            state.Initialized = true;
-            ForceStateSave();
+            // state.Initialized = true;
+            // ForceStateSave();
 
             return passPhrase;
         }
@@ -136,7 +163,6 @@ namespace Cindi.Application.Services.ClusterState
             lock (_locker)
             {
                 state.LockedLogicBlocks.Add(logicBlockId, DateTime.UtcNow);
-                changeDetected = true;
             }
         }
 
@@ -145,24 +171,23 @@ namespace Cindi.Application.Services.ClusterState
             lock (_locker)
             {
                 state.LockedLogicBlocks.Remove(logicBlockId);
-                changeDetected = true;
             }
         }
 
-        public ClusterState GetState()
+        public CindiClusterState GetState()
         {
             return state;
         }
 
-        public void ForceStateSave()
+        /*public void ForceStateSave()
         {
             lock (_locker)
             {
                 _clusterRepository.SaveClusterState(state).GetAwaiter().GetResult();
             }
-        }
+        }*/
 
-        public void InitializeSaveThread()
+        /*public void InitializeSaveThread()
         {
             if (_clusterRepository != null)
             {
@@ -177,7 +202,7 @@ namespace Cindi.Application.Services.ClusterState
                                 lock (_locker)
                                 {
                                     _logger.LogInformation("Saving cluster state...");
-                                    _clusterRepository.SaveClusterState(state).GetAwaiter().GetResult();
+                                    //_clusterRepository.SaveClusterState(state).GetAwaiter().GetResult();
                                     Thread.Sleep(100);
                                     changeDetected = false;
                                 }
@@ -187,17 +212,30 @@ namespace Cindi.Application.Services.ClusterState
                     SaveThread.Start();
                 }
             }
-        }
+        }*/
 
         public void ChangeAssignmentEnabled(bool newState)
         {
             lock (_locker)
             {
+                _node.Send(new ExecuteCommands()
+                {
+                    WaitForCommits = true,
+                    Commands = new List<BaseCommand>()
+                {
+                    new UpdateClusterDetails()
+                    {
+                        AssignmentEnabled = newState
+                    }
+                }
+                }).GetAwaiter().GetResult();
+                /*
                 if (newState != state.AssignmentEnabled)
                 {
                     state.AssignmentEnabled = newState;
                     changeDetected = true;
                 }
+                */
             }
         }
 
@@ -207,8 +245,17 @@ namespace Cindi.Application.Services.ClusterState
             {
                 if (allowAutoRegistration != state.AllowAutoRegistration)
                 {
-                    state.AllowAutoRegistration = allowAutoRegistration;
-                    changeDetected = true;
+                    _node.Send(new ExecuteCommands()
+                    {
+                        WaitForCommits = true,
+                        Commands = new List<BaseCommand>()
+                {
+                    new UpdateClusterDetails()
+                    {
+                        AllowAutoRegistration = allowAutoRegistration
+                    }
+                }
+                    });
                 }
             }
         }

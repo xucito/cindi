@@ -8,10 +8,11 @@ using Cindi.Application.Cluster.Commands.InitializeCluster;
 using Cindi.Application.Cluster.Commands.SetEncryptionKey;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Cindi.Application.Cluster.Queries;
-using Cindi.Application.Cluster.Queries.GetClusterState;
 using Cindi.Application.Cluster.Queries.GetClusterStats;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Presentation.Results;
@@ -25,8 +26,10 @@ namespace Cindi.Presentation.Controllers
 {
     public class ClusterController : BaseController
     {
-        public ClusterController(ILoggerFactory logger) : base(logger.CreateLogger<SequencesController>())
+        IClusterStateService _stateService;
+        public ClusterController(ILoggerFactory logger, IClusterStateService stateService) : base(logger.CreateLogger<SequencesController>())
         {
+            _stateService = stateService;
         }
 
         [AllowAnonymous]
@@ -68,7 +71,7 @@ namespace Cindi.Presentation.Controllers
             try
             {
                 var result = await Mediator.Send(command);
-                return Ok(new HttpCommandResult<ClusterState>("clusterstate", result, null));
+                return Ok(new HttpCommandResult<CindiClusterState>("clusterstate", result, null));
             }
             catch (BaseException e)
             {
@@ -85,7 +88,8 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
-                return Ok(await Mediator.Send(new GetClusterStateQuery()));
+                return Ok(_stateService.GetState());
+                ///return Ok(await Mediator.Send(new GetClusterStateQuery()));
             }
             catch (BaseException e)
             {

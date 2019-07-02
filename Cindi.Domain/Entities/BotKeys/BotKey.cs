@@ -1,13 +1,17 @@
-﻿using System;
+﻿using ConsensusCore.Domain.BaseClasses;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Cindi.Domain.Entities.BotKeys
 {
-    public class BotKey
+    public class BotKey : ShardData
     {
+        public BotKey()
+        {
+            ShardType = typeof(BotKey).Name;
+        }
         public string BotName { get; set; }
-        public Guid Id { get; set; }
         public string HashedIdKey { get; set; }
         public byte[] HashedIdKeySalt { get; set; }
         public string PublicEncryptionKey { get; set; }

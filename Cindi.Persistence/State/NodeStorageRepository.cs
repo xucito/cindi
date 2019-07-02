@@ -38,20 +38,32 @@ namespace Cindi.Persistence.State
             return result;
         }
 
+        public object _saveLock = new object();
+
         public void SaveNodeData(NodeStorage storage)
         {
-            if (!DoesStateExist)
+            try
             {
-                DoesStateExist = (LoadNodeData() != null);
+                lock (_saveLock)
+                {
+                    if (!DoesStateExist)
+                    {
+                        DoesStateExist = (LoadNodeData() != null);
+                    }
+                    if (!DoesStateExist)
+                    {
+                        _clusterState.InsertOne(storage);
+                    }
+                    else
+                    {
+                        //var filter = Builders<NodeStorage>.Filter.Eq("Id", storage.Id.ToString());
+                        _clusterState.ReplaceOne(f => true, storage);
+                    }
+                }
             }
-            if (!DoesStateExist)
+            catch(Exception e)
             {
-                _clusterState.InsertOne(storage);
-            }
-            else
-            {
-                var filter = Builders<NodeStorage>.Filter.Eq("_id", storage.Id);
-                _clusterState.ReplaceOne(filter, storage);
+                Console.WriteLine("Issues saving as there may be a concurrency issue");
             }
         }
     }
