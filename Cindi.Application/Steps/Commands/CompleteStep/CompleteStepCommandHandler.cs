@@ -5,6 +5,7 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Sequences;
@@ -12,6 +13,9 @@ using Cindi.Domain.Exceptions.SequenceTemplates;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -36,6 +40,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private IBotKeysRepository _botKeysRepository;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             ISequenceTemplatesRepository sequenceTemplateRepository,
@@ -44,7 +50,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            IBotKeysRepository botKeysRepository
+            IBotKeysRepository botKeysRepository, 
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
             )
         {
             _stepsRepository = stepsRepository;
@@ -60,6 +67,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             });
             _mediator = mediator;
             _botKeysRepository = botKeysRepository;
+            _node = node;
         }
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
@@ -117,7 +125,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             }
                         }
                 });
-                await _stepsRepository.UpdateStep(stepToComplete);
+
+                await _node.Send(new WriteData()
+                {
+                    Data = stepToComplete,
+                    WaitForSafeWrite = true,
+                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                });
+             //   await _stepsRepository.UpdateStep(stepToComplete);
 
 
                 return new CommandResult()
@@ -186,7 +201,15 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 Updates = finalUpdate
             });
 
-            var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
+            //var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
+
+            await _node.Send(new WriteData()
+            {
+                Data = stepToComplete,
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+            });
+
             var updatedStep = await _stepsRepository.GetStepAsync(stepToComplete.Id);
 
             if (updatedStep.SequenceId != null)
@@ -399,9 +422,15 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         }
                     });
 
-                    await _sequencesRepository.UpdateSequence(sequence);
+                    //await _sequencesRepository.UpdateSequence(sequence);
+                    await _node.Send(new WriteData()
+                    {
+                        Data = sequence,
+                        WaitForSafeWrite = true,
+                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                    });
                 }
-                await _sequencesRepository.UpsertSequenceMetadataAsync(sequence.Id);
+                //await _sequencesRepository.UpsertSequenceMetadataAsync(sequence.Id);
             }
 
             return new CommandResult()

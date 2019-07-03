@@ -12,9 +12,8 @@ namespace Cindi.Application.Interfaces
         long CountSequences();
         Task<Sequence> GetSequenceAsync(Guid SequenceId);
         Task<List<Sequence>> GetSequencesAsync(int size = 10, int page = 0, string status = null, string[] sequenceTemplateIds = null);
-        Task<Guid> InsertSequenceAsync(Sequence Sequence);
+        Task<Sequence> InsertSequenceAsync(Sequence Sequence);
         Task<List<Step>> GetSequenceStepsAsync(Guid sequenceId);
-        Task<bool> UpsertSequenceMetadataAsync(Guid sequenceId);
-        Task<bool> UpdateSequence(Sequence sequence);
+        Task<Sequence> UpdateSequence(Sequence sequence);
     }
 }

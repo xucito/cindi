@@ -2,11 +2,15 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -27,6 +31,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private IBotKeysRepository _botKeysRepository;
         private IGlobalValuesRepository _globalValuesRepository;
         public ILogger<AssignStepCommandHandler> Logger;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
 
         public AssignStepCommandHandler(
             IStepsRepository stepsRepository,
@@ -34,7 +39,8 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             IStepTemplatesRepository stepTemplateRepository,
             IBotKeysRepository botKeysRepository,
             ILogger<AssignStepCommandHandler> logger,
-            IGlobalValuesRepository globalValuesRepository
+            IGlobalValuesRepository globalValuesRepository,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
             )
         {
             _stepsRepository = stepsRepository;
@@ -43,6 +49,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             _botKeysRepository = botKeysRepository;
             _globalValuesRepository = globalValuesRepository;
             Logger = logger;
+            _node = node;
         }
         public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
@@ -194,7 +201,14 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                 });
                             }
 
-                            await _stepsRepository.UpdateStep(unassignedStep);
+                             await _node.Send(new WriteData()
+                            {
+                                Data = unassignedStep,
+                                WaitForSafeWrite = true,
+                                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                            });
+
+                            //await _stepsRepository.UpdateStep(unassignedStep);
                             if (inputsUpdated)
                             {
                                 //Update the record with real values, this is not commited to DB

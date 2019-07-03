@@ -49,6 +49,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<NodeStorage>(gv => NodeStorageClassMap.Register(gv));
             BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
+            BsonSerializer.RegisterSerializer(typeof(TrackedEntitySerializer), new NodeStorageSerializer());
         }
     }
 }

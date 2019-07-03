@@ -50,10 +50,11 @@ namespace Cindi.Persistence.Sequences
 
         public long CountSequences() { return _sequence.EstimatedDocumentCount(); }
 
-        public async Task<Guid> InsertSequenceAsync(Sequence Sequence)
+        public async Task<Sequence> InsertSequenceAsync(Sequence sequence)
         {
-            await _sequence.InsertOneAsync(Sequence);
-            return Sequence.Id;
+            await _sequence.InsertOneAsync(sequence);
+            await UpsertSequenceMetadataAsync(sequence.Id);
+            return sequence;
         }
 
         public async Task<Sequence> GetSequenceAsync(Guid SequenceId)
@@ -71,7 +72,7 @@ namespace Cindi.Persistence.Sequences
             return sequences;
         }
 
-        public async Task<bool> UpdateSequence(Sequence sequence)
+        public async Task<Sequence> UpdateSequence(Sequence sequence)
         {
             var result = await _sequence.ReplaceOneAsync(
                   doc => doc.Id == sequence.Id,
@@ -81,9 +82,11 @@ namespace Cindi.Persistence.Sequences
                       IsUpsert = false
                   });
 
+            await UpsertSequenceMetadataAsync(sequence.Id);
+
             if (result.IsAcknowledged)
             {
-                return true;
+                return sequence;
             }
             else
             {
@@ -135,11 +138,14 @@ namespace Cindi.Persistence.Sequences
             return await GetSequencesAsync(validSequences.Select(vs => vs.SequenceId).ToArray());
         }
 
-        public async Task<bool> UpsertSequenceMetadataAsync(Guid sequenceId)
+        /// <summary>
+        /// The id will be the same
+        /// </summary>
+        /// <param name="sequenceId"></param>
+        /// <returns></returns>
+        private async Task<SequenceMetadata> UpsertSequenceMetadataAsync(Guid sequenceId)
         {
             var sequenceToUpdate = await GetSequenceAsync(sequenceId);
-
-            var md = sequenceToUpdate.Metadata;
 
             var replaceResult = await _sequenceMetadata.ReplaceOneAsync(
                     doc => doc.SequenceId == sequenceId,
@@ -147,7 +153,7 @@ namespace Cindi.Persistence.Sequences
                     new UpdateOptions { IsUpsert = true }
                     );
 
-            return replaceResult.IsAcknowledged;
+            return sequenceToUpdate.Metadata;
         }
     }
 }

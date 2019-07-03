@@ -25,13 +25,15 @@ namespace Cindi.Domain.Entities.Steps
     {
         public Step()
         {
+            ShardType = nameof(Step);
         }
 
         public Step(Journal journal) : base(journal)
         {
+            ShardType = nameof(Step);
         }
 
-        public Step(string name = "", string description = "", string stepTemplateId = "", string createdBy = "", Guid? id = null, Dictionary<string, object> inputs = null, string encryptionString = "", int? stepRefId = null, Guid? sequenceId = null) : base(
+        public Step(Guid id, string name = "", string description = "", string stepTemplateId = "", string createdBy = "", Dictionary<string, object> inputs = null, string encryptionString = "", int? stepRefId = null, Guid? sequenceId = null) : base(
             new Journal(new JournalEntry()
             {
                 Updates = new List<Update>()
@@ -69,7 +71,7 @@ namespace Cindi.Domain.Entities.Steps
                     new Update()
                     {
                         FieldName = "id",
-                        Value = Guid.NewGuid(),
+                        Value = id,
                         Type = UpdateType.Create
                     },
                     new Update()
@@ -100,8 +102,7 @@ namespace Cindi.Domain.Entities.Steps
             })
             )
         {
-
-
+            ShardType = nameof(Step);
         }
 
 

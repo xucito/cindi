@@ -43,7 +43,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     HashedIdKeySalt = salt,
                     PublicEncryptionKey = request.PublicEncryptionKey,
                     BotName = request.BotKeyName,
-                    Id = Guid.NewGuid(),
+                    Id = keyId,
                     IsDisabled = false,
                     Nonce = 0
                 }

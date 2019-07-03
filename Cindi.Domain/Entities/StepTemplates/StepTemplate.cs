@@ -27,7 +27,9 @@ namespace Cindi.Domain.Entities.StepTemplates
             ShardType = typeof(StepTemplate).Name;
         }
 
-        public StepTemplate(string id,
+        public StepTemplate(
+            Guid id,
+            string referenceId,
             string description,
             bool allowDynamicInputs,
             Dictionary<string, DynamicDataDescription> inputDefinitions,
@@ -40,8 +42,8 @@ namespace Cindi.Domain.Entities.StepTemplates
                 {
                     new Update()
                     {
-                        FieldName = "id",
-                        Value = id,
+                        FieldName = "referenceid",
+                        Value = referenceId,
                         Type = UpdateType.Create
                     },
                     new Update()
@@ -84,13 +86,14 @@ namespace Cindi.Domain.Entities.StepTemplates
             })
             )
         {
+            Id = id;
             ShardType = typeof(StepTemplate).Name;
         }
 
-        public string Id { get; set; }
+        public string ReferenceId { get; set; }
 
-        public string Name { get { return Id.Split(':')[0]; } }
-        public string Version { get { return Id.Split(':')[1]; } }
+        public string Name { get { return ReferenceId.Split(':')[0]; } }
+        public string Version { get { return ReferenceId.Split(':')[1]; } }
 
         public string Description { get; set; }
 
@@ -129,7 +132,7 @@ namespace Cindi.Domain.Entities.StepTemplates
         /// <returns></returns>
         public bool StepMatches(Step step)
         {
-            if (step.StepTemplateId == Id)
+            if (step.StepTemplateId == ReferenceId)
             {
                 return true;
             }
@@ -246,7 +249,7 @@ namespace Cindi.Domain.Entities.StepTemplates
                 throw new InvalidStepInputException("No inputs were specified however step template " + Id + " has " + InputDefinitions.Count() + " inputs.");
             }
 
-            var newStep = new Step(name, description, stepTemplateId, createdBy, Guid.NewGuid(), verifiedInputs, encryptionKey, stepRefId, sequenceId);
+            var newStep = new Step(Guid.NewGuid(), name, description, stepTemplateId, createdBy, verifiedInputs, encryptionKey, stepRefId, sequenceId);
             return newStep;
         }
 

@@ -4,12 +4,16 @@ using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.SequencesTemplates;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.SequenceTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -28,18 +32,21 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
         private IStepsRepository _stepsRepository;
         private IStepTemplatesRepository _stepTemplatesRepository;
         private IMediator _mediator;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
 
         public CreateSequenceCommandHandler(ISequencesRepository sequencesRepository,
             ISequenceTemplatesRepository sequenceTemplatesRepository,
             IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
-            IMediator mediator)
+            IMediator mediator,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
         {
             _sequencesRepository = sequencesRepository;
             _sequenceTemplatesRepository = sequenceTemplatesRepository;
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
             _mediator = mediator;
+            _node = node;
         }
 
         public async Task<CommandResult> Handle(CreateSequenceCommand request, CancellationToken cancellationToken)
@@ -65,14 +72,21 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                 }
             }
 
-            var createdSequenceId = await _sequencesRepository.InsertSequenceAsync(new Domain.Entities.Sequences.Sequence(
-                Guid.NewGuid(),
+            var createdSequenceId = Guid.NewGuid();
+
+            var createdSequenceTemplateId = await _node.Send(new WriteData()
+            {
+                Data = new Domain.Entities.Sequences.Sequence(
+                createdSequenceId,
                 request.SequenceTemplateId,
                 request.Inputs,
                 request.Name,
                 request.CreatedBy,
                 DateTime.UtcNow
-            ));
+            ),
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
+            });
 
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Count() == 0).ToList();
 
@@ -135,9 +149,7 @@ namespace Cindi.Application.Sequences.Commands.CreateSequence
                     await _stepsRepository.UpsertStepMetadataAsync(newStep.Id); */
                 }
             }
-
-
-            await _sequencesRepository.UpsertSequenceMetadataAsync(createdSequenceId);
+            
 
             stopwatch.Stop();
 

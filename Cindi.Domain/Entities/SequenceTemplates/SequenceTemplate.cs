@@ -16,7 +16,6 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         public SequenceTemplate()
         {
             this.LogicBlocks = new List<LogicBlock>();
-
             ShardType = typeof(SequenceTemplate).Name;
         }
 
@@ -26,7 +25,8 @@ namespace Cindi.Domain.Entities.SequencesTemplates
         }
 
         public SequenceTemplate(
-            string id,
+            Guid id,
+            string referenceId,
             string description,
             Dictionary<string, DynamicDataDescription> inputDefinitions,
             List<LogicBlock> logicBlocks,
@@ -39,8 +39,8 @@ namespace Cindi.Domain.Entities.SequencesTemplates
                 {
                     new Update()
                     {
-                        FieldName = "id",
-                        Value = id,
+                        FieldName = "referenceid",
+                        Value = referenceId,
                         Type = UpdateType.Create
                     },
                     new Update()
@@ -76,12 +76,13 @@ namespace Cindi.Domain.Entities.SequencesTemplates
                 }
             }))
         {
+            Id = id;
             ShardType = typeof(SequenceTemplate).Name;
         }
 
-        public string Id { get; set; }
-        public string Name { get { return Id.Split(':')[0]; } }
-        public string Version { get { return Id.Split(':')[1]; } }
+        public string ReferenceId { get; set; }
+        public string Name { get { return ReferenceId.Split(':')[0]; } }
+        public string Version { get { return ReferenceId.Split(':')[1]; } }
 
         public string Description { get; set; }
         public List<LogicBlock> LogicBlocks { get; set; }

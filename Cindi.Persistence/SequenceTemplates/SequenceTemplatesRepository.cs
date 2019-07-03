@@ -40,7 +40,13 @@ namespace Cindi.Persistence.SequenceTemplates
 
         public async Task<SequenceTemplate> GetSequenceTemplateAsync(string sequenceTemplateId)
         {
-            var foundSequenceTemplate = (await _sequenceTemplate.FindAsync(s => s.Id == sequenceTemplateId)).FirstOrDefault();
+            var foundSequenceTemplate = (await _sequenceTemplate.FindAsync(s => s.ReferenceId == sequenceTemplateId)).FirstOrDefault();
+            return foundSequenceTemplate;
+        }
+
+        public async Task<SequenceTemplate> GetSequenceTemplateAsync(Guid id)
+        {
+            var foundSequenceTemplate = (await _sequenceTemplate.FindAsync(s => s.Id == id)).FirstOrDefault();
             return foundSequenceTemplate;
         }
 

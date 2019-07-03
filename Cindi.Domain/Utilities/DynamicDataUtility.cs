@@ -32,6 +32,11 @@ namespace Cindi.Domain.Utilities
 
         public static Dictionary<string, object> DecryptDynamicData(Dictionary<string, DynamicDataDescription> template, Dictionary<string, object> inputs, EncryptionProtocol protocol, string encryptionKey, bool usePublicKey = true)
         {
+            if (inputs == null)
+            {
+                return null;
+            }
+
             Dictionary<string, object> decryptedData = new Dictionary<string, object>();
             var toLoweredDefinitions = template.ToDictionary(entry => entry.Key.ToLower(),
                 entry => entry.Value);
@@ -69,6 +74,11 @@ namespace Cindi.Domain.Utilities
 
         public static Dictionary<string, object> EncryptDynamicData(Dictionary<string, DynamicDataDescription> template, Dictionary<string, object> inputs, EncryptionProtocol protocol, string encryptionKey, bool usePublicKey = true)
         {
+            if (inputs == null)
+            {
+                return null;
+            }
+
             Dictionary<string, object> decryptedData = new Dictionary<string, object>();
             var toLoweredDefinitions = template.ToDictionary(entry => entry.Key.ToLower(),
     entry => entry.Value);

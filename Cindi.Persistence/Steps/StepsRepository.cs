@@ -45,7 +45,7 @@ namespace Cindi.Persistence.Steps
         {
             var database = client.GetDatabase(DatabaseName);
             _steps = database.GetCollection<Step>("Steps");
-          //  _stepMetadata = database.GetCollection<StepMetadata>("_Steps");
+            //  _stepMetadata = database.GetCollection<StepMetadata>("_Steps");
             _journalEntries = database.GetCollection<JournalEntry>("JournalEntries");
         }
 
@@ -107,13 +107,13 @@ namespace Cindi.Persistence.Steps
         }
 
 
-        public async Task<Guid> InsertStepAsync(Step step)
+        public async Task<Step> InsertStepAsync(Step step)
         {
             await _steps.InsertOneAsync(step);
-            return step.Id;
+            return step;
         }
 
-        public async Task<bool> UpdateStep(Step step)
+        public async Task<Step> UpdateStep(Step step)
         {
             var result = await _steps.ReplaceOneAsync(
                   doc => doc.Id == step.Id,
@@ -123,9 +123,9 @@ namespace Cindi.Persistence.Steps
                       IsUpsert = false
                   });
 
-            if(result.IsAcknowledged)
+            if (result.IsAcknowledged)
             {
-                return true;
+                return step;
             }
             else
             {

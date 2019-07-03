@@ -1,9 +1,13 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,13 +23,16 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
     {
         public IStepsRepository _stepsRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
 
         public AppendStepLogCommandHandler(IStepsRepository stepsRepository,
-            ILogger<AppendStepLogCommandHandler> logger
+            ILogger<AppendStepLogCommandHandler> logger, 
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
             )
         {
             _stepsRepository = stepsRepository;
             Logger = logger;
+            _node = node;
         }
 
         public async Task<CommandResult> Handle(AppendStepLogCommand request, CancellationToken cancellationToken)
@@ -57,7 +64,14 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                         }
             });
 
-            await _stepsRepository.UpdateStep(step);
+            //await _stepsRepository.UpdateStep(step);
+
+            var createdSequenceTemplateId = await _node.Send(new WriteData()
+            {
+                Data = step,
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+            });
 
             return new CommandResult()
             {

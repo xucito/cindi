@@ -11,7 +11,6 @@ namespace Cindi.Persistence.Sequences
         public static void Register(BsonClassMap<SequenceMetadata> sm)
         {
             sm.AutoMap();
-            sm.MapIdMember(c => c.SequenceId);
         }
 
         public static void Register(BsonClassMap<Sequence> sm)

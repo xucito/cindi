@@ -1,11 +1,15 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.SequencesTemplates;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.SequenceTemplates;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -21,11 +25,13 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
     {
         private readonly ISequenceTemplatesRepository _sequenceTemplatesRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
 
-        public CreateSequenceTemplateCommandHandler(ISequenceTemplatesRepository sequenceTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository)
+        public CreateSequenceTemplateCommandHandler(ISequenceTemplatesRepository sequenceTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
         {
             _sequenceTemplatesRepository = sequenceTemplatesRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
+            _node = node;
         }
 
         public async Task<CommandResult> Handle(CreateSequenceTemplateCommand request, CancellationToken cancellationToken)
@@ -35,11 +41,11 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
 
             var existingSequenceTemplate = await _sequenceTemplatesRepository.GetSequenceTemplateAsync(request.Name + ":" + request.Version);
 
-            if(existingSequenceTemplate != null)
+            if (existingSequenceTemplate != null)
             {
                 return new CommandResult()
                 {
-                    ObjectRefId = existingSequenceTemplate.Id,
+                    ObjectRefId = existingSequenceTemplate.ReferenceId,
                     ElapsedMs = stopwatch.ElapsedMilliseconds,
                     Type = CommandResultTypes.None
                 };
@@ -51,7 +57,7 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
                 foreach (var ss in lg.SubsequentSteps)
                 {
                     var st = await _stepTemplatesRepository.GetStepTemplateAsync(ss.StepTemplateId);
-                    if(st == null)
+                    if (st == null)
                     {
                         throw new StepTemplateNotFoundException("Template " + ss.StepTemplateId + " cannot be found.");
                     }
@@ -158,7 +164,7 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
 
                                         var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).First();
 
-                                        var foundTemplates = (allStepTemplates.Where(template => template.Id == resolvedSubstep.StepTemplateId));
+                                        var foundTemplates = (allStepTemplates.Where(template => template.ReferenceId == resolvedSubstep.StepTemplateId));
 
                                         if (foundTemplates.Count() != 0)
                                         {
@@ -193,20 +199,27 @@ namespace Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate
                 }
             }
 
-
-            var createdSequenceTemplateId = await _sequenceTemplatesRepository.InsertSequenceTemplateAsync(new Domain.Entities.SequencesTemplates.SequenceTemplate(
+            var newId = Guid.NewGuid();
+            var newSequenceTemplate = new Domain.Entities.SequencesTemplates.SequenceTemplate(newId,
                 request.Name + ":" + request.Version,
                 request.Description,
                 request.InputDefinitions,
                 request.LogicBlocks,
                 request.CreatedBy,
                 DateTime.UtcNow
-            ));
+            );
+
+            var createdSequenceTemplateId = await _node.Send(new WriteData()
+            {
+                Data = newSequenceTemplate,
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
+            });
 
             stopwatch.Stop();
             return new CommandResult()
             {
-                ObjectRefId = createdSequenceTemplateId.ToString(),
+                ObjectRefId = newSequenceTemplate.ReferenceId,
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
             };

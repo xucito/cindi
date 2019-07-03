@@ -2,9 +2,13 @@
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,12 +26,15 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
         public IStepsRepository _stepsRepository;
         public ILogger<UnassignStepCommandHandler> Logger;
         private CindiClusterOptions _option;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
 
         public UnassignStepCommandHandler(IStepsRepository stepsRepository,
             ILogger<UnassignStepCommandHandler> logger,
-            IOptionsMonitor<CindiClusterOptions> options)
+            IOptionsMonitor<CindiClusterOptions> options,
+             IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
         {
             _stepsRepository = stepsRepository;
+            _node = node;
             Logger = logger;
             options.OnChange((change) =>
             {
@@ -43,7 +50,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
 
             var step = await _stepsRepository.GetStepAsync(request.StepId);
 
-            if(step.Status != StepStatuses.Suspended)
+            if (step.Status != StepStatuses.Suspended)
             {
                 Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
                 return new CommandResult()
@@ -70,7 +77,12 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                         }
             });
 
-            await _stepsRepository.UpdateStep(step);
+            await _node.Send(new WriteData()
+            {
+                Data = step,
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+            });
 
             return new CommandResult()
             {

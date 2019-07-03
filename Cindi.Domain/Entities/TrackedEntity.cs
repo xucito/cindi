@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Cindi.Domain.Entities
 {
-    public class TrackedEntity: ShardData
+    public class TrackedEntity : ShardData
     {
         public TrackedEntity() { }
 
@@ -37,9 +37,9 @@ namespace Cindi.Domain.Entities
                        BindingFlags.NonPublic |
                        BindingFlags.Public);
 
-           
 
-            foreach (var property in properties.Where(p => p.Name != "Journal" && (p.GetSetMethod(true) != null || p.GetSetMethod() != null) ))
+
+            foreach (var property in properties.Where(p => p.Name != "Journal" && (p.GetSetMethod(true) != null || p.GetSetMethod() != null) && p.Name != "ShardType" && p.Name != "ShardId"))
             {
                 var latestValue = Journal.GetLatestAction(property.Name.ToLower());
 

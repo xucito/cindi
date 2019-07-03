@@ -69,5 +69,11 @@ namespace Cindi.Persistence.GlobalValues
 
             return validGlobalValues;
         }
+
+        public async Task<GlobalValue> GetGlobalValueAsync(Guid id)
+        {
+            var globalValue = (await _globalValues.FindAsync(s => s.Id == id)).FirstOrDefault();
+            return globalValue;
+        }
     }
 }

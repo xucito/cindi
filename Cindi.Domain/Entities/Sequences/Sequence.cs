@@ -12,9 +12,12 @@ namespace Cindi.Domain.Entities.Sequences
     /// <summary>
     /// Immutable reference to a sequence
     /// </summary>
-    public class Sequence: TrackedEntity
+    public class Sequence : TrackedEntity
     {
-        public Sequence() { }
+        public Sequence()
+        {
+            ShardType = nameof(Sequence);
+        }
         public Sequence(
             Guid id,
             string sequenceTemplateId,
@@ -73,10 +76,9 @@ namespace Cindi.Domain.Entities.Sequences
             })
             )
         {
-
+            ShardType = nameof(Sequence);
         }
 
-        public Guid Id { get; set; }
         public string Name { get; set; }
         public string SequenceTemplateId { get; set; }
 
@@ -94,10 +96,10 @@ namespace Cindi.Domain.Entities.Sequences
                 return
                 new SequenceMetadata()
                 {
-                SequenceId = Id,
-                CreatedOn = CreatedOn,
-                SequenceTemplateId = SequenceTemplateId,
-                Status = Status
+                    SequenceId = Id,
+                    CreatedOn = CreatedOn,
+                    SequenceTemplateId = SequenceTemplateId,
+                    Status = Status
                 };
             }
         }

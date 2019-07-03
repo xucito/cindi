@@ -1,7 +1,9 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.GlobalValues;
+using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.SequencesTemplates;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Users;
 using ConsensusCore.Domain.BaseClasses;
@@ -20,14 +22,24 @@ namespace Cindi.Application.Services
         IGlobalValuesRepository _globalValues;
         IStepTemplatesRepository _stepTemplatesRepository;
         ISequenceTemplatesRepository _sequenceTemplateRepository;
+        IStepsRepository _stepsRepository;
+        ISequencesRepository _sequenceRepository;
 
-        public CindiDataRouter(IUsersRepository users, IBotKeysRepository botKeys, IGlobalValuesRepository globalValues, IStepTemplatesRepository stepTemplatesRepository, ISequenceTemplatesRepository sequenceTemplateRepository)
+        public CindiDataRouter(IUsersRepository users,
+            IBotKeysRepository botKeys,
+            IGlobalValuesRepository globalValues,
+            IStepTemplatesRepository stepTemplatesRepository,
+            ISequenceTemplatesRepository sequenceTemplateRepository,
+                    IStepsRepository stepsRepository,
+        ISequencesRepository sequenceRepository)
         {
             _users = users;
             _botKeys = botKeys;
             _globalValues = globalValues;
             _stepTemplatesRepository = stepTemplatesRepository;
-            _sequenceTemplateRepository = _sequenceTemplateRepository;
+            _sequenceTemplateRepository = sequenceTemplateRepository;
+            _stepsRepository = stepsRepository;
+            _sequenceRepository = sequenceRepository;
         }
 
 
@@ -44,6 +56,16 @@ namespace Cindi.Application.Services
                     return await _users.GetUserAsync(objectId);
                 case nameof(BotKey):
                     return await _botKeys.GetBotKeyAsync(objectId);
+                case nameof(GlobalValue):
+                    return await _globalValues.GetGlobalValueAsync(objectId);
+                case nameof(StepTemplate):
+                    return await _stepTemplatesRepository.GetStepTemplateAsync(objectId);
+                case nameof(SequenceTemplate):
+                    return await _sequenceTemplateRepository.GetSequenceTemplateAsync(objectId);
+                case nameof(Step):
+                    return await _stepsRepository.GetStepAsync(objectId);
+                case nameof(Sequence):
+                    return await _sequenceRepository.GetSequenceAsync(objectId);
                 default:
                     return null;
             }
@@ -64,6 +86,10 @@ namespace Cindi.Application.Services
                     return await _stepTemplatesRepository.InsertAsync(t1);
                 case SequenceTemplate t1:
                     return await _sequenceTemplateRepository.InsertSequenceTemplateAsync(t1);
+                case Sequence t1:
+                    return await _sequenceRepository.InsertSequenceAsync(t1);
+                case Step t1:
+                    return await _stepsRepository.InsertStepAsync(t1);
             }
             return null;
         }
@@ -78,6 +104,10 @@ namespace Cindi.Application.Services
                 //return await _users.Upda(t1);
                 case BotKey t1:
                     return await _botKeys.UpdateBotKey(t1);
+                case Sequence t1:
+                    return await _sequenceRepository.UpdateSequence(t1);
+                case Step t1:
+                    return await _stepsRepository.UpdateStep(t1);
             }
             return null;
         }
