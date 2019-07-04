@@ -24,12 +24,20 @@ namespace Cindi.Persistence.Serializers
 
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, TrackedEntity value)
         {
-            TrackedEntity tempCache = value;
-            var jsonDocument = JsonConvert.SerializeObject(tempCache);
-            var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
+            try
+            {
+                TrackedEntity tempCache = value;
+                var jsonDocument = JsonConvert.SerializeObject(tempCache);
+                var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
 
-            var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
-            serializer.Serialize(context, bsonDocument.AsBsonValue);
+                var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
+                serializer.Serialize(context, bsonDocument.AsBsonValue);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Serializing entity " + value.ShardType + " with id " + value.ShardId);
+                throw e;
+            }
         }
     }
 }

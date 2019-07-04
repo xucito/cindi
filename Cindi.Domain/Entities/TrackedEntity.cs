@@ -2,6 +2,7 @@
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.BaseClasses;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -55,7 +56,7 @@ namespace Cindi.Domain.Entities
                 }
                 else
                 {
-                    property.SetValue(this, latestValue == null ? null : latestValue.Update.Value);
+                    property.SetValue(this, latestValue == null ? null : ConvertObject(latestValue.Update.Value, property.PropertyType));
                 }
             }
         }
@@ -68,6 +69,26 @@ namespace Cindi.Domain.Entities
                 list.Add(item);
             }
             return list;
+        }
+
+        public static object ConvertObject(object value, Type type)
+        {
+            if (value is System.String && (type == typeof(Guid) || type == typeof(Guid?)))
+            {
+                return new Guid((string)value);
+            }
+
+            if(value is System.Int64 && type == typeof(int?))
+            {
+                return Convert.ToInt32((System.Int64)value);
+            }
+
+            if(value is JObject)
+            {
+                return ((JObject)value).ToObject(type);
+            }
+
+            return value;
         }
 
         public object Clone()

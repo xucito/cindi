@@ -21,6 +21,9 @@ namespace Cindi.Persistence.Serializers
 
             var bsonDocument = document.ToBsonDocument();
             bsonDocument.Remove("_id");
+            bsonDocument.Remove("_saveLocker");
+            bsonDocument.Remove("_saveThread");
+            bsonDocument.Remove("_locker");
             var result = BsonExtensionMethods.ToJson(bsonDocument);
             var jsonSerializerSettings = new JsonSerializerSettings();
             jsonSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;

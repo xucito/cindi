@@ -54,10 +54,10 @@ namespace Cindi.Presentation.Authentication
             }
             var id = authHeader;
 
-            var key = _mediator.Send(new GetBotKeyQuery()
+            var key = await _mediator.Send(new GetBotKeyQuery()
             {
                 Id = new Guid(id)
-            }).GetAwaiter().GetResult();
+            });
 
 
             if (key.Count == 0)

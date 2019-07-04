@@ -5,6 +5,7 @@ using Cindi.Domain.Entities.Sequences;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Users;
+using Cindi.Domain.ValueObjects;
 using Cindi.Persistence.GlobalValues;
 using Cindi.Persistence.Journals;
 using Cindi.Persistence.NodeStorages;
@@ -49,7 +50,9 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<NodeStorage>(gv => NodeStorageClassMap.Register(gv));
             BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
-            BsonSerializer.RegisterSerializer(typeof(TrackedEntitySerializer), new NodeStorageSerializer());
+            BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
+           // BsonSerializer.RegisterSerializer(typeof(TrackedEntity), new TrackedEntitySerializer());
+            //BsonSerializer.RegisterSerializer(typeof(Journal), new JournalSerializer());
         }
     }
 }

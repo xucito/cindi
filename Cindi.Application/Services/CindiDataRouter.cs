@@ -74,24 +74,36 @@ namespace Cindi.Application.Services
         public async Task<ShardData> InsertDataAsync(ShardData data)
         {
             data.ShardType = data.GetType().Name;
-            switch (data)
+            try
             {
-                case User t1:
-                    return await _users.InsertUserAsync(t1);
-                case BotKey t1:
-                    return await _botKeys.InsertBotKeyAsync(t1);
-                case GlobalValue t1:
-                    return await _globalValues.InsertGlobalValue(t1);
-                case StepTemplate t1:
-                    return await _stepTemplatesRepository.InsertAsync(t1);
-                case SequenceTemplate t1:
-                    return await _sequenceTemplateRepository.InsertSequenceTemplateAsync(t1);
-                case Sequence t1:
-                    return await _sequenceRepository.InsertSequenceAsync(t1);
-                case Step t1:
-                    return await _stepsRepository.InsertStepAsync(t1);
+                switch (data)
+                {
+                    case User t1:
+                        return await _users.InsertUserAsync(t1);
+                    case BotKey t1:
+                        return await _botKeys.InsertBotKeyAsync(t1);
+                    case GlobalValue t1:
+                        return await _globalValues.InsertGlobalValue(t1);
+                    case StepTemplate t1:
+                        return await _stepTemplatesRepository.InsertAsync(t1);
+                    case SequenceTemplate t1:
+                        return await _sequenceTemplateRepository.InsertSequenceTemplateAsync(t1);
+                    case Sequence t1:
+                        return await _sequenceRepository.InsertSequenceAsync(t1);
+                    case Step t1:
+                        return await _stepsRepository.InsertStepAsync(t1);
+                }
+                return null;
             }
-            return null;
+            catch(Exception e)
+            {
+                if(e.Message.Contains("E11000 duplicate key error collection"))
+                {
+                    Console.WriteLine("Detected that there was a duplicate record in the database... Updating existing record and continueing");
+                    return await UpdateDataAsync(data);
+                }
+                throw e;
+            }
         }
 
         public async Task<ShardData> UpdateDataAsync(ShardData data)
