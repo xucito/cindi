@@ -84,7 +84,7 @@ namespace Cindi.Domain.Utilities
     entry => entry.Value);
             foreach (var input in inputs)
             {
-                if (toLoweredDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
+                if (toLoweredDefinitions[input.Key.ToLower()].Type == InputDataTypes.Secret)//&& !InputDataUtility.IsInputReference(input, out _, out _))
                 {
                     switch (protocol)
                     {

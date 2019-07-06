@@ -10,5 +10,6 @@ namespace Cindi.Domain.ValueObjects
         public int LogicBlockId { get; set; }
         //Randomly generated GUID to identify the thread that locked the logic block
         public Guid LockerCode { get; set; }
+        public DateTime CreatedOn { get; set; }
     }
 }

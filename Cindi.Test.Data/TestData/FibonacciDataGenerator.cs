@@ -42,7 +42,7 @@ namespace Cindi.Test.Global.TestData
                 },
                 SubsequentSteps = new List<SubsequentStep> {
              new SubsequentStep(){
-                 StepTemplateId =stepTemplate.Id,
+                 StepTemplateId =stepTemplate.ReferenceId,
                  StepRefId = 0,
                           Mappings = new List<Mapping>(){
                           new Mapping()
@@ -126,7 +126,7 @@ namespace Cindi.Test.Global.TestData
                             {
                                 new SubsequentStep()
                                 {
-                                    StepTemplateId = stepTemplate.Id,
+                                    StepTemplateId = stepTemplate.ReferenceId,
                                     StepRefId = i + 1, // This will create the next step
                                     Mappings = mappings
                                 }
@@ -138,11 +138,17 @@ namespace Cindi.Test.Global.TestData
                 new Journal(new JournalEntry
                 {
                     Updates = new List<Update> {
+                                                           new Update()
+                                    {
+                                        Value = Guid.NewGuid(),
+                                        Type = UpdateType.Create,
+                                        FieldName = "id"
+                                    },
                                     new Update()
                                     {
                                         Value = "SimpleSequence:1",
                                         Type = UpdateType.Create,
-                                        FieldName = "id"
+                                        FieldName = "sequencetemplateid"
                                     },
                                     new Update()
                                     {
@@ -188,7 +194,7 @@ namespace Cindi.Test.Global.TestData
                 },
                 SubsequentSteps = new List<SubsequentStep> {
              new SubsequentStep(){
-                 StepTemplateId =stepTemplate.Id,
+                 StepTemplateId =stepTemplate.ReferenceId,
                  StepRefId = 0,
                           Mappings = new List<Mapping>(){
                           new Mapping()
@@ -272,7 +278,7 @@ namespace Cindi.Test.Global.TestData
                             {
                                 new SubsequentStep()
                                 {
-                                    StepTemplateId = stepTemplate.Id,
+                                    StepTemplateId = stepTemplate.ReferenceId,
                                     StepRefId = i + 1, // This will create the next step
                                     Mappings = mappings
                                 }
@@ -288,7 +294,7 @@ namespace Cindi.Test.Global.TestData
                                     {
                                         Value = "SimpleSequence:1",
                                         Type = UpdateType.Create,
-                                        FieldName = "id"
+                                        FieldName = "sequencetemplateid"
                                     },
                                     new Update()
                                     {

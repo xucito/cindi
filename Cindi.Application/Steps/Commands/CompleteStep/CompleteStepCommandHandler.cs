@@ -50,7 +50,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            IBotKeysRepository botKeysRepository, 
+            IBotKeysRepository botKeysRepository,
             IConsensusCoreNode<CindiClusterState, IBaseRepository> node
             )
         {
@@ -78,7 +78,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
             IMediator mediator,
-            IBotKeysRepository botKeysRepository
+            IBotKeysRepository botKeysRepository,
+             IConsensusCoreNode<CindiClusterState, IBaseRepository> node
     )
         {
             _stepsRepository = stepsRepository;
@@ -89,6 +90,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             Logger = logger;
             _option = options;
             _botKeysRepository = botKeysRepository;
+            _node = node;
+            _mediator = mediator;
         }
 
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
@@ -132,7 +135,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     WaitForSafeWrite = true,
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
                 });
-             //   await _stepsRepository.UpdateStep(stepToComplete);
+                //   await _stepsRepository.UpdateStep(stepToComplete);
 
 
                 return new CommandResult()
@@ -180,14 +183,15 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 Value = request.StatusCode,
                             }
                         };
-            if(request.Log != null)
+            if (request.Log != null)
             {
                 finalUpdate.Add(
                             new Update()
                             {
                                 Type = UpdateType.Append,
                                 FieldName = "logs",
-                                Value = new StepLog() {
+                                Value = new StepLog()
+                                {
                                     CreatedOn = DateTime.UtcNow,
                                     Message = request.Log
                                 },
@@ -236,17 +240,35 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                 //Get all the logic blocks for all logic blocks containing the step that has been completed
                 var logicBlocks = sequenceTemplate.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Where(ps => ps.StepRefId == updatedStep.StepRefId).Count() > 0).ToList();
-                
+
 
                 foreach (var logicBlock in logicBlocks)
                 {
-                    while (_clusterStateService.IsLogicBlockLocked(updatedStep.SequenceId + ">logicBlock:" + logicBlock.Id))
-                    {
-                        Console.WriteLine("Found " + ("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock) + " Lock");
-                        Thread.Sleep(1000);
-                    }
+                    var lockId = Guid.NewGuid();
 
-                    _clusterStateService.LockLogicBlock("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock.Id);
+
+                    bool lockObtained = false;
+                    while (!lockObtained)
+                    {
+                        while (_clusterStateService.IsLogicBlockLocked(updatedStep.SequenceId.Value, logicBlock.Id))
+                        {
+                            Console.WriteLine("Found " + ("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock) + " Lock");
+                            Thread.Sleep(1000);
+                        }
+
+                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.SequenceId.Value, logicBlock.Id);
+
+                        // CheckIfYouObtainedALock
+
+                        while (!_node.HasEntryBeenCommitted(entryNumber))
+                        {
+                            Logger.LogDebug("Waiting for entry " + entryNumber + " to be commited.");
+                            Thread.Sleep(250);
+                        }
+
+                        //Check whether you got the lock
+                        lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.SequenceId.Value, logicBlock.Id);
+                    }
 
                     var ready = true;
 
@@ -390,9 +412,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 addedStep = true;
                             }
                         }
-                        _clusterStateService.UnlockLogicBlock("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock.Id);
+                        await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.SequenceId.Value, logicBlock.Id);
                     }
-
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned

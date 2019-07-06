@@ -158,7 +158,7 @@ export class StepComponent implements OnInit, OnDestroy {
 
   submit(event) {
     this.payload = {
-      stepTemplateId: this.stepTemplate.id,
+      stepTemplateId: this.stepTemplate.referenceId,
       inputs: event
     };
 

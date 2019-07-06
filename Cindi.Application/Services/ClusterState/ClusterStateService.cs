@@ -2,10 +2,14 @@
 using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Users.Commands.CreateUserCommand;
+using Cindi.Domain.ClusterCommands;
+using Cindi.Domain.ClusterCommands.Enums;
 using Cindi.Domain.ClusterRPC;
+using Cindi.Domain.Entities.SequencesTemplates;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
+using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.BaseClasses;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
@@ -149,29 +153,44 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool AutoRegistrationEnabled { get { return state.AllowAutoRegistration; } }
 
-        public bool IsLogicBlockLocked(string logicBlockId)
+
+        public async Task<int> LockLogicBlock(Guid lockKey, Guid sequenceid, int logicBlockId)
         {
-            if (state.LockedLogicBlocks.ContainsKey(logicBlockId))
+            return (await _node.Send(new ExecuteCommands()
             {
-                return true;
-            }
-            return false;
+                Commands = new List<BaseCommand>()
+                {
+                    new UpdateLogicBlockLock(){
+                        Action = LockBlockActions.APPLY,
+                        Lock = new LogicBlockLock(){
+                            SequenceId = sequenceid,
+                            LockerCode = lockKey,
+                            LogicBlockId = logicBlockId,
+                            CreatedOn = DateTime.Now
+                        }
+                    }
+                }
+            })).EntryNo;
+            //state.LockedLogicBlocks.Add(block.LogicBlockId, DateTime.UtcNow);
         }
 
-        public void LockLogicBlock(string logicBlockId)
+        public async Task<bool> UnlockLogicBlock(Guid lockKey, Guid sequenceid, int logicBlockId)
         {
-            lock (_locker)
+            return (await _node.Send(new ExecuteCommands()
             {
-                state.LockedLogicBlocks.Add(logicBlockId, DateTime.UtcNow);
-            }
-        }
-
-        public void UnlockLogicBlock(string logicBlockId)
-        {
-            lock (_locker)
-            {
-                state.LockedLogicBlocks.Remove(logicBlockId);
-            }
+                Commands = new List<BaseCommand>()
+                {
+                    new UpdateLogicBlockLock(){
+                        Action = LockBlockActions.REMOVE,
+                        Lock = new LogicBlockLock(){
+                            SequenceId = sequenceid,
+                            LockerCode = lockKey,
+                            LogicBlockId = logicBlockId
+                        }
+                    }
+                }
+            })).IsSuccessful;
+            //state.LockedLogicBlocks.Remove(logicBlockId);
         }
 
         public CindiClusterState GetState()
@@ -263,6 +282,25 @@ namespace Cindi.Application.Services.ClusterState
         public bool IsAssignmentEnabled()
         {
             return state.AssignmentEnabled;
+        }
+
+        public bool WasLockObtained(Guid lockKey, Guid sequenceId, int logicBlockId)
+        {
+            if (state.LockedLogicBlocks.ContainsKey(sequenceId + ":" + logicBlockId) && state.LockedLogicBlocks[(sequenceId + ":" + logicBlockId)].LockerCode == lockKey)
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+        public bool IsLogicBlockLocked(Guid sequenceId, int logicBlockId)
+        {
+            if (state.LockedLogicBlocks.ContainsKey(sequenceId + ":" + logicBlockId))
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

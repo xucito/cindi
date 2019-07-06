@@ -9,7 +9,7 @@ namespace Cindi.Test.Global.TestData
 {
     public static class SecretSampleData
     {
-        public static readonly StepTemplate StepTemplate = new StepTemplate(
+        public static readonly StepTemplate StepTemplate = new StepTemplate(Guid.NewGuid(),
             "Pass_Password:0",
             "",
             false,

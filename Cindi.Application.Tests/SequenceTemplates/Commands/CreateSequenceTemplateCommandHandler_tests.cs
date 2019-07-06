@@ -3,6 +3,7 @@ using Cindi.Application.Sequences.Commands.CreateSequence;
 using Cindi.Application.SequenceTemplates.Commands.CreateSequenceTemplate;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.StepTemplates;
+using Cindi.Test.Global;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,9 @@ namespace Cindi.Application.Tests.SequenceTemplates.Commands
             sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepTemplatesRepository> stepsRepository = new Mock<IStepTemplatesRepository>();
 
-            var handler = new CreateSequenceTemplateCommandHandler(sequenceTemplatesRepository.Object, stepsRepository.Object);
+            var node = Utility.GetMockConsensusCoreNode();
+
+            var handler = new CreateSequenceTemplateCommandHandler(sequenceTemplatesRepository.Object, stepsRepository.Object, node.Object);
 
             await Assert.ThrowsAsync<StepTemplateNotFoundException>(async () => await handler.Handle(new CreateSequenceTemplateCommand()
             {

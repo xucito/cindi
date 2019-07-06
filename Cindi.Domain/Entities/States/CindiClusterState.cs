@@ -1,4 +1,8 @@
-﻿using Cindi.Domain.ClusterRPC;
+﻿using Cindi.Domain.ClusterCommands;
+using Cindi.Domain.ClusterCommands.Enums;
+using Cindi.Domain.ClusterRPC;
+using Cindi.Domain.Exceptions.State;
+using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.BaseClasses;
 using System;
 using System.Collections.Generic;
@@ -11,7 +15,7 @@ namespace Cindi.Domain.Entities.States
     {
         public const string DefaultId = "State";
         public string Id { get; private set; } = DefaultId;
-        public Dictionary<string, DateTime> LockedLogicBlocks = new Dictionary<string, DateTime>();
+        public Dictionary<string, LogicBlockLock> LockedLogicBlocks = new Dictionary<string, LogicBlockLock>();
         public bool AssignmentEnabled { get; private set; } = true;
         public string Version { get; private set; } = "1.0";
         public string EncryptionKeyHash { get; private set; }
@@ -53,6 +57,36 @@ namespace Cindi.Domain.Entities.States
                         Initialized = t1.Initialized.Value;
                     }
                     break;
+                case UpdateLogicBlockLock t1:
+                    if (t1.Action == LockBlockActions.APPLY)
+                    {
+                        LockedLogicBlocks.Add(t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId, t1.Lock);
+                    }
+                    else if (t1.Action == LockBlockActions.REMOVE)
+                    {
+                        if (LockedLogicBlocks.ContainsKey(t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId))
+                        {
+                            if (LockedLogicBlocks[t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId].LockerCode == t1.Lock.LockerCode)
+                            {
+
+                                LockedLogicBlocks.Remove(t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId);
+                            }
+                            else
+                            {
+                                throw new InvalidLogicBlockUnlockException("Logic block " + t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId + " is held by a different locker code. Given " + t1.Lock.LockerCode + ", held by " + LockedLogicBlocks[t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId].LockerCode);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidLogicBlockUnlockException("Logic block " + t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId + " does not exist for unlocking.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Received a logic block update for " + t1.Lock.SequenceId + " that did not contain a action");
+                    }
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }

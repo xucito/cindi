@@ -54,7 +54,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
             var createdStepId = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
 
-            var step = await stepsRepository.GetStepAsync(createdStepId);
+            var step = await stepsRepository.GetStepAsync(createdStepId.Id);
 
             Assert.NotNull(step);
             Assert.Equal(StepStatuses.Unassigned, step.Status);
@@ -75,7 +75,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
                 }
             });
-            Assert.True(await stepsRepository.UpdateStep(step));
+            Assert.NotNull(await stepsRepository.UpdateStep(step));
 
             Assert.NotEmpty(step.Journal.JournalEntries);
             Assert.Equal(StepStatuses.Assigned, step.Status);
@@ -95,7 +95,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
                 }
             });
-            Assert.True(await stepsRepository.UpdateStep(step));
+            Assert.NotNull(await stepsRepository.UpdateStep(step));
             step = await stepsRepository.GetStepAsync(step.Id);
             Assert.Equal(StepStatuses.Successful, step.Status);
             Assert.True(step.IsComplete());
@@ -115,7 +115,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
 
 
-            var step = await stepsRepository.GetStepAsync(createdStepId);
+            var step = await stepsRepository.GetStepAsync(createdStepId.Id);
 
             Assert.NotNull(step);
             Assert.Equal(StepStatuses.Unassigned, step.Status);
@@ -136,7 +136,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
                 }
             });
-            Assert.True(await stepsRepository.UpdateStep(step));
+            Assert.NotNull(await stepsRepository.UpdateStep(step));
             Assert.Empty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned));
             Assert.NotEmpty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Assigned));
             step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
@@ -154,7 +154,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
                 }
             });
-            Assert.True(await stepsRepository.UpdateStep(step));
+            Assert.NotNull(await stepsRepository.UpdateStep(step));
             Assert.Empty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned));
             Assert.Empty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Assigned));
             Assert.Empty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Warning));
@@ -167,7 +167,7 @@ namespace Cindi.Infrastructure.Tests.Integration
         {
             await stepTemplatesRepository.InsertAsync(FibonacciSampleData.StepTemplate);
             var createdStepId = await stepsRepository.InsertStepAsync(FibonacciSampleData.Step);
-            var step = await stepsRepository.GetStepAsync(createdStepId);
+            var step = await stepsRepository.GetStepAsync(createdStepId.Id);
             var status = step.Status;
 
             Assert.NotNull(step);
@@ -187,8 +187,8 @@ namespace Cindi.Infrastructure.Tests.Integration
 
                 }
             });
-            Assert.True(await stepsRepository.UpdateStep(step));
-            step = await stepsRepository.GetStepAsync(createdStepId);
+            Assert.NotNull(await stepsRepository.UpdateStep(step));
+            step = await stepsRepository.GetStepAsync(createdStepId.Id);
             Assert.Empty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned));
             Assert.NotEmpty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Assigned));
             step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
@@ -222,7 +222,7 @@ namespace Cindi.Infrastructure.Tests.Integration
                     }
                 }
             });
-            Assert.True(await stepsRepository.UpdateStep(step));
+            Assert.NotNull(await stepsRepository.UpdateStep(step));
 
             Assert.NotEmpty(await stepsRepository.GetStepsAsync(1, 0, StepStatuses.Successful));
             var completedStep = await stepsRepository.GetStepAsync(step.Id);
@@ -242,7 +242,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
             var newSequence = new Domain.Entities.Sequences.Sequence(
                 id,
-                data.sequenceTemplate.Id,
+                data.sequenceTemplate.ReferenceId,
                 new Dictionary<string, object>(),
                 "",
                 "",
@@ -252,7 +252,7 @@ namespace Cindi.Infrastructure.Tests.Integration
 
             var newSequenceId = await sequenceRepository.InsertSequenceAsync(newSequence);
 
-            await sequenceRepository.UpsertSequenceMetadataAsync(id);
+           // await sequenceRepository.UpsertSequenceMetadataAsync(id);
 
             Assert.NotNull(await sequenceRepository.GetSequenceAsync(newSequence.Id));
             Assert.Single((await sequenceRepository.GetSequencesAsync()));
@@ -279,7 +279,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             var id = Guid.NewGuid();
             var newSequence = new Domain.Entities.Sequences.Sequence(
                 id,
-                data.sequenceTemplate.Id,
+                data.sequenceTemplate.ReferenceId,
                 new Dictionary<string, object>(),
                 "",
                 "",

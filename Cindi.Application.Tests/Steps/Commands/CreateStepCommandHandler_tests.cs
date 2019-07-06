@@ -8,14 +8,18 @@ using Cindi.Application.Steps.Commands.CompleteStep;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Sequences;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using Cindi.Test.Global;
 using Cindi.Test.Global.MockInterfaces;
 using Cindi.Test.Global.TestData;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -42,6 +46,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             DefaultSuspensionTime = 0
         };
 
+        Mock<IConsensusCoreNode<CindiClusterState, IBaseRepository>> node;
+
         public CreateStepCommandHandler_Tests()
         {
 
@@ -49,6 +55,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             {
                 return "GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY";
             };
+
+            node = Utility.GetMockConsensusCoreNode();
         }
 
         [Fact]
@@ -57,13 +65,13 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
+            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
 
             await Assert.ThrowsAsync<StepTemplateNotFoundException>(async () =>
             {
                 await handler.Handle(new CreateStepCommand()
                 {
-                    StepTemplateId = FibonacciSampleData.StepTemplate.Id
+                    StepTemplateId = FibonacciSampleData.StepTemplate.ReferenceId
 
                 }, new System.Threading.CancellationToken());
             });
@@ -75,14 +83,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
+            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
 
             var commandResult = await handler.Handle(new CreateStepCommand()
             {
-                StepTemplateId = FibonacciSampleData.StepTemplate.Id,
+                StepTemplateId = FibonacciSampleData.StepTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>()
                 {
                     { "n-1", 1 } ,
@@ -91,7 +99,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, new System.Threading.CancellationToken());
 
             Assert.NotNull(handler);
-            Assert.Equal(TestStep.Id.ToString(), commandResult.ObjectRefId);
+            Assert.Equal(commandResult.Result.Id.ToString(), commandResult.ObjectRefId);
         }
 
         [Fact]
@@ -100,14 +108,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
+            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
-                StepTemplateId = FibonacciSampleData.StepTemplate.Id
+                StepTemplateId = FibonacciSampleData.StepTemplate.ReferenceId
             }, new System.Threading.CancellationToken()));
         }
 
@@ -117,14 +125,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
+            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
-                StepTemplateId = FibonacciSampleData.StepTemplate.Id,
+                StepTemplateId = FibonacciSampleData.StepTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>()
                 {
                     { "n-1", 1 } ,
@@ -140,13 +148,13 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.Id)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep.Id));
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
-                StepTemplateId = FibonacciSampleData.StepTemplate.Id,
+                StepTemplateId = FibonacciSampleData.StepTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>()
                 {
                     { "n-1", 1 }
@@ -159,21 +167,21 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void CreateStepWithSecret()
         {
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.Id)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
+            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
 
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.Id);
-            var newStep = stepTemplate.GenerateStep(stepTemplate.Id, "", "", "", new Dictionary<string, object>() {
+            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
+            var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "This is a test"}
-            },null,null,null, ClusterStateService.GetEncryptionKey());
+            }, null, null, null, ClusterStateService.GetEncryptionKey());
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep.Id));
+            stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object);
+            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
 
             var step = await handler.Handle(new CreateStepCommand()
             {
-                StepTemplateId = stepTemplate.Id,
+                StepTemplateId = stepTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>()
                 {
                     {"secret", "This is a test" }
@@ -186,7 +194,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Assert.Equal("This is a test", SecurityUtility.SymmetricallyDecrypt((string)step.Result.Inputs["secret"], ClusterStateService.GetEncryptionKey()));
         }
 
-        
+
 
         [Fact]
         public async void StepIsAlwaysCreatedWithLowerCaseInputs()

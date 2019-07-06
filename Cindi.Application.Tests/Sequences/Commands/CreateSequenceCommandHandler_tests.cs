@@ -1,8 +1,12 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Sequences.Commands.CreateSequence;
 using Cindi.Domain.Entities.Sequences;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.Global;
+using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Node;
 using MediatR;
 using Moq;
 using System;
@@ -17,6 +21,13 @@ namespace Cindi.Application.Tests.Sequences.Commands
     public class CreateSequenceCommandHandler_tests
     {
         Mock<IMediator> _mediator = new Mock<IMediator>();
+
+        Mock<IConsensusCoreNode<CindiClusterState, IBaseRepository>> _node;
+
+        public CreateSequenceCommandHandler_tests()
+        {
+            _node = Utility.GetMockConsensusCoreNode();
+        }
 
         [Fact]
         public async void DetectMissingSequenceTemplate()
@@ -43,15 +54,15 @@ namespace Cindi.Application.Tests.Sequences.Commands
             FibonacciSequenceData data = new FibonacciSequenceData(5);
             Mock<ISequencesRepository> sequencesRepository = new Mock<ISequencesRepository>();
             Mock<ISequenceTemplatesRepository> sequenceTemplatesRepository = new Mock<ISequenceTemplatesRepository>();
-            sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
+            sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.ReferenceId)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
 
-            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object);
+            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object, _node.Object);
 
             await handler.Handle(new CreateSequenceCommand()
             {
-                SequenceTemplateId = data.sequenceTemplate.Id,
+                SequenceTemplateId = data.sequenceTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>() {
                     { "n-1", 1 },
                     { "n-2", 1 },
@@ -66,14 +77,14 @@ namespace Cindi.Application.Tests.Sequences.Commands
             FibonacciSequenceData data = new FibonacciSequenceData(5);
             Mock<ISequencesRepository> sequencesRepository = new Mock<ISequencesRepository>();
             Mock<ISequenceTemplatesRepository> sequenceTemplatesRepository = new Mock<ISequenceTemplatesRepository>();
-            sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.Id)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
+            sequenceTemplatesRepository.Setup(sr => sr.GetSequenceTemplateAsync(data.sequenceTemplateWithInputs.ReferenceId)).Returns(Task.FromResult(data.sequenceTemplateWithInputs));
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object);
+            var handler = new CreateSequenceCommandHandler(sequencesRepository.Object, sequenceTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object, _node.Object);
 
             await Assert.ThrowsAsync<MissingInputException>(async () => await handler.Handle(new CreateSequenceCommand()
             {
-                SequenceTemplateId = data.sequenceTemplate.Id,
+                SequenceTemplateId = data.sequenceTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>() { { "n-1", 1 } }
             }, new System.Threading.CancellationToken()));
         }

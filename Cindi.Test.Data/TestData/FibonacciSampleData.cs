@@ -13,7 +13,7 @@ namespace Cindi.Test.Global.TestData
 {
     public static class FibonacciSampleData
     {
-        public static readonly StepTemplate StepTemplate = new StepTemplate(
+        public static readonly StepTemplate StepTemplate = new StepTemplate(Guid.NewGuid(),
             "Fibonacci_stepTemplate:0",
             "",
             false,
@@ -42,7 +42,7 @@ namespace Cindi.Test.Global.TestData
         {
         };
 
-        public static readonly SequenceTemplate SequenceTemplate = new SequenceTemplate(
+        public static readonly SequenceTemplate SequenceTemplate = new SequenceTemplate(Guid.NewGuid(),
             "Fibonacci:0",
             "",
             new Dictionary<string, DynamicDataDescription>(),
@@ -57,7 +57,7 @@ namespace Cindi.Test.Global.TestData
                     },
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
-                             StepTemplateId =StepTemplate.Id,
+                             StepTemplateId =StepTemplate.ReferenceId,
                              StepRefId = 0,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
@@ -91,7 +91,7 @@ namespace Cindi.Test.Global.TestData
                     },
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
-                             StepTemplateId =StepTemplate.Id,
+                             StepTemplateId =StepTemplate.ReferenceId,
                              StepRefId = 1,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
@@ -150,8 +150,8 @@ new Domain.Entities.JournalEntries.JournalEntry()
                     },
                     new Update()
                     {
-                        FieldName = "StepTemplateId",
-                        Value = StepTemplate.Id,
+                        FieldName = "steptemplateid",
+                        Value = StepTemplate.ReferenceId,
                         Type = UpdateType.Create
                     },
                     new Update()
@@ -186,7 +186,7 @@ new Domain.Entities.JournalEntries.JournalEntry()
 
         public static readonly Sequence Sequence = new Sequence(
             Guid.NewGuid(),
-            SequenceTemplate.Id,
+            SequenceTemplate.ReferenceId,
             new Dictionary<string, object>(),
             "",
             "admin",

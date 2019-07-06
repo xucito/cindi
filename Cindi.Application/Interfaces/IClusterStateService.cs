@@ -1,5 +1,7 @@
 ﻿using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.States;
+using Cindi.Domain.ValueObjects;
+using System;
 using System.Threading.Tasks;
 
 namespace Cindi.Application.Interfaces
@@ -12,12 +14,13 @@ namespace Cindi.Application.Interfaces
         Task<string> GenerateEncryptionKeyAsync(string key = null);
         bool IsAssignmentEnabled();
         bool IsEncryptionKeyValid(string key);
-        bool IsLogicBlockLocked(string logicBlockId);
-        void LockLogicBlock(string logicBlockId);
+        bool IsLogicBlockLocked(Guid sequenceId, int logicBlocKId);
         void SetAllowAutoRegistration(bool allowAutoRegistration);
         void SetClusterName(string newName);
         void SetEncryptionKey(string key);
-        void UnlockLogicBlock(string logicBlockId);
+        Task<int> LockLogicBlock(Guid lockKey, Guid sequenceid, int Value);
+        Task<bool> UnlockLogicBlock(Guid lockKey, Guid sequenceid, int Value);
+        bool WasLockObtained(Guid lockKey, Guid sequenceid, int Value);
         CindiClusterState GetState();
     }
 }
