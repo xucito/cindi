@@ -88,25 +88,29 @@ namespace Cindi.Domain.Utilities
         {
             try
             {
-                RijndaelManaged aes = new RijndaelManaged();
-                aes.KeySize = 256;
-                aes.BlockSize = 128;
-                aes.Padding = PaddingMode.PKCS7;
-                aes.Mode = CipherMode.CBC;
-                aes.Key = encoding.GetBytes(key);
+                if (encryptedString != null)
+                {
+                    RijndaelManaged aes = new RijndaelManaged();
+                    aes.KeySize = 256;
+                    aes.BlockSize = 128;
+                    aes.Padding = PaddingMode.PKCS7;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Key = encoding.GetBytes(key);
 
-                // Base 64 decode
-                byte[] base64Decoded = Convert.FromBase64String(encryptedString);
-                string base64DecodedStr = encoding.GetString(base64Decoded);
+                    // Base 64 decode
+                    byte[] base64Decoded = Convert.FromBase64String(encryptedString);
+                    string base64DecodedStr = encoding.GetString(base64Decoded);
 
-                // JSON Decode base64Str
-                var payload = JsonConvert.DeserializeObject<Dictionary<string, string>>(base64DecodedStr);
+                    // JSON Decode base64Str
+                    var payload = JsonConvert.DeserializeObject<Dictionary<string, string>>(base64DecodedStr);
 
-                aes.IV = Convert.FromBase64String(payload["iv"]);
+                    aes.IV = Convert.FromBase64String(payload["iv"]);
 
-                ICryptoTransform AESDecrypt = aes.CreateDecryptor(aes.Key, aes.IV);
-                byte[] buffer = Convert.FromBase64String(payload["value"]);
-                return encoding.GetString(AESDecrypt.TransformFinalBlock(buffer, 0, buffer.Length));
+                    ICryptoTransform AESDecrypt = aes.CreateDecryptor(aes.Key, aes.IV);
+                    byte[] buffer = Convert.FromBase64String(payload["value"]);
+                    return encoding.GetString(AESDecrypt.TransformFinalBlock(buffer, 0, buffer.Length));
+                }
+                return null;
             }
             catch (Exception e)
             {
@@ -197,6 +201,10 @@ namespace Cindi.Domain.Utilities
         //https://stackoverflow.com/questions/28086321/c-sharp-bouncycastle-rsa-encryption-with-public-private-keys
         public static string RsaEncryptWithPublic(string clearText, string publicKey)
         {
+            if (clearText == null)
+            {
+                return null;
+            }
             var bytesToEncrypt = Encoding.UTF8.GetBytes(clearText);
 
             var encryptEngine = new Pkcs1Encoding(new RsaEngine());
@@ -214,6 +222,10 @@ namespace Cindi.Domain.Utilities
 
         public static string RsaDecryptWithPrivate(string base64Input, string privateKey)
         {
+            if (base64Input == null)
+            {
+                return null;
+            }
             var trimmedKey = privateKey;
             var bytesToDecrypt = Convert.FromBase64String(base64Input);
 
@@ -232,6 +244,11 @@ namespace Cindi.Domain.Utilities
 
         public static string RsaDecryptWithPublic(string base64Input, string publicKey)
         {
+            if(base64Input == null)
+            {
+                return null;
+            }
+
             var bytesToDecrypt = Convert.FromBase64String(base64Input);
 
             var decryptEngine = new Pkcs1Encoding(new RsaEngine());
@@ -249,6 +266,11 @@ namespace Cindi.Domain.Utilities
 
         public static string RsaEncryptWithPrivate(string clearText, string privateKey)
         {
+            if (clearText == null)
+            {
+                return null;
+            }
+
             var bytesToEncrypt = Encoding.UTF8.GetBytes(clearText);
 
             var encryptEngine = new Pkcs1Encoding(new RsaEngine());

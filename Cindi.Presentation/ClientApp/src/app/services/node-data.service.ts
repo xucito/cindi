@@ -3,17 +3,21 @@ import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { environment } from "../../environments/environment";
 import { AuthenticationService } from "../auth/authentication.service";
+import { EnvService } from './env.service';
 
 @Injectable()
 export class NodeDataService {
   private api = "/api/";
-  private baseUrl = environment.apiUrl; //'http://10.10.10.24:5021/';//'http://localhost:5021/';//'http://10.10.10.24:5021/';// //'http://10.10.10.24:5021/';// 'http://10.10.10.17:5021/';// 'http://localhost:5021/'; //
+  private baseUrl;//= environment.apiUrl; //'http://10.10.10.24:5021/';//'http://localhost:5021/';//'http://10.10.10.24:5021/';// //'http://10.10.10.24:5021/';// 'http://10.10.10.17:5021/';// 'http://localhost:5021/'; //
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private env: EnvService
   ) /*,
     @Inject('BASE_URL') private baseUrl: string*/
-  {}
+  {
+    this.baseUrl = env.apiUrl;
+  }
 
   GetSteps(status: string = ""): Observable<any> {
     if (status != "")

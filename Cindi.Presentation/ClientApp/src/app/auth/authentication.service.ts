@@ -3,12 +3,16 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "../../environments/environment";
 import { map } from "rxjs/operators";
 import { AppStateService } from "../services/app-state.service";
+import { EnvService } from "../services/env.service";
 @Injectable({
   providedIn: "root"
 })
 export class AuthenticationService {
-
-  constructor(private http: HttpClient, private appState: AppStateService) {}
+  constructor(
+    private http: HttpClient,
+    private appState: AppStateService,
+    private env: EnvService
+  ) {}
 
   login(username: string, password: string) {
     let headerDict = {
@@ -19,7 +23,7 @@ export class AuthenticationService {
     };
 
     return this.http
-      .get<any>(environment.apiUrl + "/api/users/me", requestOptions)
+      .get<any>(this.env.apiUrl + "/api/users/me", requestOptions)
       .pipe(
         map(result => {
           let user = result.result;

@@ -150,6 +150,12 @@ namespace Cindi.Domain.Entities.StepTemplates
                 return false;
             }
 
+            if(stepTemplate.AllowDynamicInputs != AllowDynamicInputs)
+            {
+                exception = new ConflictingStepTemplateException("Found existing template with conflicting settings, Allow dynamics input is different.");
+                return false;
+            }
+
             if ((stepTemplate.OutputDefinitions == null && OutputDefinitions != null) ||
                 (stepTemplate.OutputDefinitions != null && OutputDefinitions == null)
                 || (stepTemplate.OutputDefinitions.Count() != OutputDefinitions.Count()))

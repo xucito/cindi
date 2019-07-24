@@ -54,6 +54,8 @@ using System.Threading;
 using ConsensusCore.Node.Controllers;
 using ConsensusCore.Domain.Services;
 using Cindi.Domain.Entities.States;
+using System.IO;
+using Cindi.Application.Pipelines;
 
 namespace Cindi.Presentation
 {
@@ -80,7 +82,8 @@ namespace Cindi.Presentation
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient));
 
-            services.AddScoped<IMediator, Mediator>();
+            //services.AddScoped<IMediator, Mediator>();
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             // services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
             services.AddAutoMapper();
@@ -206,7 +209,7 @@ namespace Cindi.Presentation
                     Thread.Sleep(1000);
                 }
 
-                if(node.GetState().Initialized)
+                if (node.GetState().Initialized)
                 { }
 
                 ClusterStateService.Initialized = node.GetState().Initialized;
@@ -285,19 +288,55 @@ namespace Cindi.Presentation
 
             if (EnableUI)
             {
+                OverrideUISettings();
                 app.UseSpaStaticFiles();
                 app.UseSpa(spa =>
                 {
                     // To learn more about options for serving an Angular SPA from ASP.NET Core,
                     // see https://go.microsoft.com/fwlink/?linkid=864501
 
+                    spa.Options.SourcePath = "ClientApp";
 
                     if (env.IsDevelopment())
                     {
-                        spa.Options.SourcePath = "ClientApp";
                         spa.UseAngularCliServer(npmScript: "start");
                     }
                 });
+            }
+        }
+
+        public void OverrideUISettings()
+        {
+            if (File.Exists("ClientApp/dist/env.js"))
+            {
+                string text = "";
+                using (StreamReader sr = new StreamReader("ClientApp/dist/env.js"))
+                {
+                    int i = 0;
+                    do
+                    {
+                        i++;
+                        string line = sr.ReadLine();
+                        if (line != null && line != "" && line.Contains("window.__env"))
+                        {
+                            var splitLine = line.Split("=");
+                            var variableName = splitLine.First().Split(".").Last().Trim();
+                            if (Configuration.GetSection("Client").GetValue<string>(variableName) != null)
+                            {
+                                text += splitLine.First() + "= \"" + Configuration.GetSection("Client").GetValue<string>(variableName) + "\";" + Environment.NewLine;
+                            }
+                            else
+                            {
+                                text += line + Environment.NewLine; ;
+                            }
+                        }
+                        else
+                        {
+                            text += line + Environment.NewLine; ;
+                        }
+                    } while (sr.EndOfStream == false);
+                }
+                File.WriteAllText("./ClientApp/dist/env.js", text);
             }
         }
     }

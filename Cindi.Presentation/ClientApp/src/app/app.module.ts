@@ -30,6 +30,7 @@ import { UsersComponent } from "./users/users.component";
 import { AddUsersModalComponent } from "./shared/components/modals/add-users-modal/add-users-modal.component";
 import { GlobalValuesComponent } from './global-values/global-values.component';
 import { AddGlobalValueModalComponent } from "./shared/components/modals/add-global-value-modal/add-global-value-modal.component";
+import { EnvServiceProvider } from "./services/env.service.provider";
 
 @NgModule({
   declarations: [
@@ -107,6 +108,7 @@ import { AddGlobalValueModalComponent } from "./shared/components/modals/add-glo
     BrowserAnimationsModule
   ],
   providers: [
+    EnvServiceProvider,
     NodeDataService,
     AppStateService,
     LoadingBarService,
