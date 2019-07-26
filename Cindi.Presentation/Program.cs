@@ -22,6 +22,7 @@ namespace Cindi.Presentation
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false)
                 .AddCommandLine(args)
+                .AddEnvironmentVariables()
                 .Build();
 
             _fileLoggingOptions = config.GetSection("Logging:File").Get<FileLoggerOptions>();
@@ -30,17 +31,13 @@ namespace Cindi.Presentation
 
             if (_fileLoggingOptions.LogDirectory == "" && EnableLogToFile)
             {
-                var logPath = Directory.GetCurrentDirectory() + "/Logs";
+                var logPath = Directory.GetCurrentDirectory() + "\\test";
                 Console.WriteLine("Failed to detect log directory, writing logs to " + logPath);
                 _fileLoggingOptions.LogDirectory = logPath;
             }
             else if(!EnableLogToFile)
             {
                 Console.WriteLine("WARNING: Logs are not being persisted to disk, this can be configured using the setting Logging:File:Enabled");
-            }
-            else
-            {
-                Console.WriteLine("Writing logs to path " + _fileLoggingOptions.LogDirectory);
             }
 
             CreateWebHostBuilder(args).Build().Run();
@@ -51,7 +48,17 @@ namespace Cindi.Presentation
                 .ConfigureLogging(builder =>
                 {
                     if (_fileLoggingOptions != null && EnableLogToFile)
-                        builder.AddFile(options => options = _fileLoggingOptions);
+                    {
+                        Console.WriteLine("Writing logs to path " + _fileLoggingOptions.LogDirectory);
+                        builder.AddFile(options => {
+                            options.FileSizeLimit = _fileLoggingOptions.FileSizeLimit;
+                            options.RetainedFileCountLimit = _fileLoggingOptions.RetainedFileCountLimit;
+                            options.FileName = _fileLoggingOptions.FileName;
+                            options.Extension = _fileLoggingOptions.Extension;
+                            options.Periodicity = _fileLoggingOptions.Periodicity;
+                            options.LogDirectory = _fileLoggingOptions.LogDirectory;
+                        });
+                    }
                 })
                 .UseStartup<Startup>();
     }
