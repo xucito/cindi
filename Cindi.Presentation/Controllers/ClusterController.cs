@@ -27,7 +27,7 @@ namespace Cindi.Presentation.Controllers
     public class ClusterController : BaseController
     {
         IClusterStateService _stateService;
-        public ClusterController(ILoggerFactory logger, IClusterStateService stateService) : base(logger.CreateLogger<SequencesController>())
+        public ClusterController(ILoggerFactory logger, IClusterStateService stateService) : base(logger.CreateLogger<ClusterController>())
         {
             _stateService = stateService;
         }

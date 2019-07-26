@@ -1,4 +1,4 @@
-﻿using Cindi.Domain.Entities.Sequences;
+﻿using Cindi.Domain.Entities.Workflows;
 using ConsensusCore.Domain.Services;
 using MongoDB.Bson.Serialization;
 using System;

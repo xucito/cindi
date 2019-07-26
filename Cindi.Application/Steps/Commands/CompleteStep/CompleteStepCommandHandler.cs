@@ -4,12 +4,12 @@ using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.JournalEntries;
-using Cindi.Domain.Entities.Sequences;
+using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
-using Cindi.Domain.Exceptions.Sequences;
-using Cindi.Domain.Exceptions.SequenceTemplates;
+using Cindi.Domain.Exceptions.Workflows;
+using Cindi.Domain.Exceptions.WorkflowTemplates;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
@@ -33,8 +33,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
     {
         public IStepsRepository _stepsRepository;
         public IStepTemplatesRepository _stepTemplatesRepository;
-        public ISequenceTemplatesRepository _sequenceTemplateRepository;
-        public ISequencesRepository _sequencesRepository;
+        public IWorkflowTemplatesRepository _workflowTemplateRepository;
+        public IWorkflowsRepository _workflowsRepository;
         public IClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
@@ -44,8 +44,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
-            ISequenceTemplatesRepository sequenceTemplateRepository,
-            ISequencesRepository sequencesRepository,
+            IWorkflowTemplatesRepository workflowTemplateRepository,
+            IWorkflowsRepository workflowsRepository,
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
@@ -56,8 +56,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
-            _sequenceTemplateRepository = sequenceTemplateRepository;
-            _sequencesRepository = sequencesRepository;
+            _workflowTemplateRepository = workflowTemplateRepository;
+            _workflowsRepository = workflowsRepository;
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options.CurrentValue;
@@ -72,8 +72,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
-            ISequenceTemplatesRepository sequenceTemplateRepository,
-            ISequencesRepository sequencesRepository,
+            IWorkflowTemplatesRepository workflowTemplateRepository,
+            IWorkflowsRepository workflowsRepository,
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
@@ -84,8 +84,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
-            _sequenceTemplateRepository = sequenceTemplateRepository;
-            _sequencesRepository = sequencesRepository;
+            _workflowTemplateRepository = workflowTemplateRepository;
+            _workflowsRepository = workflowsRepository;
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options;
@@ -216,30 +216,30 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             var updatedStep = await _stepsRepository.GetStepAsync(stepToComplete.Id);
 
-            if (updatedStep.SequenceId != null)
+            if (updatedStep.WorkflowId != null)
             {
                 //Keep track of whether a step has been added
                 var addedStep = false;
-                var sequence = await _sequencesRepository.GetSequenceAsync(updatedStep.SequenceId.Value);
+                var workflow = await _workflowsRepository.GetWorkflowAsync(updatedStep.WorkflowId.Value);
 
-                if (sequence == null)
+                if (workflow == null)
                 {
-                    throw new MissingSequenceException("Failed to continue sequence " + updatedStep.SequenceId + " as sequence does not exist.");
+                    throw new MissingWorkflowException("Failed to continue workflow " + updatedStep.WorkflowId + " as workflow does not exist.");
                 }
 
-                //Get the sequence template
-                var sequenceTemplate = await _sequenceTemplateRepository.GetSequenceTemplateAsync(sequence.SequenceTemplateId);
+                //Get the workflow template
+                var workflowTemplate = await _workflowTemplateRepository.GetWorkflowTemplateAsync(workflow.WorkflowTemplateId);
 
-                if (sequenceTemplate == null)
+                if (workflowTemplate == null)
                 {
-                    throw new SequenceTemplateNotFoundException("Failed to continue sequence " + updatedStep.SequenceId + " sequence template " + sequence.SequenceTemplateId + ".");
+                    throw new WorkflowTemplateNotFoundException("Failed to continue workflow " + updatedStep.WorkflowId + " workflow template " + workflow.WorkflowTemplateId + ".");
                 }
 
                 //Get all the steps related to this task
-                var sequenceSteps = await _sequencesRepository.GetSequenceStepsAsync(updatedStep.SequenceId.Value);
+                var workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
 
                 //Get all the logic blocks for all logic blocks containing the step that has been completed
-                var logicBlocks = sequenceTemplate.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Where(ps => ps.StepRefId == updatedStep.StepRefId).Count() > 0).ToList();
+                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Where(ps => ps.StepRefId == updatedStep.StepRefId).Count() > 0).ToList();
 
 
                 foreach (var logicBlock in logicBlocks)
@@ -250,13 +250,13 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     bool lockObtained = false;
                     while (!lockObtained)
                     {
-                        while (_clusterStateService.IsLogicBlockLocked(updatedStep.SequenceId.Value, logicBlock.Id))
+                        while (_clusterStateService.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Id))
                         {
-                            Console.WriteLine("Found " + ("sequence:" + updatedStep.SequenceId + ">logicBlock:" + logicBlock) + " Lock");
+                            Console.WriteLine("Found " + ("workflow:" + updatedStep.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
                             Thread.Sleep(1000);
                         }
 
-                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.SequenceId.Value, logicBlock.Id);
+                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
 
                         // CheckIfYouObtainedALock
 
@@ -267,7 +267,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         }
 
                         //Check whether you got the lock
-                        lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.SequenceId.Value, logicBlock.Id);
+                        lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
                     }
 
                     var ready = true;
@@ -279,7 +279,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         foreach (var prerequisite in logicBlock.PrerequisiteSteps)
                         {
                             // Check whether the pre-requisite is in the submited steps, if there is a single one missing, do not submit subsequent steps 
-                            var step = sequenceSteps.Where(s => s.StepRefId == prerequisite.StepRefId).FirstOrDefault();
+                            var step = workflowSteps.Where(s => s.StepRefId == prerequisite.StepRefId).FirstOrDefault();
                             if (step == null)
                             {
                                 ready = false;
@@ -302,11 +302,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         {
 
                             // Check whether the pre-requisite is in the submited steps, if there is a single one missing break but do not change ready
-                            var matchedSteps = sequenceSteps.Where(s => s.StepRefId == prerequisite.StepRefId);
+                            var matchedSteps = workflowSteps.Where(s => s.StepRefId == prerequisite.StepRefId);
 
                             if (matchedSteps.Count() > 1)
                             {
-                                Logger.LogError("Detected duplicate pre-requisite steps for sequence " + sequence.Id + " at step reference " + prerequisite.StepRefId);
+                                Logger.LogError("Detected duplicate pre-requisite steps for workflow " + workflow.Id + " at step reference " + prerequisite.StepRefId);
                             }
 
                             if (matchedSteps == null)
@@ -332,9 +332,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     {
                         foreach (var substep in logicBlock.SubsequentSteps)
                         {
-                            if (sequenceSteps.Where(s => s.StepRefId == substep.StepRefId).Count() > 0)
+                            if (workflowSteps.Where(s => s.StepRefId == substep.StepRefId).Count() > 0)
                             {
-                                Logger.LogCritical("Encountered duplicate subsequent step for sequence " + sequence.Id + ". Ignoring the generation of duplicate.");
+                                Logger.LogCritical("Encountered duplicate subsequent step for workflow " + workflow.Id + ". Ignoring the generation of duplicate.");
                             }
                             else
                             {
@@ -344,7 +344,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 foreach (var mapping in substep.Mappings)
                                 {
                                     //find the mapping with the highest priority
-                                    var highestPriorityReference = SequenceTemplateUtility.GetHighestPriorityReference(mapping.OutputReferences, sequenceSteps.ToArray());
+                                    var highestPriorityReference = WorkflowTemplateUtility.GetHighestPriorityReference(mapping.OutputReferences, workflowSteps.ToArray());
 
 
                                     //if the highest priority reference is null, there are no mappings
@@ -357,15 +357,15 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     {
                                         verifiedInputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
                                     }
-                                    // If the step ref is not -1 it is a step in the array but the sequence
+                                    // If the step ref is not -1 it is a step in the array but the workflow
                                     else if (highestPriorityReference.StepRefId != -1)
                                     {
-                                        var parentStep = sequenceSteps.Where(ss => ss.StepRefId == highestPriorityReference.StepRefId).FirstOrDefault();
+                                        var parentStep = workflowSteps.Where(ss => ss.StepRefId == highestPriorityReference.StepRefId).FirstOrDefault();
 
                                         //If there is a AND and there is no parent step, throw a error
                                         if (parentStep == null && Condition == "AND")
                                         {
-                                            throw new InvalidSequenceProcessingException("Detected AND Condition but no parent found");
+                                            throw new InvalidWorkflowProcessingException("Detected AND Condition but no parent found");
                                         }
                                         else
                                         {
@@ -390,11 +390,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                             }
                                         }
                                     }
-                                    //Get the value from the sequence ref
+                                    //Get the value from the workflow ref
                                     else
                                     {
                                         // Validate it is in the definition
-                                        verifiedInputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(sequence.Inputs, highestPriorityReference.OutputId).Value);
+                                        verifiedInputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(workflow.Inputs, highestPriorityReference.OutputId).Value);
                                     }
 
                                 }
@@ -406,28 +406,28 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     StepTemplateId = substep.StepTemplateId,
                                     CreatedBy = SystemUsers.QUEUE_MANAGER,
                                     Inputs = verifiedInputs,
-                                    SequenceId = sequence.Id,
+                                    WorkflowId = workflow.Id,
                                     StepRefId = substep.StepRefId
                                 });
                                 addedStep = true;
                             }
                         }
-                        await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.SequenceId.Value, logicBlock.Id);
+                        await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
                     }
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned
 
-                var sequenceStatus = sequence.Status;
-                sequenceSteps = await _sequencesRepository.GetSequenceStepsAsync(updatedStep.SequenceId.Value);
-                var highestStatus = StepStatuses.GetHighestPriority(sequenceSteps.Select(s => s.Status).ToArray());
+                var workflowStatus = workflow.Status;
+                workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
+                var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
 
-                var newSequenceStatus = SequenceStatuses.ConvertStepStatusToSequenceStatus(highestStatus);
+                var newWorkflowStatus = WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
 
-                if (newSequenceStatus != sequence.Status)
+                if (newWorkflowStatus != workflow.Status)
                 {
 
-                    sequence.UpdateJournal(
+                    workflow.UpdateJournal(
                     new JournalEntry()
                     {
                         CreatedBy = request.CreatedBy,
@@ -438,20 +438,20 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 {
                                     FieldName = "status",
                                     Type = UpdateType.Override,
-                                    Value = newSequenceStatus
+                                    Value = newWorkflowStatus
                                 }
                         }
                     });
 
-                    //await _sequencesRepository.UpdateSequence(sequence);
+                    //await _workflowsRepository.UpdateWorkflow(workflow);
                     await _node.Send(new WriteData()
                     {
-                        Data = sequence,
+                        Data = workflow,
                         WaitForSafeWrite = true,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
                     });
                 }
-                //await _sequencesRepository.UpsertSequenceMetadataAsync(sequence.Id);
+                //await _workflowsRepository.UpsertWorkflowMetadataAsync(workflow.Id);
             }
 
             return new CommandResult()

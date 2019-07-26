@@ -1,5 +1,5 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
-using Cindi.Domain.Entities.SequencesTemplates;
+using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
@@ -25,7 +25,7 @@ namespace Cindi.Test.Global.TestData
             return step;
         }
 
-        public static SequenceTemplate GetSequenceTemplateWithInputs(int numberOfSteps)
+        public static WorkflowTemplate GetWorkflowTemplateWithInputs(int numberOfSteps)
         {
             var stepTemplate = FibonacciSampleData.StepTemplate;
 
@@ -134,7 +134,7 @@ namespace Cindi.Test.Global.TestData
                         });
             }
 
-            var sequenceTemplate = new SequenceTemplate(
+            var workflowTemplate = new WorkflowTemplate(
                 new Journal(new JournalEntry
                 {
                     Updates = new List<Update> {
@@ -148,7 +148,7 @@ namespace Cindi.Test.Global.TestData
                                     {
                                         Value = "SimpleSequence:1",
                                         Type = UpdateType.Create,
-                                        FieldName = "sequencetemplateid"
+                                        FieldName = "WorkflowTemplateId"
                                     },
                                     new Update()
                                     {
@@ -176,10 +176,10 @@ namespace Cindi.Test.Global.TestData
                         {
                         };
             
-            return sequenceTemplate;
+            return workflowTemplate;
         }
 
-        public static SequenceTemplate GetSequenceTemplate(int numberOfSteps)
+        public static WorkflowTemplate GetWorkflowTemplate(int numberOfSteps)
         {
             var stepTemplate = FibonacciSampleData.StepTemplate;
 
@@ -286,7 +286,7 @@ namespace Cindi.Test.Global.TestData
                         });
             }
 
-            var sequenceTemplate = new SequenceTemplate(
+            var workflowTemplate = new WorkflowTemplate(
                 new Journal(new JournalEntry
                 {
                     Updates = new List<Update> {
@@ -294,7 +294,7 @@ namespace Cindi.Test.Global.TestData
                                     {
                                         Value = "SimpleSequence:1",
                                         Type = UpdateType.Create,
-                                        FieldName = "sequencetemplateid"
+                                        FieldName = "WorkflowTemplateId"
                                     },
                                     new Update()
                                     {
@@ -322,7 +322,7 @@ namespace Cindi.Test.Global.TestData
             {
             };
 
-            return sequenceTemplate;
+            return workflowTemplate;
         }
     }
 }

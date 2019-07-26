@@ -1,5 +1,5 @@
 ﻿using Cindi.Application.GlobalValues.Commands.CreateGlobalValue;
-using Cindi.Application.Sequences.Commands.CreateSequence;
+using Cindi.Application.Workflows.Commands;
 using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Users.Commands.CreateUserCommand;
 using MediatR;
@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Workflows.Commands.CreateWorkflow;
 
 namespace Cindi.Application.Pipelines
 {
@@ -60,7 +61,7 @@ namespace Cindi.Application.Pipelines
         public bool ShouldPrintOutput(Type request)
         {
             if(request == typeof(CreateStepCommand) ||
-                request == typeof(CreateSequenceCommand) ||
+                request == typeof(CreateWorkflowCommand) ||
                 request == typeof(CreateUserCommand) || 
                 request == typeof(CreateGlobalValueCommand))
             {

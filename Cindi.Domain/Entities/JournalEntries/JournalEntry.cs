@@ -18,6 +18,6 @@ namespace Cindi.Domain.Entities.JournalEntries
     public static class JournalEntityTypes
     {
         public const string Step = "step";
-        public const string Sequence = "sequence";
+        public const string Workflow = "workflow";
     }
 }

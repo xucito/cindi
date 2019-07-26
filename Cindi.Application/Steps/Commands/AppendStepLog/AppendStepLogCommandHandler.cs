@@ -66,7 +66,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 
             //await _stepsRepository.UpdateStep(step);
 
-            var createdSequenceTemplateId = await _node.Send(new WriteData()
+            var createdWorkflowTemplateId = await _node.Send(new WriteData()
             {
                 Data = step,
                 WaitForSafeWrite = true,

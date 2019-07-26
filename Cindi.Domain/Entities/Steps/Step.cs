@@ -33,7 +33,7 @@ namespace Cindi.Domain.Entities.Steps
             ShardType = nameof(Step);
         }
 
-        public Step(Guid id, string name = "", string description = "", string stepTemplateId = "", string createdBy = "", Dictionary<string, object> inputs = null, string encryptionString = "", int? stepRefId = null, Guid? sequenceId = null) : base(
+        public Step(Guid id, string name = "", string description = "", string stepTemplateId = "", string createdBy = "", Dictionary<string, object> inputs = null, string encryptionString = "", int? stepRefId = null, Guid? workflowId = null) : base(
             new Journal(new JournalEntry()
             {
                 Updates = new List<Update>()
@@ -88,8 +88,8 @@ namespace Cindi.Domain.Entities.Steps
                     },
                     new Update()
                     {
-                        FieldName = "sequenceid",
-                        Value = sequenceId,
+                        FieldName = "workflowid",
+                        Value = workflowId,
                         Type = UpdateType.Create
                     },
                     new Update()
@@ -110,12 +110,12 @@ namespace Cindi.Domain.Entities.Steps
         public string Description { get; set; }
 
         /// <summary>
-        /// The sequence this step belongs to 
+        /// The workflow this step belongs to 
         /// </summary>
-        public Guid? SequenceId { get; set; }
+        public Guid? WorkflowId { get; set; }
 
         /// <summary>
-        /// Used to map to a specific step in a sequence
+        /// Used to map to a specific step in a workflow
         /// </summary>
         public int? StepRefId { get; set; }
 

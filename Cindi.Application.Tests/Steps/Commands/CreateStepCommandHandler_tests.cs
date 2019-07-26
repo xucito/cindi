@@ -10,7 +10,7 @@ using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
-using Cindi.Domain.Exceptions.Sequences;
+using Cindi.Domain.Exceptions.Workflows;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;

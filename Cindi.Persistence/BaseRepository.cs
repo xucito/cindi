@@ -1,7 +1,7 @@
 ﻿using Cindi.Domain.Entities;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.JournalEntries;
-using Cindi.Domain.Entities.Sequences;
+using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Users;
@@ -9,7 +9,7 @@ using Cindi.Domain.ValueObjects;
 using Cindi.Persistence.GlobalValues;
 using Cindi.Persistence.Journals;
 using Cindi.Persistence.NodeStorages;
-using Cindi.Persistence.Sequences;
+using Cindi.Persistence.Workflows;
 using Cindi.Persistence.Serializers;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
@@ -38,8 +38,8 @@ namespace Cindi.Persistence
 
         public static void RegisterClassMaps()
         {
-            BsonClassMap.RegisterClassMap<SequenceMetadata>(cm => SequencesClassMap.Register(cm));
-            BsonClassMap.RegisterClassMap<Sequence>(seq => SequencesClassMap.Register(seq));
+            BsonClassMap.RegisterClassMap<WorkflowMetadata>(cm => WorkflowsClassMap.Register(cm));
+            BsonClassMap.RegisterClassMap<Workflow>(seq => WorkflowsClassMap.Register(seq));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<Journal>(je => JournalsClassMap.Register(je));
             BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));

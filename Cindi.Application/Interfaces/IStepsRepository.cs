@@ -1,5 +1,5 @@
 ﻿using Cindi.Domain.Entities.JournalEntries;
-using Cindi.Domain.Entities.Sequences;
+using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.Steps;
 using System;
 using System.Collections.Generic;

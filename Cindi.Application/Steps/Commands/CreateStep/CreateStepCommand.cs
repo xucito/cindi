@@ -29,7 +29,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         public string CreatedBy { get; set; }
 
         public int? StepRefId { get; set; }
-        public Guid? SequenceId { get; set; }
+        public Guid? WorkflowId { get; set; }
 
     }
 }

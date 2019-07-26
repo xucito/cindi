@@ -28,8 +28,6 @@ using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Presentation.Transformers;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Cindi.Persistence.SequenceTemplates;
-using Cindi.Persistence.Sequences;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Cindi.Application.Options;
 using Cindi.Application.Services.ClusterMonitor;
@@ -56,6 +54,8 @@ using ConsensusCore.Domain.Services;
 using Cindi.Domain.Entities.States;
 using System.IO;
 using Cindi.Application.Pipelines;
+using Cindi.Persistence.Workflows;
+using Cindi.Persistence.WorkflowTemplates;
 
 namespace Cindi.Presentation
 {
@@ -127,8 +127,8 @@ namespace Cindi.Presentation
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
             services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
-            services.AddTransient<ISequencesRepository, SequencesRepository>(s => new SequencesRepository(MongoClient));
-            services.AddTransient<ISequenceTemplatesRepository, SequenceTemplatesRepository>(s => new SequenceTemplatesRepository(MongoClient));
+            services.AddTransient<IWorkflowsRepository, WorkflowsRepository>(s => new WorkflowsRepository(MongoClient));
+            services.AddTransient<IWorkflowTemplatesRepository, WorkflowTemplatesRepository>(s => new WorkflowTemplatesRepository(MongoClient));
             // services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
             services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
             services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));

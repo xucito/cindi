@@ -1,5 +1,5 @@
-﻿using Cindi.Domain.Entities.Sequences;
-using Cindi.Domain.Entities.SequencesTemplates;
+﻿using Cindi.Domain.Entities.Workflows;
+using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
@@ -42,7 +42,7 @@ namespace Cindi.Test.Global.TestData
         {
         };
 
-        public static readonly SequenceTemplate SequenceTemplate = new SequenceTemplate(Guid.NewGuid(),
+        public static readonly WorkflowTemplate SequenceTemplate = new WorkflowTemplate(Guid.NewGuid(),
             "Fibonacci:0",
             "",
             new Dictionary<string, DynamicDataDescription>(),
@@ -184,7 +184,7 @@ new Domain.Entities.JournalEntries.JournalEntry()
             }
         }
 
-        public static readonly Sequence Sequence = new Sequence(
+        public static readonly Workflow Sequence = new Workflow(
             Guid.NewGuid(),
             SequenceTemplate.ReferenceId,
             new Dictionary<string, object>(),
@@ -196,8 +196,8 @@ new Domain.Entities.JournalEntries.JournalEntry()
 
         public class FibonacciSequenceData
         {
-            public SequenceTemplate sequenceTemplate;
-            public SequenceTemplate sequenceTemplateWithInputs;
+            public WorkflowTemplate workflowTemplate;
+            public WorkflowTemplate workflowTemplateWithInputs;
             public StepTemplate stepTemplate;
             public int numberOfSteps = 0;
 
@@ -205,8 +205,8 @@ new Domain.Entities.JournalEntries.JournalEntry()
             {
                 this.numberOfSteps = numberOfSteps;
                 stepTemplate = FibonacciSampleData.StepTemplate;
-                sequenceTemplate = FibonacciDataGenerator.GetSequenceTemplate(numberOfSteps);
-                sequenceTemplateWithInputs = FibonacciDataGenerator.GetSequenceTemplateWithInputs(numberOfSteps);
+                workflowTemplate = FibonacciDataGenerator.GetWorkflowTemplate(numberOfSteps);
+                workflowTemplateWithInputs = FibonacciDataGenerator.GetWorkflowTemplateWithInputs(numberOfSteps);
             }
         }
     }

@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cindi.Domain.Entities.SequencesTemplates;
+using Cindi.Domain.Entities.WorkflowsTemplates;
 
 namespace Cindi.Application.Interfaces
 {
-    public interface ISequenceTemplatesRepository
+    public interface IWorkflowTemplatesRepository
     {
-        Task<SequenceTemplate> GetSequenceTemplateAsync(string sequenceTemplateId);
-        Task<SequenceTemplate> GetSequenceTemplateAsync(Guid id);
-        Task<List<SequenceTemplate>> GetSequenceTemplatesAsync(int page = 0, int size = 10);
-        Task<SequenceTemplate> InsertSequenceTemplateAsync(SequenceTemplate sequenceTemplate);
-        long CountSequenceTemplates();
+        Task<WorkflowTemplate> GetWorkflowTemplateAsync(string WorkflowTemplateId);
+        Task<WorkflowTemplate> GetWorkflowTemplateAsync(Guid id);
+        Task<List<WorkflowTemplate>> GetWorkflowTemplatesAsync(int page = 0, int size = 10);
+        Task<WorkflowTemplate> InsertWorkflowTemplateAsync(WorkflowTemplate workflowTemplate);
+        long CountWorkflowTemplates();
     }
 }

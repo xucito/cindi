@@ -1,8 +1,8 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.GlobalValues;
-using Cindi.Domain.Entities.Sequences;
-using Cindi.Domain.Entities.SequencesTemplates;
+using Cindi.Domain.Entities.Workflows;
+using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Users;
@@ -21,25 +21,25 @@ namespace Cindi.Application.Services
         IBotKeysRepository _botKeys;
         IGlobalValuesRepository _globalValues;
         IStepTemplatesRepository _stepTemplatesRepository;
-        ISequenceTemplatesRepository _sequenceTemplateRepository;
+        IWorkflowTemplatesRepository _workflowTemplateRepository;
         IStepsRepository _stepsRepository;
-        ISequencesRepository _sequenceRepository;
+        IWorkflowsRepository _workflowRepository;
 
         public CindiDataRouter(IUsersRepository users,
             IBotKeysRepository botKeys,
             IGlobalValuesRepository globalValues,
             IStepTemplatesRepository stepTemplatesRepository,
-            ISequenceTemplatesRepository sequenceTemplateRepository,
+            IWorkflowTemplatesRepository workflowTemplateRepository,
                     IStepsRepository stepsRepository,
-        ISequencesRepository sequenceRepository)
+        IWorkflowsRepository workflowRepository)
         {
             _users = users;
             _botKeys = botKeys;
             _globalValues = globalValues;
             _stepTemplatesRepository = stepTemplatesRepository;
-            _sequenceTemplateRepository = sequenceTemplateRepository;
+            _workflowTemplateRepository = workflowTemplateRepository;
             _stepsRepository = stepsRepository;
-            _sequenceRepository = sequenceRepository;
+            _workflowRepository = workflowRepository;
         }
 
 
@@ -60,12 +60,12 @@ namespace Cindi.Application.Services
                     return await _globalValues.GetGlobalValueAsync(objectId);
                 case nameof(StepTemplate):
                     return await _stepTemplatesRepository.GetStepTemplateAsync(objectId);
-                case nameof(SequenceTemplate):
-                    return await _sequenceTemplateRepository.GetSequenceTemplateAsync(objectId);
+                case nameof(WorkflowTemplate):
+                    return await _workflowTemplateRepository.GetWorkflowTemplateAsync(objectId);
                 case nameof(Step):
                     return await _stepsRepository.GetStepAsync(objectId);
-                case nameof(Sequence):
-                    return await _sequenceRepository.GetSequenceAsync(objectId);
+                case nameof(Workflow):
+                    return await _workflowRepository.GetWorkflowAsync(objectId);
                 default:
                     return null;
             }
@@ -86,10 +86,10 @@ namespace Cindi.Application.Services
                         return await _globalValues.InsertGlobalValue(t1);
                     case StepTemplate t1:
                         return await _stepTemplatesRepository.InsertAsync(t1);
-                    case SequenceTemplate t1:
-                        return await _sequenceTemplateRepository.InsertSequenceTemplateAsync(t1);
-                    case Sequence t1:
-                        return await _sequenceRepository.InsertSequenceAsync(t1);
+                    case WorkflowTemplate t1:
+                        return await _workflowTemplateRepository.InsertWorkflowTemplateAsync(t1);
+                    case Workflow t1:
+                        return await _workflowRepository.InsertWorkflowAsync(t1);
                     case Step t1:
                         return await _stepsRepository.InsertStepAsync(t1);
                 }
@@ -116,8 +116,8 @@ namespace Cindi.Application.Services
                 //return await _users.Upda(t1);
                 case BotKey t1:
                     return await _botKeys.UpdateBotKey(t1);
-                case Sequence t1:
-                    return await _sequenceRepository.UpdateSequence(t1);
+                case Workflow t1:
+                    return await _workflowRepository.UpdateWorkflow(t1);
                 case Step t1:
                     return await _stepsRepository.UpdateStep(t1);
             }

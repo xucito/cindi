@@ -56,7 +56,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 
             if (existingStepTemplate == null)
             {
-                var createdSequenceTemplateId = await _node.Send(new WriteData()
+                var createdWorkflowTemplateId = await _node.Send(new WriteData()
                 {
                     Data = newStepTemplate,
                     WaitForSafeWrite = true,

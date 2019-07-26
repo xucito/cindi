@@ -60,30 +60,30 @@ namespace Cindi.Domain.Entities.States
                 case UpdateLogicBlockLock t1:
                     if (t1.Action == LockBlockActions.APPLY)
                     {
-                        LockedLogicBlocks.Add(t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId, t1.Lock);
+                        LockedLogicBlocks.Add(t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId, t1.Lock);
                     }
                     else if (t1.Action == LockBlockActions.REMOVE)
                     {
-                        if (LockedLogicBlocks.ContainsKey(t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId))
+                        if (LockedLogicBlocks.ContainsKey(t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId))
                         {
-                            if (LockedLogicBlocks[t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId].LockerCode == t1.Lock.LockerCode)
+                            if (LockedLogicBlocks[t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId].LockerCode == t1.Lock.LockerCode)
                             {
 
-                                LockedLogicBlocks.Remove(t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId);
+                                LockedLogicBlocks.Remove(t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId);
                             }
                             else
                             {
-                                throw new InvalidLogicBlockUnlockException("Logic block " + t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId + " is held by a different locker code. Given " + t1.Lock.LockerCode + ", held by " + LockedLogicBlocks[t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId].LockerCode);
+                                throw new InvalidLogicBlockUnlockException("Logic block " + t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId + " is held by a different locker code. Given " + t1.Lock.LockerCode + ", held by " + LockedLogicBlocks[t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId].LockerCode);
                             }
                         }
                         else
                         {
-                            throw new InvalidLogicBlockUnlockException("Logic block " + t1.Lock.SequenceId + ":" + t1.Lock.LogicBlockId + " does not exist for unlocking.");
+                            throw new InvalidLogicBlockUnlockException("Logic block " + t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId + " does not exist for unlocking.");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Received a logic block update for " + t1.Lock.SequenceId + " that did not contain a action");
+                        Console.WriteLine("Received a logic block update for " + t1.Lock.WorkflowId + " that did not contain a action");
                     }
                     break;
 

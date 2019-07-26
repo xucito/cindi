@@ -51,13 +51,13 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
-            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.StepRefId, request.SequenceId, ClusterStateService.GetEncryptionKey() );
+            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.StepRefId, request.WorkflowId, ClusterStateService.GetEncryptionKey() );
 
            /* var createdStepId = await _stepsRepository.InsertStepAsync(
                 newStep
                 );*/
 
-            var createdSequenceTemplateId = await _node.Send(new WriteData()
+            var createdWorkflowTemplateId = await _node.Send(new WriteData()
             {
                 Data = newStep,
                 WaitForSafeWrite = true,

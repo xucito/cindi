@@ -8,7 +8,7 @@ using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
-using Cindi.Domain.Exceptions.Sequences;
+using Cindi.Domain.Exceptions.Workflows;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using Cindi.Test.Global;
@@ -100,12 +100,12 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
 
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            sequenceTemplateRepository.Setup(str => str.GetSequenceTemplateAsync(TestSequence.SequenceTemplateId)).Returns(Task.FromResult(FibonacciSampleData.SequenceTemplate));
+            Mock<IWorkflowTemplatesRepository> workflowTemplateRepository = new Mock<IWorkflowTemplatesRepository>();
+            workflowTemplateRepository.Setup(str => str.GetWorkflowTemplateAsync(TestSequence.WorkflowTemplateId)).Returns(Task.FromResult(FibonacciSampleData.SequenceTemplate));
 
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
-            sequenceRepository.Setup(sr => sr.GetSequenceAsync(TestSequence.Id)).Returns(Task.FromResult(TestSequence));
-            sequenceRepository.Setup(sr => sr.GetSequenceStepsAsync(TestSequence.Id)).Returns(Task.FromResult(new List<Step>() { TestStep }));
+            Mock<IWorkflowsRepository> sequenceRepository = new Mock<IWorkflowsRepository>();
+            sequenceRepository.Setup(sr => sr.GetWorkflowAsync(TestSequence.Id)).Returns(Task.FromResult(TestSequence));
+            sequenceRepository.Setup(sr => sr.GetWorkflowStepsAsync(TestSequence.Id)).Returns(Task.FromResult(new List<Step>() { TestStep }));
 
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
@@ -144,7 +144,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             _node.Setup(n => n.HasEntryBeenCommitted(It.IsAny<int>())).Returns(true);
             service.Setup(m => m.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>())).Returns(true);
 
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, service.Object, mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, workflowTemplateRepository.Object, sequenceRepository.Object, service.Object, mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
 
             Assert.Equal(TestStep.Id.ToString(), (await handler.Handle(new CompleteStepCommand()
             {
@@ -167,8 +167,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
+            Mock<IWorkflowTemplatesRepository> workflowTemplateRepository = new Mock<IWorkflowTemplatesRepository>();
+            Mock<IWorkflowsRepository> sequenceRepository = new Mock<IWorkflowsRepository>();
 
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
 
@@ -207,7 +207,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(mockStateLogger.Object, serviceScopeFactory.Object, _node.Object), mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, workflowTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(mockStateLogger.Object, serviceScopeFactory.Object, _node.Object), mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
 
             var completeResult = await handler.Handle(new CompleteStepCommand()
             {
@@ -234,8 +234,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, null, null, null, ClusterStateService.GetEncryptionKey());
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
+            Mock<IWorkflowTemplatesRepository> workflowTemplateRepository = new Mock<IWorkflowTemplatesRepository>();
+            Mock<IWorkflowsRepository> sequenceRepository = new Mock<IWorkflowsRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(stepTemplate.ReferenceId)).Returns(Task.FromResult(stepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
             stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
@@ -255,7 +255,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var node = Utility.GetMockConsensusCoreNode();
 
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(mockStateLogger.Object, serviceScopeFactory.Object, node.Object), mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, workflowTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(mockStateLogger.Object, serviceScopeFactory.Object, node.Object), mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
 
             var completeResult = await handler.Handle(new CompleteStepCommand()
             {
@@ -293,8 +293,8 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            Mock<ISequenceTemplatesRepository> sequenceTemplateRepository = new Mock<ISequenceTemplatesRepository>();
-            Mock<ISequencesRepository> sequenceRepository = new Mock<ISequencesRepository>();
+            Mock<IWorkflowTemplatesRepository> workflowTemplateRepository = new Mock<IWorkflowTemplatesRepository>();
+            Mock<IWorkflowsRepository> sequenceRepository = new Mock<IWorkflowsRepository>();
             stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
             stepsRepository.Setup(s => s.GetStepAsync(TestStep.Id)).Returns(Task.FromResult(TestStep));
@@ -330,9 +330,9 @@ namespace Cindi.Application.Tests.Steps.Commands
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
-            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, sequenceTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(mockStateLogger.Object, serviceScopeFactory.Object, _node.Object), mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
+            var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, workflowTemplateRepository.Object, sequenceRepository.Object, new ClusterStateService(mockStateLogger.Object, serviceScopeFactory.Object, _node.Object), mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
 
-            await Assert.ThrowsAsync<MissingSequenceException>(async () => await handler.Handle(new CompleteStepCommand()
+            await Assert.ThrowsAsync<MissingWorkflowException>(async () => await handler.Handle(new CompleteStepCommand()
             {
                 Id = TestStep.Id,
                 Outputs = new Dictionary<string, object>()

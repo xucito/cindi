@@ -1,6 +1,6 @@
 ﻿using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
-using Cindi.Domain.Entities.Sequences;
+using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.ValueObjects;
@@ -25,8 +25,8 @@ namespace Cindi.Infrastructure.Tests.Integration
         public string TestDBId;
         public StepTemplatesRepository stepTemplatesRepository;
         public StepsRepository stepsRepository;
-        public SequenceTemplatesRepository sequenceTemplatesRepository;
-        public SequencesRepository sequenceRepository;
+        public WorkflowTemplatesRepository workflowTemplatesRepository;
+        public WorkflowsRepository sequenceRepository;
 
         public MongoDb_Tests(MongoDBFixture fixture)
         {
@@ -236,11 +236,11 @@ namespace Cindi.Infrastructure.Tests.Integration
         public async void CreateSequence()
         {
             FibonacciSequenceData data = new FibonacciSequenceData(5);
-            await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplate);
+            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.sequenceTemplate);
 
             var id = Guid.NewGuid();
 
-            var newSequence = new Domain.Entities.Sequences.Sequence(
+            var newSequence = new Domain.Entities.Sequences.Workflow(
                 id,
                 data.sequenceTemplate.ReferenceId,
                 new Dictionary<string, object>(),
@@ -250,34 +250,34 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
             };
 
-            var newSequenceId = await sequenceRepository.InsertSequenceAsync(newSequence);
+            var newWorkflowId = await sequenceRepository.InsertWorkflowAsync(newSequence);
 
            // await sequenceRepository.UpsertSequenceMetadataAsync(id);
 
-            Assert.NotNull(await sequenceRepository.GetSequenceAsync(newSequence.Id));
-            Assert.Single((await sequenceRepository.GetSequencesAsync()));
-            Assert.Equal(SequenceStatuses.Started, (await sequenceRepository.GetSequenceAsync(newSequence.Id)).Status);
-            Assert.Equal(SequenceStatuses.Started, (await sequenceRepository.GetSequencesAsync())[0].Status);
+            Assert.NotNull(await sequenceRepository.GetWorkflowAsync(newSequence.Id));
+            Assert.Single((await sequenceRepository.GetWorkflowsAsync()));
+            Assert.Equal(WorkflowStatuses.Started, (await sequenceRepository.GetWorkflowAsync(newSequence.Id)).Status);
+            Assert.Equal(WorkflowStatuses.Started, (await sequenceRepository.GetWorkflowsAsync())[0].Status);
         }
 
         [Fact]
         public async void CreateSequenceTemplate()
         {
             FibonacciSequenceData data = new FibonacciSequenceData(5);
-            await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplateWithInputs);
+            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.sequenceTemplateWithInputs);
 
-            Assert.NotNull(await sequenceTemplatesRepository.GetSequenceTemplateAsync(data.sequenceTemplate.Id));
-            Assert.NotEmpty(await sequenceTemplatesRepository.GetSequenceTemplatesAsync());
+            Assert.NotNull(await workflowTemplatesRepository.GetWorkflowTemplateAsync(data.sequenceTemplate.Id));
+            Assert.NotEmpty(await workflowTemplatesRepository.GetWorkflowTemplatesAsync());
         }
 
         [Fact]
         public async void GetSequenceMetadata()
         {
             FibonacciSequenceData data = new FibonacciSequenceData(5);
-            await sequenceTemplatesRepository.InsertSequenceTemplateAsync(data.sequenceTemplate);
+            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.sequenceTemplate);
 
             var id = Guid.NewGuid();
-            var newSequence = new Domain.Entities.Sequences.Sequence(
+            var newSequence = new Domain.Entities.Sequences.Workflow(
                 id,
                 data.sequenceTemplate.ReferenceId,
                 new Dictionary<string, object>(),
@@ -287,7 +287,7 @@ namespace Cindi.Infrastructure.Tests.Integration
             {
             };
 
-            var newSequenceId = await sequenceRepository.InsertSequenceAsync(newSequence);
+            var newWorkflowId = await sequenceRepository.InsertWorkflowAsync(newSequence);
 
             Assert.NotNull(newSequence.Metadata);
         }
@@ -317,8 +317,8 @@ namespace Cindi.Infrastructure.Tests.Integration
             //BaseRepository.RegisterClassMaps();
             stepTemplatesRepository = new StepTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
             stepsRepository = new StepsRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
-            sequenceTemplatesRepository = new SequenceTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
-            sequenceRepository = new SequencesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
+            workflowTemplatesRepository = new WorkflowTemplatesRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
+            sequenceRepository = new WorkflowsRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
             return Task.CompletedTask;
         }
     }
