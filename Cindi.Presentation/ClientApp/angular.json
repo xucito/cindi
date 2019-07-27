@@ -145,5 +145,8 @@
       "styleext": "scss"
     },
     "@schematics/angular:directive": {}
+  },
+  "cli": {
+    "defaultCollection": "@ngrx/schematics"
   }
 }

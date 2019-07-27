@@ -88,6 +88,10 @@ export class CindiClientService {
     return this.http.get(this.baseUrl + this.api + "users");
   }
 
+  GetCurrentUser(): Observable<any> {
+    return this.http.get(this.baseUrl + this.api + "users/me");
+  }
+
   PostUser(user: any) {
     return this.http.post(this.baseUrl + this.api + "users", user);
   }

@@ -5,7 +5,9 @@ import { Router } from "@angular/router";
 import { EnvService } from "../../services/env.service";
 import { map } from "rxjs/operators";
 import { Subscription } from "rxjs";
-import { AppStateService } from '../../services/app-state.service';
+import { Store } from "@ngrx/store";
+import { State } from "../../reducers";
+import { setCurrentUser } from "../../reducers/root.actions";
 
 @Component({
   selector: "login",
@@ -22,7 +24,7 @@ export class LoginComponent extends NbLoginComponent {
     public router: Router,
     private http: HttpClient,
     private env: EnvService,
-    private appState: AppStateService
+    private store: Store<State>
   ) {
     super(service, {}, cd, router);
   }
@@ -51,8 +53,8 @@ export class LoginComponent extends NbLoginComponent {
             );
             localStorage.setItem("currentUser", JSON.stringify(user));
             localStorage.setItem("authToken", AuthData);
+            this.store.dispatch(setCurrentUser({ user: user }));
           }
-          this.appState.UpdateUser(user);
         })
       )
       .subscribe(result => {});

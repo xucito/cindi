@@ -5,12 +5,12 @@ import {
   NbSidebarService,
   NbThemeService
 } from "@nebular/theme";
-
-import { UserData } from "../../../@core/data/users";
 import { map, takeUntil } from "rxjs/operators";
-import { Subject, Subscription } from "rxjs";
-import { AppStateService } from "../../../services/app-state.service";
-
+import { Subject, Subscription, Observable } from "rxjs";
+import { Store, select } from "@ngrx/store";
+import { State } from "../../../reducers";
+import * as fromUser from "../../../entities/user.reducer";
+import { User } from "../../../entities/user.model";
 @Component({
   selector: "ngx-header",
   styleUrls: ["./header.component.scss"],
@@ -49,15 +49,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private menuService: NbMenuService,
     private themeService: NbThemeService,
     private breakpointService: NbMediaBreakpointsService,
-    private appState: AppStateService
+    private store: Store<State>
   ) {}
 
   ngOnInit() {
     this.currentTheme = this.themeService.currentTheme;
 
-    this.user$ = this.appState.User.subscribe(result => {
-      this.user = result;
-    });
+    this.user$ = this.store
+      .select(state => state.currentUser)
+      .subscribe(result => {
+        this.user = result;
+      });
 
     const { xl } = this.breakpointService.getBreakpointsMap();
     this.themeService

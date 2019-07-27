@@ -6,7 +6,7 @@
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { NgModule } from "@angular/core";
-import { HttpClientModule } from "@angular/common/http";
+import { HttpClientModule, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { CoreModule } from "./@core/core.module";
 import { ThemeModule } from "./@theme/theme.module";
 import { AppComponent } from "./app.component";
@@ -21,9 +21,15 @@ import {
   NbWindowModule
 } from "@nebular/theme";
 import { NgxAuthModule } from "./auth/auth.module";
-import { EnvServiceProvider } from './services/env.service.provider';
-import { CindiClientService } from './services/cindi-client.service';
-import { AppStateService } from './services/app-state.service';
+import { EnvServiceProvider } from "./services/env.service.provider";
+import { CindiClientService } from "./services/cindi-client.service";
+import { StoreModule } from "@ngrx/store";
+import { metaReducers, ROOT_REDUCERS } from "./reducers";
+import { StoreDevtoolsModule } from "@ngrx/store-devtools";
+import { environment } from "../environments/environment";
+import { EffectsModule } from "@ngrx/effects";
+import { UserEffects } from "./entities/user.effects";
+import { BasicAuthInterceptor } from "./auth/basic-auth.interceptor";
 
 @NgModule({
   declarations: [AppComponent],
@@ -33,7 +39,6 @@ import { AppStateService } from './services/app-state.service';
     HttpClientModule,
     AppRoutingModule,
     NgxAuthModule,
-    ThemeModule.forRoot(),
     NbSidebarModule.forRoot(),
     NbMenuModule.forRoot(),
     NbDatepickerModule.forRoot(),
@@ -43,13 +48,27 @@ import { AppStateService } from './services/app-state.service';
     NbChatModule.forRoot({
       messageGoogleMapKey: "AIzaSyA_wNuCzia92MAmdLRzmqitRGvCF7wCZPY"
     }),
-    CoreModule.forRoot()
+    CoreModule.forRoot(),
+    StoreModule.forRoot(ROOT_REDUCERS, {
+      metaReducers,
+      runtimeChecks: {
+        strictStateImmutability: true,
+        strictActionImmutability: true
+      }
+    }),
+    !environment.production ? StoreDevtoolsModule.instrument() : [],
+    EffectsModule.forRoot([UserEffects]),
+    ThemeModule.forRoot()
   ],
   bootstrap: [AppComponent],
   providers: [
     EnvServiceProvider,
     CindiClientService,
-    AppStateService
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: BasicAuthInterceptor,
+      multi: true
+    }
   ]
 })
 export class AppModule {}

@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-export interface User {
+/*export interface User {
   name: string;
   picture: string;
 }
@@ -19,3 +19,4 @@ export abstract class UserData {
   abstract getContacts(): Observable<Contacts[]>;
   abstract getRecentUsers(): Observable<RecentUsers[]>;
 }
+*/
