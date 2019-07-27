@@ -8,6 +8,18 @@ export const MENU_ITEMS: NbMenuItem[] = [
     home: true,
   },
   {
+    title: 'ADMIN',
+    group: true,
+  },
+  {
+    title: 'Step-Templates',
+    icon: 'file-text-outline'
+  },
+  {
+    title: 'Workflow-Templates',
+    icon: 'share-outline'
+  },
+  {
     title: 'FEATURES',
     group: true,
   },

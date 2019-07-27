@@ -17,12 +17,17 @@ const routes: Routes = [
   },
   {
     path: 'auth',
+    loadChildren: './auth/auth.module#NgxAuthModule'/*
     component: NbAuthComponent,
     children: [
       {
         path: '',
         component: NbLoginComponent,
       },
+      {
+    path: 'auth',
+    loadChildren: './auth/auth.module#NgxAuthModule',
+  },
       {
         path: 'login',
         component: NbLoginComponent,
@@ -43,7 +48,7 @@ const routes: Routes = [
         path: 'reset-password',
         component: NbResetPasswordComponent,
       },
-    ],
+    ],*/
   },
   { path: '', redirectTo: 'pages', pathMatch: 'full' },
   { path: '**', redirectTo: 'pages' },
