@@ -1,0 +1,34 @@
+<h1>{{ selectedId }}</h1>
+<div class="row h-100">
+  <div class="col-sm-4">
+    <h2>Inputs</h2>
+    <mat-table #table class="tb" [dataSource]="workflowInputs">
+      <!-- Name Column -->
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef> Id </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.id }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.type }} </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
+      <mat-row
+        (click)="selectWorkflow(row)"
+        *matRowDef="let row; columns: columnsToDisplay"
+      ></mat-row>
+    </mat-table>
+  </div>
+  <div class="col-sm-4">
+    <div class="fluid-container" *ngIf="template != undefined">
+      <cindi-workflow-template-visualization
+        [workflowTemplate]="template"
+      ></cindi-workflow-template-visualization>
+    </div>
+  </div>
+  <div class="col-sm-4"></div>
+</div>
+
+{{workflowInputs | json}}

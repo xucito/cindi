@@ -1,0 +1,62 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <button
+    class="navbar-toggler"
+    type="button"
+    data-toggle="collapse"
+    data-target="#navbarTogglerDemo01"
+    aria-controls="navbarTogglerDemo01"
+    aria-expanded="false"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+    <a class="navbar-brand" href="#">Cindi</a>
+    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+      <li class="nav-item">
+        <a [routerLink]="['/']" (click)="collapse()">
+          <span class="glyphicon glyphicon-home"></span> Home
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['/steps']" (click)="collapse()">
+          <span class="glyphicon glyphicon-education"></span> Steps
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['workflows']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Workflows
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['step-templates']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Step Templates
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['workflow-templates']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Workflow Templates
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['users']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Users
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['global-values']" (click)="collapse()">
+          <span class="glyphicon glyphicon-th-list"></span> Global Values
+        </a>
+      </li>
+      <li class="nav-item">
+        <a [routerLink]="['workflow-templates']" (click)="collapse()">
+          <i class="material-icons">
+            account_circle
+          </i>
+          <span class="glyphicon glyphicon-th-list"></span> {{ username }}
+        </a>
+      </li>      
+
+    </ul>
+  </div>
+</nav>

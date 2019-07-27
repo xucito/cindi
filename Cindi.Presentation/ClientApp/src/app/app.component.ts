@@ -1,39 +1,21 @@
-import { Component } from "@angular/core";
-import { NodeDataService } from "./services/node-data.service";
-import { AppStateService } from "./services/app-state.service";
-import { LoadingBarService } from "./services/loading-bar.service";
-import { Subscription } from "rxjs";
+/**
+ * @license
+ * Copyright Akveo. All Rights Reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ */
+import { Component, OnInit } from '@angular/core';
+import { AnalyticsService } from './@core/utils/analytics.service';
 
 @Component({
-  selector: "app-root",
-  templateUrl: "./app.component.html",
-  styleUrls: ["./app.component.css"]
+  selector: 'ngx-app',
+  template: '<router-outlet></router-outlet>',
 })
-export class AppComponent {
-  title = "app";
-  color = "primary";
-  mode = "indeterminate";
-  value = 50;
-  bufferValue = 75;
-  isLoading = false;
-  loadingBar$: Subscription;
-  user$: Subscription;
-  user: any;
+export class AppComponent implements OnInit {
 
-  constructor(
-    private _appState: AppStateService,
-    private loadingBar: LoadingBarService
-  ) {
-    //_appState.refreshStepTemplateData().subscribe(result => {});
-    this.loadingBar$ = loadingBar.IsLoading.subscribe(
-      (result) => {
-        this.isLoading = result;
-      }
-    )
-    this.user$ = _appState.currentUser.subscribe(
-      (user) => {
-        this.user = user;
-      }
-    )
+  constructor(private analytics: AnalyticsService) {
+  }
+
+  ngOnInit(): void {
+    this.analytics.trackPageViews();
   }
 }

@@ -1,0 +1,41 @@
+<div class="container">
+  <br/>
+  <h1>Workflows</h1>
+  <div class="table-bordered">
+    <mat-table #table [dataSource]="workflows">
+      <!-- Name Column -->
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef> Id </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.id }} </mat-cell>
+      </ng-container>
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.name }} </mat-cell>
+      </ng-container>
+
+      <!-- Name Column -->
+      <!--<ng-container matColumnDef="version">
+        <mat-header-cell *matHeaderCellDef> Version </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.version }} </mat-cell>
+      </ng-container>-->
+
+      <ng-container matColumnDef="createdOn">
+        <mat-header-cell *matHeaderCellDef> Created On </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.createdOn }} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <mat-header-cell *matHeaderCellDef> Status </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{ element.status }} </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="columnsToDisplay"></mat-header-row>
+      <mat-row
+        (click)="selectWorkflow(row)"
+        *matRowDef="let row; columns: columnsToDisplay"
+      ></mat-row>
+    </mat-table>
+  </div>
+</div>
