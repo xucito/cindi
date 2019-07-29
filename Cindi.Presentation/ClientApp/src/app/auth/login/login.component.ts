@@ -8,6 +8,7 @@ import { Subscription } from "rxjs";
 import { Store } from "@ngrx/store";
 import { State } from "../../reducers";
 import { setCurrentUser } from "../../reducers/root.actions";
+import { AuthenticationService } from '../services/authentication.service';
 
 @Component({
   selector: "login",
@@ -22,41 +23,16 @@ export class LoginComponent extends NbLoginComponent {
     public service: NbAuthService,
     public cd: ChangeDetectorRef,
     public router: Router,
-    private http: HttpClient,
-    private env: EnvService,
-    private store: Store<State>
+    public authentication: AuthenticationService
   ) {
     super(service, {}, cd, router);
   }
 
   login() {
-    console.log(this.user);
-    let headerDict = {
-      Authorization:
-        "basic " + window.btoa(this.user.username + ":" + this.user.password)
-    };
-    let requestOptions = {
-      headers: new HttpHeaders(headerDict)
-    };
-
-    this.login$ = this.http
-      .get<any>(this.env.apiUrl + "/api/users/me", requestOptions)
-      .pipe(
-        map(result => {
-          let user = result.result;
-          // login successful if there's a user in the response
-          if (user) {
-            // store user details and basic auth credentials in local storage
-            // to keep user logged in between page refreshes
-            let AuthData = window.btoa(
-              this.user.username + ":" + this.user.password
-            );
-            localStorage.setItem("currentUser", JSON.stringify(user));
-            localStorage.setItem("authToken", AuthData);
-            this.store.dispatch(setCurrentUser({ user: user }));
-          }
-        })
-      )
-      .subscribe(result => {});
+    this.login$ = this.authentication
+      .login(this.user.username, this.user.password)
+      .subscribe(result => {
+        this.router.navigate(["/"]);
+      });
   }
 }

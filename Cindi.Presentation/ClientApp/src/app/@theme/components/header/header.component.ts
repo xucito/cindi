@@ -9,8 +9,6 @@ import { map, takeUntil } from "rxjs/operators";
 import { Subject, Subscription, Observable } from "rxjs";
 import { Store, select } from "@ngrx/store";
 import { State } from "../../../reducers";
-import * as fromUser from "../../../entities/user.reducer";
-import { User } from "../../../entities/user.model";
 @Component({
   selector: "ngx-header",
   styleUrls: ["./header.component.scss"],

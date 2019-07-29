@@ -28,8 +28,10 @@ import { metaReducers, ROOT_REDUCERS } from "./reducers";
 import { StoreDevtoolsModule } from "@ngrx/store-devtools";
 import { environment } from "../environments/environment";
 import { EffectsModule } from "@ngrx/effects";
-import { UserEffects } from "./entities/user.effects";
 import { BasicAuthInterceptor } from "./auth/basic-auth.interceptor";
+import { StepTemplateEffects } from "./entities/step-templates/step-template.effects";
+import { StepEffects } from "./entities/steps/step.effects";
+import { AuthenticationService } from './auth/services/authentication.service';
 
 @NgModule({
   declarations: [AppComponent],
@@ -57,7 +59,7 @@ import { BasicAuthInterceptor } from "./auth/basic-auth.interceptor";
       }
     }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
-    EffectsModule.forRoot([UserEffects]),
+    EffectsModule.forRoot([StepTemplateEffects, StepEffects]),
     ThemeModule.forRoot()
   ],
   bootstrap: [AppComponent],
@@ -68,7 +70,8 @@ import { BasicAuthInterceptor } from "./auth/basic-auth.interceptor";
       provide: HTTP_INTERCEPTORS,
       useClass: BasicAuthInterceptor,
       multi: true
-    }
+    },
+    AuthenticationService
   ]
 })
 export class AppModule {}

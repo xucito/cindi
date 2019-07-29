@@ -8,12 +8,15 @@ import {
   combineReducers
 } from "@ngrx/store";
 import { environment } from "../../environments/environment";
-import * as fromUser from "../entities/user.reducer";
+import * as fromStepTemplates from "../entities/step-templates/step-template.reducer";
 import { InjectionToken } from "@angular/core";
 import { currentUserReducer } from "./root.reducer";
+import * as fromStep from "../entities/steps/step.reducer";
+import { selectIds, selectAll } from '../entities/steps/step.reducer';
 
 export interface State {
-  user: fromUser.State;
+  stepTemplates: fromStepTemplates.State;
+  steps: fromStep.State;
   currentUser: any;
 }
 
@@ -21,17 +24,21 @@ export const ROOT_REDUCERS = new InjectionToken<
   ActionReducerMap<State, Action>
 >("Root reducers token", {
   factory: () => ({
-    user: fromUser.reducer,
-    currentUser: currentUserReducer
+    stepTemplates: fromStepTemplates.reducer,
+    currentUser: currentUserReducer,
+    steps: fromStep.reducer
   })
 });
 
 export function reducers(state: State | undefined, action: Action) {
   return combineReducers({
-    user: fromUser.reducer,
-    currentUser: currentUserReducer
+    stepTemplates: fromStepTemplates.reducer,
+    currentUser: currentUserReducer,
+    steps: fromStep.reducer
   });
 }
+
+
 
 export const metaReducers: MetaReducer<State>[] = !environment.production
   ? []

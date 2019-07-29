@@ -1,0 +1,85 @@
+<nb-card size="giant">
+
+  <nb-card-header>
+    <span>Step Feed</span>
+  </nb-card-header>
+
+  <nb-card-body class="body">
+    <nb-tabset>
+      <nb-tab tabTitle="Unassigned">
+        <!-- <nb-list>
+        <nb-list-item class="contact" *ngFor="let c of steps">
+          <nb-user
+            [picture]="c.user.picture"
+            [name]="c.user.name"
+            [title]="c.type"
+            size="large"
+          ></nb-user>
+          <nb-icon icon="phone-outline" pack="eva"></nb-icon>
+        </nb-list-item>
+      </nb-list>-->
+        <nb-list class="user-activity-list">
+          <nb-list-item *ngFor="let step of uncompletedSteps">
+            <div class="visited-date">
+              <nb-icon *ngIf="step.status == 'unassigned'" icon="layers" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'suspended'" icon="pause-circle" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'assigned'" icon="activity" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'successful'" icon="checkmark-circle-2" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'warning'" icon="alert-triangle" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'error'" icon="alert-circle" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'question-mark-circle'" icon="layers" pack="eva"></nb-icon>
+            </div>
+            <div class="step-template-name">
+              <div class="caption">Step Template </div>
+              <div class="value">{{ step.stepTemplateId }}</div>
+            </div>
+
+            <nb-actions size="small">
+              <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"></nb-action>
+              <nb-action icon="close-circle" *ngIf="step.status == 'unassigned'"></nb-action>
+              <nb-action icon="copy"></nb-action>
+            </nb-actions>
+          </nb-list-item>
+        </nb-list>
+      </nb-tab>
+
+      <nb-tab tabTitle="All Steps">
+        <!-- <nb-list>
+          <nb-list-item class="contact" *ngFor="let c of steps">
+            <nb-user
+              [picture]="c.user.picture"
+              [name]="c.user.name"
+              [title]="c.type"
+              size="large"
+            ></nb-user>
+            <nb-icon icon="phone-outline" pack="eva"></nb-icon>
+          </nb-list-item>
+        </nb-list>-->
+        <nb-list class="user-activity-list">
+          <nb-list-item *ngFor="let step of steps">
+            <div class="visited-date">
+              <nb-icon *ngIf="step.status == 'unassigned'" icon="layers" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'suspended'" icon="pause-circle" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'assigned'" icon="activity" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'successful'" icon="checkmark-circle-2" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'warning'" icon="alert-triangle" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'error'" icon="alert-circle" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'question-mark-circle'" icon="layers" pack="eva"></nb-icon>
+            </div>
+            <div class="step-template-name">
+              <div class="caption">Step Template </div>
+              <div class="value">{{ step.stepTemplateId }}</div>
+            </div>
+            <nb-actions size="small">
+              <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"></nb-action>
+              <nb-action icon="close-circle" *ngIf="step.status == 'unassigned'"></nb-action>
+              <nb-action icon="copy"></nb-action>
+            </nb-actions>
+          </nb-list-item>
+        </nb-list>
+      </nb-tab>
+
+    </nb-tabset>
+
+  </nb-card-body>
+</nb-card>
