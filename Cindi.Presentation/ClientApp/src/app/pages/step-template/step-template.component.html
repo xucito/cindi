@@ -1,0 +1,17 @@
+<nb-card>
+  <nb-card-header>
+    <div class="headerText">
+      Step Template: {{selectedId}}
+    </div>
+    <nb-actions size="small" class="headerText">
+      <nb-action icon="play-circle-outline" (click)="openWindow(contentTemplate, stepTemplate)"></nb-action>
+    </nb-actions>
+  </nb-card-header>
+</nb-card>
+
+<template-view [inputDefinitions]="stepTemplate.inputDefinitions" [outputDefinitions]="stepTemplate.outputDefinitions"></template-view>
+
+<ng-template #contentTemplate let-data>
+  <dynamic-form [readOnly]="false" [additionalProps]="data.stepTemplate" (onInputAction)="actionInput($event)"
+    (onSubmit)="submitNewStep($event)" [inputs]="data.inputs"></dynamic-form>
+</ng-template>

@@ -9,13 +9,14 @@ export const loadStepTemplates = createAction(
 );
 
 export const loadStepTemplatesSuccess = createAction(
-  '[StepTemplate/API] Load StepTemplates Success', 
+  '[StepTemplate/API] Load StepTemplates Success',
   props<{ stepTemplates: StepTemplate[] }>()
 );
 export const loadStepTemplatesFail = createAction(
-  '[StepTemplate/API] Load StepTemplates Fail', 
+  '[StepTemplate/API] Load StepTemplates Fail',
   props<{ errors: any }>()
-); 
+);
+
 export const addStepTemplate = createAction(
   '[StepTemplate/API] Add StepTemplate',
   props<{ stepTemplate: StepTemplate }>()

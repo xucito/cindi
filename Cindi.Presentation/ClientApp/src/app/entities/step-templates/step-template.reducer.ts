@@ -1,4 +1,4 @@
-import { Action, createReducer, on } from "@ngrx/store";
+import { Action, createReducer, on, createSelector } from "@ngrx/store";
 import { EntityState, EntityAdapter, createEntityAdapter } from "@ngrx/entity";
 import { StepTemplate } from "./step-template.model";
 import * as StepTemplateActions from "./step-template.actions";
@@ -57,4 +57,16 @@ export const {
   selectEntities,
   selectAll,
   selectTotal
-} = adapter.getSelectors();
+} = adapter.getSelectors((state: any) => state.stepTemplates);
+
+export const getStepTemplate = createSelector(
+  selectAll,
+  (stepTemplates, props) => {
+    for(let i = 0; i < stepTemplates.length; i++)
+    {
+      if (stepTemplates[i].referenceId == props.referenceId) {
+        return stepTemplates[i];
+      }
+    }
+  }
+);

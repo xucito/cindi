@@ -1,3 +1,6 @@
+import { loadGlobalValues } from "./../entities/global-values/global-value.actions";
+import { loadWorkflowTemplates } from "./../entities/workflow-templates/workflow-template.actions";
+import { loadWorkflows } from "./../entities/workflows/workflow.actions";
 import { Component } from "@angular/core";
 
 import { MENU_ITEMS } from "./pages-menu";
@@ -21,5 +24,8 @@ export class PagesComponent {
   constructor(private store: Store<State>) {
     store.dispatch(loadStepTemplates());
     store.dispatch(loadSteps({ status: undefined }));
+    store.dispatch(loadWorkflows({ status: undefined }));
+    store.dispatch(loadWorkflowTemplates());
+    store.dispatch(loadGlobalValues());
   }
 }

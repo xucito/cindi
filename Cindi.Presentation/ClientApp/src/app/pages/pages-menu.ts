@@ -1,48 +1,55 @@
-import { NbMenuItem } from '@nebular/theme';
+import { NbMenuItem } from "@nebular/theme";
 
 export const MENU_ITEMS: NbMenuItem[] = [
   {
-    title: 'Dashboard',
-    icon: 'home-outline',
-    link: '/pages/dashboard',
-    home: true,
+    title: "Dashboard",
+    icon: "home-outline",
+    link: "/pages/dashboard",
+    home: true
   },
   {
-    title: 'ADMIN',
-    group: true,
+    title: "ADMIN",
+    group: true
   },
   {
-    title: 'Step-Templates',
-    icon: 'file-text-outline'
+    title: "Step-Templates",
+    icon: "file-text-outline",
+    link: "/pages/step-templates"
   },
   {
-    title: 'Workflow-Templates',
-    icon: 'share-outline'
+    title: "Workflow-Templates",
+    icon: "share-outline",
+    link: "/pages/workflow-templates"
   },
   {
-    title: 'FEATURES',
-    group: true,
+    title: "Global-Values",
+    icon: "bookmark-outline",
+    link: "/pages/global-values"
   },
   {
-    title: 'Auth',
-    icon: 'lock-outline',
+    title: "FEATURES",
+    group: true
+  },
+  {
+    title: "Auth",
+    icon: "lock-outline",
     children: [
       {
-        title: 'Login',
-        link: '/auth/login',
+        title: "Login",
+        link: "/auth/login"
       },
       {
-        title: 'Register',
-        link: '/auth/register',
+        title: "Register",
+        link: "/auth/register"
       },
       {
-        title: 'Request Password',
-        link: '/auth/request-password',
+        title: "Request Password",
+        link: "/auth/request-password"
       },
       {
-        title: 'Reset Password',
-        link: '/auth/reset-password',
-      },
-    ],
-  },
+        title: "Reset Password",
+        link: "/auth/reset-password"
+      }
+    ]
+  }
 ];

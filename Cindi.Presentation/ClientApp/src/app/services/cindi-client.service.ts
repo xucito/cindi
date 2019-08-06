@@ -103,4 +103,8 @@ export class CindiClientService {
   PostGlobalValues(gv: any): Observable<any> {
     return this.http.post(this.baseUrl + this.api + "global-values", gv);
   }
+
+  PostWorkflow(workflow: any): Observable<any> {
+    return this.http.post(this.baseUrl + this.api + "workflows", workflow);
+  }
 }

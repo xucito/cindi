@@ -5,6 +5,14 @@ import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PagesRoutingModule } from './pages-routing.module';
+import { StepTemplatesComponent } from './step-templates/step-templates.component';
+import { SharedModule } from '../shared/shared.module';
+import { StepTemplateComponent } from './step-template/step-template.component';
+import { WorkflowComponent } from './workflow/workflow.component';
+import { WorkflowsComponent } from './workflows/workflows.component';
+import { WorkflowTemplatesComponent } from './workflow-templates/workflow-templates.component';
+import { WorkflowTemplateComponent } from './workflow-template/workflow-template.component';
+import { GlobalValuesComponent } from './global-values/global-values.component';
 
 @NgModule({
   imports: [
@@ -12,9 +20,17 @@ import { PagesRoutingModule } from './pages-routing.module';
     ThemeModule,
     NbMenuModule,
     DashboardModule,
+    SharedModule
   ],
   declarations: [
-    PagesComponent
+    PagesComponent,
+    StepTemplatesComponent,
+    StepTemplateComponent,
+    WorkflowComponent,
+    WorkflowsComponent,
+    WorkflowTemplatesComponent,
+    WorkflowTemplateComponent,
+    GlobalValuesComponent
   ],
 })
 export class PagesModule {

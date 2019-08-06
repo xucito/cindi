@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConsensusCore.Domain" Version="1.0.1" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.0" />
+    <PackageReference Include="ConsensusCore.Domain" Version="1.0.2-alpha" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.2-alpha" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.2.0" />

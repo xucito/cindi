@@ -12,11 +12,16 @@ import * as fromStepTemplates from "../entities/step-templates/step-template.red
 import { InjectionToken } from "@angular/core";
 import { currentUserReducer } from "./root.reducer";
 import * as fromStep from "../entities/steps/step.reducer";
-import { selectIds, selectAll } from '../entities/steps/step.reducer';
+import * as fromWorkflows from "../entities/workflows/workflow.reducer";
+import * as fromWorkflowTemplates from "../entities/workflow-templates/workflow-template.reducer";
+import * as fromGlobalValues from "../entities/global-values/global-value.reducer";
 
 export interface State {
   stepTemplates: fromStepTemplates.State;
   steps: fromStep.State;
+  workflows: fromWorkflows.State,
+  workflowTemplates: fromWorkflowTemplates.State,
+  globalValues: fromGlobalValues.State,
   currentUser: any;
 }
 
@@ -26,7 +31,10 @@ export const ROOT_REDUCERS = new InjectionToken<
   factory: () => ({
     stepTemplates: fromStepTemplates.reducer,
     currentUser: currentUserReducer,
-    steps: fromStep.reducer
+    steps: fromStep.reducer,
+    workflows: fromWorkflows.reducer,
+    workflowTemplates: fromWorkflowTemplates.reducer,
+    globalValues: fromGlobalValues.reducer
   })
 });
 

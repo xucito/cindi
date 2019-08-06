@@ -203,7 +203,9 @@ namespace Cindi.Presentation
         {
             BootstrapThread = new Task(() =>
             {
-                while (node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Green)
+                while (node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Yellow &&
+                node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Green
+                )
                 {
                     logger.LogInformation("Waiting for cluster to establish a quorum");
                     Thread.Sleep(1000);
@@ -247,8 +249,6 @@ namespace Cindi.Presentation
                     }
 
                     var setPassword = Configuration.GetValue<string>("DefaultPassword");
-
-
 
 
                     if (node.IsLeader)

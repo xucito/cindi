@@ -37,7 +37,8 @@
             <nb-actions size="small">
               <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"></nb-action>
               <nb-action icon="close-circle" *ngIf="step.status == 'unassigned'"></nb-action>
-              <nb-action icon="copy"></nb-action>
+              <nb-action icon="eye-outline" (click)="openStepViewWindow(stepView, step)"></nb-action>
+              <nb-action icon="copy" (click)="openWindow(contentTemplate, step)"></nb-action>
             </nb-actions>
           </nb-list-item>
         </nb-list>
@@ -73,7 +74,8 @@
             <nb-actions size="small">
               <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"></nb-action>
               <nb-action icon="close-circle" *ngIf="step.status == 'unassigned'"></nb-action>
-              <nb-action icon="copy"></nb-action>
+              <nb-action icon="eye-outline" (click)="openStepViewWindow(stepView, step)"></nb-action>
+              <nb-action icon="copy" (click)="openWindow(contentTemplate, step)"></nb-action>
             </nb-actions>
           </nb-list-item>
         </nb-list>
@@ -83,3 +85,12 @@
 
   </nb-card-body>
 </nb-card>
+
+<ng-template #contentTemplate let-data>
+  <dynamic-form [readOnly]="false" [additionalProps]="data.stepTemplate" (onInputAction)="actionInput($event)"
+    (onSubmit)="submitNewStep($event)" [inputs]="data.inputs"></dynamic-form>
+</ng-template>
+
+<ng-template #stepView let-data>
+  <step-view [step]="data.step" [stepTemplate]="data.stepTemplate"></step-view>
+</ng-template>

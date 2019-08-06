@@ -1,3 +1,4 @@
+import { filter } from "rxjs/operators";
 import { Action, createReducer, on, createSelector } from "@ngrx/store";
 import { EntityState, EntityAdapter, createEntityAdapter } from "@ngrx/entity";
 import { Step } from "./step.model";
@@ -76,5 +77,45 @@ export const getMostRecentSteps = createSelector(
       });
     }
     return steps.slice(0, props.hits);
+  }
+);
+
+export const getStep = createSelector(
+  selectAll,
+  (steps, props) => {
+    for (let i = 0; i < steps.length; i++) {
+      if (steps[i].id == props.id) {
+        return steps[i];
+      }
+    }
+  }
+);
+
+export const getStepCreationMetrics = createSelector(
+  selectAll,
+  (steps, props) => {
+    const startDate = new Date();
+    startDate.setMinutes(startDate.getMinutes() - 15);
+    steps = steps.filter(s => new Date(s.createdOn) > startDate);
+
+    const metrics = [];
+
+    for (let i = 0; i < 15; i++) {
+      const endDate: Date = new Date(startDate);
+      endDate.setMinutes(startDate.getMinutes() + 1);
+      const filteredSteps = steps.filter(s => {
+        return (
+          new Date(s.createdOn) >= startDate && new Date(s.createdOn) < endDate
+        );
+      });
+
+      metrics.push({
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        numberOfSteps: filteredSteps.length
+      });
+      startDate.setMinutes(startDate.getMinutes() + 1);
+    }
+    return metrics;
   }
 );

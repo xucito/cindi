@@ -1,3 +1,4 @@
+import { SharedModule } from './../../shared/shared.module';
 import { NgModule } from "@angular/core";
 import {
   NbCardModule,
@@ -5,7 +6,8 @@ import {
   NbListModule,
   NbIconModule,
   NbButtonModule,
-  NbActionsModule
+  NbActionsModule,
+  NbToastrModule
 } from "@nebular/theme";
 
 import { ThemeModule } from "../../@theme/theme.module";
@@ -14,6 +16,7 @@ import { StepActivityComponent } from "./step-activity/step-activity.component";
 import { StepCardComponent } from "./step-card/step-card.component";
 import { StepsFeedComponent } from "./steps-feed/steps-feed.component";
 import { StoreModule } from "@ngrx/store";
+import { StepTimeLineComponent } from './step-time-line/step-time-line.component';
 
 @NgModule({
   imports: [
@@ -23,13 +26,16 @@ import { StoreModule } from "@ngrx/store";
     NbListModule,
     NbIconModule,
     NbButtonModule,
-    NbActionsModule
+    NbActionsModule,
+    SharedModule,
+    NbToastrModule
   ],
   declarations: [
     DashboardComponent,
     StepActivityComponent,
     StepCardComponent,
-    StepsFeedComponent
+    StepsFeedComponent,
+    StepTimeLineComponent
   ]
 })
 export class DashboardModule {}
