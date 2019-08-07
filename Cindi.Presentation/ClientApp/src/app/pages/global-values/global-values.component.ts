@@ -8,7 +8,7 @@ import {
 @Component({
   selector: "global-values",
   templateUrl: "./global-values.component.html",
-  styleUrls: ["./global-values.component.css"]
+  styleUrls: ["./global-values.component.scss"]
 })
 export class GlobalValuesComponent implements OnInit {
   globalValues$;

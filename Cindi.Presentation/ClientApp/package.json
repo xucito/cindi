@@ -49,6 +49,7 @@
     "@ngrx/schematics": "^8.1.0",
     "@ngrx/store": "^8.1.0",
     "@ngrx/store-devtools": "^8.1.0",
+    "@swimlane/ngx-graph": "^6.1.0",
     "bootstrap": "4.3.1",
     "classlist.js": "1.1.20150312",
     "codemirror": "^5.48.2",
