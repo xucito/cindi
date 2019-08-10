@@ -74,7 +74,7 @@ namespace Cindi.Domain.Entities
                 }
                 else
                 {
-                    list.Add(item);
+                    list.Add(Convert.ChangeType(item,type.GetGenericArguments()[0]));
                 }
             }
             return list;

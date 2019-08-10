@@ -5,8 +5,6 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.ValueObjects;
 using Cindi.Persistence;
-using Cindi.Persistence.Sequences;
-using Cindi.Persistence.SequenceTemplates;
 using Cindi.Persistence.Steps;
 using Cindi.Persistence.StepTemplates;
 using Cindi.Test.Global.TestData;
@@ -17,6 +15,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using static Cindi.Test.Global.TestData.FibonacciSampleData;
+using Cindi.Persistence.WorkflowTemplates;
+using Cindi.Persistence.Workflows;
 
 namespace Cindi.Infrastructure.Tests.Integration
 {
@@ -235,14 +235,14 @@ namespace Cindi.Infrastructure.Tests.Integration
         [Fact]
         public async void CreateSequence()
         {
-            FibonacciSequenceData data = new FibonacciSequenceData(5);
-            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.sequenceTemplate);
+            FibonacciWorkflowData data = new FibonacciWorkflowData(5);
+            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.workflowTemplate);
 
             var id = Guid.NewGuid();
 
-            var newSequence = new Domain.Entities.Sequences.Workflow(
+            var newSequence = new Workflow(
                 id,
-                data.sequenceTemplate.ReferenceId,
+                data.workflowTemplate.ReferenceId,
                 new Dictionary<string, object>(),
                 "",
                 "",
@@ -263,23 +263,23 @@ namespace Cindi.Infrastructure.Tests.Integration
         [Fact]
         public async void CreateSequenceTemplate()
         {
-            FibonacciSequenceData data = new FibonacciSequenceData(5);
-            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.sequenceTemplateWithInputs);
+            FibonacciWorkflowData data = new FibonacciWorkflowData(5);
+            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.workflowTemplateWithInputs);
 
-            Assert.NotNull(await workflowTemplatesRepository.GetWorkflowTemplateAsync(data.sequenceTemplate.Id));
+            Assert.NotNull(await workflowTemplatesRepository.GetWorkflowTemplateAsync(data.workflowTemplate.Id));
             Assert.NotEmpty(await workflowTemplatesRepository.GetWorkflowTemplatesAsync());
         }
 
         [Fact]
         public async void GetSequenceMetadata()
         {
-            FibonacciSequenceData data = new FibonacciSequenceData(5);
-            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.sequenceTemplate);
+            FibonacciWorkflowData data = new FibonacciWorkflowData(5);
+            await workflowTemplatesRepository.InsertWorkflowTemplateAsync(data.workflowTemplate);
 
             var id = Guid.NewGuid();
-            var newSequence = new Domain.Entities.Sequences.Workflow(
+            var newSequence = new Workflow(
                 id,
-                data.sequenceTemplate.ReferenceId,
+                data.workflowTemplate.ReferenceId,
                 new Dictionary<string, object>(),
                 "",
                 "",

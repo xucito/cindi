@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Results;
 using Cindi.Domain.Entities.WorkflowsTemplates;
+using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 using Cindi.Domain.ValueObjects;
 using MediatR;
 using System;

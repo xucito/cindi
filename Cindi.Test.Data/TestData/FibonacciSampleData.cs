@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using static Cindi.Domain.ValueObjects.DynamicDataDescription;
+using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
+using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 
 namespace Cindi.Test.Global.TestData
 {
@@ -42,7 +44,7 @@ namespace Cindi.Test.Global.TestData
         {
         };
 
-        public static readonly WorkflowTemplate SequenceTemplate = new WorkflowTemplate(Guid.NewGuid(),
+        public static readonly WorkflowTemplate WorkflowTemplate = new WorkflowTemplate(Guid.NewGuid(),
             "Fibonacci:0",
             "",
             new Dictionary<string, DynamicDataDescription>(),
@@ -51,9 +53,10 @@ namespace Cindi.Test.Global.TestData
                 new LogicBlock()
                 {
                     Id = 0,
-                    Condition = "OR",
-                    PrerequisiteSteps = new List<PrerequisiteStep>
+                    Prerequisites = new ConditionGroup
                     {
+                        Operator = "OR",
+                        Conditions = new List<Condition>(){},
                     },
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
@@ -79,15 +82,15 @@ namespace Cindi.Test.Global.TestData
                 new LogicBlock()
                 {
                     Id = 1,
-                    Condition = "AND",
-                    PrerequisiteSteps = new List<PrerequisiteStep>
+                    Prerequisites = new ConditionGroup
                     {
-                        new PrerequisiteStep()
+                        Operator = "AND",
+                        Conditions = new List<Condition>(){ new StepStatusCondition()
                         {
-                            StepRefId = 0,
-                            Status = StepStatuses.Successful,
-                            StatusCode = 0
-                        }
+                    StepRefId = 0,
+                    Status = StepStatuses.Successful,
+                    StatusCode = 0
+                        }},
                     },
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
@@ -184,9 +187,9 @@ new Domain.Entities.JournalEntries.JournalEntry()
             }
         }
 
-        public static readonly Workflow Sequence = new Workflow(
+        public static readonly Workflow Workflow = new Workflow(
             Guid.NewGuid(),
-            SequenceTemplate.ReferenceId,
+            WorkflowTemplate.ReferenceId,
             new Dictionary<string, object>(),
             "",
             "admin",
@@ -194,14 +197,14 @@ new Domain.Entities.JournalEntries.JournalEntry()
         {
         };
 
-        public class FibonacciSequenceData
+        public class FibonacciWorkflowData
         {
             public WorkflowTemplate workflowTemplate;
             public WorkflowTemplate workflowTemplateWithInputs;
             public StepTemplate stepTemplate;
             public int numberOfSteps = 0;
 
-            public FibonacciSequenceData(int numberOfSteps)
+            public FibonacciWorkflowData(int numberOfSteps)
             {
                 this.numberOfSteps = numberOfSteps;
                 stepTemplate = FibonacciSampleData.StepTemplate;

@@ -1,7 +1,11 @@
-﻿using Cindi.Application.Services.ClusterState;
+﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Application.Steps.Queries.GetSteps;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,14 +21,17 @@ namespace Cindi.Application.Services.ClusterMonitor
         private IMediator _mediator;
         Thread checkSuspendedStepsThread;
         private ILogger<ClusterMonitorService> _logger;
+        private IConsensusCoreNode<CindiClusterState, IBaseRepository> node;
 
-        public ClusterMonitorService(IServiceScopeFactory serviceProvider)
+        public ClusterMonitorService(IServiceScopeFactory serviceProvider,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository> _node)
         {
             var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
 
             _logger.LogInformation("Starting clean up service...");
+            node = _node;
             Start();
         }
 
@@ -39,11 +46,17 @@ namespace Cindi.Application.Services.ClusterMonitor
         {
             checkSuspendedStepsThread = new Thread(async () =>
             {
+                bool printedMessage = false;
                 while (true)
                 {
                     //Do not run if it is uninitialized
-                    if (ClusterStateService.Initialized)
+                    if (ClusterStateService.Initialized && node.IsLeader)
                     {
+                        if (!printedMessage)
+                        {
+                            _logger.LogInformation("Detected I am cluster leader, starting to clean up cluster");
+                            printedMessage = true;
+                        }
                         try
                         {
                             var page = 0;
@@ -89,6 +102,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     }
                     else
                     {
+                        printedMessage = false;
                         Thread.Sleep(3000);
                     }
                 }

@@ -14,6 +14,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
+    <ProjectReference Include="..\Cindi.Test.Data\Cindi.Test.Global.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="WorkflowTemplates\Conditions\TestObjects\" />
   </ItemGroup>
 
 </Project>

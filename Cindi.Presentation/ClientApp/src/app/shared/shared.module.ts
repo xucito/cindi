@@ -12,10 +12,20 @@ import {
   NbActionsModule
 } from "@nebular/theme";
 import { CodemirrorModule } from "@ctrl/ngx-codemirror";
-import { TemplateViewComponent } from './components/template-view/template-view.component';
+import { TemplateViewComponent } from "./components/template-view/template-view.component";
+import { WorkflowVisualizerComponent } from "./components/workflow-visualizer/workflow-visualizer.component";
+import { NgxGraphModule } from "@swimlane/ngx-graph";
+import { WorkflowStepComponent } from './components/workflow-step/workflow-step.component';
 
 @NgModule({
-  declarations: [DynamicFormComponent, InputComponent, StepViewComponent, TemplateViewComponent],
+  declarations: [
+    DynamicFormComponent,
+    InputComponent,
+    StepViewComponent,
+    TemplateViewComponent,
+    WorkflowVisualizerComponent,
+    WorkflowStepComponent
+  ],
   exports: [
     DynamicFormComponent,
     StepViewComponent,
@@ -23,7 +33,9 @@ import { TemplateViewComponent } from './components/template-view/template-view.
     NbIconModule,
     NbCardModule,
     NbActionsModule,
-    TemplateViewComponent
+    TemplateViewComponent,
+    WorkflowVisualizerComponent,
+    NgxGraphModule
   ],
   imports: [
     CommonModule,
@@ -35,7 +47,8 @@ import { TemplateViewComponent } from './components/template-view/template-view.
     NbListModule,
     NbIconModule,
     NbCardModule,
-    NbActionsModule
+    NbActionsModule,
+    NgxGraphModule
   ]
 })
 export class SharedModule {}

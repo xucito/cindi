@@ -1,0 +1,51 @@
+<nb-card>
+  <nb-card-header>Visualization</nb-card-header>
+  <ngx-graph class="chart-container"
+    *ngIf="hierarchialGraph != null && hierarchialGraph.nodes != null && hierarchialGraph.edges != null"
+    [view]="undefined" [links]="hierarchialGraph.edges" [nodes]="hierarchialGraph.nodes" [legend]="false"
+    [curve]="curve" [view]="undefined" [autoZoom]="true" (select)="selectStep($event)" [zoomLevel]="1"
+    [autoCenter]="true" [update$]="update$" [draggingEnabled]="false" [layout]="'dagre'"
+    [layoutSettings]="{orientation: 'TB'}" [scheme]="colorScheme">
+
+    <ng-template #defsTemplate>
+      <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+        <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+      </svg:marker>
+    </ng-template>
+    <ng-template #nodeTemplate let-node>
+      <svg:g class="node" ngx-tooltip [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
+        <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" [attr.fill]="'white'"
+          stroke="black" />
+        <svg:text alignment-baseline="top" [attr.x]="30" [attr.y]="20" font-weight="bold">{{node.label}}
+        </svg:text>
+        <svg:rect [attr.width]="30" [attr.height]="node.dimension.height" [attr.fill]="'blue'" />
+        <svg:text *ngFor="let mapping of node.data.mappings; let i = index" alignment-baseline="top" [attr.x]="30"
+          [attr.y]="40">
+          Inputs
+        </svg:text>
+        <svg *ngFor="let mapping of node.data.mappings; let i = index" height="20" width="20" [attr.x]="40"
+        [attr.y]="45 + i*20" (click)="print()">
+            <polygon points="0,0 10,10 0,20" />
+            Sorry, your browser does not support inline SVG.
+        </svg>
+        <svg:text *ngFor="let mapping of node.data.mappings; let i = index" alignment-baseline="top" [attr.x]="60"
+          [attr.y]="60 + i*20">
+          {{mapping.stepInputId}}
+        </svg:text>
+      </svg:g>
+    </ng-template>
+    <ng-template #linkTemplate let-link>
+      <svg:g class="edge">
+        <svg:path class="line" stroke-width="2" marker-end="url(#arrow)">
+        </svg:path>
+        <svg:text class="edge-label" text-anchor="middle">
+          <textPath class="text-path" [attr.href]="'#' + link.id" style="fill: #4c4c4c;"
+            [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
+            {{link.label}}
+          </textPath>
+        </svg:text>
+      </svg:g>
+    </ng-template>
+
+  </ngx-graph>
+</nb-card>

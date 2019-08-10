@@ -9,6 +9,7 @@ import { StepTemplatesComponent } from "./step-templates/step-templates.componen
 import { StepTemplateComponent } from "./step-template/step-template.component";
 import { WorkflowTemplatesComponent } from "./workflow-templates/workflow-templates.component";
 import { WorkflowTemplateComponent } from './workflow-template/workflow-template.component';
+import {WorkflowDesignerComponent} from './workflow-designer/workflow-designer.component';
 
 const routes: Routes = [
   {
@@ -44,6 +45,16 @@ const routes: Routes = [
           {
             path: ":id",
             component: WorkflowTemplateComponent
+          }
+        ]
+      },
+      {
+        path: "workflow-designer",
+        children: [
+          {
+            path: "",
+            component: WorkflowDesignerComponent,
+            pathMatch: "full"
           }
         ]
       },

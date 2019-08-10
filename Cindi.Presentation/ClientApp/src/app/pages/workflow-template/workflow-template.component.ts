@@ -18,6 +18,7 @@ import { CindiClientService } from "../../services/cindi-client.service";
 export class WorkflowTemplateComponent implements OnInit {
   selectedId: string;
   workflowTemplate: any;
+  stepTemplates: any[];
 
   constructor(
     private workflowTemplateStore: Store<State>,

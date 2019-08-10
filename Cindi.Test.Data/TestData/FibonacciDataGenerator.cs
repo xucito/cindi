@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using static Cindi.Domain.ValueObjects.DynamicDataDescription;
+using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
+using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
 
 namespace Cindi.Test.Global.TestData
 {
@@ -36,8 +38,7 @@ namespace Cindi.Test.Global.TestData
             logicBlocks.Add(new LogicBlock()
             {
                 Id = 0,
-                Condition = "OR",
-                PrerequisiteSteps = new List<PrerequisiteStep>
+                Prerequisites = new ConditionGroup
                 {
                 },
                 SubsequentSteps = new List<SubsequentStep> {
@@ -114,13 +115,14 @@ namespace Cindi.Test.Global.TestData
                         new LogicBlock()
                         {
                             Id = 0,
-                            Condition = "AND",
-                            PrerequisiteSteps = new List<PrerequisiteStep> {
-                                new PrerequisiteStep(){
-                                   StepRefId = i,
-                                   //StepTemplateReference = stepTemplate.Reference,
-                                   Status = StepStatuses.Successful
-                                }
+                            Prerequisites = new ConditionGroup
+                            {
+                                Operator = "AND",
+                                Conditions = new List<Condition>(){ new StepStatusCondition()
+                                {
+                                    StepRefId = i,
+                                    Status = StepStatuses.Successful
+                                }},
                             },
                             SubsequentSteps = new List<SubsequentStep>
                             {
@@ -138,7 +140,7 @@ namespace Cindi.Test.Global.TestData
                 new Journal(new JournalEntry
                 {
                     Updates = new List<Update> {
-                                                           new Update()
+                                    new Update()
                                     {
                                         Value = Guid.NewGuid(),
                                         Type = UpdateType.Create,
@@ -148,7 +150,7 @@ namespace Cindi.Test.Global.TestData
                                     {
                                         Value = "SimpleSequence:1",
                                         Type = UpdateType.Create,
-                                        FieldName = "WorkflowTemplateId"
+                                        FieldName = "referenceid"
                                     },
                                     new Update()
                                     {
@@ -173,9 +175,9 @@ namespace Cindi.Test.Global.TestData
                                     }
                     }
                 }))
-                        {
-                        };
-            
+            {
+            };
+
             return workflowTemplate;
         }
 
@@ -188,8 +190,7 @@ namespace Cindi.Test.Global.TestData
             logicBlocks.Add(new LogicBlock()
             {
                 Id = 0,
-                Condition = "OR",
-                PrerequisiteSteps = new List<PrerequisiteStep>
+                Prerequisites = new ConditionGroup
                 {
                 },
                 SubsequentSteps = new List<SubsequentStep> {
@@ -266,13 +267,14 @@ namespace Cindi.Test.Global.TestData
                         new LogicBlock()
                         {
                             Id = 0,
-                            Condition = "AND",
-                            PrerequisiteSteps = new List<PrerequisiteStep> {
-                                new PrerequisiteStep(){
-                                   StepRefId = i,
-                                   //StepTemplateReference = stepTemplate.Reference,
-                                   Status = StepStatuses.Successful
-                                }
+                            Prerequisites = new ConditionGroup
+                            {
+                                Operator = "AND",
+                                Conditions = new List<Condition>(){ new StepStatusCondition()
+                                {
+                                    StepRefId = i,
+                                    Status = StepStatuses.Successful
+                                }},
                             },
                             SubsequentSteps = new List<SubsequentStep>
                             {

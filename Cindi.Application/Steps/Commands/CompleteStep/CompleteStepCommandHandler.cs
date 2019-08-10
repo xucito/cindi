@@ -238,15 +238,12 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Get all the steps related to this task
                 var workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
 
-                //Get all the logic blocks for all logic blocks containing the step that has been completed
-                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Where(ps => ps.StepRefId == updatedStep.StepRefId).Count() > 0).ToList();
-
+                //Evaluate all logic blocks that have not been completed
+                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Id)).ToList();
 
                 foreach (var logicBlock in logicBlocks)
                 {
                     var lockId = Guid.NewGuid();
-
-
                     bool lockObtained = false;
                     while (!lockObtained)
                     {
@@ -270,9 +267,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
                     }
 
-                    var ready = true;
+                    //When the logic block is released, recheck whether this logic block has been evaluated
+                    workflow = await _workflowsRepository.GetWorkflowAsync(updatedStep.WorkflowId.Value);
 
-                    var Condition = logicBlock.Condition;
+                    //var ready = true;
+                    /*var Condition = logicBlock.Condition;
 
                     if (Condition == "AND")
                     {
@@ -325,10 +324,10 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 break;
                             }
                         }
-                    }
+                    }*/
 
                     //If the logic block is ready to be processed, submit the steps
-                    if (ready)
+                    if (logicBlock.Prerequisites.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Id))
                     {
                         foreach (var substep in logicBlock.SubsequentSteps)
                         {
@@ -345,8 +344,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 {
                                     //find the mapping with the highest priority
                                     var highestPriorityReference = WorkflowTemplateUtility.GetHighestPriorityReference(mapping.OutputReferences, workflowSteps.ToArray());
-
-
                                     //if the highest priority reference is null, there are no mappings
                                     if (highestPriorityReference == null && mapping.DefaultValue == null)
                                     {
@@ -363,9 +360,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                         var parentStep = workflowSteps.Where(ss => ss.StepRefId == highestPriorityReference.StepRefId).FirstOrDefault();
 
                                         //If there is a AND and there is no parent step, throw a error
-                                        if (parentStep == null && Condition == "AND")
+                                        if (parentStep == null)
                                         {
-                                            throw new InvalidWorkflowProcessingException("Detected AND Condition but no parent found");
+                                            throw new InvalidWorkflowProcessingException("Missing source for mapping " + mapping.StepInputId + " from step " + highestPriorityReference.StepRefId);
                                         }
                                         else
                                         {
@@ -412,8 +409,33 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 addedStep = true;
                             }
                         }
-                        await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
+
+                        //Mark it as evaluated
+                        workflow.UpdateJournal(
+                        new JournalEntry()
+                        {
+                            CreatedBy = request.CreatedBy,
+                            CreatedOn = DateTime.UtcNow,
+                            Updates = new List<Update>()
+                            {
+                                new Update()
+                                {
+                                    FieldName = "completedlogicblocks",
+                                    Type = UpdateType.Append,
+                                    Value = logicBlock.Id
+                                }
+                            }
+                        });
+
+                        //await _workflowsRepository.UpdateWorkflow(workflow);
+                        await _node.Send(new WriteData()
+                        {
+                            Data = workflow,
+                            WaitForSafeWrite = true,
+                            Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                        });
                     }
+                    await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned

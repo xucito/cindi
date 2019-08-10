@@ -52,7 +52,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void DetectExtraInput()
         {
-            FibonacciSequenceData data = new FibonacciSequenceData(5);
+            FibonacciWorkflowData data = new FibonacciWorkflowData(5);
             Mock<IWorkflowsRepository> workflowsRepository = new Mock<IWorkflowsRepository>();
             Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
             workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.ReferenceId)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
@@ -75,7 +75,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void DetectMissingInput()
         {
-            FibonacciSequenceData data = new FibonacciSequenceData(5);
+            FibonacciWorkflowData data = new FibonacciWorkflowData(5);
             Mock<IWorkflowsRepository> workflowsRepository = new Mock<IWorkflowsRepository>();
             Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
             workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.ReferenceId)).Returns(Task.FromResult(data.workflowTemplateWithInputs));

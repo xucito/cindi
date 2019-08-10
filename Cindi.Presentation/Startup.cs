@@ -195,9 +195,9 @@ namespace Cindi.Presentation
         public void Configure(IApplicationBuilder app,
             IHostingEnvironment env,
             IClusterStateService service,
-            ClusterMonitorService monitor,
             ILogger<Startup> logger,
             IConsensusCoreNode<CindiClusterState, IBaseRepository> node,
+            ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider)
         {

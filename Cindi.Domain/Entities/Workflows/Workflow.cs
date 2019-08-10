@@ -18,6 +18,7 @@ namespace Cindi.Domain.Entities.Workflows
         {
             ShardType = nameof(Workflow);
         }
+
         public Workflow(
             Guid id,
             string workflowTemplateId,
@@ -103,5 +104,10 @@ namespace Cindi.Domain.Entities.Workflows
                 };
             }
         }
+
+        /// <summary>
+        /// Logic blocks that no longer need to be evaluated
+        /// </summary>
+        public List<int> CompletedLogicBlocks { get; set; }
     }
 }

@@ -18,6 +18,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 
 namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
@@ -26,12 +28,14 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
         private readonly IWorkflowTemplatesRepository _workflowTemplatesRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
         private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
 
-        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
+        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
             _workflowTemplatesRepository = workflowTemplatesRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
             _node = node;
+            Logger = logger;
         }
 
         public async Task<CommandResult> Handle(CreateWorkflowTemplateCommand request, CancellationToken cancellationToken)
@@ -84,66 +88,128 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                 }
             }
 
-            Dictionary<int, HashSet<int>> ValidatedSubsequentSteps = new Dictionary<int, HashSet<int>>();
+            //Dictionary<int, HashSet<int>> ValidatedSubsequentSteps = new Dictionary<int, HashSet<int>>();
 
-            ValidatedSubsequentSteps.Add(-1, new HashSet<int>());
-            /*ValidatedSubsequentSteps.Add(0, new HashSet<int>());
-            ValidatedSubsequentSteps.Add(1, new HashSet<int>());
-            */
+            //ValidatedSubsequentSteps.Add(-1, new HashSet<int>());
 
-            //Starting Logic Block must only have have subsequent step ref with step 0
-            var startingLogicBlock = request.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Count() == 0);
+            //There should be at least one pre-requisite that returns as true
+            var startingLogicBlock = request.LogicBlocks.Where(lb => lb.Prerequisites.Evaluate(new List<Domain.Entities.Steps.Step>())).ToList();
 
             if (startingLogicBlock.Count() == 0)
             {
                 throw new NoValidStartingLogicBlockException();
             }
 
-            foreach (var block in request.LogicBlocks)
-            {
-                foreach (var step in block.SubsequentSteps)
-                {
-                    //Check whether the step template exists
-                    var result = await _stepTemplatesRepository.GetStepTemplateAsync(step.StepTemplateId);
+            var validatedLogicBlock = true;
+            List<int> validatedLogicBlockIds = new List<int>();
+            validatedLogicBlockIds.AddRange(startingLogicBlock.Select(slb => slb.Id));
 
-                    if (ValidatedSubsequentSteps.ContainsKey(step.StepRefId))
+            Dictionary<int, ConditionGroupValidation> validations = new Dictionary<int, ConditionGroupValidation>();
+
+            foreach(var lb in request.LogicBlocks)
+            {
+                validations.Add(lb.Id, null);
+            }
+
+            foreach(var startingLb in startingLogicBlock)
+            {
+                validations[startingLb.Id] = new ConditionGroupValidation()
+                {
+                    IsValid = true,
+                    Reason = "Starting logic block"
+                };
+            }
+
+            while (validatedLogicBlock)
+            {
+                //reset to true
+                validatedLogicBlock = false;
+                //Only evaluate unvalidatedlogicblocks
+                foreach (var block in request.LogicBlocks.Where(lb => !validatedLogicBlockIds.Contains(lb.Id)))
+                {
+                    var validation = block.Prerequisites.ValidateConditionGroup(request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Id)));
+                    
+                    if(validations[block.Id] == null || !validations[block.Id].IsValid)
                     {
-                        foreach (var prerequsiteStep in block.PrerequisiteSteps)
+                        validations[block.Id] = validation;
+                    }
+                    
+                    if (validation.IsValid)
+                    {
+                        // Mark to re-evaluate the rest of the logicblocks
+                        validatedLogicBlock = true;
+                        validatedLogicBlockIds.Add(block.Id);
+
+                        foreach (var step in block.SubsequentSteps)
                         {
-                            if (!ValidatedSubsequentSteps[step.StepRefId].Contains(prerequsiteStep.StepRefId))
+                            //Check whether the step template exists
+                            var result = await _stepTemplatesRepository.GetStepTemplateAsync(step.StepTemplateId);
+
+                            foreach (var mapping in step.Mappings)
                             {
-                                ValidatedSubsequentSteps[step.StepRefId].Add(prerequsiteStep.StepRefId);
+                                WorkflowTemplate.ValidateMapping(mapping);
+                            }
+
+                            if (result == null)
+                                throw new StepTemplateNotFoundException("Step Template does not exist " + step.StepTemplateId);
+
+                            var flatMappedSubsequentSteps = request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Id)).SelectMany(lb => lb.SubsequentSteps.Select(ss => ss.StepRefId));
+                            foreach (var mapping in step.Mappings)
+                            {
+                                if (mapping.OutputReferences != null)
+                                {
+                                    foreach (var reference in mapping.OutputReferences)
+                                    {
+                                        if (!flatMappedSubsequentSteps.Contains(reference.StepRefId))
+                                        {
+                                            throw new MissingStepException("Defined mapping for substep " + step.StepRefId + " for mapping " + mapping.StepInputId + " is missing  " + reference.StepRefId);
+                                        }
+                                        else
+                                        {
+                                            if (reference.StepRefId != -1)
+                                            {
+                                                var foundBlock = request.LogicBlocks.Where(st => st.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).Count() > 0).First();
+
+                                                var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).First();
+
+                                                var foundTemplates = (allStepTemplates.Where(template => template.ReferenceId == resolvedSubstep.StepTemplateId));
+
+                                                if (foundTemplates.Count() != 0)
+                                                {
+                                                    var foundTemplate = foundTemplates.First();
+                                                    if (foundTemplate.OutputDefinitions.Where(id => id.Key.ToLower() == reference.OutputId.ToLower()).Count() == 0)
+                                                    {
+                                                        throw new MissingOutputException("Missing output " + reference.OutputId + " for step " + step.StepRefId + " from step template " + foundTemplate.Id);
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                var foundDefinition = request.InputDefinitions.Where(id => id.Key.ToLower() == reference.OutputId.ToLower());
+                                                if (foundDefinition.Count() == 0)
+                                                {
+                                                    throw new MissingInputException("Missing input " + reference.OutputId + " for step " + step.StepRefId + " from workflow input.");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (mapping.DefaultValue == null)
+                                    {
+                                        throw new MissingOutputException("Neither Value or Output References exist. If neither is required, this is a redundant output reference");
+                                    }
+                                }
                             }
                         }
                     }
-                    else
-                    {
-                        ValidatedSubsequentSteps.Add(step.StepRefId, new HashSet<int>());
-                    }
-
-                    foreach (var mapping in step.Mappings)
-                    {
-                        WorkflowTemplate.ValidateMapping(mapping);
-                    }
-
-                    if (result == null)
-                        throw new StepTemplateNotFoundException("Step Template does not exist " + step.StepTemplateId);
                 }
             }
 
-            foreach (var block in request.LogicBlocks)
+            // This is done inefficiently
+            /*foreach (var block in request.LogicBlocks)
             {
-                foreach (var step in block.PrerequisiteSteps)
-                {
-                    //Check whether the step template exists
-                    bool prerequisiteStepExists = false;
-
-                    if (!ValidatedSubsequentSteps.ContainsKey(step.StepRefId))
-                    {
-                        throw new MissingStepException("Defined prerequisite step " + step.StepRefId + " missing in logic block " + block.Id);
-                    }
-                }
-
                 foreach (var substep in block.SubsequentSteps)
                 {
                     foreach (var mapping in substep.Mappings)
@@ -173,8 +239,6 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                                             {
                                                 throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.StepRefId + " from step template " + foundTemplate.Id);
                                             }
-                                            //NEED TO ADD TYPING CHECK FOR NEW Workflow INPUT
-                                            //if(foundTemplate.InputDefinitions.Where(id => id.Key != reference.OutputId).First().Value.Type != reference.)
                                         }
                                     }
                                     else
@@ -197,7 +261,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                         }
                     }
                 }
-            }
+            }*/
 
             var newId = Guid.NewGuid();
             var newWorkflowTemplate = new WorkflowTemplate(newId,

@@ -73,6 +73,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             }
 
             var createdWorkflowId = Guid.NewGuid();
+            var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Prerequisites.Evaluate(new List<Step>())).ToList();
 
             var createdWorkflowTemplateId = await _node.Send(new WriteData()
             {
@@ -88,7 +89,9 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
             });
 
-            var startingLogicBlock = template.LogicBlocks.Where(lb => lb.PrerequisiteSteps.Count() == 0).ToList();
+            var workflow = await _workflowsRepository.GetWorkflowAsync(createdWorkflowId);
+
+            //When there are no conditions to be met
 
             // Needs to happen before first step is added
             DateTimeOffset WorkflowStartTime = DateTime.Now;
@@ -99,8 +102,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.StepTemplateId);
 
                     var verifiedInputs = new Dictionary<string, object>();
-
-
+                    
                     foreach (var mapping in subBlock.Mappings)
                     {
                         string mappedValue = "";
@@ -148,8 +150,32 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 
                     await _stepsRepository.UpsertStepMetadataAsync(newStep.Id); */
                 }
+
+
+                workflow.UpdateJournal(
+                new JournalEntry()
+                {
+                    CreatedBy = request.CreatedBy,
+                    CreatedOn = DateTime.UtcNow,
+                    Updates = new List<Update>()
+                    {
+                    new Update()
+                    {
+                        FieldName = "completedlogicblocks",
+                        Type = UpdateType.Append,
+                        Value = block.Id //Add the logic block
+                    }
+                    }
+                });
+
+                //await _workflowsRepository.UpdateWorkflow(workflow);
+                await _node.Send(new WriteData()
+                {
+                    Data = workflow,
+                    WaitForSafeWrite = true,
+                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                });
             }
-            
 
             stopwatch.Stop();
 

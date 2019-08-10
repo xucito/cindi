@@ -8,6 +8,8 @@ using Cindi.Domain.Exceptions;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Entities.JournalEntries;
+using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
+using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
 
 namespace Cindi.Domain.Entities.WorkflowsTemplates
 {
@@ -118,92 +120,4 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
             return true;
         }
     }
-
-    public class LogicBlock
-    {
-        public LogicBlock()
-        {
-            PrerequisiteSteps = new List<PrerequisiteStep>();
-            SubsequentSteps = new List<SubsequentStep>();
-        }
-
-        public int Id { get; set; }
-        public string Condition { get; set; }
-        public new List<PrerequisiteStep> PrerequisiteSteps { get; set; }
-        public new List<SubsequentStep> SubsequentSteps { get; set; }
-    }
-
-    public class Logic
-    {
-        public static string AND { get { return "AND"; } }
-        public static string OR { get { return "OR"; } }
-    }
-
-    public class PrerequisiteStep
-    {
-        /// <summary>
-        /// Unique Id of the Step defined within the workflow
-        /// </summary>
-        public int StepRefId { get; set; }
-
-        public string Description { get; set; }
-
-        public string StepTemplateReferenceId { get; set; }
-
-        private string _status { get; set; }
-
-        public string Status
-        {
-            get { return _status; }
-            set
-            {
-                if (StepStatuses.IsValid(value))
-                {
-                    _status = value;
-                }
-                else
-                {
-                    throw new InvalidStepStatusInputException();
-                }
-
-            }
-        }
-
-        public int StatusCode { get; set; }
-    }
-
-    public class SubsequentStep
-    {
-        public SubsequentStep()
-        {
-            Mappings = new List<Mapping>();
-            IsPriority = false;
-        }
-
-        public string Description { get; set; }
-        public string StepTemplateId { get; set; }
-        public List<Mapping> Mappings { get; set; }
-        public bool IsPriority { get; set; }
-        public int StepRefId { get; set; }
-    }
-
-    public class Mapping
-    {
-        public StepOutputReference[] OutputReferences { get; set; }
-
-        public string Description { get; set; }
-
-        public DefaultValue DefaultValue { get; set; }
-        /// <summary>
-        /// The field that the Step is mapped to
-        /// </summary>
-        public string StepInputId { get; set; }
-    }
-
-    public class DefaultValue
-    {
-        public object Value { get; set; }
-        public int Priority = 99999999;
-    }
-
 }
