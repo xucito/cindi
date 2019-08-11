@@ -10,6 +10,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
 {
     public class ConditionGroup
     {
+        public Guid Id { get; set; } = Guid.NewGuid();
         [Required]
         public string Operator { get; set; } = OperatorStatements.AND;
         public List<Condition> Conditions { get; set; } = new List<Condition>();

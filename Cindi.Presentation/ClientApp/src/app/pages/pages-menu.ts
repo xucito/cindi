@@ -25,6 +25,10 @@ export const MENU_ITEMS: NbMenuItem[] = [
     title: "Global-Values",
     icon: "bookmark-outline",
     link: "/pages/global-values"
+  },  {
+    title: "Workflow-Designer",
+    icon: "bookmark-outline",
+    link: "/pages/workflow-designer"
   },
   {
     title: "FEATURES",

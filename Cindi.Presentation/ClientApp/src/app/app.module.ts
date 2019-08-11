@@ -20,7 +20,10 @@ import {
   NbMenuModule,
   NbSidebarModule,
   NbToastrModule,
-  NbWindowModule
+  NbWindowModule,
+  NbOverlayContainerComponent,
+  NbWindowService,
+  NbWindowComponent
 } from "@nebular/theme";
 import { NgxAuthModule } from "./auth/auth.module";
 import { EnvServiceProvider } from "./services/env.service.provider";

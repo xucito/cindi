@@ -8,10 +8,11 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 {
+    [Serializable]
     [JsonConverter(typeof(ConditionSerializer))]
     public abstract class Condition
     {
-        public Condition() { }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public abstract string Name { get; }
         public string Description { get; set; }
         public abstract bool Evaluate(List<Step> completedSteps);

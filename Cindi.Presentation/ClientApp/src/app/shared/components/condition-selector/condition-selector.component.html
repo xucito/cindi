@@ -1,0 +1,30 @@
+<nb-card>
+  <nb-card-body>
+    Condition Type
+    <nb-select fullWidth [(selected)]="selectedConditionType" placeholder="Type" (selectedChange)="changed($event)">
+      <nb-option *ngFor="let conditionType of selectableConditionTypes" [value]="conditionType.value">
+        {{conditionType.name}}
+      </nb-option>
+    </nb-select>
+    <div *ngIf="selectedConditionType == 'StepStatus' && _condition != undefined">
+      Selected Step 
+      <nb-select fullWidth [(selected)]="''+_condition.stepRefId" placeholder="Step">
+        <nb-option *ngFor="let step of options.steps" [value]="''+step.stepRefId">
+          {{step.stepRefId}}
+        </nb-option>
+      </nb-select>
+      Selected Status
+      <nb-select fullWidth [(selected)]="_condition.status" placeholder="Step">
+        <nb-option *ngFor="let status of stepStatuses" [value]="status">
+          {{status}}
+        </nb-option>
+      </nb-select>
+      Selected Status Code (optional)
+      <input fullWidth nbInput type="number" [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="_condition.statusCode" />
+      <button (click)="AddCondition()">Submit</button>
+    </div>
+  </nb-card-body>
+</nb-card>
+
+{{_condition | json}}

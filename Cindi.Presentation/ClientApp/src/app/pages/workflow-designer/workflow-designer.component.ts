@@ -1,3 +1,4 @@
+import { NbWindowService } from '@nebular/theme';
 import {
   Component,
   OnInit,
@@ -39,7 +40,8 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
   allStepTemplates$: Subscription;
   @Output() selectedStepChange = new EventEmitter();
 
-  constructor(private stepTemplateStore: Store<State>) {
+  constructor(private stepTemplateStore: Store<State>,
+    private windowService: NbWindowService) {
     this.allStepTemplates$ = stepTemplateStore
       .pipe(select(selectAll))
       .subscribe(result => {
@@ -188,7 +190,9 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
         label: "NEW",
         data: {
           color: "#3f51b5",
-          new: true
+          new: true,
+          parent: node,
+          allNodes: [...nodesInput]
         }
       });
 
@@ -205,5 +209,14 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
 
   print() {
     console.log("pressed a SVG");
+  }
+
+  openWindow(contentTemplate, parentNode) {
+    this.windowService.open(contentTemplate, {
+      title: "Add logicBlock",
+      context: {
+        parentNode: parentNode
+      }
+    });
   }
 }

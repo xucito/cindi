@@ -2,6 +2,7 @@
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 using Cindi.Domain.Exceptions.Steps;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,8 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 {
+    [Serializable]
+    [JsonConverter(typeof(ConditionSerializer))]
     public class StepStatusCondition : Condition
     {
         public override string Name => "StepStatus"; 

@@ -1,8 +1,12 @@
 <nb-card>
   <nb-card-header>Visualization</nb-card-header>
+  
+  <conditions-group-visualizer></conditions-group-visualizer>
   <ngx-graph class="chart-container"
     *ngIf="hierarchialGraph != null && hierarchialGraph.nodes != null && hierarchialGraph.edges != null"
-    [view]="undefined" [links]="hierarchialGraph.edges" [nodes]="hierarchialGraph.nodes" [legend]="false"
+    [view]="undefined" [links]="hierarchialGraph.edges" [nodes]="hierarchialGraph.nodes"
+    [clusters]="hierarchialGraph.clusters"
+    [legend]="false"
     [curve]="curve" [view]="undefined" [autoZoom]="true" (select)="selectStep($event)" [zoomLevel]="1"
     [autoCenter]="true" [update$]="update$" [draggingEnabled]="false" [layout]="'dagre'"
     [layoutSettings]="{orientation: 'TB'}" [scheme]="colorScheme">
@@ -34,7 +38,8 @@
           {{mapping.stepInputId}}
         </svg:text>
       </svg:g>
-      <svg:g class="node" ngx-tooltip [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
+
+      <svg:g class="node" (click)="openWindow(contentTemplate, node.data)" ngx-tooltip [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
         *ngIf="node.data.new">
         <svg:rect class="stroke-2" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
           [attr.fill]="'white'" stroke="black" />
@@ -54,9 +59,31 @@
         </svg:text>
       </svg:g>
     </ng-template>
-
   </ngx-graph>
 </nb-card>
 
+<ng-template #contentTemplate let-data>
+    <nb-stepper orientation="horizontal">
+        <nb-step [label]="labelOne">
+          <ng-template #labelOne>Prerequisites</ng-template>
+          <h3>Step content #1</h3>
+          {{data | json}}
+          <button nbButton disabled nbStepperNext>prev</button>
+          <button nbButton nbStepperNext>next</button>
+        </nb-step>
+        <nb-step [label]="labelTwo">
+          <ng-template #labelTwo>SubsequentSteps</ng-template>
+          <h3>Step content #2</h3>
+          <button nbButton nbStepperPrevious>prev</button>
+          <button nbButton nbStepperNext>next</button>
+        </nb-step>
+        <nb-step label="Third step">
+            <ng-template #labelFour>Mappings</ng-template>
+          <h3>Step content #3</h3>
+          <button nbButton nbStepperPrevious>prev</button>
+          <button nbButton nbStepperNext>next</button>
+        </nb-step>
+      </nb-stepper>
+</ng-template>
 
 {{allStepTemplates | json}}

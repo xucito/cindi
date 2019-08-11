@@ -9,13 +9,19 @@ import {
   NbCardModule,
   NbListModule,
   NbIconModule,
-  NbActionsModule
+  NbActionsModule,
+  NbStepperModule,
+  NbButtonModule,
+  NbSelectModule,
+  NbInputModule
 } from "@nebular/theme";
 import { CodemirrorModule } from "@ctrl/ngx-codemirror";
 import { TemplateViewComponent } from "./components/template-view/template-view.component";
 import { WorkflowVisualizerComponent } from "./components/workflow-visualizer/workflow-visualizer.component";
 import { NgxGraphModule } from "@swimlane/ngx-graph";
 import { WorkflowStepComponent } from './components/workflow-step/workflow-step.component';
+import { ConditionsGroupVisualizerComponent } from './components/conditions-group-visualizer/conditions-group-visualizer.component';
+import { ConditionSelectorComponent } from './components/condition-selector/condition-selector.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +30,9 @@ import { WorkflowStepComponent } from './components/workflow-step/workflow-step.
     StepViewComponent,
     TemplateViewComponent,
     WorkflowVisualizerComponent,
-    WorkflowStepComponent
+    WorkflowStepComponent,
+    ConditionsGroupVisualizerComponent,
+    ConditionSelectorComponent
   ],
   exports: [
     DynamicFormComponent,
@@ -32,23 +40,32 @@ import { WorkflowStepComponent } from './components/workflow-step/workflow-step.
     NbListModule,
     NbIconModule,
     NbCardModule,
+    NbStepperModule,
     NbActionsModule,
+    NbButtonModule,
+    NbSelectModule,
+    NbInputModule,
     TemplateViewComponent,
     WorkflowVisualizerComponent,
-    NgxGraphModule
+    NgxGraphModule,
+    ConditionsGroupVisualizerComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
+    NbSelectModule,
     ReactiveFormsModule,
     NbLayoutModule,
     NbCardModule,
     CodemirrorModule,
     NbListModule,
     NbIconModule,
+    NbInputModule,
     NbCardModule,
     NbActionsModule,
-    NgxGraphModule
+    NgxGraphModule,
+    NbButtonModule,
+    NbStepperModule
   ]
 })
 export class SharedModule {}
