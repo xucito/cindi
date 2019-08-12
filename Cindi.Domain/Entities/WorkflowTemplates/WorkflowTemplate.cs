@@ -105,7 +105,7 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
 
                 foreach (var reference in map.OutputReferences)
                 {
-                    if (reference.StepRefId != -1)
+                    if (reference.WorkflowStepId != -1)
                     {
                         throw new InvalidMappingException("All starting mappings must be mapping from step -1 to step 0");
                     }

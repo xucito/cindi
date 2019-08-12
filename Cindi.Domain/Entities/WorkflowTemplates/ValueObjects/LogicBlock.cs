@@ -8,12 +8,12 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
     {
         public LogicBlock()
         {
-            Prerequisites = new ConditionGroup();
+            Dependencies = new ConditionGroup();
             SubsequentSteps = new List<SubsequentStep>();
         }
 
         public int Id { get; set; }
-        public new ConditionGroup Prerequisites { get; set; }
+        public new ConditionGroup Dependencies { get; set; }
         public new List<SubsequentStep> SubsequentSteps { get; set; }
     }
 }

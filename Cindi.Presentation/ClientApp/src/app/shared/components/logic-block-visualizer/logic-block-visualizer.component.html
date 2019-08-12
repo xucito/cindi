@@ -1,0 +1,17 @@
+<div *ngIf="logicBlock != undefined">
+  Prerequisite
+  <conditions-group-visualizer [availableSteps]="steps" [prerequisites]="logicBlock.prerequisites">
+  </conditions-group-visualizer>
+
+  <div class="w-100">
+    Subsequent Step
+  </div>
+  <div class="w-100">
+    <nb-select fullWidth [(selected)]="selectedStep" status="primary">
+      <nb-option *ngFor="let step of logicBlock.subsequentSteps" [value]="step"> {{ step.workflowStepId }}
+      </nb-option>
+    </nb-select>
+  </div>
+
+  <step-mappings-visualizer [subsequentStep]="selectedStep"></step-mappings-visualizer>
+</div>

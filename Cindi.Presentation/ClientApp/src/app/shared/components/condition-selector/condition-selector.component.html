@@ -8,9 +8,9 @@
     </nb-select>
     <div *ngIf="selectedConditionType == 'StepStatus' && _condition != undefined">
       Selected Step 
-      <nb-select fullWidth [(selected)]="''+_condition.stepRefId" placeholder="Step">
-        <nb-option *ngFor="let step of options.steps" [value]="''+step.stepRefId">
-          {{step.stepRefId}}
+      <nb-select fullWidth [(selected)]="''+_condition.workflowStepId" placeholder="Step">
+        <nb-option *ngFor="let step of options.steps" [value]="''+step.workflowStepId">
+          {{step.workflowStepId}}
         </nb-option>
       </nb-select>
       Selected Status

@@ -8,7 +8,6 @@ using Cindi.Domain.Entities.Users;
 using Cindi.Domain.ValueObjects;
 using Cindi.Persistence.GlobalValues;
 using Cindi.Persistence.Journals;
-using Cindi.Persistence.NodeStorages;
 using Cindi.Persistence.Workflows;
 using Cindi.Persistence.Serializers;
 using Cindi.Persistence.Steps;
@@ -22,6 +21,11 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
+using ConditionSerializer = Cindi.Persistence.Serializers.ConditionSerializer;
+using System.Linq;
+using Cindi.Persistence.WorkflowTemplates.Conditions;
+using Cindi.Persistence.ConsensusCoreMappings;
 
 namespace Cindi.Persistence
 {
@@ -47,12 +51,14 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<User>(u => UsersClassMap.Register(u));
             BsonClassMap.RegisterClassMap<GlobalValue>(gv => GlobalValuesClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<TrackedEntity>(gv => TrackedEntitiesClassMap.Register(gv));
+            BsonClassMap.RegisterClassMap<Condition>(gv => ConditionsClassMap.Register(gv));
+            BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<NodeStorage>(gv => NodeStorageClassMap.Register(gv));
-            BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
+            BsonClassMap.RegisterClassMap<Update>(gv => UpdateClassMap.Register(gv));
+
+            /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
-            BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
-           // BsonSerializer.RegisterSerializer(typeof(TrackedEntity), new TrackedEntitySerializer());
-            //BsonSerializer.RegisterSerializer(typeof(Journal), new JournalSerializer());
+            BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());*/
         }
     }
 }

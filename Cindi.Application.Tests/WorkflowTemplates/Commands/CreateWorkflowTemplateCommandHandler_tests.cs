@@ -81,7 +81,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             StepRefId = 0,
+                             WorkflowStepId = 0,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
                                        {
@@ -107,7 +107,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                         Operator = "AND",
                         Conditions = new List<Condition>(){ new StepStatusCondition()
                         {
-                    StepRefId = 0,
+                    WorkflowStepId = 0,
                     Status = StepStatuses.Successful,
                     StatusCode = 0
                         }},
@@ -115,7 +115,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             StepRefId = 1,
+                             WorkflowStepId = 1,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
                                        {
@@ -123,7 +123,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                                           {
                                               new StepOutputReference()
                                               {
-                                                  StepRefId = 3,
+                                                  WorkflowStepId = 3,
                                                   OutputId = "n"
                                               }
                                           },
@@ -137,7 +137,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    StepRefId = 0,
+                                                    WorkflowStepId = 0,
                                                     OutputId = "n"
                                                 }
                                             },
@@ -187,7 +187,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             StepRefId = 0,
+                             WorkflowStepId = 0,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
                                        {
@@ -213,7 +213,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                         Operator = "AND",
                         Conditions = new List<Condition>(){ new StepStatusCondition()
                         {
-                    StepRefId = 0,
+                    WorkflowStepId = 0,
                     Status = StepStatuses.Successful,
                     StatusCode = 0
                         }},
@@ -221,7 +221,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             StepRefId = 1,
+                             WorkflowStepId = 1,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
                                        {
@@ -229,7 +229,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                                           {
                                               new StepOutputReference()
                                               {
-                                                  StepRefId = 0,
+                                                  WorkflowStepId = 0,
                                                   OutputId = "z"
                                               }
                                           },
@@ -243,7 +243,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    StepRefId = 0,
+                                                    WorkflowStepId = 0,
                                                     OutputId = "n"
                                                 }
                                             },

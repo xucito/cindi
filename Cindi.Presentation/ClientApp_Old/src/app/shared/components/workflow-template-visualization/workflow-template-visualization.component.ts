@@ -68,8 +68,8 @@ export class WorkflowTemplateVisualizationComponent implements OnInit {
     this.update$.next(true);
   }
 
-  getStepColour(stepRefId: string) {
-    var result = this._workflow.steps.filter(s => s.stepRefId == stepRefId);
+  getStepColour(workflowStepId: string) {
+    var result = this._workflow.steps.filter(s => s.workflowStepId == workflowStepId);
 
     if (result.length == 0) {
       return "#BCBFBF";
@@ -89,11 +89,11 @@ export class WorkflowTemplateVisualizationComponent implements OnInit {
     }
   }
 
-  getStep(stepRefId: number) {
+  getStep(workflowStepId: number) {
     if (this._workflow == undefined) {
       return undefined;
     }
-    var result = this._workflow.steps.filter(s => s.stepRefId == stepRefId);
+    var result = this._workflow.steps.filter(s => s.workflowStepId == workflowStepId);
 
     if (result.length == 0) {
       return undefined;
@@ -157,22 +157,22 @@ export class WorkflowTemplateVisualizationComponent implements OnInit {
           {
             edges.push({
               source: "-1",
-              target: "" + substep.stepRefId,
+              target: "" + substep.workflowStepId,
               label: "",
               id: id()
           })};
-          if (nodes.filter(n => n.id == substep.stepRefId).length == 0) {
+          if (nodes.filter(n => n.id == substep.workflowStepId).length == 0) {
             var foundStepTemplate = this._appState.getStepTemplateDef(
               substep.stepTemplateId
             );
-            let step = this.getStep(substep.stepRefId);
+            let step = this.getStep(substep.workflowStepId);
             if (foundStepTemplate == undefined) {
               nodes.push({
-                id: "" + substep.stepRefId,
+                id: "" + substep.workflowStepId,
                 label:
                   "" +
                   substep.stepTemplateId + "|" +
-                  substep.stepRefId +
+                  substep.workflowStepId +
                   (step != undefined ? "| step: " + step.id : ""),
                 data: {
                   color: "#3f51b5"
@@ -180,12 +180,12 @@ export class WorkflowTemplateVisualizationComponent implements OnInit {
               });
             } else {
               nodes.push({
-                id: "" + substep.stepRefId,
+                id: "" + substep.workflowStepId,
                 label:
                   "" +
                   foundStepTemplate.name +
                   " | " +
-                  substep.stepRefId +
+                  substep.workflowStepId +
                   (step != undefined ? " | step: " + step.id : ""),
                 data: {
                   value: foundStepTemplate,
@@ -197,8 +197,8 @@ export class WorkflowTemplateVisualizationComponent implements OnInit {
 
           block.prerequisiteSteps.forEach(preStep => {
             edges.push({
-              source: "" + preStep.stepRefId,
-              target: "" + substep.stepRefId,
+              source: "" + preStep.workflowStepId,
+              target: "" + substep.workflowStepId,
               label: preStep.status + "|" + preStep.statusCode,
               id: id()
             });

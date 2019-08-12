@@ -22,7 +22,6 @@ namespace Cindi.Persistence.Serializers
             var bsonDocument = document.ToBsonDocument();
 
             var result = BsonExtensionMethods.ToJson(bsonDocument);
-            var test = JsonConvert.DeserializeObject<BaseCommand>(result);
             return JsonConvert.DeserializeObject<BaseCommand>(result);
         }
 

@@ -1,4 +1,4 @@
-<ngx-graph [draggingEnabled]="false" class="chart-container" [view]="[1000, 800]" [links]="edges" [nodes]="nodes">
+<ngx-graph [draggingEnabled]="false" class="chart-container" [links]="edges" [nodes]="nodes">
 
   <ng-template #nodeTemplate let-node>
     <svg:g width="100" height="50" *ngIf="node.data.type == 'conditionGroup'">
@@ -19,10 +19,10 @@
         </svg:rect>
         <svg:text y="15" x="10">{{node.data.condition.name}}</svg:text>
         <svg:text y="30" x="10">
-          Step {{node.data.condition.stepRefId}} {{node.data.condition.comparer}} {{node.data.condition.status}}
+          Step {{node.data.condition.workflowStepId}} {{node.data.condition.comparer}} {{node.data.condition.status}}
         </svg:text>
         <svg:text y="45" x="10" *ngIf="node.data.condition.statusCode != undefined">
-          Step {{node.data.condition.stepRefId}} {{node.data.condition.comparer}} statusCode
+          Step {{node.data.condition.workflowStepId}} {{node.data.condition.comparer}} statusCode
           {{node.data.condition.statusCode}}
         </svg:text>
       </svg:g>
@@ -63,5 +63,3 @@
     (onSubmit)="addNewCondition(node.id, $event,node.data.parent)"></condition-selector>
   {{node| json}}
 </ng-template>
-
-{{prerequisites | json}}

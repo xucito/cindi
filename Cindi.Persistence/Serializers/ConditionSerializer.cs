@@ -1,5 +1,4 @@
-﻿
-using Cindi.Domain.ValueObjects;
+﻿using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -10,9 +9,9 @@ using System.Text;
 
 namespace Cindi.Persistence.Serializers
 {
-    public class UpdateSerializer : SerializerBase<Update>
+    public class ConditionSerializer : SerializerBase<Condition>
     {
-        public override Update Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        public override Condition Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
             var document = serializer.Deserialize(context, args);
@@ -20,13 +19,14 @@ namespace Cindi.Persistence.Serializers
             var bsonDocument = document.ToBsonDocument();
 
             var result = BsonExtensionMethods.ToJson(bsonDocument);
-            return JsonConvert.DeserializeObject<Update>(result);
+            return JsonConvert.DeserializeObject<Condition>(result);
         }
 
-        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, Update value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, Condition value)
         {
             var jsonDocument = JsonConvert.SerializeObject(value);
             var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
+
             var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
             serializer.Serialize(context, bsonDocument.AsBsonValue);
         }

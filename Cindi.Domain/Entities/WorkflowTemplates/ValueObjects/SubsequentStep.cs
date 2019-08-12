@@ -16,6 +16,6 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
         public string StepTemplateId { get; set; }
         public List<Mapping> Mappings { get; set; }
         public bool IsPriority { get; set; }
-        public int StepRefId { get; set; }
+        public int WorkflowStepId { get; set; }
     }
 }

@@ -124,7 +124,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                         Description = null,
                         Inputs = verifiedInputs,
                         WorkflowId = createdWorkflowId,
-                        StepRefId = subBlock.StepRefId,
+                        WorkflowStepId = subBlock.WorkflowStepId,
                         Name = null
                     });
 

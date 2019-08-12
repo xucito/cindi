@@ -61,7 +61,7 @@ namespace Cindi.Test.Global.TestData
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             StepRefId = 0,
+                             WorkflowStepId = 0,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
                                        {
@@ -87,7 +87,7 @@ namespace Cindi.Test.Global.TestData
                         Operator = "AND",
                         Conditions = new List<Condition>(){ new StepStatusCondition()
                         {
-                    StepRefId = 0,
+                    WorkflowStepId = 0,
                     Status = StepStatuses.Successful,
                     StatusCode = 0
                         }},
@@ -95,7 +95,7 @@ namespace Cindi.Test.Global.TestData
                     SubsequentSteps = new List<SubsequentStep> {
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             StepRefId = 1,
+                             WorkflowStepId = 1,
                                       Mappings = new List<Mapping>(){
                                       new Mapping()
                                        {
@@ -103,7 +103,7 @@ namespace Cindi.Test.Global.TestData
                                           {
                                               new StepOutputReference()
                                               {
-                                                  StepRefId = 0,
+                                                  WorkflowStepId = 0,
                                                   OutputId = "n"
                                               }
                                           },
@@ -117,7 +117,7 @@ namespace Cindi.Test.Global.TestData
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    StepRefId = 0,
+                                                    WorkflowStepId = 0,
                                                     OutputId = "n"
                                                 }
                                             },

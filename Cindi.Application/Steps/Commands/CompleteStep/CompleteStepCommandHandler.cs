@@ -278,7 +278,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         foreach (var prerequisite in logicBlock.PrerequisiteSteps)
                         {
                             // Check whether the pre-requisite is in the submited steps, if there is a single one missing, do not submit subsequent steps 
-                            var step = workflowSteps.Where(s => s.StepRefId == prerequisite.StepRefId).FirstOrDefault();
+                            var step = workflowSteps.Where(s => s.WorkflowStepId == prerequisite.WorkflowStepId).FirstOrDefault();
                             if (step == null)
                             {
                                 ready = false;
@@ -301,11 +301,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         {
 
                             // Check whether the pre-requisite is in the submited steps, if there is a single one missing break but do not change ready
-                            var matchedSteps = workflowSteps.Where(s => s.StepRefId == prerequisite.StepRefId);
+                            var matchedSteps = workflowSteps.Where(s => s.WorkflowStepId == prerequisite.WorkflowStepId);
 
                             if (matchedSteps.Count() > 1)
                             {
-                                Logger.LogError("Detected duplicate pre-requisite steps for workflow " + workflow.Id + " at step reference " + prerequisite.StepRefId);
+                                Logger.LogError("Detected duplicate pre-requisite steps for workflow " + workflow.Id + " at step reference " + prerequisite.WorkflowStepId);
                             }
 
                             if (matchedSteps == null)
@@ -331,7 +331,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     {
                         foreach (var substep in logicBlock.SubsequentSteps)
                         {
-                            if (workflowSteps.Where(s => s.StepRefId == substep.StepRefId).Count() > 0)
+                            if (workflowSteps.Where(s => s.WorkflowStepId == substep.WorkflowStepId).Count() > 0)
                             {
                                 Logger.LogCritical("Encountered duplicate subsequent step for workflow " + workflow.Id + ". Ignoring the generation of duplicate.");
                             }
@@ -355,14 +355,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                         verifiedInputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
                                     }
                                     // If the step ref is not -1 it is a step in the array but the workflow
-                                    else if (highestPriorityReference.StepRefId != -1)
+                                    else if (highestPriorityReference.WorkflowStepId != -1)
                                     {
-                                        var parentStep = workflowSteps.Where(ss => ss.StepRefId == highestPriorityReference.StepRefId).FirstOrDefault();
+                                        var parentStep = workflowSteps.Where(ss => ss.WorkflowStepId == highestPriorityReference.WorkflowStepId).FirstOrDefault();
 
                                         //If there is a AND and there is no parent step, throw a error
                                         if (parentStep == null)
                                         {
-                                            throw new InvalidWorkflowProcessingException("Missing source for mapping " + mapping.StepInputId + " from step " + highestPriorityReference.StepRefId);
+                                            throw new InvalidWorkflowProcessingException("Missing source for mapping " + mapping.StepInputId + " from step " + highestPriorityReference.WorkflowStepId);
                                         }
                                         else
                                         {
@@ -381,7 +381,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                                 catch (Exception e)
                                                 {
                                                     //TO DO Move this to logger
-                                                    Console.WriteLine("Found error at mapping " + mapping.StepInputId + " for step " + substep.StepRefId);
+                                                    Console.WriteLine("Found error at mapping " + mapping.StepInputId + " for step " + substep.WorkflowStepId);
                                                     throw e;
                                                 }
                                             }
@@ -404,7 +404,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     CreatedBy = SystemUsers.QUEUE_MANAGER,
                                     Inputs = verifiedInputs,
                                     WorkflowId = workflow.Id,
-                                    StepRefId = substep.StepRefId
+                                    WorkflowStepId = substep.WorkflowStepId
                                 });
                                 addedStep = true;
                             }

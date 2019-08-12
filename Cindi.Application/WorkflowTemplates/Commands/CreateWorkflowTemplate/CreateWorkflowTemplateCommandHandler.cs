@@ -76,13 +76,13 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             {
                 foreach (var subStep in block.SubsequentSteps)
                 {
-                    if (stepRefs.Contains(subStep.StepRefId))
+                    if (stepRefs.Contains(subStep.WorkflowStepId))
                     {
-                        throw new DuplicateWorkflowStepRefException("Found duplicate step refs for " + subStep.StepRefId);
+                        throw new DuplicateWorkflowStepRefException("Found duplicate step refs for " + subStep.WorkflowStepId);
                     }
                     else
                     {
-                        stepRefs.Add(subStep.StepRefId);
+                        stepRefs.Add(subStep.WorkflowStepId);
                     }
                     allStepTemplates.Add(await _stepTemplatesRepository.GetStepTemplateAsync(subStep.StepTemplateId));
                 }
@@ -153,24 +153,24 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                             if (result == null)
                                 throw new StepTemplateNotFoundException("Step Template does not exist " + step.StepTemplateId);
 
-                            var flatMappedSubsequentSteps = request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Id)).SelectMany(lb => lb.SubsequentSteps.Select(ss => ss.StepRefId));
+                            var flatMappedSubsequentSteps = request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Id)).SelectMany(lb => lb.SubsequentSteps.Select(ss => ss.WorkflowStepId));
                             foreach (var mapping in step.Mappings)
                             {
                                 if (mapping.OutputReferences != null)
                                 {
                                     foreach (var reference in mapping.OutputReferences)
                                     {
-                                        if (!flatMappedSubsequentSteps.Contains(reference.StepRefId))
+                                        if (!flatMappedSubsequentSteps.Contains(reference.WorkflowStepId))
                                         {
-                                            throw new MissingStepException("Defined mapping for substep " + step.StepRefId + " for mapping " + mapping.StepInputId + " is missing  " + reference.StepRefId);
+                                            throw new MissingStepException("Defined mapping for substep " + step.WorkflowStepId + " for mapping " + mapping.StepInputId + " is missing  " + reference.WorkflowStepId);
                                         }
                                         else
                                         {
-                                            if (reference.StepRefId != -1)
+                                            if (reference.WorkflowStepId != -1)
                                             {
-                                                var foundBlock = request.LogicBlocks.Where(st => st.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).Count() > 0).First();
+                                                var foundBlock = request.LogicBlocks.Where(st => st.SubsequentSteps.Where(ss => ss.WorkflowStepId == reference.WorkflowStepId).Count() > 0).First();
 
-                                                var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).First();
+                                                var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.WorkflowStepId == reference.WorkflowStepId).First();
 
                                                 var foundTemplates = (allStepTemplates.Where(template => template.ReferenceId == resolvedSubstep.StepTemplateId));
 
@@ -179,7 +179,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                                                     var foundTemplate = foundTemplates.First();
                                                     if (foundTemplate.OutputDefinitions.Where(id => id.Key.ToLower() == reference.OutputId.ToLower()).Count() == 0)
                                                     {
-                                                        throw new MissingOutputException("Missing output " + reference.OutputId + " for step " + step.StepRefId + " from step template " + foundTemplate.Id);
+                                                        throw new MissingOutputException("Missing output " + reference.OutputId + " for step " + step.WorkflowStepId + " from step template " + foundTemplate.Id);
                                                     }
                                                 }
                                             }
@@ -188,7 +188,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                                                 var foundDefinition = request.InputDefinitions.Where(id => id.Key.ToLower() == reference.OutputId.ToLower());
                                                 if (foundDefinition.Count() == 0)
                                                 {
-                                                    throw new MissingInputException("Missing input " + reference.OutputId + " for step " + step.StepRefId + " from workflow input.");
+                                                    throw new MissingInputException("Missing input " + reference.OutputId + " for step " + step.WorkflowStepId + " from workflow input.");
                                                 }
                                             }
                                         }
@@ -218,17 +218,17 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                         {
                             foreach (var reference in mapping.OutputReferences)
                             {
-                                if (!ValidatedSubsequentSteps.ContainsKey(reference.StepRefId))
+                                if (!ValidatedSubsequentSteps.ContainsKey(reference.WorkflowStepId))
                                 {
-                                    throw new MissingStepException("Defined mapping for substep " + substep.StepRefId + " for mapping " + mapping.StepInputId + " is missing  " + reference.StepRefId);
+                                    throw new MissingStepException("Defined mapping for substep " + substep.WorkflowStepId + " for mapping " + mapping.StepInputId + " is missing  " + reference.WorkflowStepId);
                                 }
                                 else
                                 {
-                                    if (reference.StepRefId != -1)
+                                    if (reference.WorkflowStepId != -1)
                                     {
-                                        var foundBlock = request.LogicBlocks.Where(st => st.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).Count() > 0).First();
+                                        var foundBlock = request.LogicBlocks.Where(st => st.SubsequentSteps.Where(ss => ss.WorkflowStepId == reference.WorkflowStepId).Count() > 0).First();
 
-                                        var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.StepRefId == reference.StepRefId).First();
+                                        var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.WorkflowStepId == reference.WorkflowStepId).First();
 
                                         var foundTemplates = (allStepTemplates.Where(template => template.ReferenceId == resolvedSubstep.StepTemplateId));
 
@@ -237,7 +237,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                                             var foundTemplate = foundTemplates.First();
                                             if (foundTemplate.InputDefinitions.Where(id => id.Key.ToLower() != reference.OutputId.ToLower()).Count() == 0)
                                             {
-                                                throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.StepRefId + " from step template " + foundTemplate.Id);
+                                                throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.WorkflowStepId + " from step template " + foundTemplate.Id);
                                             }
                                         }
                                     }
@@ -246,7 +246,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                                         var foundDefinition = request.InputDefinitions.Where(id => id.Key.ToLower() == reference.OutputId.ToLower());
                                         if (foundDefinition.Count() == 0)
                                         {
-                                            throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.StepRefId + " from workflow input.");
+                                            throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.WorkflowStepId + " from workflow input.");
                                         }
                                     }
                                 }

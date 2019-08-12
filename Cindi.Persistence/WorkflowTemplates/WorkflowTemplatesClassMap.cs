@@ -5,6 +5,8 @@ using MongoDB.Bson.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
+using System.Linq;
 
 namespace Cindi.Persistence.WorkflowTemplates
 {

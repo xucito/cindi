@@ -9,6 +9,8 @@ namespace Cindi.Test.Global.TestClasses
 {
     public class AlwaysFalseCondition : Condition
     {
+        public override string Name => "AlwaysFalseCondition";
+
         public override bool Evaluate(List<Step> completedSteps)
         {
             return false;

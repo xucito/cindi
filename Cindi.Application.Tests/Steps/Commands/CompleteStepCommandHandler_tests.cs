@@ -86,7 +86,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                     },
                     new Update()
                     {
-                        FieldName = "steprefid",
+                        FieldName = "workflowstepid",
                         Type = UpdateType.Create,
                         Value = 0
                     },

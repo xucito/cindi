@@ -1,89 +1,38 @@
-<nb-card>
-  <nb-card-header>Visualization</nb-card-header>
-  
-  <conditions-group-visualizer></conditions-group-visualizer>
-  <ngx-graph class="chart-container"
-    *ngIf="hierarchialGraph != null && hierarchialGraph.nodes != null && hierarchialGraph.edges != null"
-    [view]="undefined" [links]="hierarchialGraph.edges" [nodes]="hierarchialGraph.nodes"
-    [clusters]="hierarchialGraph.clusters"
-    [legend]="false"
-    [curve]="curve" [view]="undefined" [autoZoom]="true" (select)="selectStep($event)" [zoomLevel]="1"
-    [autoCenter]="true" [update$]="update$" [draggingEnabled]="false" [layout]="'dagre'"
-    [layoutSettings]="{orientation: 'TB'}" [scheme]="colorScheme">
+<div class="row">
+  <div class="col-sm-6">
+    <nb-card>
+      <nb-card-body>
+        <ngx-graph class="chart-container" [draggingEnabled]="false" [view]="[1000, 500]" [links]="edges"
+          [nodes]="nodes">
+          <ng-template #nodeTemplate let-node>
+            <svg:g *ngIf="node.meta.type == 'step'" (click)="selectStep(node)">
+              <svg:rect rx="5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
+                fill="white" stroke="black"></svg:rect>
+              <svg:text x=10 y="20">{{node.data.step.stepTemplateId}}</svg:text>
+              <svg:circle x="0" y="0" r="10" height="10" width="10"></svg:circle>
+            </svg:g>
+            <svg:g *ngIf="node.meta.type == 'start'">
+              <svg:rect rx="5" ry="5" width="60" height="30" fill="white" stroke="black"></svg:rect>
+              <svg:text x=10 y="20">START</svg:text>
+            </svg:g>
 
-    <ng-template #defsTemplate>
-      <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
-        <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
-      </svg:marker>
-    </ng-template>
-    <ng-template #nodeTemplate let-node>
-      <svg:g class="node" ngx-tooltip [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
-        *ngIf="!node.data.new">
-        <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" [attr.fill]="'white'"
-          stroke="black" />
-        <svg:text alignment-baseline="top" [attr.x]="30" [attr.y]="20" font-weight="bold">{{node.label}}
-        </svg:text>
-        <svg:rect [attr.width]="30" [attr.height]="node.dimension.height" [attr.fill]="'blue'" />
-        <svg:text *ngFor="let mapping of node.data.mappings; let i = index" alignment-baseline="top" [attr.x]="30"
-          [attr.y]="40">
-          Inputs
-        </svg:text>
-        <svg *ngFor="let mapping of node.data.mappings; let i = index" height="20" width="20" [attr.x]="40"
-          [attr.y]="45 + i*20" (click)="print()">
-          <polygon points="0,0 10,10 0,20" />
-          Sorry, your browser does not support inline SVG.
-        </svg>
-        <svg:text *ngFor="let mapping of node.data.mappings; let i = index" alignment-baseline="top" [attr.x]="60"
-          [attr.y]="60 + i*20">
-          {{mapping.stepInputId}}
-        </svg:text>
-      </svg:g>
+            <svg:g *ngIf="node.meta.type == 'new'">
+              <svg:rect class="stroke-2" rx="5" ry="5" width="60" height="30" fill="white" stroke="black"></svg:rect>
+              <svg:text x=10 y="20">NEW</svg:text>
+            </svg:g>
+          </ng-template>
+        </ngx-graph>
+      </nb-card-body>
+    </nb-card>
+  </div>
 
-      <svg:g class="node" (click)="openWindow(contentTemplate, node.data)" ngx-tooltip [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
-        *ngIf="node.data.new">
-        <svg:rect class="stroke-2" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
-          [attr.fill]="'white'" stroke="black" />
-        <svg:text alignment-baseline="top" [attr.x]="5" [attr.y]="20" font-weight="bold">{{node.label}}
-        </svg:text>
-      </svg:g>
-    </ng-template>
-    <ng-template #linkTemplate let-link>
-      <svg:g class="edge">
-        <svg:path class="line" stroke-width="2" marker-end="url(#arrow)">
-        </svg:path>
-        <svg:text class="edge-label" text-anchor="middle">
-          <textPath class="text-path" [attr.href]="'#' + link.id" style="fill: #4c4c4c;"
-            [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
-            {{link.label}}
-          </textPath>
-        </svg:text>
-      </svg:g>
-    </ng-template>
-  </ngx-graph>
-</nb-card>
+  <div class="col-sm-6">
+    <nb-card>
+      <nb-card-body>
+        <logic-block-visualizer [steps]="selectedLogicBlockPreviousSteps" [logicBlock]="selectedLogicblock">
+        </logic-block-visualizer>
+      </nb-card-body>
+    </nb-card>
+  </div>
 
-<ng-template #contentTemplate let-data>
-    <nb-stepper orientation="horizontal">
-        <nb-step [label]="labelOne">
-          <ng-template #labelOne>Prerequisites</ng-template>
-          <h3>Step content #1</h3>
-          {{data | json}}
-          <button nbButton disabled nbStepperNext>prev</button>
-          <button nbButton nbStepperNext>next</button>
-        </nb-step>
-        <nb-step [label]="labelTwo">
-          <ng-template #labelTwo>SubsequentSteps</ng-template>
-          <h3>Step content #2</h3>
-          <button nbButton nbStepperPrevious>prev</button>
-          <button nbButton nbStepperNext>next</button>
-        </nb-step>
-        <nb-step label="Third step">
-            <ng-template #labelFour>Mappings</ng-template>
-          <h3>Step content #3</h3>
-          <button nbButton nbStepperPrevious>prev</button>
-          <button nbButton nbStepperNext>next</button>
-        </nb-step>
-      </nb-stepper>
-</ng-template>
-
-{{allStepTemplates | json}}
+</div>

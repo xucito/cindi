@@ -8,8 +8,8 @@ import { Graph, Node, Edge, Layout } from "@swimlane/ngx-graph";
   styleUrls: ["./conditions-group-visualizer.component.css"]
 })
 export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
-  ngOnChanges(changes: import("@angular/core").SimpleChanges): void {
-    throw new Error("Method not implemented.");
+  ngOnChanges(): void {
+    this.generateGraph();
   }
 
   constructor(private windowService: NbWindowService) {
@@ -23,10 +23,10 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
 
   @Input() availableSteps: any[] = [
     {
-      stepRefId: 0
+      workflowStepId: 0
     },
     {
-      stepRefId: 1
+      workflowStepId: 1
     }
   ];
 
@@ -37,7 +37,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
       {
         name: "StepStatus",
         comparer: "is",
-        stepRefId: 0,
+        workflowStepId: 0,
         stepTemplateReferenceId: null,
         status: "successful",
         id: "2",
@@ -52,7 +52,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
           {
             name: "StepStatus",
             comparer: "is",
-            stepRefId: 0,
+            workflowStepId: 0,
             stepTemplateReferenceId: null,
             status: "successful",
             statusCode: 0,
@@ -68,7 +68,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
               {
                 name: "StepStatus",
                 comparer: "is",
-                stepRefId: 0,
+                workflowStepId: 0,
                 stepTemplateReferenceId: null,
                 status: "successful",
                 statusCode: 0,
@@ -86,7 +86,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
           {
             name: "StepStatus",
             comparer: "is",
-            stepRefId: 0,
+            workflowStepId: 0,
             stepTemplateReferenceId: null,
             status: "successful",
             statusCode: 0,

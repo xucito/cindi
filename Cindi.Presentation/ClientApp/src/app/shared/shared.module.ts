@@ -22,6 +22,8 @@ import { NgxGraphModule } from "@swimlane/ngx-graph";
 import { WorkflowStepComponent } from './components/workflow-step/workflow-step.component';
 import { ConditionsGroupVisualizerComponent } from './components/conditions-group-visualizer/conditions-group-visualizer.component';
 import { ConditionSelectorComponent } from './components/condition-selector/condition-selector.component';
+import { LogicBlockVisualizerComponent } from './components/logic-block-visualizer/logic-block-visualizer.component';
+import { StepMappingsVisualizerComponent } from './components/step-mappings-visualizer/step-mappings-visualizer.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +34,9 @@ import { ConditionSelectorComponent } from './components/condition-selector/cond
     WorkflowVisualizerComponent,
     WorkflowStepComponent,
     ConditionsGroupVisualizerComponent,
-    ConditionSelectorComponent
+    ConditionSelectorComponent,
+    LogicBlockVisualizerComponent,
+    StepMappingsVisualizerComponent
   ],
   exports: [
     DynamicFormComponent,
@@ -48,7 +52,8 @@ import { ConditionSelectorComponent } from './components/condition-selector/cond
     TemplateViewComponent,
     WorkflowVisualizerComponent,
     NgxGraphModule,
-    ConditionsGroupVisualizerComponent
+    ConditionsGroupVisualizerComponent,
+    LogicBlockVisualizerComponent
   ],
   imports: [
     CommonModule,

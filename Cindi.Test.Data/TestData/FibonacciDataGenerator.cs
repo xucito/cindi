@@ -44,7 +44,7 @@ namespace Cindi.Test.Global.TestData
                 SubsequentSteps = new List<SubsequentStep> {
              new SubsequentStep(){
                  StepTemplateId =stepTemplate.ReferenceId,
-                 StepRefId = 0,
+                 WorkflowStepId = 0,
                           Mappings = new List<Mapping>(){
                           new Mapping()
                            {
@@ -74,7 +74,7 @@ namespace Cindi.Test.Global.TestData
                     {
                         new StepOutputReference()
                         {
-                            StepRefId =  i,
+                            WorkflowStepId =  i,
                             OutputId = "n"
                         }
                     },
@@ -102,7 +102,7 @@ namespace Cindi.Test.Global.TestData
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    StepRefId = i -1,
+                                                    WorkflowStepId = i -1,
                                                     OutputId = "n"
                                                 }
                                             },
@@ -120,7 +120,7 @@ namespace Cindi.Test.Global.TestData
                                 Operator = "AND",
                                 Conditions = new List<Condition>(){ new StepStatusCondition()
                                 {
-                                    StepRefId = i,
+                                    WorkflowStepId = i,
                                     Status = StepStatuses.Successful
                                 }},
                             },
@@ -129,7 +129,7 @@ namespace Cindi.Test.Global.TestData
                                 new SubsequentStep()
                                 {
                                     StepTemplateId = stepTemplate.ReferenceId,
-                                    StepRefId = i + 1, // This will create the next step
+                                    WorkflowStepId = i + 1, // This will create the next step
                                     Mappings = mappings
                                 }
                             }
@@ -196,7 +196,7 @@ namespace Cindi.Test.Global.TestData
                 SubsequentSteps = new List<SubsequentStep> {
              new SubsequentStep(){
                  StepTemplateId =stepTemplate.ReferenceId,
-                 StepRefId = 0,
+                 WorkflowStepId = 0,
                           Mappings = new List<Mapping>(){
                           new Mapping()
                            {
@@ -226,7 +226,7 @@ namespace Cindi.Test.Global.TestData
                     {
                         new StepOutputReference()
                         {
-                            StepRefId =  i,
+                            WorkflowStepId =  i,
                             OutputId = "n"
                         }
                     },
@@ -254,7 +254,7 @@ namespace Cindi.Test.Global.TestData
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    StepRefId = i -1,
+                                                    WorkflowStepId = i -1,
                                                     OutputId = "n"
                                                 }
                                             },
@@ -272,7 +272,7 @@ namespace Cindi.Test.Global.TestData
                                 Operator = "AND",
                                 Conditions = new List<Condition>(){ new StepStatusCondition()
                                 {
-                                    StepRefId = i,
+                                    WorkflowStepId = i,
                                     Status = StepStatuses.Successful
                                 }},
                             },
@@ -281,7 +281,7 @@ namespace Cindi.Test.Global.TestData
                                 new SubsequentStep()
                                 {
                                     StepTemplateId = stepTemplate.ReferenceId,
-                                    StepRefId = i + 1, // This will create the next step
+                                    WorkflowStepId = i + 1, // This will create the next step
                                     Mappings = mappings
                                 }
                             }

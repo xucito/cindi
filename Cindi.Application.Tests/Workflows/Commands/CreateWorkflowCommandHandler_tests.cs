@@ -43,7 +43,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         }
 
         [Fact]
-        public async void PassStepRefIdToNewStep()
+        public async void PassWorkflowStepIdToNewStep()
         {
             Assert.True(false);
         }

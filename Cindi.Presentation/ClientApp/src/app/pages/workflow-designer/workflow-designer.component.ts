@@ -1,4 +1,4 @@
-import { NbWindowService } from '@nebular/theme';
+import { NbWindowService } from "@nebular/theme";
 import {
   Component,
   OnInit,
@@ -22,51 +22,132 @@ import { selectAll } from "../../entities/step-templates/step-template.reducer";
   styleUrls: ["./workflow-designer.component.css"]
 })
 export class WorkflowDesignerComponent implements OnInit, OnChanges {
-  ngOnChanges(): void {
-    this.hierarchialGraph = this.generateGraph();
-    this.updateChart();
-  }
-  name = "Angular 5";
-  hierarchialGraph: Graph;
-  curve = shape.curveLinear; //shape.curveBundle.beta(1);
-  view = undefined;
-  stepTemplates$: Subscription;
-  maxStringLength = 20;
-  // curve = shape.curveLinear;
-  colorScheme;
-  public ngOnInit(): void {}
-  update$: Subject<any> = new Subject();
+  ngOnChanges(): void {}
+
   allStepTemplates: any[] = [];
   allStepTemplates$: Subscription;
+
+  nodes: Node[] = [];
+  edges: Edge[] = [];
+
+  selectedLogicblock: any;
+  selectedLogicBlockPreviousSteps: any;
+
+  public ngOnInit(): void {}
   @Output() selectedStepChange = new EventEmitter();
 
-  constructor(private stepTemplateStore: Store<State>,
-    private windowService: NbWindowService) {
+  constructor(
+    private stepTemplateStore: Store<State>,
+    private windowService: NbWindowService
+  ) {
     this.allStepTemplates$ = stepTemplateStore
       .pipe(select(selectAll))
       .subscribe(result => {
         this.allStepTemplates = result;
       });
-    this.setColorScheme("vivid");
-    this.hierarchialGraph = this.generateGraph();
-    this.updateChart();
+
+    this.generateGraph();
   }
 
   @Input() workflowTemplate: WorkflowTemplate = new WorkflowTemplate();
-  @Input() workflow: any;
+  @Input() workflow: any = {
+    referenceId: "SimpleWorkflow:1",
+    name: "SimpleWorkflow",
+    version: "1",
+    description: null,
+    logicBlocks: [
+      {
+        id: 0,
+        prerequisites: {
+          id: "59e45676-a39d-46df-97b3-f2bb7d25e949",
+          operator: "AND",
+          conditions: [],
+          conditionGroups: []
+        },
+        subsequentSteps: [
+          {
+            description: null,
+            stepTemplateId: "Fibonacci_stepTemplate:0",
+            mappings: [
+              {
+                outputReferences: null,
+                description: null,
+                defaultValue: { priority: 99999999, value: 1 },
+                stepInputId: "n-1"
+              },
+              {
+                outputReferences: null,
+                description: null,
+                defaultValue: { priority: 99999999, value: 1 },
+                stepInputId: "n-2"
+              }
+            ],
+            isPriority: false,
+            workflowStepId: 0
+          }
+        ]
+      },
+      {
+        id: 1,
+        prerequisites: {
+          id: "a2321d96-203d-4670-9eeb-2aa78d3512fb",
+          operator: "AND",
+          conditions: [
+            {
+              name: "StepStatus",
+              comparer: "is",
+              workflowStepId: 0,
+              stepTemplateReferenceId: null,
+              status: "successful",
+              statusCode: 0,
+              id: "716055cf-b603-4219-a9bf-e67e9c99f822",
+              description: null
+            }
+          ],
+          conditionGroups: []
+        },
+        subsequentSteps: [
+          {
+            description: null,
+            stepTemplateId: "Fibonacci_stepTemplate:0",
+            mappings: [
+              {
+                outputReferences: [
+                  { workflowStepId: 0, outputId: "n", priority: 0 }
+                ],
+                description: null,
+                defaultValue: { priority: 99999999, value: 1 },
+                stepInputId: "n-1"
+              },
+              {
+                outputReferences: [
+                  { workflowStepId: 0, outputId: "n", priority: 0 }
+                ],
+                description: null,
+                defaultValue: { priority: 99999999, value: 1 },
+                stepInputId: "n-2"
+              }
+            ],
+            isPriority: false,
+            workflowStepId: 1
+          }
+        ]
+      }
+    ],
+    inputDefinitions: null,
+    createdBy: "admin",
+    createdOn: "2019-08-12T11:34:28.275Z",
+    id: "d687417e-976a-4efa-859d-5c504d8c3962",
+    shardId: "e51da395-24a8-41df-b8a8-9bec3952b708",
+    shardType: "WorkflowTemplate",
+    data: null,
+    className: "Cindi.Domain.Entities.WorkflowsTemplates.WorkflowTemplate"
+  };
   @Input() stepTemplates: any[] = [];
   @Input() editMode = false;
 
-  setColorScheme(name) {
-    this.colorScheme = colorSets.find(s => s.name === name);
-  }
-
-  updateChart() {
-    this.update$.next(true);
-  }
-
-  getStepColour(stepRefId: string) {
-    var result = this.workflow.steps.filter(s => s.stepRefId == stepRefId);
+  getStepColour(workflowStepId: string) {
+    var result = this.workflow.steps.filter(s => s.workflowStepId == workflowStepId);
 
     if (result.length == 0) {
       return "#BCBFBF";
@@ -86,113 +167,93 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
     }
   }
 
-  getStep(stepRefId: number) {
-    if (this.workflow == undefined) {
-      return undefined;
-    }
-    var result = this.workflow.steps.filter(s => s.stepRefId == stepRefId);
+  generateGraph() {
+    let nodes: Node[] = [];
+    let edges: Edge[] = [];
 
-    if (result.length == 0) {
-      return undefined;
-    } else {
-      return result[0];
-    }
+    nodes.push({
+      id: "" + 0,
+      label: "Start",
+      data: {},
+      meta: {
+        type: "start"
+      }
+    });
+
+    this.workflow.logicBlocks.forEach(logicBlock => {
+      this.getLogicBlockNodesAndEdges(nodes, edges, logicBlock);
+    });
+
+    this.addNewNodes(edges, nodes);
+
+    this.nodes = nodes;
+    this.edges = edges;
   }
 
-  selectStep(node: any) {
-    console.log(node);
-    this.selectedStepChange.emit(node);
+  getLogicBlockNodesAndEdges(nodes: Node[], edges: Edge[], logicBlock: any) {
+    logicBlock.subsequentSteps.forEach(step => {
+      if (nodes.filter(n => n.id == step.workflowStepId).length == 0) {
+        nodes.push({
+          id: "" + step.workflowStepId,
+          label: step.workflowStepId,
+          dimension: {
+            height: 30,
+            width: step.stepTemplateId.length * 9
+          },
+          data: {
+            step: step,
+            logicBlock: logicBlock
+          },
+          meta: {
+            type: "step"
+          }
+        });
+      }
+    });
+
+    this.getConditionGroupNodesAndEdges(
+      nodes,
+      edges,
+      logicBlock.prerequisites,
+      logicBlock.subsequentSteps
+    );
   }
 
-  generateGraph(): Graph {
-    if (this.workflowTemplate != undefined) {
-      let nodes: Node[] = [];
-      let edges: Edge[] = [];
-      let posCount = 0;
-
-      nodes.push({
-        id: "-1",
-        label: "start",
-        data: {
-          color: "#3f51b5"
-        }
-      });
-
-      posCount++;
-      this.workflowTemplate.logicBlocks.forEach(block => {
-        let noPrerequisites = block.prerequisiteSteps.length == 0;
-        block.subsequentSteps.forEach(substep => {
-          if (noPrerequisites) {
-            edges.push({
-              source: "-1",
-              target: "" + substep.stepRefId,
-              label: "",
-              id: id()
-            });
-          }
-          if (nodes.filter(n => n.id == substep.stepRefId).length == 0) {
-            var foundStepTemplate = this.stepTemplates.filter(
-              st => st.referenceId == substep.stepTemplateId
-            )[0];
-            let step = this.getStep(substep.stepRefId);
-            if (foundStepTemplate == undefined) {
-              nodes.push({
-                id: "" + substep.stepRefId,
-                label: substep.stepTemplateId,
-                data: {
-                  color: "#3f51b5",
-                  mappings: substep.mappings
-                },
-                dimension: {
-                  width: 300,
-                  height: 100
-                }
-              });
-            } else {
-              nodes.push({
-                id: "" + substep.stepRefId,
-                label: foundStepTemplate.name,
-                data: {
-                  value: foundStepTemplate,
-                  color: "#3f51b5",
-                  mappings: substep.mappings
-                }
-              });
-            }
-          }
-
-          block.prerequisiteSteps.forEach(preStep => {
-            edges.push({
-              source: "" + preStep.stepRefId,
-              target: "" + substep.stepRefId,
-              label: preStep.status + "|" + preStep.statusCode,
-              id: id()
-            });
-          });
-
-          posCount++;
+  getConditionGroupNodesAndEdges(
+    nodes: Node[],
+    edges: Edge[],
+    conditionGroup: any,
+    subsequentSteps: any[]
+  ) {
+    conditionGroup.conditions.forEach(prerequisiteStep => {
+      subsequentSteps.forEach(step => {
+        edges.push({
+          id: id(), //prerequisiteStep.workflowStepId + "-" + step.workflowStepId,
+          source: "" + prerequisiteStep.workflowStepId,
+          target: "" + step.workflowStepId
         });
       });
-      return this.addAllPossibleNodes(edges, nodes);
-    }
+    });
+
+    conditionGroup.conditionGroups.forEach(conditionGroup => {
+      this.getConditionGroupNodesAndEdges(
+        nodes,
+        edges,
+        conditionGroup,
+        subsequentSteps
+      );
+    });
   }
 
-  addAllPossibleNodes(
-    edgesInput: Edge[],
-    nodesInput: Node[]
-  ): { edges: Edge[]; nodes: Node[] } {
-    let nodes: Node[] = nodesInput;
-    let edges: Edge[] = edgesInput;
-    let randomId = 10000;
-    nodesInput.forEach(node => {
+  addNewNodes(edges: Edge[], nodes: Node[]) {
+    nodes.forEach(node => {
+      let randomId = id();
       nodes.push({
         id: "" + randomId,
         label: "NEW",
-        data: {
-          color: "#3f51b5",
-          new: true,
-          parent: node,
-          allNodes: [...nodesInput]
+        data: {},
+        meta: {
+          type: "new"
         }
       });
 
@@ -203,8 +264,6 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
         id: id()
       });
     });
-
-    return { edges, nodes };
   }
 
   print() {
@@ -218,5 +277,24 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
         parentNode: parentNode
       }
     });
+  }
+
+  selectStep(node) {
+    this.selectedLogicblock = node.data.logicBlock;
+    let logicBlockSubsequentSteps = [];
+    this.selectedLogicblock.subsequentSteps.forEach(element => {
+      logicBlockSubsequentSteps.push(element.workflowStepId);
+    });
+
+    this.selectedLogicBlockPreviousSteps = this.nodes
+      .filter(
+        n =>
+          n.meta.type == "step" && logicBlockSubsequentSteps.indexOf(n.id) > -1
+      )
+      .map(n => {
+        return {
+          workflowStepId: n.id
+        };
+      });
   }
 }

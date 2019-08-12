@@ -44,7 +44,7 @@ export class ConditionSelectorComponent implements OnInit {
         comparer: "is",
         status: "successful",
         statusCode: undefined,
-        stepRefId: this.options.steps ? this.options.steps[0] : undefined
+        workflowStepId: this.options.steps ? this.options.steps[0] : undefined
       };
     }
   }

@@ -19,7 +19,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
         /// <summary>
         /// Unique Id of the Step defined within the workflow
         /// </summary>
-        public int StepRefId { get; set; }
+        public int WorkflowStepId { get; set; }
 
         public string StepTemplateReferenceId { get; set; }
 
@@ -47,7 +47,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 
         public override bool Evaluate(List<Step> completedSteps)
         {
-            var foundSteps = completedSteps.Where(cs => cs.StepRefId == StepRefId);
+            var foundSteps = completedSteps.Where(cs => cs.WorkflowStepId == WorkflowStepId);
             if (foundSteps.Count() == 1)
             {
                 if (foundSteps.First().Status == Status)
@@ -72,12 +72,12 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
         {
             foreach (var logicBlock in validatedLogicblocks)
             {
-                if (logicBlock.SubsequentSteps.Exists(ss => ss.StepRefId == StepRefId))
+                if (logicBlock.SubsequentSteps.Exists(ss => ss.WorkflowStepId == WorkflowStepId))
                 {
                     return new ConditionValidation()
                     {
                         IsValid = true,
-                        Reason = "Step with stepRefId " + StepRefId + " exists."
+                        Reason = "Step with workflowStepId " + WorkflowStepId + " exists."
                     };
                 }
             }
@@ -85,7 +85,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
             return new ConditionValidation()
             {
                 IsValid = false,
-                Reason = "Step with stepRefId " + StepRefId + " does not exist or complete before this step."
+                Reason = "Step with workflowStepId " + WorkflowStepId + " does not exist or complete before this step."
             };
         }
     }

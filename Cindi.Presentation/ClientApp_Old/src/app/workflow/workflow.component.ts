@@ -68,7 +68,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     if (this.workflow != undefined) {
       let filteredSteps: any[] = this.workflow.steps.filter(
-        s => s.stepRefId == this.selectedStepId
+        s => s.workflowStepId == this.selectedStepId
       );
       if (filteredSteps.length == 1) {
         this.runStep = filteredSteps[0];
