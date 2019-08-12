@@ -151,9 +151,9 @@ export class WorkflowTemplateVisualizationComponent implements OnInit {
       posCount++;
 
       this._workflowTemplate.logicBlocks.forEach(block => {
-        let noPrerequisites = block.prerequisiteSteps.length == 0;
+        let noDependencies = block.prerequisiteSteps.length == 0;
         block.subsequentSteps.forEach(substep => {
-          if(noPrerequisites)
+          if(noDependencies)
           {
             edges.push({
               source: "-1",

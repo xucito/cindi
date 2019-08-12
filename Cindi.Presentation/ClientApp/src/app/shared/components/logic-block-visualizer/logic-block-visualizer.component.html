@@ -1,6 +1,6 @@
 <div *ngIf="logicBlock != undefined">
   Prerequisite
-  <conditions-group-visualizer [availableSteps]="steps" [prerequisites]="logicBlock.prerequisites">
+  <conditions-group-visualizer [availableSteps]="otherSteps" [dependencies]="logicBlock.dependencies">
   </conditions-group-visualizer>
 
   <div class="w-100">

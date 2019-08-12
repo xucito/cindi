@@ -1,9 +1,10 @@
-<ngx-graph class="chart-container" [view]="[500, 200]" [links]="edges" [nodes]="nodes">
+<ngx-graph class="chart-container" [draggingEnabled]="false" [view]="[500, 200]" [links]="edges" [nodes]="nodes">
   <ng-template #nodeTemplate let-node>
     <svg:g *ngIf="node.meta.type == 'field'">
-      <svg:rect rx=" 5" ry="5" [attr.width]="100" [attr.height]="30" fill="white" stroke="black">
+      <svg:rect rx=" 5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" fill="white" stroke="black">
       </svg:rect>
       <svg:text x=10 y="20">{{node.label}}</svg:text>
+      <svg:text x=10 y="40">Default Value: {{node.data.defaultValue}}</svg:text>
     </svg:g>
     <svg:g *ngIf="node.meta.type == 'step'">
         <svg:rect rx=" 5" ry="5" [attr.width]="100" [attr.height]="30" fill="white" stroke="black">

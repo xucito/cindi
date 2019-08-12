@@ -6,7 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./workflow-step.component.css']
 })
 export class WorkflowStepComponent implements OnInit {
-  prerequisiteSteps
+  dependenciesSteps
 
   constructor() { }
 

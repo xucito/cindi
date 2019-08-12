@@ -93,7 +93,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             //ValidatedSubsequentSteps.Add(-1, new HashSet<int>());
 
             //There should be at least one pre-requisite that returns as true
-            var startingLogicBlock = request.LogicBlocks.Where(lb => lb.Prerequisites.Evaluate(new List<Domain.Entities.Steps.Step>())).ToList();
+            var startingLogicBlock = request.LogicBlocks.Where(lb => lb.Dependencies.Evaluate(new List<Domain.Entities.Steps.Step>())).ToList();
 
             if (startingLogicBlock.Count() == 0)
             {
@@ -127,7 +127,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                 //Only evaluate unvalidatedlogicblocks
                 foreach (var block in request.LogicBlocks.Where(lb => !validatedLogicBlockIds.Contains(lb.Id)))
                 {
-                    var validation = block.Prerequisites.ValidateConditionGroup(request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Id)));
+                    var validation = block.Dependencies.ValidateConditionGroup(request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Id)));
                     
                     if(validations[block.Id] == null || !validations[block.Id].IsValid)
                     {

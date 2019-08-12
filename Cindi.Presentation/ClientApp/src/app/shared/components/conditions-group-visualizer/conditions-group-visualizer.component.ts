@@ -30,7 +30,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     }
   ];
 
-  @Input() prerequisites: any = {
+  @Input() dependencies: any = {
     id: "1",
     operator: "AND",
     conditions: [
@@ -101,8 +101,8 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
   generateGraph() {
     let nodes: Node[] = [];
     let edges: Edge[] = [];
-    //nodes.push({ id: this.prerequisites.id, label: "Start" });
-    this.getNodesAndEdges(undefined, nodes, edges, this.prerequisites);
+    //nodes.push({ id: this.dependencies.id, label: "Start" });
+    this.getNodesAndEdges(undefined, nodes, edges, this.dependencies);
 
     this.edges = edges;
     this.nodes = nodes;
@@ -203,7 +203,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
   ngOnInit() {}
 
   ToggleConditionGroupOperator(id: string, comparator: string) {
-    this.SetConditionGroupOperator(id, comparator, this.prerequisites);
+    this.SetConditionGroupOperator(id, comparator, this.dependencies);
     this.generateGraph();
   }
 
@@ -295,7 +295,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     console.log(event);
     console.log(data);
     event.id = data.id;
-    this.SetCondition(event, this.prerequisites);
+    this.SetCondition(event, this.dependencies);
     this.generateGraph();
   }
 
@@ -319,7 +319,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
           conditionGroups: [],
           operator: selectedOption
         },
-        this.prerequisites
+        this.dependencies
       )
     ) {
       this.generateGraph();
@@ -329,9 +329,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     }
   }
 
-  addCondition(condition, parentId, conditionGroup)
-  {
-
+  addCondition(condition, parentId, conditionGroup) {
     if (conditionGroup.id == parentId) {
       //Create an empty array if it does not exist
       if (conditionGroup.conditions == undefined) {
@@ -356,17 +354,55 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     }
     return false;
   }
-  addNewCondition(newConditionId,condition, parentId)
-  {
+  addNewCondition(newConditionId, condition, parentId) {
     condition.id = newConditionId;
-    if(this.addCondition(condition, parentId, this.prerequisites))
-    {
+    if (this.addCondition(condition, parentId, this.dependencies)) {
       console.log("Added new condition");
       this.generateGraph();
+    } else {
+      console.error("failed to add condition");
     }
-    else
-    {
-      console.error("failed to add condition")
+  }
+
+  deleteNode(node) {
+    console.log(node);
+    if (node.data.type == "condition") {
+      if (this.removeCondition(node.id, this.dependencies)) {
+        console.log("Sucessfully removed condition");
+        this.generateGraph();
+      } else {
+        console.error("Failed to remove condition");
+      }
+    } else if (node.data.type == "conditionGroup") {
+      if (this.removeConditionGroup(node.id, this.dependencies)) {
+        console.log("Sucessfully removed condition");
+        this.generateGraph();
+      } else {
+        console.error("Failed to remove condition");
+      }
+    }
+  }
+
+  removeCondition(id: string, conditionGroup) {
+    for (var i = 0; i < conditionGroup.conditions.length; i++) {
+      if (conditionGroup.conditions[i].id == id) {
+        conditionGroup.conditions.splice(i, 1);
+        return true;
+      }
+    }
+
+    for (var i = 0; i < conditionGroup.conditionGroups.length; i++) {
+      this.removeCondition(id, conditionGroup.conditionGroups[i]);
+    }
+  }
+
+  removeConditionGroup(id: string, conditionGroup) {
+    for (var i = 0; i < conditionGroup.conditionGroups.length; i++) {
+      if (conditionGroup.conditionGroups[i].id == id) {
+        conditionGroup.conditionGroups.splice(i, 1);
+        return true;
+      }
+      this.removeCondition(id, conditionGroup.conditionGroups[i]);
     }
   }
 }

@@ -327,7 +327,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     }*/
 
                     //If the logic block is ready to be processed, submit the steps
-                    if (logicBlock.Prerequisites.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Id))
+                    if (logicBlock.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Id))
                     {
                         foreach (var substep in logicBlock.SubsequentSteps)
                         {

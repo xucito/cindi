@@ -73,7 +73,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             }
 
             var createdWorkflowId = Guid.NewGuid();
-            var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Prerequisites.Evaluate(new List<Step>())).ToList();
+            var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Dependencies.Evaluate(new List<Step>())).ToList();
 
             var createdWorkflowTemplateId = await _node.Send(new WriteData()
             {

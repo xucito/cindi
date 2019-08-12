@@ -53,7 +53,7 @@ namespace Cindi.Test.Global.TestData
                 new LogicBlock()
                 {
                     Id = 0,
-                    Prerequisites = new ConditionGroup
+                    Dependencies = new ConditionGroup
                     {
                         Operator = "OR",
                         Conditions = new List<Condition>(){},
@@ -82,7 +82,7 @@ namespace Cindi.Test.Global.TestData
                 new LogicBlock()
                 {
                     Id = 1,
-                    Prerequisites = new ConditionGroup
+                    Dependencies = new ConditionGroup
                     {
                         Operator = "AND",
                         Conditions = new List<Condition>(){ new StepStatusCondition()

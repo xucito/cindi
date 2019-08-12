@@ -10,6 +10,7 @@
         [attr.fill]="node.data.operator == 'OR' ? '#5893B1': 'white'" stroke="black"></svg:rect>
       <svg:text y="25" x="10">AND</svg:text>
       <svg:text y="25" x="60">OR</svg:text>
+      <svg:circle r="10" x="250" y="0" fill="red" (click)="deleteNode(node)"></svg:circle>
     </svg:g>
 
     <svg:g width="250" height="50" *ngIf="node.data.type == 'condition'"
@@ -25,6 +26,7 @@
           Step {{node.data.condition.workflowStepId}} {{node.data.condition.comparer}} statusCode
           {{node.data.condition.statusCode}}
         </svg:text>
+        <svg:circle r="10" x="250" y="0" fill="red" (click)="deleteNode(node)"></svg:circle>
       </svg:g>
     </svg:g>
 

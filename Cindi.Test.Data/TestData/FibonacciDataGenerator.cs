@@ -38,7 +38,7 @@ namespace Cindi.Test.Global.TestData
             logicBlocks.Add(new LogicBlock()
             {
                 Id = 0,
-                Prerequisites = new ConditionGroup
+                Dependencies = new ConditionGroup
                 {
                 },
                 SubsequentSteps = new List<SubsequentStep> {
@@ -115,7 +115,7 @@ namespace Cindi.Test.Global.TestData
                         new LogicBlock()
                         {
                             Id = 0,
-                            Prerequisites = new ConditionGroup
+                            Dependencies = new ConditionGroup
                             {
                                 Operator = "AND",
                                 Conditions = new List<Condition>(){ new StepStatusCondition()
@@ -190,7 +190,7 @@ namespace Cindi.Test.Global.TestData
             logicBlocks.Add(new LogicBlock()
             {
                 Id = 0,
-                Prerequisites = new ConditionGroup
+                Dependencies = new ConditionGroup
                 {
                 },
                 SubsequentSteps = new List<SubsequentStep> {
@@ -267,7 +267,7 @@ namespace Cindi.Test.Global.TestData
                         new LogicBlock()
                         {
                             Id = 0,
-                            Prerequisites = new ConditionGroup
+                            Dependencies = new ConditionGroup
                             {
                                 Operator = "AND",
                                 Conditions = new List<Condition>(){ new StepStatusCondition()

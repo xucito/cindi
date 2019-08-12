@@ -9,6 +9,7 @@ import { id } from "@swimlane/ngx-charts/release/utils";
 })
 export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
   ngOnChanges(changes: import("@angular/core").SimpleChanges): void {
+
     this.generateGraph();
   }
   @Input() subsequentStep;
@@ -31,30 +32,48 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
           nodes.push({
             id: "field_" + mapping.stepInputId,
             label: mapping.stepInputId,
+            data: {
+              defaultValue: mapping.defaultValue
+                ? mapping.defaultValue.value
+                : ""
+            },
             meta: {
-              type: 'field'
+              type: "field"
+            },
+            dimension: {
+              width: mapping.defaultValue
+                ? ("" + mapping.defaultValue.value).length >
+                  mapping.stepInputId.length
+                  ? ("" + mapping.defaultValue.value).length * 15
+                  : (mapping.stepInputId.length + 14) * 9
+                : (mapping.stepInputId.length + 14) * 9,
+              height: 50
             }
           });
         }
-        mapping.outputReferences.forEach(reference => {
-          if (
-            nodes.filter(n => n.id == "step_" + reference.workflowStepId).length == 0
-          ) {
-            nodes.push({
-              id: "step_" + reference.workflowStepId,
-              label: reference.workflowStepId,
-              meta: {
-                type: 'step'
-              }
-            });
-          }
 
-          edges.push({
-            id: id(),
-            source: "step_" + reference.workflowStepId,
-            target: "field_" + mapping.stepInputId
+        if (mapping.outputReferences != undefined) {
+          mapping.outputReferences.forEach(reference => {
+            if (
+              nodes.filter(n => n.id == "step_" + reference.workflowStepId)
+                .length == 0
+            ) {
+              nodes.push({
+                id: "step_" + reference.workflowStepId,
+                label: reference.workflowStepId,
+                meta: {
+                  type: "step"
+                }
+              });
+            }
+
+            edges.push({
+              id: id(),
+              source: "step_" + reference.workflowStepId,
+              target: "field_" + mapping.stepInputId
+            });
           });
-        });
+        }
       });
       this.nodes = nodes;
       this.edges = edges;
