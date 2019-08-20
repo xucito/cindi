@@ -6,19 +6,18 @@ using MongoDB.Bson.Serialization.Serializers;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Cindi.Persistence.ConsensusCoreMappings
 {
-    public static class NodeStorageClassMap
+     public static class LocalShardMetaDataClassMap
     {
-        public static void Register(BsonClassMap<NodeStorage> cm)
+        public static void Register(BsonClassMap<LocalShardMetaData> cm)
         {
             cm.AutoMap();
-            cm.SetIsRootClass(true);
-            cm.UnmapMember(c => c._saveThread);
-            cm.MapMember(s => s.ShardMetaData).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, LocalShardMetaData>>(DictionaryRepresentation.ArrayOfArrays));
+            cm.MapMember(s => s.ShardOperations).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<int, ShardOperation>>(DictionaryRepresentation.ArrayOfArrays));
+
+            cm.MapMember(s => s.ObjectsMarkedForDeletion).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, DateTime>>(DictionaryRepresentation.ArrayOfArrays));
             /*AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(NodeStorage))).ToList()
                 .ForEach(type => cm.AddKnownType(type));*/
         }

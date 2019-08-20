@@ -7,13 +7,14 @@ import { Component, OnInit, Input, OnChanges } from '@angular/core';
 })
 export class LogicBlockVisualizerComponent implements OnInit, OnChanges {
   ngOnChanges(changes: import("@angular/core").SimpleChanges): void {
-    this.selectedStep = undefined;
   }
 
   @Input() logicBlock;
   @Input() otherSteps;
+  @Input() allPossibleMappings;
 
-  selectedStep: any;
+  @Input() selectedStep: any;
+  @Input() selectedStepTemplate: any;
 
   constructor() { }
 

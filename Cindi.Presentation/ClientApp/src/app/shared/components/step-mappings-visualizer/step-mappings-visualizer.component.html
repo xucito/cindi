@@ -1,15 +1,21 @@
-<ngx-graph class="chart-container" [draggingEnabled]="false" [view]="[500, 200]" [links]="edges" [nodes]="nodes">
+<ngx-graph class="chart-container" [draggingEnabled]="false" [links]="edges" [nodes]="nodes">
   <ng-template #nodeTemplate let-node>
     <svg:g *ngIf="node.meta.type == 'field'">
-      <svg:rect rx=" 5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" fill="white" stroke="black">
+      <svg:rect rx=" 5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" fill="white"
+        stroke="black">
       </svg:rect>
       <svg:text x=10 y="20">{{node.label}}</svg:text>
       <svg:text x=10 y="40">Default Value: {{node.data.defaultValue}}</svg:text>
+      <svg:circle r=10 x=0 y=0 (click)="openStepMappingWindow(selectMappingTemplate,node.data)"></svg:circle>
     </svg:g>
     <svg:g *ngIf="node.meta.type == 'step'">
-        <svg:rect rx=" 5" ry="5" [attr.width]="100" [attr.height]="30" fill="white" stroke="black">
-        </svg:rect>
-        <svg:text x=10 y="20">Step: {{node.label}}</svg:text>
-      </svg:g>
+      <svg:rect rx=" 5" ry="5" [attr.width]="100" [attr.height]="30" fill="white" stroke="black">
+      </svg:rect>
+      <svg:text x=10 y="20">Step: {{node.label}}</svg:text>
+    </svg:g>
   </ng-template>
 </ngx-graph>
+
+<ng-template #selectMappingTemplate let-data>
+  <mapping-selector (onMappingChange)="updateMapping($event)" [mapping]="data.mapping" [options]="data.options"></mapping-selector>
+</ng-template>

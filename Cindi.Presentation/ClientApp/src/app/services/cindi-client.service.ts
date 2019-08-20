@@ -107,4 +107,8 @@ export class CindiClientService {
   PostWorkflow(workflow: any): Observable<any> {
     return this.http.post(this.baseUrl + this.api + "workflows", workflow);
   }
+
+  PostWorkflowTemplate(workflowTemplate: any): Observable<any> {
+    return this.http.post(this.baseUrl + this.api + "workflow-templates", workflowTemplate);
+  }
 }

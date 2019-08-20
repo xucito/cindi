@@ -11,12 +11,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ClientApp\**" />
+    <Content Remove="ClientApp\**" />
+    <EmbeddedResource Remove="ClientApp\**" />
+    <None Remove="ClientApp\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="environment.ts" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="ClientApp_Old\" />
-    <Folder Include="ClientApp\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

@@ -13,7 +13,8 @@ import {
   NbStepperModule,
   NbButtonModule,
   NbSelectModule,
-  NbInputModule
+  NbInputModule,
+  NbAccordionModule
 } from "@nebular/theme";
 import { CodemirrorModule } from "@ctrl/ngx-codemirror";
 import { TemplateViewComponent } from "./components/template-view/template-view.component";
@@ -24,6 +25,9 @@ import { ConditionsGroupVisualizerComponent } from './components/conditions-grou
 import { ConditionSelectorComponent } from './components/condition-selector/condition-selector.component';
 import { LogicBlockVisualizerComponent } from './components/logic-block-visualizer/logic-block-visualizer.component';
 import { StepMappingsVisualizerComponent } from './components/step-mappings-visualizer/step-mappings-visualizer.component';
+import { WorkflowInputsComponent } from './components/workflow-inputs/workflow-inputs.component';
+import { MappingSelectorComponent } from './components/mapping-selector/mapping-selector.component';
+import { SelectStepTemplateComponent } from './components/select-step-template/select-step-template.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +40,10 @@ import { StepMappingsVisualizerComponent } from './components/step-mappings-visu
     ConditionsGroupVisualizerComponent,
     ConditionSelectorComponent,
     LogicBlockVisualizerComponent,
-    StepMappingsVisualizerComponent
+    StepMappingsVisualizerComponent,
+    WorkflowInputsComponent,
+    MappingSelectorComponent,
+    SelectStepTemplateComponent
   ],
   exports: [
     DynamicFormComponent,
@@ -67,6 +74,7 @@ import { StepMappingsVisualizerComponent } from './components/step-mappings-visu
     NbIconModule,
     NbInputModule,
     NbCardModule,
+    NbAccordionModule,
     NbActionsModule,
     NgxGraphModule,
     NbButtonModule,

@@ -1,39 +1,103 @@
 <div class="row">
-    <div class="col-sm-6">
-      <nb-card>
-        <nb-card-body>
-          <ngx-graph class="chart-container" [autoZoom]="true" [draggingEnabled]="false" [links]="edges"
-            [nodes]="nodes">
-            <ng-template #nodeTemplate let-node>
-              <svg:g *ngIf="node.meta.type == 'step'" (click)="selectStep(node)">
-                <svg:rect rx="5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
-                  fill="white" stroke="black"></svg:rect>
-                <svg:text x=10 y="20">{{node.data.step.stepTemplateId}}</svg:text>
-                <svg:circle x="0" y="0" r="10" height="10" width="10" fill="white" stroke="black"></svg:circle>
-                <svg:text x="-4" y="4">{{node.data.step.workflowStepId}}</svg:text>
-              </svg:g>
-              <svg:g *ngIf="node.meta.type == 'start'">
-                <svg:rect rx="5" ry="5" width="60" height="30" fill="white" stroke="black"></svg:rect>
-                <svg:text x=10 y="20">START</svg:text>
-              </svg:g>
-
-              <svg:g *ngIf="node.meta.type == 'new'">
-                <svg:rect class="stroke-2" rx="5" ry="5" width="60" height="30" fill="white" stroke="black"></svg:rect>
-                <svg:text x=10 y="20" (click)="addLogicBlock(node)">NEW</svg:text>
-              </svg:g>
-            </ng-template>
-          </ngx-graph>
-        </nb-card-body>
-      </nb-card>
-    </div>
-
-    <div class="col-sm-6">
-      <nb-card>
-        <nb-card-body>
-          <logic-block-visualizer [otherSteps]="selectedLogicBlockPreviousSteps" [logicBlock]="selectedLogicblock">
-          </logic-block-visualizer>
-        </nb-card-body>
-      </nb-card>
-    </div>
-
+  <div class="col-sm-12">
+    <button nbButton (click)="openSaveWindow(submitWorkflow)">Save & Submit</button>
   </div>
+</div>
+<div class="row">
+  <div class="col-sm-3">
+    <nb-card>
+      <nb-card-header>
+        Workflow Inputs
+      </nb-card-header>
+      <nb-card-body>
+        <workflow-inputs (OnChange)="updateInputDefinitions($event)" [InputDefinitions]="workflowTemplate.inputDefinitions">
+        </workflow-inputs>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-sm-9">
+    <div class="row">
+      <div class="col-sm-12">
+        <nb-card>
+          <nb-card-header>
+            Workflow Visualizer
+          </nb-card-header>
+          <nb-card-body>
+            <ngx-graph class="chart-container" [clusters]="clusters" [autoZoom]="true" [draggingEnabled]="false"
+              [links]="edges" [nodes]="nodes" layout="dagreCluster">
+              <ng-template #nodeTemplate let-node>
+                <svg:g *ngIf="node.meta.type == 'step'" (click)="selectStep(node)">
+                  <svg:rect rx="5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
+                    fill="white" stroke="black"></svg:rect>
+                  <svg:text x=10 y="20">{{node.data.step.stepTemplateId}}</svg:text>
+                  <svg:circle x="0" y="0" r="10" height="10" width="10" fill="white" stroke="black"></svg:circle>
+                  <svg:text x="-4" y="4">{{node.data.step.workflowStepId}}</svg:text>
+                </svg:g>
+                <svg:g *ngIf="node.meta.type == 'start'">
+                  <svg:rect rx="5" ry="5" width="60" height="30" fill="white" stroke="black"></svg:rect>
+                  <svg:text x=10 y="20">START</svg:text>
+                </svg:g>
+
+                <svg:g *ngIf="node.meta.type == 'new'">
+                  <svg:rect class="stroke-2" rx="5" ry="5" width="60" height="30" fill="white" stroke="black">
+                  </svg:rect>
+                  <svg:text x=10 y="20" (click)="openNewLogicBlockWindow(newStepTemplateWithLogicBlock, node)">NEW
+                  </svg:text>
+                </svg:g>
+
+                <ng-template #clusterTemplate let-cluster>
+                  <svg:g>
+                    <svg:rect class="stroke-2" [attr.width]="cluster.width" [attr.height]="cluster.height"
+                      fill="#F5FCF4" stroke="black"></svg:rect>
+                    <svg:rect (click)="openNewStepWindow(newStepTemplate, cluster.data)" class="stroke-2" fill="white"
+                      x="0" y="0" width="100" height="50" stroke="black"></svg:rect>
+                    <svg:text x=10 y=25>Add Step</svg:text>
+                  </svg:g>
+                </ng-template>
+              </ng-template>
+            </ngx-graph>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12">
+        <nb-card *ngIf="selectedLogicblock">
+          <nb-card-header>
+            Logic Block Visualizer
+          </nb-card-header>
+          <nb-card-body>
+            <logic-block-visualizer [allPossibleMappings]="selectedLogicBlockPossibleMappings"
+              [otherSteps]="selectedLogicBlockPreviousSteps" [logicBlock]="selectedLogicblock"
+              [selectedStep]="selectedStep" [selectedStepTemplate]="selectedStepTemplate">
+            </logic-block-visualizer>
+          </nb-card-body>
+        </nb-card>
+      </div>
+    </div>
+  </div>
+
+
+
+
+</div>
+
+<ng-template #newStepTemplate let-data>
+  <select-step-template [stepTemplates]="stepTemplates" (onSelect)="addSubsequentStep($event, data)">
+  </select-step-template>
+</ng-template>
+
+<ng-template #newStepTemplateWithLogicBlock let-data>
+  <select-step-template [stepTemplates]="stepTemplates" (onSelect)="addLogicBlockWithSubsequentStep($event, data)">
+  </select-step-template>
+</ng-template>
+
+<ng-template #submitWorkflow let-data>
+  Name
+  <input nbInput fullWidth type="text" [ngModelOptions]="{standalone: true}"
+  [(ngModel)]="workflowTemplate.name" >
+  Version
+  <input nbInput fullWidth type="number" [ngModelOptions]="{standalone: true}"
+  [(ngModel)]="workflowTemplate.version" >
+  <Button nbButton (click)="save()">Save</Button>
+</ng-template>

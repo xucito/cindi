@@ -63,7 +63,7 @@ namespace Cindi.Persistence.State
             }
             catch(Exception e)
             {
-                Console.WriteLine("Issues saving as there may be a concurrency issue");
+                throw e;
             }
         }
     }

@@ -15,7 +15,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
                 {
                     if (t.IsSubclassOf(typeof(Condition)))
                     {
-                        if (!t.IsGenericTypeDefinition && jObject.Value<string>("Name") == ((Condition)Activator.CreateInstance(t)).Name)
+                        if (!t.IsGenericTypeDefinition && jObject.Value<string>("name") == ((Condition)Activator.CreateInstance(t)).Name)
                         {
                             return (Condition)Activator.CreateInstance(t);
                         }

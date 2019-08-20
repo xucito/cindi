@@ -1,0 +1,43 @@
+<div class="row">
+  <div class="col-sm-6">
+    <nb-accordion>
+      <nb-accordion-item *ngFor="let option of _options">
+        <nb-accordion-item-header>
+          Step: {{option.stepRefId}}:{{option.stepTemplateName}}
+        </nb-accordion-item-header>
+        <nb-accordion-item-body>
+          <nb-list>
+            <nb-list-item *ngFor="let mapping of option.mappings">
+              <div class="list-item w-100">
+                {{mapping.name}}
+              </div>
+              <div class="list-item w-100">
+                <button (click)="addOutputReference(option, mapping)" nbButton status="success">
+                  <nb-icon icon="arrow-circle-right-outline"></nb-icon>
+                </button>
+              </div>
+            </nb-list-item>
+          </nb-list>
+        </nb-accordion-item-body>
+      </nb-accordion-item>
+    </nb-accordion>
+  </div>
+  <div class="col-sm-6">
+    <nb-list *ngIf="mapping != undefined">
+      <nb-list-item *ngFor="let reference of mapping.outputReferences; let i = index">
+        <div class="list-item">
+          <span *ngIf="reference.workflowStepId != -1">Step: {{reference.workflowStepId}}</span>
+          <span *ngIf="reference.workflowStepId == -1">Workflow Input</span>
+        </div>
+        <div class="list-item">
+          {{reference.outputId}}
+        </div>
+        <div class="list-item">
+          <button (click)="increasePriority(i)" nbButton status="success">
+            <nb-icon icon="arrow-circle-up-outline"></nb-icon>
+          </button>
+        </div>
+      </nb-list-item>
+    </nb-list>
+  </div>
+</div>

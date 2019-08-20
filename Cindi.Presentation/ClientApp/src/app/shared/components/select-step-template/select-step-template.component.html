@@ -1,0 +1,11 @@
+<nb-list>
+  <nb-list-item *ngFor="let stepTemplate of stepTemplates" (click)="onSelect.emit(stepTemplate)">
+    <div class="step-template-name">
+      <div class="caption">
+        Version: {{stepTemplate.version}}</div>
+      <div class="value">
+        {{stepTemplate.name}}
+      </div>
+    </div>
+  </nb-list-item>
+</nb-list>

@@ -26,6 +26,8 @@ using ConditionSerializer = Cindi.Persistence.Serializers.ConditionSerializer;
 using System.Linq;
 using Cindi.Persistence.WorkflowTemplates.Conditions;
 using Cindi.Persistence.ConsensusCoreMappings;
+using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Bson.Serialization.Options;
 
 namespace Cindi.Persistence
 {
@@ -55,7 +57,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<NodeStorage>(gv => NodeStorageClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<Update>(gv => UpdateClassMap.Register(gv));
-
+            BsonClassMap.RegisterClassMap<LocalShardMetaData>(lsm => LocalShardMetaDataClassMap.Register(lsm));
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
             BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());*/
