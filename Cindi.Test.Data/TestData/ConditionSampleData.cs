@@ -9,183 +9,191 @@ namespace Cindi.Test.Global.TestData
 {
     public static class ConditionSampleData
     {
-       public static ConditionGroup OneLayerTrueConditionGroup = new ConditionGroup()
+        public static ConditionGroup OneLayerTrueConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.AND,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysTrueCondition(),
-                    new AlwaysTrueCondition()
+                    {"0", new AlwaysTrueCondition() } ,
+                    {"1", new AlwaysTrueCondition() }
                 }
         };
 
         public static ConditionGroup OneLayerORTrueConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.OR,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysFalseCondition(),
-                    new AlwaysTrueCondition()
+                    {"0", new AlwaysFalseCondition() },
+                    {"1", new AlwaysTrueCondition() }
                 }
         };
 
         public static ConditionGroup OneLayerFalseConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.AND,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysTrueCondition(),
-                    new AlwaysFalseCondition()
+                    {"0", new AlwaysTrueCondition() },
+                    {"1", new AlwaysFalseCondition() }
                 }
         };
 
-       public static ConditionGroup TwoLayerTrueConditionGroup = new ConditionGroup()
+        public static ConditionGroup TwoLayerTrueConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.AND,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysTrueCondition(),
-                    new AlwaysTrueCondition()
+                    {"0", new AlwaysTrueCondition() },
+                    {"1", new AlwaysTrueCondition() }
                 },
-            ConditionGroups = new List<ConditionGroup>()
+            ConditionGroups = new Dictionary<string, ConditionGroup>()
             {
-                new ConditionGroup()
+                { "0", new ConditionGroup()
                 {
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysTrueCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysTrueCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     }
+                }
                 },
-                new ConditionGroup()
+                 { "1", new ConditionGroup()
                 {
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysTrueCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysTrueCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     }
                 }
             }
+            }
         };
 
-       public static ConditionGroup TwoLayerFalseConditionGroup = new ConditionGroup()
+        public static ConditionGroup TwoLayerFalseConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.AND,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysTrueCondition(),
-                    new AlwaysTrueCondition()
+                    {"0", new AlwaysTrueCondition() },
+                    {"1", new AlwaysTrueCondition() }
                 },
-            ConditionGroups = new List<ConditionGroup>()
+            ConditionGroups = new Dictionary<string, ConditionGroup>()
             {
-                new ConditionGroup()
+                 { "0", new ConditionGroup()
                 {
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysTrueCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysTrueCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     }
-                },
-                new ConditionGroup()
+                } },
+                 { "1", new ConditionGroup()
                 {
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysFalseCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysFalseCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     }
                 }
+            }
             }
         };
 
         public static ConditionGroup ThreeLayerTrueConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.AND,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysTrueCondition(),
-                    new AlwaysTrueCondition()
+                    {"0", new AlwaysTrueCondition() },
+                    {"1", new AlwaysTrueCondition() }
                 },
-            ConditionGroups = new List<ConditionGroup>()
+            ConditionGroups = new Dictionary<string, ConditionGroup>()
             {
-                new ConditionGroup()
+                {"0", new ConditionGroup()
                 {
                     //Should return true
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysTrueCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysTrueCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     },
-                    ConditionGroups = new List<ConditionGroup>()
+                    ConditionGroups = new Dictionary<string, ConditionGroup>()
                     {
-                        new ConditionGroup()
+                        { "0", new ConditionGroup()
                         {
                             //Should return true
                             Operator = OperatorStatements.OR,
-                            Conditions = new List<Condition>()
+                            Conditions = new Dictionary<string, Condition>()
                             {
-                                new AlwaysFalseCondition(),
-                                new AlwaysTrueCondition()
+                                {"0", new AlwaysFalseCondition() },
+                                {"1", new AlwaysTrueCondition() }
                             }
                         }
                     }
+                }
+                }
                 },
                 //Should return true
-                new ConditionGroup()
+                 { "1", new ConditionGroup()
                 {
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysTrueCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysTrueCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     }
                 }
+            }
             }
         };
 
         public static ConditionGroup ThreeLayerFalseConditionGroup = new ConditionGroup()
         {
             Operator = OperatorStatements.AND,
-            Conditions = new List<Condition>()
+            Conditions = new Dictionary<string, Condition>()
                 {
-                    new AlwaysTrueCondition(),
-                    new AlwaysTrueCondition()
+                    {"0", new AlwaysTrueCondition() },
+                    {"1", new AlwaysTrueCondition() }
                 },
-            ConditionGroups = new List<ConditionGroup>()
+            ConditionGroups = new Dictionary<string, ConditionGroup>()
             {
-                new ConditionGroup()
+                {"0", new ConditionGroup()
                 {
                     Operator = OperatorStatements.AND,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysTrueCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysTrueCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     },
-                    ConditionGroups = new List<ConditionGroup>()
+                    ConditionGroups = new Dictionary<string, ConditionGroup>()
                     {
-                        new ConditionGroup()
+                         { "0", new ConditionGroup()
                         {
                             Operator = OperatorStatements.AND,
-                            Conditions = new List<Condition>()
+                            Conditions = new Dictionary<string, Condition>()
                             {
-                                new AlwaysFalseCondition(),
-                                new AlwaysTrueCondition()
+                                {"0", new AlwaysFalseCondition() },
+                                {"1", new AlwaysTrueCondition() }
                             }
                         }
                     }
-                },
-                new ConditionGroup()
+                    }
+                } },
+                 { "1", new ConditionGroup()
                 {
                     Operator = OperatorStatements.OR,
-                    Conditions = new List<Condition>()
+                    Conditions = new Dictionary<string, Condition>()
                     {
-                        new AlwaysFalseCondition(),
-                        new AlwaysTrueCondition()
+                        {"0", new AlwaysFalseCondition() },
+                        {"1", new AlwaysTrueCondition() }
                     }
+                }
                 }
             }
         };

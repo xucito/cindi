@@ -17,8 +17,8 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
         [Required]
         public string Version { get; set; }
         public string Description { get; set; }
-        public List<LogicBlock> LogicBlocks { get; set; }
-        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }
+        public Dictionary<string, LogicBlock> LogicBlocks { get; set; } = new Dictionary<string, LogicBlock>();
+        public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; } = new Dictionary<string, DynamicDataDescription>();
         public string CreatedBy { get; set; }
     }
 }

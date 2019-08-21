@@ -9,11 +9,9 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
         public LogicBlock()
         {
             Dependencies = new ConditionGroup();
-            SubsequentSteps = new List<SubsequentStep>();
+            SubsequentSteps = new Dictionary<string, SubsequentStep>();
         }
-
-        public int Id { get; set; }
         public new ConditionGroup Dependencies { get; set; }
-        public new List<SubsequentStep> SubsequentSteps { get; set; }
+        public new Dictionary<string, SubsequentStep> SubsequentSteps { get; set; }
     }
 }

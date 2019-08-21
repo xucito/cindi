@@ -75,7 +75,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
 
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
@@ -123,7 +123,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "$secret"}
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
 
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
@@ -170,7 +170,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "$$secret"}
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
 
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
@@ -215,7 +215,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "\\$secret"}
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
 
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
@@ -261,7 +261,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"n-1", "$1"},
                 {"n-2", 2 }
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
 
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 

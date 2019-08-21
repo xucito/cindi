@@ -55,16 +55,15 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     name: "SimpleWorkflowWithInputs",
     version: 1,
     description: null,
-    logicBlocks: [
-      {
-        id: 0,
+    logicBlocks: {
+      0: {
         dependencies: {
           id: "97dae226-98ae-4f8e-b2b7-bc54216bfa21",
           operator: "AND",
-          conditions: [],
-          conditionGroups: []
+          conditions: {},
+          conditionGroups: {}
         },
-        subsequentSteps: [
+        subsequentSteps:[
           {
             description: null,
             stepTemplateId: "Fibonacci_stepTemplate:0",
@@ -88,16 +87,14 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
             ],
             isPriority: false,
             workflowStepId: 0
-          }
-        ]
+          }]
       },
-      {
-        id: 1,
+      1: {
         dependencies: {
           id: "61860b31-4b3c-4332-b5c5-0e1f095154ff",
           operator: "AND",
-          conditions: [
-            {
+          conditions: {
+           "0": {
               name: "StepStatus",
               comparer: "is",
               workflowStepId: 0,
@@ -107,8 +104,8 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
               id: "c7e9ca0d-c15b-4d5f-aea2-fc1b099de35c",
               description: null
             }
-          ],
-          conditionGroups: []
+          },
+          conditionGroups: {}
         },
         subsequentSteps: [
           {
@@ -137,7 +134,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
           }
         ]
       }
-    ],
+    },
     inputDefinitions: {
       "n-1": { description: null, type: "int" },
       "n-2": { description: null, type: "int" }
@@ -190,21 +187,21 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
       }
     });
 
-    this.workflowTemplate.logicBlocks.forEach(logicBlock => {
-      this.getLogicBlockNodesAndEdges(nodes, edges, logicBlock);
+    Object.keys(this.workflowTemplate.logicBlocks).forEach(key => {
+      this.getLogicBlockNodesAndEdges(nodes, edges, this.workflowTemplate.logicBlocks[key]);
     });
 
     this.addNewNodes(edges, nodes);
 
     this.clusters = [];
-    this.workflowTemplate.logicBlocks.forEach(logicBlock => {
+    Object.keys(this.workflowTemplate.logicBlocks).forEach(key => {
       this.clusters.push({
         id: id(),
-        label: logicBlock.id,
-        childNodeIds: logicBlock.subsequentSteps.map(
+        label: key,
+        childNodeIds: this.workflowTemplate.logicBlocks[key].subsequentSteps.map(
           ss => "" + ss.workflowStepId
         ),
-        data: logicBlock
+        data: this.workflowTemplate.logicBlocks[key]
       });
     });
 
@@ -264,21 +261,21 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     conditionGroup: any,
     subsequentSteps: any[]
   ) {
-    conditionGroup.conditions.forEach(dependenciesStep => {
+    Object.keys(conditionGroup.conditions).forEach(key => {
       subsequentSteps.forEach(step => {
         edges.push({
           id: id(), //dependenciesStep.workflowStepId + "-" + step.workflowStepId,
-          source: "" + dependenciesStep.workflowStepId,
+          source: "" + conditionGroup.conditions[key].workflowStepId,
           target: "" + step.workflowStepId
         });
       });
     });
 
-    conditionGroup.conditionGroups.forEach(conditionGroup => {
+    Object.keys(conditionGroup.conditionGroups).forEach(key => {
       this.getConditionGroupNodesAndEdges(
         nodes,
         edges,
-        conditionGroup,
+        conditionGroup.conditionGroups[key],
         subsequentSteps
       );
     });
@@ -387,8 +384,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
 
   addLogicBlock(node) {
     console.log(node);
-    this.workflowTemplate.logicBlocks.push({
-      id: id(),
+    this.workflowTemplate.logicBlocks[id()] = {
       dependencies: {
         id: id(),
         operator: "AND",
@@ -404,7 +400,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
         conditionGroups: []
       },
       subsequentSteps: [{}]
-    });
+    };
 
     this.generateGraph();
   }
@@ -443,7 +439,6 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     console.log(parentId);
 
     let newLogicBlock = {
-      id: id(),
       dependencies: {
         id: id(),
         operator: "AND",
@@ -469,7 +464,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
       ]
     };
 
-    this.workflowTemplate.logicBlocks.push(newLogicBlock);
+    this.workflowTemplate.logicBlocks[id()] = newLogicBlock;
 
     this.generateGraph();
   }

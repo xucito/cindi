@@ -29,10 +29,10 @@ export class WorkflowDesignerComponent implements OnInit, OnChanges {
   allStepTemplates: any[];
 
   ngOnChanges(changes: import("@angular/core").SimpleChanges): void {
-    throw new Error("Method not implemented.");
+   // throw new Error("Method not implemented.");
   }
   ngOnInit(): void {
-    throw new Error("Method not implemented.");
+   // throw new Error("Method not implemented.");
   }
 
   constructor(

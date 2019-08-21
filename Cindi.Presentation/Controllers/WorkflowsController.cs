@@ -28,6 +28,12 @@ namespace Cindi.Presentation.Controllers
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+
+            if(command.Inputs == null)
+            {
+                //Set to an empty dictionary if null
+                command.Inputs = new Dictionary<string, object>();
+            }
             try
             {
                 command.CreatedBy = ClaimsUtility.GetId(User);

@@ -16,10 +16,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         {
             cm.AutoMap();
             cm.MapMember(s => s.ShardOperations).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<int, ShardOperation>>(DictionaryRepresentation.ArrayOfArrays));
-
             cm.MapMember(s => s.ObjectsMarkedForDeletion).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, DateTime>>(DictionaryRepresentation.ArrayOfArrays));
-            /*AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(NodeStorage))).ToList()
-                .ForEach(type => cm.AddKnownType(type));*/
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Utilities;
 using ConsensusCore.Domain.Interfaces;
@@ -45,8 +46,9 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     BotName = request.BotKeyName,
                     Id = keyId,
                     IsDisabled = false,
-                    Nonce = 0
-                }
+                    Nonce = 0,
+                    ShardType = typeof(BotKey).Name
+        }
             }));
 
             return new CommandResult<string>()

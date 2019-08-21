@@ -68,87 +68,91 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                 Name = data.workflowTemplateWithInputs.Name,
                 Version = data.workflowTemplateWithInputs.Version,
                 InputDefinitions = data.workflowTemplateWithInputs.InputDefinitions,
-                LogicBlocks = new List<LogicBlock>()
+                LogicBlocks = new Dictionary<string, LogicBlock>()
             {
-                new LogicBlock()
+                    { "0", new LogicBlock()
                 {
-                    Id = 0,
                     Dependencies = new ConditionGroup
                     {
                         Operator = "OR",
-                        Conditions = new List<Condition>(){},
+                        Conditions = new Dictionary<string, Condition>(){},
                     },
-                    SubsequentSteps = new List<SubsequentStep> {
+                    SubsequentSteps = new Dictionary<string, SubsequentStep>{
+                        {"0",
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             WorkflowStepId = 0,
-                                      Mappings = new List<Mapping>(){
+                                      Mappings = new Dictionary<string, Mapping>(){
+                                          {"n-1",
                                       new Mapping()
                                        {
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
                                            },
-                                           StepInputId = "n-1"
-                                       },
+                                       } },
+                                      { "n-2",
                                       new Mapping(){
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-2"
+                                           }
                                        }
                                    }
+                                      }
                          } }
-                },
+                } } },
+                    { "1",
                 new LogicBlock()
                 {
-                    Id = 1,
                     Dependencies = new ConditionGroup
                     {
                         Operator = "AND",
-                        Conditions = new List<Condition>(){ new StepStatusCondition()
+                        Conditions = new Dictionary<string, Condition>{
+                            {"0", new StepStatusCondition()
                         {
-                    WorkflowStepId = 0,
+                    StepName = "0",
                     Status = StepStatuses.Successful,
                     StatusCode = 0
-                        }},
+                        }} }
                     },
-                    SubsequentSteps = new List<SubsequentStep> {
+                    SubsequentSteps = new Dictionary<string, SubsequentStep> {
+                        { "1",
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             WorkflowStepId = 1,
-                                      Mappings = new List<Mapping>(){
+                                      Mappings = new Dictionary<string, Mapping>(){
+                                          {"n-1",
                                       new Mapping()
                                        {
                                           OutputReferences = new StepOutputReference[]
                                           {
                                               new StepOutputReference()
                                               {
-                                                  WorkflowStepId = 3,
+                                                  StepName = "3",
                                                   OutputId = "n"
                                               }
                                           },
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-1"
-                                       },
+                                           }
+                                       } },
+                                      {"n-2",
                                       new Mapping(){
                                             OutputReferences = new StepOutputReference[]
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    WorkflowStepId = 0,
+                                                    StepName = "0",
                                                     OutputId = "n"
                                                 }
                                             },
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-2"
+                                           }
                                        }
                                    }
                          } }
                 }
+                }
+                }
+                    }
             }
             }, new System.Threading.CancellationToken()));
         }
@@ -174,87 +178,95 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                 Name = data.workflowTemplateWithInputs.Name,
                 Version = data.workflowTemplateWithInputs.Version,
                 InputDefinitions = data.workflowTemplateWithInputs.InputDefinitions,
-                LogicBlocks = new List<LogicBlock>()
+                LogicBlocks = new Dictionary<string, LogicBlock>()
             {
+                    { "0",
                 new LogicBlock()
                 {
-                    Id = 0,
                     Dependencies = new ConditionGroup
                     {
                         Operator = "OR",
-                        Conditions = new List<Condition>(){},
+                        Conditions = new Dictionary<string, Condition>(){},
                     },
-                    SubsequentSteps = new List<SubsequentStep> {
+                    SubsequentSteps = new Dictionary<string, SubsequentStep> {
+                        { "0",
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             WorkflowStepId = 0,
-                                      Mappings = new List<Mapping>(){
+                                      Mappings = new Dictionary<string, Mapping>(){
+                                          {"n-1",
                                       new Mapping()
                                        {
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-1"
-                                       },
+                                           }
+                                       } },
+                                      {
+                                              "n-2",
                                       new Mapping(){
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-2"
-                                       }
+                                           }
+                                      }
                                    }
+                                      }
                          } }
-                },
+                }
+                    } },
+                { "1",
                 new LogicBlock()
                 {
-                    Id = 1,
                     Dependencies = new ConditionGroup
                     {
                         Operator = "AND",
-                        Conditions = new List<Condition>(){ new StepStatusCondition()
+                        Conditions = new Dictionary<string, Condition>(){
+                            {"0", new StepStatusCondition()
                         {
-                    WorkflowStepId = 0,
+                    StepName = "0",
                     Status = StepStatuses.Successful,
                     StatusCode = 0
-                        }},
+                        }} }
                     },
-                    SubsequentSteps = new List<SubsequentStep> {
+                    SubsequentSteps = new Dictionary<string, SubsequentStep>{
+                        { "1",
                          new SubsequentStep(){
                              StepTemplateId =StepTemplate.ReferenceId,
-                             WorkflowStepId = 1,
-                                      Mappings = new List<Mapping>(){
+                                      Mappings = new Dictionary<string, Mapping>(){
+                                          {"n-1",
                                       new Mapping()
                                        {
                                           OutputReferences = new StepOutputReference[]
                                           {
                                               new StepOutputReference()
                                               {
-                                                  WorkflowStepId = 0,
+                                                  StepName = "0",
                                                   OutputId = "z"
                                               }
                                           },
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-1"
-                                       },
+                                           }
+                                       } },
+                                      {
+                                              "n-2",
                                       new Mapping(){
                                             OutputReferences = new StepOutputReference[]
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    WorkflowStepId = 0,
+                                                    StepName = "0",
                                                     OutputId = "n"
                                                 }
                                             },
                                            DefaultValue = new DefaultValue(){
                                                Value = 1
-                                           },
-                                           StepInputId = "n-2"
-                                       }
+                                           }
+                                      }
                                    }
                          } }
                 }
+                    }
+                }
+                    }
             }
             }, new System.Threading.CancellationToken()));
         }
@@ -279,7 +291,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                 Name = data.workflowTemplateWithInputs.Name,
                 Version = data.workflowTemplateWithInputs.Version,
                 InputDefinitions = data.workflowTemplateWithInputs.InputDefinitions,
-                LogicBlocks = new List<LogicBlock>()
+                LogicBlocks = new Dictionary<string, LogicBlock>()
                 {
                 }
             }, new System.Threading.CancellationToken()));

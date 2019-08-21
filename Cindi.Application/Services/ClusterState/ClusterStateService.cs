@@ -154,7 +154,7 @@ namespace Cindi.Application.Services.ClusterState
         public bool AutoRegistrationEnabled { get { return state.AllowAutoRegistration; } }
 
 
-        public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, int logicBlockId)
+        public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
             return (await _node.Send(new ExecuteCommands()
             {
@@ -174,7 +174,7 @@ namespace Cindi.Application.Services.ClusterState
             //state.LockedLogicBlocks.Add(block.LogicBlockId, DateTime.UtcNow);
         }
 
-        public async Task<bool> UnlockLogicBlock(Guid lockKey, Guid workflowid, int logicBlockId)
+        public async Task<bool> UnlockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
             return (await _node.Send(new ExecuteCommands()
             {
@@ -284,7 +284,7 @@ namespace Cindi.Application.Services.ClusterState
             return state.AssignmentEnabled;
         }
 
-        public bool WasLockObtained(Guid lockKey, Guid workflowId, int logicBlockId)
+        public bool WasLockObtained(Guid lockKey, Guid workflowId, string logicBlockId)
         {
             if (state.LockedLogicBlocks.ContainsKey(workflowId + ":" + logicBlockId) && state.LockedLogicBlocks[(workflowId + ":" + logicBlockId)].LockerCode == lockKey)
             {
@@ -294,7 +294,7 @@ namespace Cindi.Application.Services.ClusterState
         }
 
 
-        public bool IsLogicBlockLocked(Guid workflowId, int logicBlockId)
+        public bool IsLogicBlockLocked(Guid workflowId, string logicBlockId)
         {
             if (state.LockedLogicBlocks.ContainsKey(workflowId + ":" + logicBlockId))
             {

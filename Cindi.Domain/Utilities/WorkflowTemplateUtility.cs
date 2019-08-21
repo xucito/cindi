@@ -27,7 +27,7 @@ namespace Cindi.Domain.Utilities
             else
             {
                 //All references with a existing step or is a reference to the workflow which is always there
-                var filteredReferences = references.Where(r => steps.Where(s => s.WorkflowStepId == r.WorkflowStepId || r.WorkflowStepId == -1).Count() > 0);
+                var filteredReferences = references.Where(r => steps.Where(s => s.Name == r.StepName).Count() > 0);
 
                 foreach (var fr in filteredReferences)
                 {

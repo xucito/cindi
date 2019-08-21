@@ -29,6 +29,16 @@ namespace Cindi.Presentation.Controllers
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+
+            if(command.InputDefinitions == null)
+            {
+                command.InputDefinitions = new Dictionary<string, Domain.ValueObjects.DynamicDataDescription>();
+            }
+
+            if(command.LogicBlocks == null)
+            {
+                command.InputDefinitions = new Dictionary<string, Domain.ValueObjects.DynamicDataDescription>();
+            }
             try
             {
                 command.CreatedBy = ClaimsUtility.GetId(User);

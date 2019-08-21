@@ -38,30 +38,25 @@ namespace Cindi.Persistence.State
             return result;
         }
 
-        public object _saveLock = new object();
-
         public void SaveNodeData(NodeStorage storage)
         {
             try
             {
-                lock (_saveLock)
+                if (!DoesStateExist)
                 {
-                    if (!DoesStateExist)
-                    {
-                        DoesStateExist = (LoadNodeData() != null);
-                    }
-                    if (!DoesStateExist)
-                    {
-                        _clusterState.InsertOne(storage);
-                    }
-                    else
-                    {
-                        //var filter = Builders<NodeStorage>.Filter.Eq("Id", storage.Id.ToString());
-                        _clusterState.ReplaceOne(f => true, storage);
-                    }
+                    DoesStateExist = (LoadNodeData() != null);
+                }
+                if (!DoesStateExist)
+                {
+                    _clusterState.InsertOne(storage);
+                }
+                else
+                {
+                    //var filter = Builders<NodeStorage>.Filter.Eq("Id", storage.Id.ToString());
+                    _clusterState.ReplaceOne(f => true, storage);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw e;
             }

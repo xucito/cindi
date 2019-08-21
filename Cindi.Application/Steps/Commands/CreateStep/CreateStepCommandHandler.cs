@@ -51,7 +51,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
-            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.WorkflowStepId, request.WorkflowId, ClusterStateService.GetEncryptionKey() );
+            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.WorkflowId, ClusterStateService.GetEncryptionKey() );
 
            /* var createdStepId = await _stepsRepository.InsertStepAsync(
                 newStep

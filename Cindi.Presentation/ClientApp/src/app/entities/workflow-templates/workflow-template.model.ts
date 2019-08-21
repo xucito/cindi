@@ -4,7 +4,7 @@ export class WorkflowTemplate {
   name: string = '';
   version: number = 0;
   description: string = '';
-  logicBlocks: any[] = [];
+  logicBlocks: any;
   inputDefinitions: any;
   createdBy: string;
   createdOn: Date;

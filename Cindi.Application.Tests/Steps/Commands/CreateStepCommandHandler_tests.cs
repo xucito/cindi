@@ -172,7 +172,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "This is a test"}
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep));

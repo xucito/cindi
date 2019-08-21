@@ -22,6 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Domain.Exceptions.Workflows;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
@@ -61,6 +62,11 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 throw new WorkflowTemplateNotFoundException("Workflow Template " + request.WorkflowTemplateId + " not found.");
             }
 
+            if(template.InputDefinitions.Count() < request.Inputs.Count())
+            {
+                throw new InvalidInputsException("Invalid number of inputs, number passed was " + request.Inputs.Count() + " which is less then defined " + template.InputDefinitions.Count());
+            }
+
             if (template.InputDefinitions != null)
             {
                 foreach (var inputs in template.InputDefinitions)
@@ -73,7 +79,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             }
 
             var createdWorkflowId = Guid.NewGuid();
-            var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Dependencies.Evaluate(new List<Step>())).ToList();
+            var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
             var createdWorkflowTemplateId = await _node.Send(new WriteData()
             {
@@ -97,35 +103,34 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             DateTimeOffset WorkflowStartTime = DateTime.Now;
             foreach (var block in startingLogicBlock)
             {
-                foreach (var subBlock in block.SubsequentSteps)
+                foreach (var subBlock in block.Value.SubsequentSteps)
                 {
-                    var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.StepTemplateId);
+                    var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.Value.StepTemplateId);
 
                     var verifiedInputs = new Dictionary<string, object>();
                     
-                    foreach (var mapping in subBlock.Mappings)
+                    foreach (var mapping in subBlock.Value.Mappings)
                     {
                         string mappedValue = "";
-                        if ((mapping.DefaultValue != null && (mapping.OutputReferences == null || mapping.OutputReferences.Count() == 0)) || (mapping.DefaultValue != null && mapping.OutputReferences.First() != null && mapping.DefaultValue.Priority > mapping.OutputReferences.First().Priority))
+                        if ((mapping.Value.DefaultValue != null && (mapping.Value.OutputReferences == null || mapping.Value.OutputReferences.Count() == 0)) || (mapping.Value.DefaultValue != null && mapping.Value.OutputReferences.First() != null && mapping.Value.DefaultValue.Priority > mapping.Value.OutputReferences.First().Priority))
                         {
                             // Change the ID to match the output
-                            verifiedInputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
+                            verifiedInputs.Add(mapping.Key, mapping.Value.DefaultValue.Value);
                         }
-                        else if (mapping.OutputReferences != null)
+                        else if (mapping.Value.OutputReferences != null)
                         {
-                            verifiedInputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(request.Inputs, mapping.OutputReferences.First().OutputId).Value);
+                            verifiedInputs.Add(mapping.Key, DynamicDataUtility.GetData(request.Inputs, mapping.Value.OutputReferences.First().OutputId).Value);
                         }
                     }
 
                     await _mediator.Send(new CreateStepCommand()
                     {
-                        StepTemplateId = subBlock.StepTemplateId,
+                        StepTemplateId = subBlock.Value.StepTemplateId,
                         CreatedBy = SystemUsers.QUEUE_MANAGER,
                         Description = null,
                         Inputs = verifiedInputs,
                         WorkflowId = createdWorkflowId,
-                        WorkflowStepId = subBlock.WorkflowStepId,
-                        Name = null
+                        Name = subBlock.Key
                     });
 
                   /*  newStep = await _stepsRepository.InsertStepAsync(newStep);
@@ -163,7 +168,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     {
                         FieldName = "completedlogicblocks",
                         Type = UpdateType.Append,
-                        Value = block.Id //Add the logic block
+                        Value = block.Key //Add the logic block
                     }
                     }
                 });

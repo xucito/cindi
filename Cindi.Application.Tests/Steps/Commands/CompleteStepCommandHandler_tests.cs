@@ -139,10 +139,10 @@ namespace Cindi.Application.Tests.Steps.Commands
             }));
 
             Mock<IClusterStateService> service = new Mock<IClusterStateService>();
-            service.Setup(m => m.IsLogicBlockLocked(It.IsAny<Guid>(), It.IsAny<int>())).Returns(false);
-            service.Setup(m => m.LockLogicBlock(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>())).Returns(Task.FromResult(1));
+            service.Setup(m => m.IsLogicBlockLocked(It.IsAny<Guid>(), It.IsAny<string>())).Returns(false);
+            service.Setup(m => m.LockLogicBlock(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(Task.FromResult(1));
             _node.Setup(n => n.HasEntryBeenCommitted(It.IsAny<int>())).Returns(true);
-            service.Setup(m => m.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>())).Returns(true);
+            service.Setup(m => m.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(true);
 
             var handler = new CompleteStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, workflowTemplateRepository.Object, sequenceRepository.Object, service.Object, mockLogger.Object, cindiClusterOptions, mediator.Object, keysRepository.Object, _node.Object);
 
@@ -231,7 +231,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var testPhrase = "This is a test";
             var TestStep = SecretSampleData.StepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
-            }, null, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, ClusterStateService.GetEncryptionKey());
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
             Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
             Mock<IWorkflowTemplatesRepository> workflowTemplateRepository = new Mock<IWorkflowTemplatesRepository>();

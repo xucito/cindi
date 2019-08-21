@@ -10,6 +10,7 @@ using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
+using Cindi.Domain.Enums;
 
 namespace Cindi.Domain.Entities.WorkflowsTemplates
 {
@@ -17,7 +18,7 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
     {
         public WorkflowTemplate()
         {
-            this.LogicBlocks = new List<LogicBlock>();
+            this.LogicBlocks = new Dictionary<string, LogicBlock>();
             ShardType = typeof(WorkflowTemplate).Name;
         }
 
@@ -31,7 +32,7 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
             string referenceId,
             string description,
             Dictionary<string, DynamicDataDescription> inputDefinitions,
-            List<LogicBlock> logicBlocks,
+            Dictionary<string, LogicBlock> logicBlocks,
             string createdBy,
             DateTime createdOn
             ) : base(
@@ -87,7 +88,7 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
         public string Version { get { return ReferenceId.Split(':')[1]; } }
 
         public string Description { get; set; }
-        public List<LogicBlock> LogicBlocks { get; set; }
+        public Dictionary<string, LogicBlock> LogicBlocks { get; set; }
 
         /// <summary>
         /// Input from dependency with input name is the dictionary key and the type as the Dictionary value
@@ -105,16 +106,16 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
 
                 foreach (var reference in map.OutputReferences)
                 {
-                    if (reference.WorkflowStepId != -1)
+                    if (reference.StepName.ToLower() != ReservedValues.WorkflowStartStepName)
                     {
-                        throw new InvalidMappingException("All starting mappings must be mapping from step -1 to step 0");
+                        throw new InvalidMappingException("All starting mappings must be mapping from step start to step 0");
                     }
                 }
             }
 
             if (map.DefaultValue == null && (map.OutputReferences == null || map.OutputReferences.Count() == 0))
             {
-                throw new InvalidMappingException("Both Value and Output reference are not specified for mapping " + map.StepInputId);
+                throw new InvalidMappingException("Both Value and Output reference are not specified for mapping.");
             }
 
             return true;

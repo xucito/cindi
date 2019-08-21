@@ -6,7 +6,7 @@ namespace Cindi.Domain.Entities.Steps
 {
     public class StepOutputReference
     {
-        public int WorkflowStepId { get; set; }
+        public string StepName { get; set; }
 
         public string OutputId { get; set; }
 

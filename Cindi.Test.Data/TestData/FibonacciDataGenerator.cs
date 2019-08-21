@@ -33,31 +33,32 @@ namespace Cindi.Test.Global.TestData
 
 
 
-            List<LogicBlock> logicBlocks = new List<LogicBlock>();
+            Dictionary<string, LogicBlock> logicBlocks = new Dictionary<string, LogicBlock>();
 
-            logicBlocks.Add(new LogicBlock()
+            logicBlocks.Add("0", new LogicBlock()
             {
-                Id = 0,
                 Dependencies = new ConditionGroup
                 {
                 },
-                SubsequentSteps = new List<SubsequentStep> {
+                SubsequentSteps = new Dictionary<string, SubsequentStep> {
+                    {"0",
              new SubsequentStep(){
                  StepTemplateId =stepTemplate.ReferenceId,
-                 WorkflowStepId = 0,
-                          Mappings = new List<Mapping>(){
+                          Mappings = new Dictionary<string, Mapping>(){
+                                  {"n-1",
                           new Mapping()
                            {
                                DefaultValue = new DefaultValue(){
                                    Value = 1
-                               },
-                               StepInputId = "n-1"
-                           },
+                               }
+                           } },
+                              {  "n-2",
                           new Mapping(){
                                DefaultValue = new DefaultValue(){
                                    Value = 1
-                               },
-                               StepInputId = "n-2"
+                               }
+                          }
+                              }
                            }
                        }
              } }
@@ -66,73 +67,74 @@ namespace Cindi.Test.Global.TestData
             for (var i = 0; i < numberOfSteps - 1; i++)
             {
 
-                var mappings = new List<Mapping>()
+                var mappings = new Dictionary<string, Mapping>()
                 {
+                    {"n-2",
                   new Mapping()
                 {
                     OutputReferences = new StepOutputReference[]
                     {
                         new StepOutputReference()
                         {
-                            WorkflowStepId =  i,
+                            StepName =  ""+i,
                             OutputId = "n"
                         }
-                    },
-                    StepInputId = "n-2"
+                    }
                 }
+                    }
                 };
 
                 if (i == 0)
                 {
-                    mappings.Add(new Mapping()
+                    mappings.Add("n-1", new Mapping()
                     {
                         DefaultValue = new DefaultValue()
                         {
                             Value = 1
-                        },
-                        StepInputId = "n-1"
+                        }
                     });
                 }
                 else
                 {
 
-                    mappings.Add(new Mapping()
+                    mappings.Add("n-1", new Mapping()
                     {
+
                         OutputReferences = new StepOutputReference[]
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    WorkflowStepId = i -1,
+                                                    StepName = ""+(i -1),
                                                     OutputId = "n"
                                                 }
-                                            },
-                        StepInputId = "n-1"
+                                            }
                     });
                 }
 
 
-                logicBlocks.Add(
+                logicBlocks.Add((i + 2) + "",
                         new LogicBlock()
                         {
-                            Id = 0,
                             Dependencies = new ConditionGroup
                             {
                                 Operator = "AND",
-                                Conditions = new List<Condition>(){ new StepStatusCondition()
+                                Conditions = new Dictionary<string, Condition>(){
+                                    {"0", new StepStatusCondition()
                                 {
-                                    WorkflowStepId = i,
+                                    StepName = ""+i,
                                     Status = StepStatuses.Successful
-                                }},
+                                }} }
                             },
-                            SubsequentSteps = new List<SubsequentStep>
+                            SubsequentSteps = new Dictionary<string, SubsequentStep>
                             {
+                                {""+(i + 1),
                                 new SubsequentStep()
                                 {
                                     StepTemplateId = stepTemplate.ReferenceId,
-                                    WorkflowStepId = i + 1, // This will create the next step
                                     Mappings = mappings
                                 }
                             }
+                                }
                         });
             }
 
@@ -185,32 +187,34 @@ namespace Cindi.Test.Global.TestData
         {
             var stepTemplate = FibonacciSampleData.StepTemplate;
 
-            List<LogicBlock> logicBlocks = new List<LogicBlock>();
+            Dictionary<string, LogicBlock> logicBlocks = new Dictionary<string, LogicBlock>();
 
-            logicBlocks.Add(new LogicBlock()
+            logicBlocks.Add("1", new LogicBlock()
             {
-                Id = 0,
                 Dependencies = new ConditionGroup
                 {
                 },
-                SubsequentSteps = new List<SubsequentStep> {
+                SubsequentSteps = new Dictionary<string, SubsequentStep> {
+                    { "0", 
              new SubsequentStep(){
                  StepTemplateId =stepTemplate.ReferenceId,
-                 WorkflowStepId = 0,
-                          Mappings = new List<Mapping>(){
+                          Mappings = new Dictionary<string, Mapping>(){
+                              {"n-1",
                           new Mapping()
                            {
                                DefaultValue = new DefaultValue(){
                                    Value = 1
-                               },
-                               StepInputId = "n-1"
-                           },
+                               }
+                           }
+                              },
+                           {"n-2",
                           new Mapping(){
                                DefaultValue = new DefaultValue(){
                                    Value = 1
-                               },
-                               StepInputId = "n-2"
+                               }
                            }
+                              }
+                          }
                        }
              } }
             });
@@ -218,72 +222,71 @@ namespace Cindi.Test.Global.TestData
             for (var i = 0; i < numberOfSteps - 1; i++)
             {
 
-                var mappings = new List<Mapping>()
-                {
+                var mappings = new Dictionary<string, Mapping>()
+                { {"n-2",
                   new Mapping()
                 {
                     OutputReferences = new StepOutputReference[]
                     {
                         new StepOutputReference()
                         {
-                            WorkflowStepId =  i,
+                            StepName =  ""+i,
                             OutputId = "n"
                         }
-                    },
-                    StepInputId = "n-2"
+                    }
+                  }
                 }
                 };
 
                 if (i == 0)
                 {
-                    mappings.Add(new Mapping()
+                    mappings.Add("n-1", new Mapping()
                     {
                         DefaultValue = new DefaultValue()
                         {
                             Value = 1
-                        },
-                        StepInputId = "n-1"
+                        }
                     });
                 }
                 else
                 {
 
-                    mappings.Add(new Mapping()
+                    mappings.Add("n-1", new Mapping()
                     {
                         OutputReferences = new StepOutputReference[]
                                             {
                                                 new StepOutputReference()
                                                 {
-                                                    WorkflowStepId = i -1,
+                                                    StepName = "" + (i -1),
                                                     OutputId = "n"
                                                 }
-                                            },
-                        StepInputId = "n-1"
+                                            }
                     });
                 }
 
 
-                logicBlocks.Add(
+                logicBlocks.Add("" + (i + 2),
                         new LogicBlock()
                         {
-                            Id = 0,
                             Dependencies = new ConditionGroup
                             {
                                 Operator = "AND",
-                                Conditions = new List<Condition>(){ new StepStatusCondition()
+                                Conditions = new Dictionary<string, Condition>(){
+                                    {"0", new StepStatusCondition()
                                 {
-                                    WorkflowStepId = i,
+                                    StepName =""+ i,
                                     Status = StepStatuses.Successful
-                                }},
+                                }} }
                             },
-                            SubsequentSteps = new List<SubsequentStep>
+                            SubsequentSteps = new Dictionary<string, SubsequentStep>
                             {
+                                { ""+(i + 1),
                                 new SubsequentStep()
                                 {
                                     StepTemplateId = stepTemplate.ReferenceId,
-                                    WorkflowStepId = i + 1, // This will create the next step
                                     Mappings = mappings
                                 }
+                            }
                             }
                         });
             }
@@ -296,7 +299,7 @@ namespace Cindi.Test.Global.TestData
                                     {
                                         Value = "SimpleSequence:1",
                                         Type = UpdateType.Create,
-                                        FieldName = "WorkflowTemplateId"
+                                        FieldName = "referenceid"
                                     },
                                     new Update()
                                     {

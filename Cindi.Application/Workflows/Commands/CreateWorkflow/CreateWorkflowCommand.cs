@@ -10,7 +10,8 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
     {
         public string Name { get; set; }
         public string WorkflowTemplateId { get; set; }
-        public Dictionary<string, object> Inputs { get; set; }
+        //Default to an empty dictionary
+        public Dictionary<string, object> Inputs { get; set; } = new Dictionary<string, object>();
         public string CreatedBy { get; set; }
     }
 }

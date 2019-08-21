@@ -239,7 +239,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 var workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
 
                 //Evaluate all logic blocks that have not been completed
-                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Id)).ToList();
+                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key)).ToList();
 
                 foreach (var logicBlock in logicBlocks)
                 {
@@ -247,13 +247,13 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     bool lockObtained = false;
                     while (!lockObtained)
                     {
-                        while (_clusterStateService.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Id))
+                        while (_clusterStateService.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Key))
                         {
                             Console.WriteLine("Found " + ("workflow:" + updatedStep.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
                             Thread.Sleep(1000);
                         }
 
-                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
+                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
 
                         // CheckIfYouObtainedALock
 
@@ -264,7 +264,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         }
 
                         //Check whether you got the lock
-                        lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
+                        lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
@@ -327,11 +327,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     }*/
 
                     //If the logic block is ready to be processed, submit the steps
-                    if (logicBlock.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Id))
+                    if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))
                     {
-                        foreach (var substep in logicBlock.SubsequentSteps)
+                        foreach (var substep in logicBlock.Value.SubsequentSteps)
                         {
-                            if (workflowSteps.Where(s => s.WorkflowStepId == substep.WorkflowStepId).Count() > 0)
+                            if (workflowSteps.Where(s => s.Name == substep.Key).Count() > 0)
                             {
                                 Logger.LogCritical("Encountered duplicate subsequent step for workflow " + workflow.Id + ". Ignoring the generation of duplicate.");
                             }
@@ -340,29 +340,29 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                                 var verifiedInputs = new Dictionary<string, object>();
 
-                                foreach (var mapping in substep.Mappings)
+                                foreach (var mapping in substep.Value.Mappings)
                                 {
                                     //find the mapping with the highest priority
-                                    var highestPriorityReference = WorkflowTemplateUtility.GetHighestPriorityReference(mapping.OutputReferences, workflowSteps.ToArray());
+                                    var highestPriorityReference = WorkflowTemplateUtility.GetHighestPriorityReference(mapping.Value.OutputReferences, workflowSteps.ToArray());
                                     //if the highest priority reference is null, there are no mappings
-                                    if (highestPriorityReference == null && mapping.DefaultValue == null)
+                                    if (highestPriorityReference == null && mapping.Value.DefaultValue == null)
                                     {
 
                                     }
                                     // If default value is higher priority
-                                    else if (mapping.DefaultValue != null && (highestPriorityReference == null || highestPriorityReference.Priority < mapping.DefaultValue.Priority))
+                                    else if (mapping.Value.DefaultValue != null && (highestPriorityReference == null || highestPriorityReference.Priority < mapping.Value.DefaultValue.Priority))
                                     {
-                                        verifiedInputs.Add(mapping.StepInputId, mapping.DefaultValue.Value);
+                                        verifiedInputs.Add(mapping.Key, mapping.Value.DefaultValue.Value);
                                     }
                                     // If the step ref is not -1 it is a step in the array but the workflow
-                                    else if (highestPriorityReference.WorkflowStepId != -1)
+                                    else if (highestPriorityReference.StepName != ReservedValues.WorkflowStartStepName)
                                     {
-                                        var parentStep = workflowSteps.Where(ss => ss.WorkflowStepId == highestPriorityReference.WorkflowStepId).FirstOrDefault();
+                                        var parentStep = workflowSteps.Where(ss => ss.Name == highestPriorityReference.StepName).FirstOrDefault();
 
                                         //If there is a AND and there is no parent step, throw a error
                                         if (parentStep == null)
                                         {
-                                            throw new InvalidWorkflowProcessingException("Missing source for mapping " + mapping.StepInputId + " from step " + highestPriorityReference.WorkflowStepId);
+                                            throw new InvalidWorkflowProcessingException("Missing source for mapping " + mapping.Key + " from step " + highestPriorityReference.StepName);
                                         }
                                         else
                                         {
@@ -375,13 +375,13 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                                     var outPutValue = DynamicDataUtility.GetData(parentStep.Outputs, highestPriorityReference.OutputId);
 
                                                     // Validate it is in the definition
-                                                    verifiedInputs.Add(mapping.StepInputId, outPutValue.Value);
+                                                    verifiedInputs.Add(mapping.Key, outPutValue.Value);
 
                                                 }
                                                 catch (Exception e)
                                                 {
                                                     //TO DO Move this to logger
-                                                    Console.WriteLine("Found error at mapping " + mapping.StepInputId + " for step " + substep.WorkflowStepId);
+                                                    Console.WriteLine("Found error at mapping " + mapping.Key + " for step " + substep.Key);
                                                     throw e;
                                                 }
                                             }
@@ -391,7 +391,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     else
                                     {
                                         // Validate it is in the definition
-                                        verifiedInputs.Add(mapping.StepInputId, DynamicDataUtility.GetData(workflow.Inputs, highestPriorityReference.OutputId).Value);
+                                        verifiedInputs.Add(mapping.Key, DynamicDataUtility.GetData(workflow.Inputs, highestPriorityReference.OutputId).Value);
                                     }
 
                                 }
@@ -400,11 +400,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 //Add the step TODO, add step priority
                                 await _mediator.Send(new CreateStepCommand()
                                 {
-                                    StepTemplateId = substep.StepTemplateId,
+                                    StepTemplateId = substep.Value.StepTemplateId,
                                     CreatedBy = SystemUsers.QUEUE_MANAGER,
                                     Inputs = verifiedInputs,
                                     WorkflowId = workflow.Id,
-                                    WorkflowStepId = substep.WorkflowStepId
+                                    Name = substep.Key //create the step with the right subsequent step
                                 });
                                 addedStep = true;
                             }
@@ -422,7 +422,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                 {
                                     FieldName = "completedlogicblocks",
                                     Type = UpdateType.Append,
-                                    Value = logicBlock.Id
+                                    Value = logicBlock.Key
                                 }
                             }
                         });
@@ -435,7 +435,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
                         });
                     }
-                    await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Id);
+                    await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned

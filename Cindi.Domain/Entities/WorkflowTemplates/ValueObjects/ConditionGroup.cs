@@ -10,11 +10,10 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
 {
     public class ConditionGroup
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
         [Required]
         public string Operator { get; set; } = OperatorStatements.AND;
-        public List<Condition> Conditions { get; set; } = new List<Condition>();
-        public List<ConditionGroup> ConditionGroups { get; set; } = new List<ConditionGroup>();
+        public Dictionary<string, Condition> Conditions { get; set; } = new Dictionary<string, Condition>();
+        public Dictionary<string, ConditionGroup> ConditionGroups { get; set; } = new Dictionary<string, ConditionGroup>();
         /// <summary>
         /// A workflow's logic should always be based on historic steps
         /// </summary>
@@ -24,7 +23,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
         {
             foreach (var condition in Conditions)
             {
-                var evalationResult = condition.Evaluate(completedSteps);
+                var evalationResult = condition.Value.Evaluate(completedSteps);
                 if (!evalationResult && Operator == OperatorStatements.AND)
                 {
                     return false;
@@ -38,7 +37,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
 
             foreach (var conditionGroup in ConditionGroups)
             {
-                var evalationResult = conditionGroup.Evaluate(completedSteps);
+                var evalationResult = conditionGroup.Value.Evaluate(completedSteps);
                 if (!evalationResult && Operator == OperatorStatements.AND)
                 {
                     return false;
@@ -73,7 +72,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
             bool isValid = true;
             foreach (var condition in Conditions)
             {
-                var valuation = condition.ValidateCondition(validatedLogicBlock);
+                var valuation = condition.Value.ValidateCondition(validatedLogicBlock);
                 if (!valuation.IsValid)
                     isValid = false;
                 finalConditionGroup.ConditionsValidation.Add(valuation);
@@ -81,7 +80,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
 
             foreach (var conditionGroup in ConditionGroups)
             {
-                var valuation = conditionGroup.ValidateConditionGroup(validatedLogicBlock);
+                var valuation = conditionGroup.Value.ValidateConditionGroup(validatedLogicBlock);
                 if (!valuation.IsValid)
                     isValid = false;
                 finalConditionGroup.ConditionGroupsValidation.Add(valuation);

@@ -10,9 +10,5 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
         public StepOutputReference[] OutputReferences { get; set; }
         public string Description { get; set; }
         public DefaultValue DefaultValue { get; set; }
-        /// <summary>
-        /// The field that the Step is mapped to
-        /// </summary>
-        public string StepInputId { get; set; }
     }
 }

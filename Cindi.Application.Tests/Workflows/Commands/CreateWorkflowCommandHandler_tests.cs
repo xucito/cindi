@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Xunit;
 using static Cindi.Test.Global.TestData.FibonacciSampleData;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
+using Cindi.Domain.Exceptions.Workflows;
 
 namespace Cindi.Application.Tests.Workflows.Commands
 {
@@ -61,7 +62,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
 
             var handler = new CreateWorkflowCommandHandler(workflowsRepository.Object, workflowTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object, _node.Object);
 
-            await handler.Handle(new CreateWorkflowCommand()
+            await Assert.ThrowsAsync<InvalidInputsException>(async () => await handler.Handle(new CreateWorkflowCommand()
             {
                 WorkflowTemplateId = data.workflowTemplate.ReferenceId,
                 Inputs = new Dictionary<string, object>() {
@@ -69,7 +70,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
                     { "n-2", 1 },
                     { "n-3", 1 }
                 }
-            }, new System.Threading.CancellationToken());
+            }, new System.Threading.CancellationToken()));
         }
 
         [Fact]

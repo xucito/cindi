@@ -13,21 +13,21 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
         {
             Comparer = StepStatusConditionComparers.IS,
             Status = StepStatuses.Successful,
-            WorkflowStepId = 0
+            StepName = "0"
         };
 
         public StepStatusCondition TestConditionISNOT = new StepStatusCondition()
         {
             Comparer = StepStatusConditionComparers.ISNOT,
             Status = StepStatuses.Successful,
-            WorkflowStepId = 0
+            StepName = "0"
         };
 
         public StepStatusCondition TestConditionStatusCodeIS = new StepStatusCondition()
         {
             Comparer = StepStatusConditionComparers.IS,
             Status = StepStatuses.Successful,
-            WorkflowStepId = 0,
+            StepName = "0",
             StatusCode = 1
         };
 
@@ -35,7 +35,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
         {
             Comparer = StepStatusConditionComparers.ISNOT,
             Status = StepStatuses.Successful,
-            WorkflowStepId = 0,
+            StepName = "0",
             StatusCode = 1
         };
 
@@ -45,7 +45,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.True(TestConditionIS.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Successful
                 }
             }));
@@ -53,7 +53,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.False(TestConditionIS.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Suspended
                 }
             }));
@@ -61,7 +61,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.False(TestConditionIS.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Warning
                 }
             }));
@@ -69,7 +69,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.False(TestConditionISNOT.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Successful
                 }
             }));
@@ -77,7 +77,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.True(TestConditionISNOT.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Suspended
                 }
             }));
@@ -85,7 +85,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.True(TestConditionISNOT.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Warning
                 }
             }));
@@ -97,7 +97,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.False(TestConditionISNOT.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 1,
+                    Name = "1",
                     Status = StepStatuses.Warning
                 }
             }));
@@ -114,7 +114,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.False(TestConditionStatusCodeIS.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Successful,
                     StatusCode = 2
                 }
@@ -124,7 +124,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.False(TestConditionStatusCodeIS.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Warning,
                     StatusCode = 1
                 }
@@ -134,7 +134,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.True(TestConditionStatusCodeIS.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Successful,
                     StatusCode = 1
                 }
@@ -144,7 +144,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.True(TestConditionStatusCodeISNOT.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Successful,
                     StatusCode = 2
                 }
@@ -155,7 +155,7 @@ namespace Cindi.Domain.Tests.WorkflowTemplates.Conditions
             Assert.True(TestConditionStatusCodeISNOT.Evaluate(new List<Step>() {
                 new Step()
                 {
-                    WorkflowStepId = 0,
+                    Name = "0",
                     Status = StepStatuses.Warning,
                     StatusCode = 1
                 }
