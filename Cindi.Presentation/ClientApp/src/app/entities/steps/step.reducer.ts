@@ -50,9 +50,15 @@ const stepReducer = createReducer(
   on(StepActions.deleteSteps, (state, action) =>
     adapter.removeMany(action.ids, state)
   ),
-  on(StepActions.loadStepsSuccess, (state, action) =>
-    adapter.addAll(action.steps, state)
-  ),
+  on(StepActions.loadStepsSuccess, (state, action) => {
+    let newState = state;
+    if(state.ids.length > 25)
+    {
+      newState = adapter.removeAll(newState);
+    }
+    newState = adapter.upsertMany(action.steps, newState);
+    return newState;
+  }),
   on(StepActions.loadSteps),
   on(StepActions.clearSteps, state => adapter.removeAll(state))
 );

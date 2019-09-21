@@ -19,8 +19,8 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
     public class CreateBotKeyCommandHandler : IRequestHandler<CreateBotKeyCommand, CommandResult<string>>
     {
         IBotKeysRepository _botKeyRepository;
-        IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
-        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
+        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
         {
             _botKeyRepository = botKeyRepository;
             _node = node;
@@ -34,7 +34,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 
             var plainTextKey = SecurityUtility.RandomString(32, false);
             Guid keyId = Guid.NewGuid();
-            var key = (await _node.Send(new WriteData()
+            var key = (await _node.Handle(new WriteData()
             {
                 WaitForSafeWrite = true,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,

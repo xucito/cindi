@@ -1,5 +1,8 @@
-﻿using Cindi.Application.Interfaces;
+﻿
+using Cindi.Application.Interfaces;
+using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.Services;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
@@ -13,7 +16,7 @@ namespace Cindi.Persistence.State
         public string DatabaseName { get; } = "CindiDb";
         public bool DoesStateExist = false;
 
-        public IMongoCollection<NodeStorage> _clusterState;
+        public IMongoCollection<NodeStorage<CindiClusterState>> _clusterState;
 
         public NodeStorageRepository(string mongoDbConnectionString, string databaseName)
         {
@@ -29,16 +32,16 @@ namespace Cindi.Persistence.State
         private void SetCollection(IMongoClient client)
         {
             var database = client.GetDatabase(DatabaseName);
-            _clusterState = database.GetCollection<NodeStorage>("NodeStorageRepository");
+            _clusterState = database.GetCollection<NodeStorage<CindiClusterState>>("NodeStorageRepository");
         }
 
-        public NodeStorage LoadNodeData()
+        public NodeStorage<CindiClusterState> LoadNodeData()
         {
             var result = _clusterState.Find(_ => true).FirstOrDefault();
             return result;
         }
 
-        public void SaveNodeData(NodeStorage storage)
+        public void SaveNodeData(NodeStorage<CindiClusterState> storage)
         {
             try
             {
@@ -58,7 +61,14 @@ namespace Cindi.Persistence.State
             }
             catch (Exception e)
             {
-                throw e;
+                if (e.Message.Contains("Collection was modified"))
+                {
+
+                }
+                else
+                {
+                    Console.WriteLine("Failed to save state with error message " + e.Message + " with stack trace " + Environment.NewLine + e.StackTrace);
+                }
             }
         }
     }

@@ -32,7 +32,6 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
   selectedLogicblock: any;
   selectedLogicBlockPreviousSteps: any;
   selectedLogicBlockPossibleMappings: any[] = [];
-  highestSubsequentStepRefId = 0;
   workflowName: string;
   workflowVersion: number;
 
@@ -53,86 +52,78 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
   @Input() workflowTemplate: WorkflowTemplate = {
     referenceId: "SimpleWorkflowWithInputs:1",
     name: "SimpleWorkflowWithInputs",
-    version: 1,
+    version: 0,
     description: null,
     logicBlocks: {
-      0: {
+      "0": {
         dependencies: {
-          id: "97dae226-98ae-4f8e-b2b7-bc54216bfa21",
           operator: "AND",
           conditions: {},
           conditionGroups: {}
         },
-        subsequentSteps:[
-          {
+        subsequentSteps: {
+          "0": {
             description: null,
             stepTemplateId: "Fibonacci_stepTemplate:0",
-            mappings: [
-              {
+            mappings: {
+              "n-1": {
                 outputReferences: [
-                  { workflowStepId: -1, outputId: "n-1", priority: 0 }
+                  { stepName: "start", outputId: "n-1", priority: 0 }
                 ],
                 description: null,
-                defaultValue: { priority: 99999999, value: 1 },
-                stepInputId: "n-1"
+                defaultValue: { priority: 99999999, value: 1 }
               },
-              {
+              "n-2": {
                 outputReferences: [
-                  { workflowStepId: -1, outputId: "n-2", priority: 0 }
+                  { stepName: "start", outputId: "n-2", priority: 0 }
                 ],
                 description: null,
-                defaultValue: { priority: 99999999, value: 1 },
-                stepInputId: "n-2"
+                defaultValue: { priority: 99999999, value: 1 }
               }
-            ],
-            isPriority: false,
-            workflowStepId: 0
-          }]
+            },
+            isPriority: false
+          }
+        }
       },
-      1: {
+      "1": {
         dependencies: {
-          id: "61860b31-4b3c-4332-b5c5-0e1f095154ff",
           operator: "AND",
           conditions: {
-           "0": {
+            "0": {
               name: "StepStatus",
               comparer: "is",
-              workflowStepId: 0,
+              stepName: "0",
               stepTemplateReferenceId: null,
               status: "successful",
               statusCode: 0,
-              id: "c7e9ca0d-c15b-4d5f-aea2-fc1b099de35c",
               description: null
             }
           },
           conditionGroups: {}
         },
-        subsequentSteps: [
-          {
+        subsequentSteps: {
+          "1": {
             description: null,
             stepTemplateId: "Fibonacci_stepTemplate:0",
-            mappings: [
-              {
+            mappings: {
+              "n-1": {
                 outputReferences: [
-                  { workflowStepId: 0, outputId: "n", priority: 0 }
+                  { stepName: "0", outputId: "n", priority: 0 }
                 ],
                 description: null,
-                defaultValue: { priority: 99999999, value: 1 },
-                stepInputId: "n-1"
+                defaultValue: { priority: 99999999, value: 1 }
               },
-              {
+              "n-2": {
                 outputReferences: [
-                  { workflowStepId: 0, outputId: "n", priority: 0 }
+                  { stepName: "0", outputId: "n", priority: 0 }
                 ],
                 description: null,
-                defaultValue: { priority: 99999999, value: 1 },
-                stepInputId: "n-2"
+                defaultValue: { priority: 99999999, value: 1 }
               }
-            ],
-            isPriority: false,
-            workflowStepId: 1
+            },
+            isPriority: false
           }
-        ]
+        }
       }
     },
     inputDefinitions: {
@@ -140,8 +131,8 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
       "n-2": { description: null, type: "int" }
     },
     createdBy: "admin",
-    createdOn: new Date("2019-08-13T09:12:13.819Z"),
-    id: "2e9df69f-411f-4b06-8f10-1e9998d57c82"
+    createdOn: new Date("2019-08-21T20:14:16.42Z"),
+    id: "e62a01aa-10ac-452a-9ba8-0be38d66e205"
   };
 
   @Input() editMode = false;
@@ -179,7 +170,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     let edges: Edge[] = [];
 
     nodes.push({
-      id: "" + -1,
+      id: "start",
       label: "Start",
       data: {},
       meta: {
@@ -188,7 +179,11 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     });
 
     Object.keys(this.workflowTemplate.logicBlocks).forEach(key => {
-      this.getLogicBlockNodesAndEdges(nodes, edges, this.workflowTemplate.logicBlocks[key]);
+      this.getLogicBlockNodesAndEdges(
+        nodes,
+        edges,
+        this.workflowTemplate.logicBlocks[key]
+      );
     });
 
     this.addNewNodes(edges, nodes);
@@ -198,31 +193,29 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
       this.clusters.push({
         id: id(),
         label: key,
-        childNodeIds: this.workflowTemplate.logicBlocks[key].subsequentSteps.map(
-          ss => "" + ss.workflowStepId
-        ),
+        childNodeIds: Object.keys(
+          this.workflowTemplate.logicBlocks[key].subsequentSteps
+        ).map(key => key),
         data: this.workflowTemplate.logicBlocks[key]
       });
     });
 
     this.nodes = nodes;
-
-    this.highestSubsequentStepRefId = this.getHighestWorkflowStepId();
     this.edges = edges;
   }
 
   getLogicBlockNodesAndEdges(nodes: Node[], edges: Edge[], logicBlock: any) {
-    logicBlock.subsequentSteps.forEach(step => {
-      if (nodes.filter(n => n.id == step.workflowStepId).length == 0) {
+    Object.keys(logicBlock.subsequentSteps).forEach(key => {
+      if (nodes.filter(n => n.id == key).length == 0) {
         nodes.push({
-          id: "" + step.workflowStepId,
-          label: step.workflowStepId,
+          id: "" + key,
+          label: key,
           dimension: {
             height: 30,
-            width: step.stepTemplateId.length * 9
+            width: logicBlock.subsequentSteps[key].stepTemplateId.length * 9
           },
           data: {
-            step: step,
+            step: logicBlock.subsequentSteps[key],
             logicBlock: logicBlock
           },
           meta: {
@@ -235,14 +228,14 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
       if (
         logicBlock.dependencies == null ||
         ((logicBlock.dependencies.conditions == undefined ||
-          logicBlock.dependencies.conditions.length == 0) &&
+          Object.keys(logicBlock.dependencies.conditions).length == 0) &&
           (logicBlock.dependencies.conditionGroups == undefined ||
-            logicBlock.dependencies.conditionGroups.length == 0))
+            Object.keys(logicBlock.dependencies.conditionGroups).length == 0))
       ) {
         edges.push({
           id: id(), //dependenciesStep.workflowStepId + "-" + step.workflowStepId,
-          source: "" + -1,
-          target: "" + step.workflowStepId
+          source: "" + "start",
+          target: "" + key
         });
       }
     });
@@ -259,14 +252,14 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     nodes: Node[],
     edges: Edge[],
     conditionGroup: any,
-    subsequentSteps: any[]
+    subsequentSteps: any
   ) {
     Object.keys(conditionGroup.conditions).forEach(key => {
-      subsequentSteps.forEach(step => {
+      Object.keys(subsequentSteps).forEach(subsequentStepName => {
         edges.push({
           id: id(), //dependenciesStep.workflowStepId + "-" + step.workflowStepId,
-          source: "" + conditionGroup.conditions[key].workflowStepId,
-          target: "" + step.workflowStepId
+          source: "" + conditionGroup.conditions[key].stepName,
+          target: "" + subsequentStepName
         });
       });
     });
@@ -361,7 +354,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     }
 
     this.selectedLogicBlockPossibleMappings.push({
-      stepRefId: "" + -1,
+      stepRefId: "start",
       mappings: workflowInputMappings
     });
   }
@@ -384,22 +377,20 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
 
   addLogicBlock(node) {
     console.log(node);
-    this.workflowTemplate.logicBlocks[id()] = {
-      dependencies: {
-        id: id(),
-        operator: "AND",
-        conditions: [
-          {
-            name: "StepStatus",
-            comparer: "is",
-            stepRefId: node.meta.parent,
-            status: "successful",
-            id: id()
-          }
-        ],
-        conditionGroups: []
+    let newId = id();
+    this.workflowTemplate.logicBlocks[id()].dependencies = {
+      operator: "AND",
+      conditions: {
+        new_condition: {
+          name: "StepStatus",
+          comparer: "is",
+          stepRefId: node.meta.parent,
+          status: "successful",
+          id: id()
+        },
+        conditionGroups: {}
       },
-      subsequentSteps: [{}]
+      subsequentSteps: {}
     };
 
     this.generateGraph();
@@ -423,13 +414,12 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     console.log(stepTemplate);
     console.log(logicblock);
 
-    logicblock.subsequentSteps.push({
+    logicblock.subsequentSteps[id()] = {
       description: undefined,
       isPriority: false,
-      mappings: [],
-      stepTemplateId: stepTemplate.referenceId,
-      workflowStepId: this.getHighestWorkflowStepId() + 1
-    });
+      mappings: {},
+      stepTemplateId: stepTemplate.referenceId
+    };
     this.generateGraph();
   }
 
@@ -437,10 +427,10 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     console.log(stepTemplate);
 
     console.log(parentId);
-
+    let newId = id();
+    let nextStepName = id();
     let newLogicBlock = {
       dependencies: {
-        id: id(),
         operator: "AND",
         conditions: [
           {
@@ -451,28 +441,21 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
             id: id()
           }
         ],
-        conditionGroups: []
+        conditionGroups: {}
       },
-      subsequentSteps: [
-        {
+      subsequentSteps: {
+        nextStepName :{
           description: undefined,
           isPriority: false,
-          mappings: [],
-          stepTemplateId: stepTemplate.referenceId,
-          workflowStepId: this.getHighestWorkflowStepId() + 1
+          mappings: {},
+          stepTemplateId: stepTemplate.referenceId
         }
-      ]
+      }
     };
 
     this.workflowTemplate.logicBlocks[id()] = newLogicBlock;
 
     this.generateGraph();
-  }
-
-  getHighestWorkflowStepId() {
-    return +this.nodes
-      .filter(n => n.meta.type == "step")
-      .sort((a, b) => (+a.id < +b.id ? 1 : -1))[0].id;
   }
 
   openSaveWindow(contentTemplate) {

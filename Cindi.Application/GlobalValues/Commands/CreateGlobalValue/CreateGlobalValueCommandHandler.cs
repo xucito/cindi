@@ -24,9 +24,9 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
         IGlobalValuesRepository _globalValuesRepository { get; set; }
-        IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
-        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
+        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
         {
             _globalValuesRepository = globalValuesRepository;
             _node = node;
@@ -57,7 +57,7 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 DateTime.UtcNow
                 );
 
-            var result = _node.Send(new WriteData()
+            var result = _node.Handle(new WriteData()
             {
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
                 WaitForSafeWrite = true,

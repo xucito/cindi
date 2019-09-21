@@ -19,6 +19,7 @@ import {
 import * as fromStepTemplate from "../../../entities/step-templates/step-template.reducer";
 import { getStepTemplate } from "../../../entities/step-templates/step-template.reducer";
 import { ConvertTemplateToInputs } from "../../../shared/utility/data-mapper";
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: "steps-feed",
@@ -69,6 +70,7 @@ export class StepsFeedComponent implements OnInit {
   openWindow(contentTemplate, step) {
     this.stepTemplateStore
       .pipe(select(getStepTemplate, { referenceId: step.stepTemplateId }))
+      .pipe(take(1))
       .subscribe(result => {
         this.windowService.open(contentTemplate, {
           title: "Create Step: " + result.referenceId,
@@ -91,6 +93,7 @@ export class StepsFeedComponent implements OnInit {
   openStepViewWindow(contentTemplate, step) {
     this.stepTemplateStore
       .pipe(select(getStepTemplate, { referenceId: step.stepTemplateId }))
+      .pipe(take(1))
       .subscribe(result => {
         this.windowService.open(contentTemplate, {
           title: "Create Step: " + result.referenceId,

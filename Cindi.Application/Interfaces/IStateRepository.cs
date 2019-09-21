@@ -1,12 +1,13 @@
-﻿using ConsensusCore.Domain.BaseClasses;
+﻿using Cindi.Domain.Entities.States;
+using ConsensusCore.Domain.BaseClasses;
 using ConsensusCore.Domain.Services;
 
 namespace Cindi.Application.Interfaces
 {
-    public interface IStateRepository: ConsensusCore.Domain.Interfaces.IBaseRepository
+    public interface IStateRepository: ConsensusCore.Domain.Interfaces.IBaseRepository<CindiClusterState>
     {
         string DatabaseName { get; }
-        NodeStorage LoadNodeData();
-        void SaveNodeData(NodeStorage storage);
+        NodeStorage<CindiClusterState> LoadNodeData();
+        void SaveNodeData(NodeStorage<CindiClusterState> storage);
     }
 }

@@ -31,7 +31,7 @@
                     fill="white" stroke="black"></svg:rect>
                   <svg:text x=10 y="20">{{node.data.step.stepTemplateId}}</svg:text>
                   <svg:circle x="0" y="0" r="10" height="10" width="10" fill="white" stroke="black"></svg:circle>
-                  <svg:text x="-4" y="4">{{node.data.step.workflowStepId}}</svg:text>
+                  <svg:text x="-4" y="4">{{node.label}}</svg:text>
                 </svg:g>
                 <svg:g *ngIf="node.meta.type == 'start'">
                   <svg:rect rx="5" ry="5" width="60" height="30" fill="white" stroke="black"></svg:rect>

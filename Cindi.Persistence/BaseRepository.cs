@@ -28,6 +28,8 @@ using Cindi.Persistence.WorkflowTemplates.Conditions;
 using Cindi.Persistence.ConsensusCoreMappings;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Options;
+using Cindi.Domain.Entities.States;
+using ConsensusCore.Domain.Models;
 
 namespace Cindi.Persistence
 {
@@ -54,11 +56,20 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<GlobalValue>(gv => GlobalValuesClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<TrackedEntity>(gv => TrackedEntitiesClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<Condition>(gv => ConditionsClassMap.Register(gv));
+            BsonClassMap.RegisterClassMap<LogEntry>();
+            BsonClassMap.RegisterClassMap<NodeInformation>();
+            BsonClassMap.RegisterClassMap<Index>();
+            BsonClassMap.RegisterClassMap<BaseTask>(); 
+            BsonClassMap.RegisterClassMap<ObjectLock>();
+            BsonClassMap.RegisterClassMap<LogicBlockLock>();
             BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
-            BsonClassMap.RegisterClassMap<NodeStorage>(gv => NodeStorageClassMap.Register(gv));
+            BsonClassMap.RegisterClassMap<NodeStorage<CindiClusterState>>(gv => NodeStorageClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<Update>(gv => UpdateClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<LocalShardMetaData>(lsm => LocalShardMetaDataClassMap.Register(lsm));
             BsonClassMap.RegisterClassMap<ShardOperation>();
+            BsonClassMap.RegisterClassMap<CindiClusterState>(cs => CindiClusterStateClassMap.Register(cs));
+
+            BsonClassMap.RegisterClassMap<BaseState>(cs => BaseStateClassMap.Register(cs));
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
             BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());*/

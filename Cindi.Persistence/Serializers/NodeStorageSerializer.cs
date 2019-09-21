@@ -9,12 +9,13 @@ using System.Text;
 using Newtonsoft.Json;
 using JsonConvert = Newtonsoft.Json.JsonConvert;
 using ConsensusCore.Domain.Services;
+using Cindi.Domain.Entities.States;
 
 namespace Cindi.Persistence.Serializers
 {
-    public class NodeStorageSerializer : SerializerBase<NodeStorage>
+    public class NodeStorageSerializer : SerializerBase<NodeStorage<CindiClusterState>>
     {
-        public override NodeStorage Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        public override NodeStorage<CindiClusterState> Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
             var document = serializer.Deserialize(context, args);
@@ -27,12 +28,12 @@ namespace Cindi.Persistence.Serializers
             var result = BsonExtensionMethods.ToJson(bsonDocument);
             var jsonSerializerSettings = new JsonSerializerSettings();
             jsonSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
-            return JsonConvert.DeserializeObject<NodeStorage>(bsonDocument.ToString(), jsonSerializerSettings);
+            return JsonConvert.DeserializeObject<NodeStorage<CindiClusterState>>(bsonDocument.ToString(), jsonSerializerSettings);
         }
 
-        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, NodeStorage value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, NodeStorage<CindiClusterState> value)
         {
-            NodeStorage tempCache = value;
+            NodeStorage<CindiClusterState> tempCache = value;
             var jsonDocument = JsonConvert.SerializeObject(tempCache);
             var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
 

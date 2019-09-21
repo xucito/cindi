@@ -72,33 +72,40 @@ namespace Cindi.Application.Pipelines
 
         public string SerializeAndHideSecrets(object item)
         {
-            var token = JObject.FromObject(item);
-
-            if (token.Type == JTokenType.Object)
+            try
             {
-                foreach (JProperty prop in token.Children<JProperty>().ToList())
+                var token = JObject.FromObject(item);
+
+                if (token.Type == JTokenType.Object)
                 {
-                    if(prop.Name.ToLower() == "password")
+                    foreach (JProperty prop in token.Children<JProperty>().ToList())
                     {
-                        prop.Value = secretOmmited;
+                        if (prop.Name.ToLower() == "password")
+                        {
+                            prop.Value = secretOmmited;
+                        }
                     }
                 }
-            }
-            else if (token.Type == JTokenType.Array)
-            {
-                foreach (JToken child in token.Children())
+                else if (token.Type == JTokenType.Array)
                 {
-                    SerializeAndHideSecrets(child);
+                    foreach (JToken child in token.Children())
+                    {
+                        SerializeAndHideSecrets(child);
+                    }
                 }
-            }
 
-            var finalString = token.ToString().Split('\n').ToList();
-            if(finalString.Count() > maxNumberOfResults)
-            {
-                finalString = finalString.Take(maxNumberOfResults).ToList();
-                finalString.Add(lengthOmmited);
+                var finalString = token.ToString().Split('\n').ToList();
+                if (finalString.Count() > maxNumberOfResults)
+                {
+                    finalString = finalString.Take(maxNumberOfResults).ToList();
+                    finalString.Add(lengthOmmited);
+                }
+                return String.Join(Environment.NewLine, finalString);
             }
-            return String.Join(Environment.NewLine, finalString);
+            catch(Exception e)
+            {
+                throw e;
+            }
         }
     }
 

@@ -34,10 +34,10 @@ namespace Cindi.Application.Services.ClusterState
         private Thread _initThread { get; set; }
         public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
-        public IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        public IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
         CindiClusterState state { get { return _node.GetState(); } }
 
-        public ClusterStateService(ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
+        public ClusterStateService(ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
         {
             _node = node;
 
@@ -99,7 +99,7 @@ namespace Cindi.Application.Services.ClusterState
             // ForceStateSave();
             lock (_locker)
             {
-                _node.Send(new ExecuteCommands()
+                _node.Handle(new ExecuteCommands()
                 {
                     WaitForCommits = true,
                     Commands = new List<BaseCommand>()
@@ -125,7 +125,7 @@ namespace Cindi.Application.Services.ClusterState
 
             lock (_locker)
             {
-                _node.Send(new ExecuteCommands()
+                _node.Handle(new ExecuteCommands()
                 {
                     WaitForCommits = true,
                     Commands = new List<BaseCommand>()
@@ -156,7 +156,7 @@ namespace Cindi.Application.Services.ClusterState
 
         public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
-            return (await _node.Send(new ExecuteCommands()
+            return (await _node.Handle(new ExecuteCommands()
             {
                 Commands = new List<BaseCommand>()
                 {
@@ -176,7 +176,7 @@ namespace Cindi.Application.Services.ClusterState
 
         public async Task<bool> UnlockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
-            return (await _node.Send(new ExecuteCommands()
+            return (await _node.Handle(new ExecuteCommands()
             {
                 Commands = new List<BaseCommand>()
                 {
@@ -237,7 +237,7 @@ namespace Cindi.Application.Services.ClusterState
         {
             lock (_locker)
             {
-                _node.Send(new ExecuteCommands()
+                _node.Handle(new ExecuteCommands()
                 {
                     WaitForCommits = true,
                     Commands = new List<BaseCommand>()
@@ -264,7 +264,7 @@ namespace Cindi.Application.Services.ClusterState
             {
                 if (allowAutoRegistration != state.AllowAutoRegistration)
                 {
-                    _node.Send(new ExecuteCommands()
+                    _node.Handle(new ExecuteCommands()
                     {
                         WaitForCommits = true,
                         Commands = new List<BaseCommand>()

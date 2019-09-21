@@ -21,9 +21,9 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
     {
         IBotKeysRepository _botKeyRepository;
         IMediator _mediator;
-        IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
-        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IConsensusCoreNode<CindiClusterState, IBaseRepository> node)
+        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
         {
             _botKeyRepository = botKeyRepository;
             _mediator = mediator;
@@ -47,7 +47,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             key.Nonce = request.Nonce;
 
-            await _node.Send(new WriteData()
+            await _node.Handle(new WriteData()
             {
                 WaitForSafeWrite = true,
                 Data = key,

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Cindi.Application.Steps.Commands;
 using Cindi.Application.Steps.Commands.AppendStepLog;
@@ -44,7 +45,8 @@ namespace Cindi.Presentation.Controllers
 
                 Step step = (await Mediator.Send(new GetStepQuery()
                 {
-                    Id = new Guid(result.ObjectRefId)
+                    Id = new Guid(result.ObjectRefId),
+                    Exclude = (s) => s.Journal
                 })).Result;
 
 
@@ -139,13 +141,16 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string status = null)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null)
         {
             return Ok(await Mediator.Send(new GetStepsQuery()
             {
                 Page = page,
                 Size = size,
-                Status = status
+                Status = status,
+                Exclusions = new List<Expression<Func<Step, object>>>{
+                    (s) => s.Journal
+                }
             }));
         }
 

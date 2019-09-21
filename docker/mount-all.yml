@@ -1,0 +1,55 @@
+version: '3.3'
+
+services:
+  cindi:
+    image: xucito/cindi:1.1
+    ports:
+      - "5022:80"
+      - "27017:27017"
+    networks:
+      - cindi_network
+    environment:
+      - "Cluster:Urls=http://cindi,http://cindi2,http://cindi3"
+      - "Cluster:MinimumNodes=2"
+      - "Client:apiUrl=http://10.10.10.133:5022"
+      - "Logging:Default=Debug"
+      - "Logging:File:LogDirectory=/var/log/cindi"
+      - "Logging:File:Enabled=true"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/mnt/nfs/var/nfsshare/cindi/node1/logs:/var/log/cindi"
+      - "/mnt/nfs/var/nfsshare/cindi/node1/data:/data/db"
+  cindi2:
+    image: xucito/cindi:1.1
+    ports:
+      - "5023:80"
+      - "27018:27017"
+    networks:
+      - cindi_network
+    environment:
+      - "Cluster:Urls=http://cindi,http://cindi2,http://cindi3"
+      - "Cluster:MinimumNodes=2"
+      - "Client:apiUrl=http://localhost:5022"
+      - "Logging:Default=Debug"
+      - "Logging:File:LogDirectory=/var/log/cindi"
+      - "Logging:File:Enabled=true"
+    volumes:
+      - "/mnt/nfs/var/nfsshare/cindi/node2/logs:/var/log/cindi"
+      - "/mnt/nfs/var/nfsshare/cindi/node2/data:/data/db"
+  cindi3:
+    image: xucito/cindi:1.1
+    ports:
+      - "5024:80"
+      - "27019:27017"
+    networks:
+      - cindi_network
+    environment:
+      - "Cluster:Urls=http://cindi,http://cindi2,http://cindi3"
+      - "Cluster:MinimumNodes=2"
+      - "Client:apiUrl=http://localhost:5022"
+      - "Logging:Default=Debug"
+      - "Logging:File:LogDirectory=/var/log/cindi"
+      - "Logging:File:Enabled=true"
+networks:
+  cindi_network:
+    driver: overlay

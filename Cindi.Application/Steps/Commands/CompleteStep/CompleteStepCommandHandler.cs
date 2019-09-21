@@ -40,7 +40,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private IBotKeysRepository _botKeysRepository;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
@@ -51,7 +51,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
+            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
             )
         {
             _stepsRepository = stepsRepository;
@@ -79,7 +79,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             CindiClusterOptions options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-             IConsensusCoreNode<CindiClusterState, IBaseRepository> node
+             IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
     )
         {
             _stepsRepository = stepsRepository;
@@ -129,7 +129,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         }
                 });
 
-                await _node.Send(new WriteData()
+                await _node.Handle(new WriteData()
                 {
                     Data = stepToComplete,
                     WaitForSafeWrite = true,
@@ -207,7 +207,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             //var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
 
-            await _node.Send(new WriteData()
+            await _node.Handle(new WriteData()
             {
                 Data = stepToComplete,
                 WaitForSafeWrite = true,
@@ -428,7 +428,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         });
 
                         //await _workflowsRepository.UpdateWorkflow(workflow);
-                        await _node.Send(new WriteData()
+                        await _node.Handle(new WriteData()
                         {
                             Data = workflow,
                             WaitForSafeWrite = true,
@@ -466,7 +466,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     });
 
                     //await _workflowsRepository.UpdateWorkflow(workflow);
-                    await _node.Send(new WriteData()
+                    await _node.Handle(new WriteData()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,

@@ -28,10 +28,10 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
     {
         private readonly IWorkflowTemplatesRepository _workflowTemplatesRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
 
-        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository> node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
             _workflowTemplatesRepository = workflowTemplatesRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
@@ -274,7 +274,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                 DateTime.UtcNow
             );
 
-            var createdWorkflowTemplateId = await _node.Send(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
             {
                 Data = newWorkflowTemplate,
                 WaitForSafeWrite = true,

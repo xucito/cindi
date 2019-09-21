@@ -22,18 +22,18 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
         IUsersRepository _usersRepository;
-        IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
         public CreateUserCommandHandler(
             IUsersRepository usersRepository,
             ILogger<CreateUserCommandHandler> logger,
             IServiceProvider prov,
             IDataRouter router,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
+            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
     )
         {
             _usersRepository = usersRepository;
-            _node = (IConsensusCoreNode<CindiClusterState, IBaseRepository>)prov.GetService(typeof(IConsensusCoreNode<CindiClusterState, IBaseRepository>));
+            _node = (IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>>)prov.GetService(typeof(IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>>));
         }
 
         public async Task<CommandResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -43,7 +43,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
 
             var salt = SecurityUtility.GenerateSalt(128);
             Guid id = Guid.NewGuid();
-            var createdUser = await _node.Send(new WriteData()
+            var createdUser = await _node.Handle(new WriteData()
             {
                 WaitForSafeWrite = true,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,

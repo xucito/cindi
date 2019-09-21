@@ -9,11 +9,14 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
+using ConsensusCore.Domain.BaseClasses;
+using ConsensusCore.Domain.RPCs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -80,7 +83,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -95,6 +98,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IGlobalValuesRepository> globalValueRepository = new Mock<IGlobalValuesRepository>();
 
             var node = Utility.GetMockConsensusCoreNode();
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
             var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
 
@@ -128,7 +132,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -147,6 +151,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
 
             var node = Utility.GetMockConsensusCoreNode();
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
             var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
 
@@ -175,7 +180,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -193,6 +198,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 );
 
             var node = Utility.GetMockConsensusCoreNode();
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
             var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
 
@@ -220,7 +226,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -238,6 +244,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 );
 
             var node = Utility.GetMockConsensusCoreNode();
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
             var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
 
@@ -266,7 +273,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -284,6 +291,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 );
 
             var node = Utility.GetMockConsensusCoreNode();
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
             var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
 

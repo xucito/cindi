@@ -8,8 +8,10 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using ConsensusCore.Domain.BaseClasses;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -31,7 +33,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private IBotKeysRepository _botKeysRepository;
         private IGlobalValuesRepository _globalValuesRepository;
         public ILogger<AssignStepCommandHandler> Logger;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
         public AssignStepCommandHandler(
             IStepsRepository stepsRepository,
@@ -40,7 +42,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             IBotKeysRepository botKeysRepository,
             ILogger<AssignStepCommandHandler> logger,
             IGlobalValuesRepository globalValuesRepository,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
+            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
             )
         {
             _stepsRepository = stepsRepository;
@@ -55,7 +57,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-
+            HashSet<Guid> ignoreUnassignedSteps = new HashSet<Guid>();
             if (_clusterStateService.IsAssignmentEnabled())
             {
                 var assignedStepSuccessfully = false;
@@ -63,89 +65,105 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var dateChecked = DateTime.UtcNow;
                 do
                 {
-                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds)).FirstOrDefault();
+                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds)).Where(s => !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefault();
                     if (unassignedStep != null)
                     {
-                        //Real values to pass to the Microservice
-                        Dictionary<string, object> realAssignedValues = new Dictionary<string, object>();
-                        //Inputs that have been converted to reference expression
-                        Dictionary<string, object> convertedInputs = new Dictionary<string, object>();
-
-                        var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
-                        try
+                        var assigned = await _node.Handle(new RequestDataShard()
                         {
-                            //This should not throw a error externally, the server should loop to the next one and log a error
-                            if (unassignedStep.Status != StepStatuses.Unassigned)
+                            Type = unassignedStep.ShardType,
+                            ObjectId = unassignedStep.Id,
+                            CreateLock = true
+                        });
+                        //Apply a lock on the item
+                        if (assigned != null && assigned.IsSuccessful && assigned.AppliedLocked)
+                        {
+
+                            //Real values to pass to the Microservice
+                            Dictionary<string, object> realAssignedValues = new Dictionary<string, object>();
+                            //Inputs that have been converted to reference expression
+                            Dictionary<string, object> convertedInputs = new Dictionary<string, object>();
+
+                            var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
+                            try
                             {
-                                throw new InvalidStepQueueException("You cannot assign step " + unassignedStep.Id + " as it is not unassigned.");
-                            }
-
-
-                            bool inputsUpdated = false;
-
-                            foreach (var input in unassignedStep.Inputs)
-                            {
-                                string convertedValue = "";
-                                bool isReferenceByValue = false;
-                                var isReference = InputDataUtility.IsInputReference(input, out convertedValue, out isReferenceByValue);
-                                if (input.Value is string && ((string)input.Value).Length > 1)
+                                //This should not throw a error externally, the server should loop to the next one and log a error
+                                if (unassignedStep.Status != StepStatuses.Unassigned)
                                 {
-                                    if (isReference)
+                                    throw new InvalidStepQueueException("You cannot assign step " + unassignedStep.Id + " as it is not unassigned.");
+                                }
+
+
+                                bool inputsUpdated = false;
+
+                                foreach (var input in unassignedStep.Inputs)
+                                {
+                                    string convertedValue = "";
+                                    bool isReferenceByValue = false;
+                                    var isReference = InputDataUtility.IsInputReference(input, out convertedValue, out isReferenceByValue);
+                                    if (input.Value is string && ((string)input.Value).Length > 1)
                                     {
-                                        //Copy by reference
-                                        if (isReferenceByValue)
+                                        if (isReference)
                                         {
-                                            var foundGlobalValue = await _globalValuesRepository.GetGlobalValueAsync(convertedValue);
-                                            if (foundGlobalValue == null)
+                                            //Copy by reference
+                                            if (isReferenceByValue)
                                             {
-                                                Logger.LogWarning("No global value was found for value " + input.Value);
-                                                realAssignedValues.Add(input.Key, null);
-                                                convertedInputs.Add(input.Key, input.Value + ":?");
+                                                var foundGlobalValue = await _globalValuesRepository.GetGlobalValueAsync(convertedValue);
+                                                if (foundGlobalValue == null)
+                                                {
+                                                    Logger.LogWarning("No global value was found for value " + input.Value);
+                                                    realAssignedValues.Add(input.Key, null);
+                                                    convertedInputs.Add(input.Key, input.Value + ":?");
+                                                }
+                                                else if (foundGlobalValue.Type != template.InputDefinitions[input.Key].Type)
+                                                {
+                                                    Logger.LogWarning("Global value was found for value " + input.Value + " however they are different types. " + template.InputDefinitions[input.Key].Type + " vs " + foundGlobalValue.Type);
+                                                    realAssignedValues.Add(input.Key, null);
+                                                    convertedInputs.Add(input.Key, input.Value + ":?");
+                                                }
+                                                else
+                                                {
+                                                    realAssignedValues.Add(input.Key, foundGlobalValue.Value);
+                                                    convertedInputs.Add(input.Key, input.Value + ":" + foundGlobalValue.Journal.GetCurrentChainId());
+                                                }
                                             }
-                                            else if (foundGlobalValue.Type != template.InputDefinitions[input.Key].Type)
-                                            {
-                                                Logger.LogWarning("Global value was found for value " + input.Value + " however they are different types. " + template.InputDefinitions[input.Key].Type + " vs " + foundGlobalValue.Type);
-                                                realAssignedValues.Add(input.Key, null);
-                                                convertedInputs.Add(input.Key, input.Value + ":?");
-                                            }
+                                            //copy by value
                                             else
                                             {
-                                                realAssignedValues.Add(input.Key, foundGlobalValue.Value);
-                                                convertedInputs.Add(input.Key, input.Value + ":" + foundGlobalValue.Journal.GetCurrentChainId());
+                                                var foundGlobalValue = await _globalValuesRepository.GetGlobalValueAsync(convertedValue);
+                                                if (foundGlobalValue == null)
+                                                {
+                                                    Logger.LogWarning("No global value was found for value " + input.Value);
+                                                    realAssignedValues.Add(input.Key, null);
+                                                    convertedInputs.Add(input.Key, null);
+                                                }
+                                                else if (foundGlobalValue.Type != template.InputDefinitions[input.Key].Type)
+                                                {
+                                                    Logger.LogWarning("Global value was found for value " + input.Value + " however they are different types. " + template.InputDefinitions[input.Key].Type + " vs " + foundGlobalValue.Type);
+                                                    realAssignedValues.Add(input.Key, null);
+                                                    convertedInputs.Add(input.Key, null);
+                                                }
+                                                else
+                                                {
+                                                    realAssignedValues.Add(input.Key, foundGlobalValue.Value);
+                                                    convertedInputs.Add(input.Key, foundGlobalValue.Value);
+                                                }
                                             }
+
+                                            inputsUpdated = true;
                                         }
-                                        //copy by value
+                                        else if (input.Value is string && ((string)input.Value).Length > 1 && ((string)input.Value).First() == '\\')
+                                        {
+                                            var escapedCommand = ((string)input.Value);
+                                            //The $ is escaped
+                                            realAssignedValues.Add(input.Key, ((string)input.Value).Substring(1, escapedCommand.Length - 1));
+                                            convertedInputs.Add(input.Key, input.Value);
+                                            inputsUpdated = true;
+                                        }
                                         else
                                         {
-                                            var foundGlobalValue = await _globalValuesRepository.GetGlobalValueAsync(convertedValue);
-                                            if (foundGlobalValue == null)
-                                            {
-                                                Logger.LogWarning("No global value was found for value " + input.Value);
-                                                realAssignedValues.Add(input.Key, null);
-                                                convertedInputs.Add(input.Key, null);
-                                            }
-                                            else if (foundGlobalValue.Type != template.InputDefinitions[input.Key].Type)
-                                            {
-                                                Logger.LogWarning("Global value was found for value " + input.Value + " however they are different types. " + template.InputDefinitions[input.Key].Type + " vs " + foundGlobalValue.Type);
-                                                realAssignedValues.Add(input.Key, null);
-                                                convertedInputs.Add(input.Key, null);
-                                            }
-                                            else
-                                            {
-                                                realAssignedValues.Add(input.Key, foundGlobalValue.Value);
-                                                convertedInputs.Add(input.Key, foundGlobalValue.Value);
-                                            }
+                                            realAssignedValues.Add(input.Key, input.Value);
+                                            convertedInputs.Add(input.Key, input.Value);
                                         }
-
-                                        inputsUpdated = true;
-                                    }
-                                    else if (input.Value is string && ((string)input.Value).Length > 1 && ((string)input.Value).First() == '\\')
-                                    {
-                                        var escapedCommand = ((string)input.Value);
-                                        //The $ is escaped
-                                        realAssignedValues.Add(input.Key, ((string)input.Value).Substring(1, escapedCommand.Length - 1));
-                                        convertedInputs.Add(input.Key, input.Value);
-                                        inputsUpdated = true;
                                     }
                                     else
                                     {
@@ -153,21 +171,15 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                         convertedInputs.Add(input.Key, input.Value);
                                     }
                                 }
-                                else
-                                {
-                                    realAssignedValues.Add(input.Key, input.Value);
-                                    convertedInputs.Add(input.Key, input.Value);
-                                }
-                            }
 
-                            //If a update was detected then add it to the journal updates
-                            if (inputsUpdated)
-                            {
-                                unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                                //If a update was detected then add it to the journal updates
+                                if (inputsUpdated)
                                 {
-                                    CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                    CreatedOn = DateTime.UtcNow,
-                                    Updates = new List<Update>()
+                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                                    {
+                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
+                                        CreatedOn = DateTime.UtcNow,
+                                        Updates = new List<Update>()
                                     {
                                        new Update()
                                         {
@@ -181,15 +193,15 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                                 Type = UpdateType.Override,
                                                 Value = convertedInputs
                                             }}
-                                });
-                            }
-                            else
-                            {
-                                unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                                    });
+                                }
+                                else
                                 {
-                                    CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                    CreatedOn = DateTime.UtcNow,
-                                    Updates = new List<Update>()
+                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                                    {
+                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
+                                        CreatedOn = DateTime.UtcNow,
+                                        Updates = new List<Update>()
                                     {
                                        new Update()
                                         {
@@ -198,25 +210,26 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             Value = StepStatuses.Assigned
                                        }
                                     }
-                                });
-                            }
+                                    });
+                                }
 
-                             await _node.Send(new WriteData()
-                            {
-                                Data = unassignedStep,
-                                WaitForSafeWrite = true,
-                                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
-                            });
-
-                            //await _stepsRepository.UpdateStep(unassignedStep);
-                            if (inputsUpdated)
-                            {
-                                //Update the record with real values, this is not commited to DB
-                                unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                                await _node.Handle(new WriteData()
                                 {
-                                    CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                    CreatedOn = DateTime.UtcNow,
-                                    Updates = new List<Update>()
+                                    Data = unassignedStep,
+                                    WaitForSafeWrite = true,
+                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                                    RemoveLock = true
+                                });
+
+                                //await _stepsRepository.UpdateStep(unassignedStep);
+                                if (inputsUpdated)
+                                {
+                                    //Update the record with real values, this is not commited to DB
+                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                                    {
+                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
+                                        CreatedOn = DateTime.UtcNow,
+                                        Updates = new List<Update>()
                                     {
                                         new Update()
                                             {
@@ -224,16 +237,23 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                                 Type = UpdateType.Override,
                                                 Value = realAssignedValues
                                             }}
-                                });
+                                    });
+                                }
                             }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                                //throw e;
+                            }
+                            assignedStepSuccessfully = true;
                         }
-                        catch (Exception e)
+                        else
                         {
-                            Console.WriteLine(e.Message);
-                            //throw e;
+                            ignoreUnassignedSteps.Add(unassignedStep.Id);
+                            assignedStepSuccessfully = false;
                         }
-                        assignedStepSuccessfully = true;
                     }
+                    //There were no unassigned steps to assign
                     else
                     {
                         assignedStepSuccessfully = true;
@@ -241,13 +261,14 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 }
                 while (!assignedStepSuccessfully);
 
+
                 if (unassignedStep != null)
                 {
                     var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
                     var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
 
                     //Decrypt the step
-                    unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData( template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
+                    unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                     unassignedStep.RemoveDelimiters();
 

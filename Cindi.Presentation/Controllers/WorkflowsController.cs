@@ -49,7 +49,7 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string status = null)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null)
         {
             return Ok(await Mediator.Send(new GetWorkflowsQuery()
             {

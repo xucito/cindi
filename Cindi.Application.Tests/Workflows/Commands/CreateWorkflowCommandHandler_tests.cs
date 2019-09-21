@@ -24,7 +24,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
     {
         Mock<IMediator> _mediator = new Mock<IMediator>();
 
-        Mock<IConsensusCoreNode<CindiClusterState, IBaseRepository>> _node;
+        Mock<IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>>> _node;
 
         public CreateWorkflowCommandHandler_tests()
         {

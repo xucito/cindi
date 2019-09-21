@@ -40,16 +40,20 @@ const workflowReducer = createReducer(
     adapter.removeMany(action.ids, state)
   ),
   on(WorkflowActions.loadWorkflows),
-  on(WorkflowActions.loadWorkflowsSuccess, (state, action) =>
-    adapter.addAll(action.workflows, state)
-  ),
+  on(WorkflowActions.loadWorkflowsSuccess, (state, action) => {
+    let newState = state;
+    if (state.ids.length > 25) {
+      newState = adapter.removeAll(newState);
+    }
+    newState = adapter.upsertMany(action.workflows, newState);
+    return newState;
+  }),
   on(WorkflowActions.clearWorkflows, state => adapter.removeAll(state))
 );
 
 export function reducer(state: State | undefined, action: Action) {
   return workflowReducer(state, action);
 }
-
 export const {
   selectIds,
   selectEntities,

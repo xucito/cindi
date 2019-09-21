@@ -1,4 +1,6 @@
-﻿using ConsensusCore.Domain.BaseClasses;
+﻿using Cindi.Domain.Entities.States;
+using ConsensusCore.Domain.BaseClasses;
+using ConsensusCore.Domain.Models;
 using ConsensusCore.Domain.Services;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Options;
@@ -13,12 +15,13 @@ namespace Cindi.Persistence.ConsensusCoreMappings
 {
     public static class NodeStorageClassMap
     {
-        public static void Register(BsonClassMap<NodeStorage> cm)
+        public static void Register(BsonClassMap<NodeStorage<CindiClusterState>> cm)
         {
             cm.AutoMap();
             cm.SetIsRootClass(true);
             cm.UnmapMember(c => c._saveThread);
             cm.MapMember(s => s.ShardMetaData).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, LocalShardMetaData>>(DictionaryRepresentation.ArrayOfArrays));
+            cm.MapMember(s => s.Logs).SetSerializer(new DictionaryInterfaceImplementerSerializer<SortedList<int, LogEntry>>(DictionaryRepresentation.ArrayOfArrays));
             /*AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(NodeStorage))).ToList()
                 .ForEach(type => cm.AddKnownType(type));*/
         }

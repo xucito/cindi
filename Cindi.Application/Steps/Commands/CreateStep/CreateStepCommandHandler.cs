@@ -26,12 +26,11 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         private readonly IStepsRepository _stepsRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
         public CreateStepCommandHandler(IStepsRepository stepsRepository, 
             IStepTemplatesRepository steptemplatesRepository, 
             IClusterStateService service, 
-            IConsensusCoreNode<CindiClusterState, 
-                IBaseRepository> node)
+            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = steptemplatesRepository;
@@ -57,7 +56,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 newStep
                 );*/
 
-            var createdWorkflowTemplateId = await _node.Send(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
             {
                 Data = newStep,
                 WaitForSafeWrite = true,

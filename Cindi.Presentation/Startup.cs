@@ -63,6 +63,9 @@ namespace Cindi.Presentation
     {
 
         public Task BootstrapThread;
+        public IConfiguration Configuration { get; }
+        public IMongoClient MongoClient { get; set; }
+        public bool EnableUI { get; }
 
         public Startup(IConfiguration configuration)
         {
@@ -71,16 +74,12 @@ namespace Cindi.Presentation
             EnableUI = Configuration.GetValue<bool>("EnableUI");
         }
 
-        public IConfiguration Configuration { get; }
-        public IMongoClient MongoClient { get; set; }
-        public bool EnableUI { get; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
 
             services.AddTransient<IDataRouter, CindiDataRouter>();
-            services.AddConsensusCore<CindiClusterState, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient));
+            services.AddConsensusCore<CindiClusterState, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient), Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
@@ -108,21 +107,6 @@ namespace Cindi.Presentation
                     configuration.RootPath = "ClientApp/dist";
                 });
             }
-
-            var value = Configuration.GetSection("Cluster").GetValue<string>("Urls");
-            // Options
-            services.Configure<ClusterOptions>((action) =>
-            {
-                action.NodeUrls = Configuration.GetSection("Cluster").GetValue<string>("Urls").Split(",").ToList();
-                action.MinimumNodes = Configuration.GetSection("Cluster").GetValue<int>("MinimumNodes");
-                action.NumberOfShards = 1;
-                action.DataTransferTimeoutMs = 30000;
-            });
-
-            services.Configure<NodeOptions>((action) => new NodeOptions()
-            {
-                EnableLeader = true
-            });
 
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
@@ -196,7 +180,7 @@ namespace Cindi.Presentation
             IHostingEnvironment env,
             IClusterStateService service,
             ILogger<Startup> logger,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository> node,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node,
             ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider)

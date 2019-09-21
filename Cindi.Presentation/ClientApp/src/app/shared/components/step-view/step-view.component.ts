@@ -30,6 +30,7 @@ export class StepViewComponent implements OnInit, OnDestroy, OnChanges {
     if (this.stepTemplate != undefined && this.step != undefined) {
       this.inputs = ConvertTemplateToInputs(this.stepTemplate, this.step);
       this.outputs = ConvertTemplateToOutputs(this.stepTemplate, this.step);
+      this.LoadLogs(this.step.logs);
     }
   }
 

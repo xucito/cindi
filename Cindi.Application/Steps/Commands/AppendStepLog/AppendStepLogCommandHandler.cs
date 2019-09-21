@@ -23,11 +23,11 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
     {
         public IStepsRepository _stepsRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository> _node;
+        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
         public AppendStepLogCommandHandler(IStepsRepository stepsRepository,
-            ILogger<AppendStepLogCommandHandler> logger, 
-            IConsensusCoreNode<CindiClusterState, IBaseRepository> node
+            ILogger<AppendStepLogCommandHandler> logger,
+            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
             )
         {
             _stepsRepository = stepsRepository;
@@ -66,7 +66,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 
             //await _stepsRepository.UpdateStep(step);
 
-            var createdWorkflowTemplateId = await _node.Send(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
             {
                 Data = step,
                 WaitForSafeWrite = true,
