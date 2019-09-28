@@ -32,8 +32,8 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.1.0" />
-    <PackageReference Include="ConsensusCore.Domain" Version="1.0.3.2-alpha" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.3.2-alpha" />
+    <PackageReference Include="ConsensusCore.Domain" Version="1.0.3.3-alpha" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.3.3-alpha" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />

@@ -10,7 +10,7 @@
         Workflow Inputs
       </nb-card-header>
       <nb-card-body>
-        <workflow-inputs (OnChange)="updateInputDefinitions($event)" [InputDefinitions]="workflowTemplate.inputDefinitions">
+        <workflow-inputs  *ngIf="_workflowTemplate != undefined" (OnChange)="updateInputDefinitions($event)" [InputDefinitions]="_workflowTemplate.inputDefinitions">
         </workflow-inputs>
       </nb-card-body>
     </nb-card>
@@ -24,7 +24,7 @@
           </nb-card-header>
           <nb-card-body>
             <ngx-graph class="chart-container" [clusters]="clusters" [autoZoom]="true" [draggingEnabled]="false"
-              [links]="edges" [nodes]="nodes" layout="dagreCluster">
+              [links]="edges" [nodes]="nodes" layout="dagreCluster" [animate]="false" *ngIf="_workflowTemplate != undefined">
               <ng-template #nodeTemplate let-node>
                 <svg:g *ngIf="node.meta.type == 'step'" (click)="selectStep(node)">
                   <svg:rect rx="5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
@@ -95,9 +95,9 @@
 <ng-template #submitWorkflow let-data>
   Name
   <input nbInput fullWidth type="text" [ngModelOptions]="{standalone: true}"
-  [(ngModel)]="workflowTemplate.name" >
+  [(ngModel)]="_workflowTemplate.name" >
   Version
   <input nbInput fullWidth type="number" [ngModelOptions]="{standalone: true}"
-  [(ngModel)]="workflowTemplate.version" >
+  [(ngModel)]="_workflowTemplate.version" >
   <Button nbButton (click)="save()">Save</Button>
 </ng-template>

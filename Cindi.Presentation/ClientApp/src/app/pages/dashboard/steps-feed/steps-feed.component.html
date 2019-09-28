@@ -20,23 +20,32 @@
       </nb-list>-->
         <nb-list class="user-activity-list">
           <nb-list-item *ngFor="let step of uncompletedSteps">
-            <div class="visited-date">
+            <div class="list-icon">
               <nb-icon *ngIf="step.status == 'unassigned'" icon="layers" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'suspended'" icon="pause-circle" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'assigned'" icon="activity" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'successful'" icon="checkmark-circle-2" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'warning'" icon="alert-triangle" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'error'" icon="alert-circle" pack="eva"></nb-icon>
-              <nb-icon *ngIf="step.status == 'question-mark-circle'" icon="layers" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'unknown'" icon="layers" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'cancelled'" icon="stop-circle" pack="eva"></nb-icon>
             </div>
             <div class="step-template-name">
-              <div class="caption">Step Template </div>
-              <div class="value">{{ step.stepTemplateId }}</div>
+              <div class="caption">{{ step.stepTemplateId }} </div>
+              <div class="date-text">{{step.createdOn | date: 'medium'}}
+              </div>
+
+
+              <div class="value">{{step.name}}</div>
             </div>
 
             <nb-actions size="small">
-              <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"></nb-action>
-              <nb-action icon="close-circle" *ngIf="step.status == 'unassigned'"></nb-action>
+              <nb-action icon="play-circle" *ngIf="step.status == 'suspended'"
+                (click)="updateStep(step.id, 'unassigned')"></nb-action>
+              <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"
+                (click)="updateStep(step.id, 'suspended')"></nb-action>
+              <nb-action icon="close-circle" *ngIf="step.status == 'unassigned' || step.status == 'suspended'"
+                (click)="updateStep(step.id, 'cancelled')"></nb-action>
               <nb-action icon="eye-outline" (click)="openStepViewWindow(stepView, step)"></nb-action>
               <nb-action icon="copy" (click)="openWindow(contentTemplate, step)"></nb-action>
             </nb-actions>
@@ -58,22 +67,23 @@
         </nb-list>-->
         <nb-list class="user-activity-list">
           <nb-list-item *ngFor="let step of steps">
-            <div class="visited-date">
+            <div class="list-icon">
               <nb-icon *ngIf="step.status == 'unassigned'" icon="layers" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'suspended'" icon="pause-circle" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'assigned'" icon="activity" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'successful'" icon="checkmark-circle-2" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'warning'" icon="alert-triangle" pack="eva"></nb-icon>
               <nb-icon *ngIf="step.status == 'error'" icon="alert-circle" pack="eva"></nb-icon>
-              <nb-icon *ngIf="step.status == 'question-mark-circle'" icon="layers" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'unknown'" icon="layers" pack="eva"></nb-icon>
+              <nb-icon *ngIf="step.status == 'cancelled'" icon="stop-circle" pack="eva"></nb-icon>
             </div>
             <div class="step-template-name">
-              <div class="caption">Step Template </div>
-              <div class="value">{{ step.stepTemplateId }}</div>
+              <div class="caption">Step Template: {{ step.stepTemplateId }} </div>
+              <div class="date-text">{{step.createdOn | date: 'medium'}}
+              </div>
+              <div class="value">{{step.name}}</div>
             </div>
             <nb-actions size="small">
-              <nb-action icon="pause-circle" *ngIf="step.status == 'unassigned'"></nb-action>
-              <nb-action icon="close-circle" *ngIf="step.status == 'unassigned'"></nb-action>
               <nb-action icon="eye-outline" (click)="openStepViewWindow(stepView, step)"></nb-action>
               <nb-action icon="copy" (click)="openWindow(contentTemplate, step)"></nb-action>
             </nb-actions>

@@ -21,6 +21,10 @@
     margin: 0 -0.25rem;
   }
 
+  nb-icon {
+    font-size: 2rem;
+  }
+
   .visited-date,
   .visited-pages-count,
   .visited-percentages {
@@ -56,3 +60,13 @@
     }
   }
 }
+
+.date-text{
+  font-size: 0.5rem
+}
+
+.list-icon{
+  min-width: 40px;
+  min-height: 40px;
+}
+

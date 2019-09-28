@@ -78,7 +78,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                                 foreach (var step in steps.Result)
                                 {
-                                    if (step.SuspendedUntil < DateTime.UtcNow)
+                                    if (step.SuspendedUntil != null && step.SuspendedUntil < DateTime.UtcNow)
                                     {
                                         await _mediator.Send(new UnassignStepCommand
                                         {
@@ -95,7 +95,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                             }
                             Thread.Sleep(1000);
                         }
-                        catch(Exception e)
+                        catch (Exception e)
                         {
                             _logger.LogError("Failed to check suspended threads with exception " + e.Message + Environment.NewLine + e.StackTrace);
                         }

@@ -27,13 +27,14 @@ export const MENU_ITEMS: NbMenuItem[] = [
     link: "/pages/global-values"
   },  {
     title: "Workflow-Designer",
-    icon: "bookmark-outline",
+    icon: "edit-2-outline",
     link: "/pages/workflow-designer"
-  },
+  }/*,
   {
     title: "FEATURES",
     group: true
-  },
+  }
+  ,
   {
     title: "Auth",
     icon: "lock-outline",
@@ -55,5 +56,5 @@ export const MENU_ITEMS: NbMenuItem[] = [
         link: "/auth/reset-password"
       }
     ]
-  }
+  }*/
 ];

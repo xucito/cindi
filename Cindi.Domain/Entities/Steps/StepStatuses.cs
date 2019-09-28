@@ -13,22 +13,25 @@ namespace Cindi.Domain.Entities.Steps
         public const string Unassigned = "unassigned";
         public const string Assigned = "assigned";
         public const string Successful = "successful";
+        public const string Cancelled = "cancelled";
         public const string Warning = "warning";
         public const string Error = "error";
         public const string Unknown = "unknown";
 
         private static Dictionary<string, int> _priorityDictionary = new Dictionary<string, int>()
         {
-            {Error,1 },
-            {Warning,2 },
-            {Successful,3 },
-            {Assigned,4 },
-            {Suspended, 4 },
-            {Unassigned,5 },
-            {Unknown,6 }
+            { Cancelled, 1 },
+            {Error,2 },
+            {Warning,3 },
+            {Successful,4 },
+            {Assigned,5 },
+            {Suspended, 6 },
+            {Unassigned,7},
+            {Unknown,8 }
         };
 
         public static string[] AllStatuses = new string[]{
+            Cancelled,
             Suspended,
             Unassigned,
             Assigned,
@@ -42,7 +45,8 @@ namespace Cindi.Domain.Entities.Steps
         {
             if (status == Successful ||
                 status == Warning ||
-                status == Error)
+                status == Error || 
+                status == Cancelled)
             {
                 return true;
             }
@@ -70,7 +74,8 @@ namespace Cindi.Domain.Entities.Steps
                 value == Warning ||
                 value == Error ||
                 value == Suspended ||
-                value == Unknown
+                value == Unknown ||
+                value == Cancelled 
                 )
             {
                 return true;

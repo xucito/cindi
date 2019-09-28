@@ -96,7 +96,7 @@ namespace Cindi.Presentation
 
             services.Configure<CindiClusterOptions>(option => new CindiClusterOptions
             {
-                DefaultSuspensionTime = Configuration.GetValue<double>("DefaultSuspensionTimeMs"),
+                DefaultSuspensionTimeMs = Configuration.GetValue<double>("DefaultSuspensionTimeMs"),
                 DbConnectionString = Configuration.GetValue<string>("DBConnectionString")
             });
 

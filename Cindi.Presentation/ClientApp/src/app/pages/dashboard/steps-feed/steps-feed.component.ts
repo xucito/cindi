@@ -20,6 +20,7 @@ import * as fromStepTemplate from "../../../entities/step-templates/step-templat
 import { getStepTemplate } from "../../../entities/step-templates/step-template.reducer";
 import { ConvertTemplateToInputs } from "../../../shared/utility/data-mapper";
 import { take } from 'rxjs/operators';
+import { loadSteps } from '../../../entities/steps/step.actions';
 
 @Component({
   selector: "steps-feed",
@@ -37,7 +38,7 @@ export class StepsFeedComponent implements OnInit {
   }
 
   constructor(
-    store: Store<State>,
+    private store: Store<State>,
     private stepTemplateStore: Store<fromStepTemplate.State>,
     private windowService: NbWindowService,
     private cindiClient: CindiClientService,
@@ -135,5 +136,27 @@ export class StepsFeedComponent implements OnInit {
         console.log("Submitted");
       });
     console.log(event);
+  }
+
+  updateStep(stepId: string, status: string)
+  {
+    this.cindiClient.PutStep(stepId, status).subscribe(result => {
+      const config: Partial<NbToastrConfig> = {
+        status: "success",
+        destroyByClick: true,
+        duration: 3000,
+        hasIcon: false,
+        position: NbGlobalPhysicalPosition.TOP_RIGHT,
+        preventDuplicates: true
+      };
+
+      const toastRef: NbToastRef = this.toastrService.show(
+        "success",
+         status + " step " + result.result.id,
+        config
+      );
+
+      this.store.dispatch(loadSteps({status: undefined}));
+    });
   }
 }

@@ -1,7 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
-using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
@@ -20,17 +19,17 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cindi.Application.Steps.Commands.UnassignStep
+namespace Cindi.Application.Steps.Commands.CancelStep
 {
-    public class UnassignStepCommandHandler : IRequestHandler<UnassignStepCommand, CommandResult>
+    public class CancelStepCommandHandler : IRequestHandler<CancelStepCommand, CommandResult>
     {
         public IStepsRepository _stepsRepository;
-        public ILogger<UnassignStepCommandHandler> Logger;
+        public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
 
-        public UnassignStepCommandHandler(IStepsRepository stepsRepository,
-            ILogger<UnassignStepCommandHandler> logger,
+        public CancelStepCommandHandler(IStepsRepository stepsRepository,
+            ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
         {
@@ -44,7 +43,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
         }
 
 
-        public async Task<CommandResult> Handle(UnassignStepCommand request, CancellationToken cancellationToken)
+        public async Task<CommandResult> Handle(CancelStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -56,57 +55,54 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                 CreateLock = true
             });
 
+            // Applied the lock successfully
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
                 var step = (Step)stepLockResult.Data;
-                if (step.Status != StepStatuses.Suspended)
+                if (step.Status == StepStatuses.Unassigned ||
+                    step.Status == StepStatuses.Suspended )
                 {
-                    Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
-                    return new CommandResult()
+                    step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
                     {
-                        ElapsedMs = stopwatch.ElapsedMilliseconds,
-                        ObjectRefId = step.Id.ToString(),
-                        Type = CommandResultTypes.None
-                    };
-                }
-
-                step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = request.CreatedBy,
-                    Updates = new List<Domain.ValueObjects.Update>()
+                        CreatedOn = DateTime.UtcNow,
+                        CreatedBy = request.CreatedBy,
+                        Updates = new List<Domain.ValueObjects.Update>()
                         {
                             new Update()
                             {
                                 Type = UpdateType.Override,
                                 FieldName = "status",
-                                Value = StepStatuses.Unassigned,
+                                Value = StepStatuses.Cancelled,
                             }
 
                         }
-                });
+                    });
 
-                var result =  await _node.Handle(new WriteData()
-                {
-                    Data = step,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    RemoveLock = true
-                });
-
-
-                if (result.IsSuccessful)
-                {
-                    return new CommandResult()
+                    var result = await _node.Handle(new WriteData()
                     {
-                        ElapsedMs = stopwatch.ElapsedMilliseconds,
-                        ObjectRefId = step.Id.ToString(),
-                        Type = CommandResultTypes.Update
-                    };
+                        Data = step,
+                        WaitForSafeWrite = true,
+                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                        RemoveLock = true
+                    });
+
+                    if (result.IsSuccessful)
+                    {
+                        return new CommandResult()
+                        {
+                            ElapsedMs = stopwatch.ElapsedMilliseconds,
+                            ObjectRefId = step.Id.ToString(),
+                            Type = CommandResultTypes.Update
+                        };
+                    }
+                    else
+                    {
+                        throw new FailedClusterOperationException("Failed to apply cluster operation with for step " + step.Id);
+                    }
                 }
                 else
                 {
-                    throw new FailedClusterOperationException("Failed to apply cluster operation with for step " + step.Id);
+                    throw new InvalidStepStatusException("Step " + request.StepId + " could not be cancelled as it has status " + step.Status);
                 }
             }
             else

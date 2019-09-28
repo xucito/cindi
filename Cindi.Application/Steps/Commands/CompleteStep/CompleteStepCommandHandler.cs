@@ -106,47 +106,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 throw new InvalidStepStatusInputException("Step " + request.Id + " is already complete with status " + stepToComplete.Status + ".");
             }
 
-            if (request.Status == StepStatuses.Suspended)
-            {
-                stepToComplete.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = request.CreatedBy,
-                    Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = request.Status,
-                            },
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "suspendeduntil",
-                                Value = request.SuspendFor == null ?DateTime.UtcNow.AddMilliseconds( _option.DefaultSuspensionTime) : DateTime.UtcNow.AddMilliseconds(DateTimeMathsUtility.GetMs(request.SuspendFor))
-                            }
-                        }
-                });
-
-                await _node.Handle(new WriteData()
-                {
-                    Data = stepToComplete,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
-                });
-                //   await _stepsRepository.UpdateStep(stepToComplete);
-
-
-                return new CommandResult()
-                {
-                    ObjectRefId = request.Id.ToString(),
-                    ElapsedMs = stopwatch.ElapsedMilliseconds,
-                    Type = CommandResultTypes.Update
-                };
-            }
-
-
             if (!StepStatuses.IsCompleteStatus(request.Status))
             {
                 throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");

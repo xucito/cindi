@@ -31,7 +31,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {
-            DefaultSuspensionTime = 0
+            DefaultSuspensionTimeMs = 0
         };
 
         public AssignStepCommandHandler_tests()
@@ -83,7 +83,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -132,7 +132,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -180,7 +180,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -226,7 +226,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
@@ -273,7 +273,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
             Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 

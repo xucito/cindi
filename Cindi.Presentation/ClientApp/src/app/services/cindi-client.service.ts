@@ -26,6 +26,12 @@ export class CindiClientService {
     }
   }
 
+  PutStep(id: string, status: string): Observable<any> {
+      return this.http.put(this.baseUrl + this.api + "steps/"+id+"/status", {
+        Status: status
+      });
+  }
+
   GetStep(stepId: string): Observable<any> {
     return this.http.get(this.baseUrl + this.api + "steps/" + stepId);
   }

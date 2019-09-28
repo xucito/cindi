@@ -38,7 +38,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {
-            DefaultSuspensionTime = 0
+            DefaultSuspensionTimeMs = 0
         };
 
         public CompleteStepCommandHandler_tests()

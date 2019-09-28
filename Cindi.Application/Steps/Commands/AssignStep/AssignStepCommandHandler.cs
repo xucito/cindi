@@ -65,7 +65,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var dateChecked = DateTime.UtcNow;
                 do
                 {
-                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds)).Where(s => !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefault();
+                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending)).Where(s => !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefault();
                     if (unassignedStep != null)
                     {
                         var assigned = await _node.Handle(new RequestDataShard()

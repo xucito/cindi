@@ -13,6 +13,7 @@ using MongoDB.Bson;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.JournalEntries;
 using System.Linq.Expressions;
+using Cindi.Domain.Enums;
 
 namespace Cindi.Persistence.Steps
 {
@@ -50,7 +51,7 @@ namespace Cindi.Persistence.Steps
             _journalEntries = database.GetCollection<JournalEntry>("JournalEntries");
         }
 
-        public async Task<List<Step>> GetStepsAsync(int size = 10, int page = 0, string status = null, string[] stepTemplateIds = null, List<Expression<Func<Step, object>>> exclusions = null)
+        public async Task<List<Step>> GetStepsAsync(int size = 10, int page = 0, string status = null, string[] stepTemplateIds = null, List<Expression<Func<Step, object>>> exclusions = null, SortOrder order = SortOrder.Descending, string sortField = "CreatedOn")
         {
             if (status != null && !StepStatuses.IsValid(status))
             {
@@ -79,7 +80,16 @@ namespace Cindi.Persistence.Steps
                 stepFilter = FilterDefinition<Step>.Empty; ;
             }
 
-            var sort = Builders<Step>.Sort.Descending("CreatedOn");
+            SortDefinition<Step> sort;
+            if (order == SortOrder.Descending)
+            {
+                sort = Builders<Step>.Sort.Descending(sortField);
+            }
+            else
+            {
+                sort = Builders<Step>.Sort.Ascending(sortField);
+            }
+
             FindOptions<Step> options = new FindOptions<Step>
             {
                 BatchSize = size,
