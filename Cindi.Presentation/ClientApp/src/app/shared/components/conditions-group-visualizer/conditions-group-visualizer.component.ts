@@ -102,7 +102,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     let nodes: Node[] = [];
     let edges: Edge[] = [];
     //nodes.push({ id: this.dependencies.id, label: "Start" });
-    this.getNodesAndEdges(undefined, nodes, edges, this.dependencies);
+    this.getNodesAndEdges(undefined, nodes, edges,"start", this.dependencies);
 
     this.edges = edges;
     this.nodes = nodes;
@@ -112,6 +112,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     fromNode: string, //node you are creating the tree from
     existingNodes: Node[],
     existingEdges: Edge[],
+    conditonGroupId: string,
     conditionGroup: any
   ): { nodes: Node[]; edges: Edge[] } {
     let nodes = existingNodes;
@@ -119,7 +120,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
 
     //Add the condition group node
     nodes.push({
-      id: conditionGroup.id,
+      id: conditonGroupId,
       label: "Group",
       data: {
         type: "conditionGroup",
@@ -134,7 +135,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
       label: "Group",
       data: {
         type: "newCondition",
-        parent: conditionGroup.id,
+        parent: conditonGroupId,
         options: {
           steps: this.availableSteps
         }
@@ -142,7 +143,7 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
     });
     edges.push({
       id: newConditionId,
-      source: conditionGroup.id,
+      source: conditonGroupId,
       target: newConditionId
     });
 
@@ -153,27 +154,28 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
       label: "Group",
       data: {
         type: "newConditionGroup",
-        parent: conditionGroup.id
+        parent: conditonGroupId
       }
     });
     edges.push({
       id: newConditionGroupId,
-      source: conditionGroup.id,
+      source: conditonGroupId,
       target: newConditionGroupId
     });
 
     if (fromNode !== undefined) {
       edges.push({
-        id: conditionGroup.id,
+        id: conditonGroupId,
         source: fromNode,
-        target: conditionGroup.id
+        target: conditonGroupId
       });
     }
     if (conditionGroup.conditions) {
-      conditionGroup.conditions.forEach(element => {
+      Object.keys(conditionGroup.conditions).forEach(element => {
+        let condition = conditionGroup.conditions[element];
         nodes.push({
-          id: element.id,
-          label: element.name,
+          id: condition.id,
+          label: condition.name,
           data: {
             type: "condition",
             condition: element,
@@ -184,16 +186,16 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
         });
 
         edges.push({
-          id: element.id,
-          source: conditionGroup.id,
-          target: element.id
+          id: condition.id,
+          source: conditonGroupId,
+          target: condition.id
         });
       });
     }
 
     if (conditionGroup.conditionGroups) {
-      conditionGroup.conditionGroups.forEach(element => {
-        this.getNodesAndEdges(conditionGroup.id, nodes, edges, element);
+      Object.keys(conditionGroup.conditionGroups).forEach(element => {
+        this.getNodesAndEdges(conditonGroupId, nodes, edges, element, conditionGroup.conditionGroups[element]);
       });
     }
 

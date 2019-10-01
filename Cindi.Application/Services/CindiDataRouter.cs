@@ -120,8 +120,10 @@ namespace Cindi.Application.Services
                     return await _workflowRepository.UpdateWorkflow(t1);
                 case Step t1:
                     return await _stepsRepository.UpdateStep(t1);
+                case GlobalValue t1:
+                    return await _globalValues.UpdateGlobalValue(t1);
             }
-            return null;
+            throw new Exception("Object type " + data.ShardType + "has no supported operations");
         }
     }
 }

@@ -75,5 +75,25 @@ namespace Cindi.Persistence.GlobalValues
             var globalValue = (await _globalValues.FindAsync(s => s.Id == id)).FirstOrDefault();
             return globalValue;
         }
+
+        public async Task<GlobalValue> UpdateGlobalValue(GlobalValue globalValue)
+        {
+            var result = await _globalValues.ReplaceOneAsync(
+                  doc => doc.Id == globalValue.Id,
+                  globalValue,
+                  new UpdateOptions
+                  {
+                      IsUpsert = false
+                  });
+
+            if (result.IsAcknowledged)
+            {
+                return globalValue;
+            }
+            else
+            {
+                throw new Exception("Update of global Value " + globalValue.Id + " failed.");
+            }
+        }
     }
 }

@@ -6,6 +6,4 @@ export class WorkflowTemplate {
   description: string = '';
   logicBlocks: any;
   inputDefinitions: any;
-  createdBy: string;
-  createdOn: Date;
 }

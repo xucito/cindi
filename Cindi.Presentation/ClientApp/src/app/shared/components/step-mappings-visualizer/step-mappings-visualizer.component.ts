@@ -45,9 +45,19 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
     let edges: Edge[] = [];
     if (this.subsequentStep && this.stepTemplate) {
       Object.keys(this.stepTemplate.inputDefinitions).forEach(prop => {
-        let foundMapping = this.subsequentStep.mappings.filter(
-          m => m.stepInputId == prop
+
+        let foundMapping = [];
+        let foundMappingKeys = Object.keys(this.subsequentStep.mappings).forEach(
+          m =>
+          {
+            if(this.subsequentStep.mappings[m].stepInputId == prop)
+            {
+              foundMapping.push(this.subsequentStep.mappings[m])
+            }
+          }
         );
+
+
 
         nodes.push({
           id: "field_" + prop,
@@ -71,7 +81,8 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
           }
         });
       });
-      this.subsequentStep.mappings.forEach(mapping => {
+      Object.keys(this.subsequentStep.mappings).forEach(mappingKey => {
+        let mapping = this.subsequentStep.mappings[mappingKey];
         /*if (
           nodes.filter(n => n.id == "field_" + mapping.stepInputId).length == 0
         ) {

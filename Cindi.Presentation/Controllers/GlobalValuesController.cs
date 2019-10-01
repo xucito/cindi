@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Cindi.Application.GlobalValues.Commands.CreateGlobalValue;
+using Cindi.Application.GlobalValues.Commands.UpdateGlobalValue;
 using Cindi.Application.GlobalValues.Queries.GetGlobalValue;
 using Cindi.Application.GlobalValues.Queries.GetGlobalValues;
 using Cindi.Domain.Entities.GlobalValues;
@@ -32,7 +33,7 @@ namespace Cindi.Presentation.Controllers
                 Size = size
             });
 
-            return Ok(new HttpQueryResult<IEnumerable<GlobalValue>,IEnumerable<GlobalValueVM>>(globalValues,Mapper.Map<IEnumerable<GlobalValueVM>>(globalValues.Result)));
+            return Ok(new HttpQueryResult<IEnumerable<GlobalValue>, IEnumerable<GlobalValueVM>>(globalValues, Mapper.Map<IEnumerable<GlobalValueVM>>(globalValues.Result)));
         }
 
         // GET api/<controller>/5
@@ -44,7 +45,7 @@ namespace Cindi.Presentation.Controllers
                 Name = name
             });
 
-            return Ok(new HttpQueryResult<GlobalValue,GlobalValueVM>(globalValue, Mapper.Map<GlobalValueVM>(globalValue.Result)));
+            return Ok(new HttpQueryResult<GlobalValue, GlobalValueVM>(globalValue, Mapper.Map<GlobalValueVM>(globalValue.Result)));
         }
 
         // POST api/<controller>
@@ -58,9 +59,23 @@ namespace Cindi.Presentation.Controllers
                 Type = globalValue.Type.ToLower(),
                 Value = globalValue.Value,
                 CreatedBy = ClaimsUtility.GetId(User)
-        });
+            });
 
             return Ok(new HttpCommandResult<GlobalValue, GlobalValueVM>("//api//global-values//" + result.ObjectRefId, result, Mapper.Map<GlobalValueVM>(result.Result)));
+        }
+
+        [HttpPut("{name}")]
+        public async Task<IActionResult> Put(string name, [FromBody]UpdateGlobalValueVM globalValue)
+        {
+            var result = await Mediator.Send(new UpdateGlobalValueCommand()
+            {
+                Description = globalValue.Description,
+                Name = name,
+                Value = globalValue.Value,
+                CreatedBy = ClaimsUtility.GetId(User)
+            });
+
+            return Ok(new HttpCommandResult<GlobalValue>("//api//global-values//" + result.ObjectRefId, result, result.Result));
         }
     }
 }

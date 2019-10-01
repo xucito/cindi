@@ -40,7 +40,15 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
   workflowName: string;
   workflowVersion: number;
   selectedWorkflowTemplateId: string;
-  _workflowTemplate: WorkflowTemplate;
+  _workflowTemplate: WorkflowTemplate = {
+    id: "",
+    referenceId: "",
+    name: "",
+    version: 0,
+    description: "",
+    logicBlocks: [],
+    inputDefinitions: []
+  };
 
   public ngOnInit(): void {}
   @Output() selectedStepChange = new EventEmitter();
@@ -76,8 +84,7 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
   @Input() workflow: any;
 
   @Input()
-  set workflowTemplate (workflowTemplate)
-  {
+  set workflowTemplate(workflowTemplate) {
     this._workflowTemplate = workflowTemplate;
   }
 
@@ -112,42 +119,44 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
   }
 
   generateGraph() {
-    let nodes: Node[] = [];
-    let edges: Edge[] = [];
+    if (this._workflowTemplate != undefined) {
+      let nodes: Node[] = [];
+      let edges: Edge[] = [];
 
-    nodes.push({
-      id: "start",
-      label: "Start",
-      data: {},
-      meta: {
-        type: "start"
-      }
-    });
-
-    Object.keys(this._workflowTemplate.logicBlocks).forEach(key => {
-      this.getLogicBlockNodesAndEdges(
-        nodes,
-        edges,
-        this._workflowTemplate.logicBlocks[key]
-      );
-    });
-
-    this.addNewNodes(edges, nodes);
-
-    this.clusters = [];
-    Object.keys(this._workflowTemplate.logicBlocks).forEach(key => {
-      this.clusters.push({
-        id: id(),
-        label: key,
-        childNodeIds: Object.keys(
-          this._workflowTemplate.logicBlocks[key].subsequentSteps
-        ).map(key => key),
-        data: Object.assign({}, this._workflowTemplate.logicBlocks[key])
+      nodes.push({
+        id: "start",
+        label: "Start",
+        data: {},
+        meta: {
+          type: "start"
+        }
       });
-    });
 
-    this.nodes = nodes;
-    this.edges = edges;
+      Object.keys(this._workflowTemplate.logicBlocks).forEach(key => {
+        this.getLogicBlockNodesAndEdges(
+          nodes,
+          edges,
+          this._workflowTemplate.logicBlocks[key]
+        );
+      });
+
+      this.addNewNodes(edges, nodes);
+
+      this.clusters = [];
+      Object.keys(this._workflowTemplate.logicBlocks).forEach(key => {
+        this.clusters.push({
+          id: id(),
+          label: key,
+          childNodeIds: Object.keys(
+            this._workflowTemplate.logicBlocks[key].subsequentSteps
+          ).map(key => key),
+          data: Object.assign({}, this._workflowTemplate.logicBlocks[key])
+        });
+      });
+
+      this.nodes = nodes;
+      this.edges = edges;
+    }
   }
 
   getLogicBlockNodesAndEdges(nodes: Node[], edges: Edge[], logicBlock: any) {
@@ -258,8 +267,8 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
   selectStep(node) {
     this.selectedLogicblock = node.data.logicBlock;
     let logicBlockSubsequentSteps = [];
-    this.selectedLogicblock.subsequentSteps.forEach(element => {
-      logicBlockSubsequentSteps.push("" + element.workflowStepId);
+    Object.keys(this.selectedLogicblock.subsequentSteps).forEach(element => {
+      logicBlockSubsequentSteps.push("" + this.selectedLogicblock.subsequentSteps[element].workflowStepId);
     });
     this.selectedStep = node.data.step;
 

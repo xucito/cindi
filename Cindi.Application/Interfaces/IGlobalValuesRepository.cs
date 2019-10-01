@@ -11,5 +11,6 @@ namespace Cindi.Application.Interfaces
         Task<GlobalValue> GetGlobalValueAsync(string globalValueName);
         Task<GlobalValue> GetGlobalValueAsync(Guid id);
         Task<GlobalValue> InsertGlobalValue(GlobalValue globalValue);
+        Task<GlobalValue> UpdateGlobalValue(GlobalValue globalValue);
     }
 }
