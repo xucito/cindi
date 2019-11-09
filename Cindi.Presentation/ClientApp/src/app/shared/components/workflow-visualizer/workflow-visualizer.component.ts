@@ -46,8 +46,8 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     name: "",
     version: 0,
     description: "",
-    logicBlocks: [],
-    inputDefinitions: []
+    logicBlocks: {},
+    inputDefinitions: {}
   };
 
   public ngOnInit(): void {}
@@ -268,7 +268,9 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
     this.selectedLogicblock = node.data.logicBlock;
     let logicBlockSubsequentSteps = [];
     Object.keys(this.selectedLogicblock.subsequentSteps).forEach(element => {
-      logicBlockSubsequentSteps.push("" + this.selectedLogicblock.subsequentSteps[element].workflowStepId);
+      logicBlockSubsequentSteps.push(
+        "" + this.selectedLogicblock.subsequentSteps[element].workflowStepId
+      );
     });
     this.selectedStep = node.data.step;
 
@@ -278,7 +280,13 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
           n.meta.type == "step" && logicBlockSubsequentSteps.indexOf(n.id) == -1
       )
       .map(n => {
-        return n.data.step;
+        return {
+          id: n.id,
+          description: n.data.step.isPriority,
+          isPriority: n.data.step.isPriority,
+          mappings: n.data.step.isPriority,
+          stepTemplateId: n.data.step.stepTemplateId
+        };
       });
 
     this.selectedStepTemplate = this.stepTemplates.filter(

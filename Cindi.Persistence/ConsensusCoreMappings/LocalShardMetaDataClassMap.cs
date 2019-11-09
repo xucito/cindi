@@ -15,8 +15,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         public static void Register(BsonClassMap<LocalShardMetaData> cm)
         {
             cm.AutoMap();
-            cm.MapMember(s => s.ShardOperations).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<int, ShardOperation>>(DictionaryRepresentation.ArrayOfArrays));
-            cm.MapMember(s => s.ObjectsMarkedForDeletion).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, DateTime>>(DictionaryRepresentation.ArrayOfArrays));
+            cm.MapIdMember(lsm => lsm.ShardId);
         }
     }
 }

@@ -26,11 +26,11 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         private readonly IStepsRepository _stepsRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
         public CreateStepCommandHandler(IStepsRepository stepsRepository, 
             IStepTemplatesRepository steptemplatesRepository, 
             IClusterStateService service, 
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+            IConsensusCoreNode<CindiClusterState> node)
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = steptemplatesRepository;

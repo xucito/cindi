@@ -34,7 +34,7 @@ export class MappingSelectorComponent implements OnInit, OnChanges {
   filterOptions() {
     let alreadyMappedIds = [];
     this.mapping.outputReferences.forEach(element => {
-      alreadyMappedIds.push(element.workflowStepId + ":" + element.outputId);
+      alreadyMappedIds.push(element.stepName + ":" + element.outputId);
     });
     this._options.forEach(option => {
       option.mappings = option.mappings.filter(
@@ -49,7 +49,7 @@ export class MappingSelectorComponent implements OnInit, OnChanges {
     console.log(mapping);
 
     this.mapping.outputReferences.push({
-      workflowStepId: option.stepRefId,
+      stepName: option.stepRefId,
       outputId: mapping.name,
       priority: 0
     });

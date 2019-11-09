@@ -23,11 +23,11 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
     {
         public IStepsRepository _stepsRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
 
         public AppendStepLogCommandHandler(IStepsRepository stepsRepository,
             ILogger<AppendStepLogCommandHandler> logger,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
+            IConsensusCoreNode<CindiClusterState> node
             )
         {
             _stepsRepository = stepsRepository;

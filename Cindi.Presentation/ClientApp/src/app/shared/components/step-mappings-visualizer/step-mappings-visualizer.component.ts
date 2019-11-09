@@ -70,7 +70,8 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
                     outputReferences: [],
                     description: null,
                     stepInputId: prop
-                  }
+                  },
+             fieldType: this.stepTemplate.inputDefinitions[prop].type
           },
           meta: {
             type: "field"
@@ -141,7 +142,7 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
   openStepMappingWindow(contentTemplate, data) {
     console.log(data);
 
-    let mappingType = "int"; //Get the type of the mapping
+    let mappingType =data.fieldType; //Get the type of the mapping
     const filteredMappings = JSON.parse(
       JSON.stringify(this.allPossibleMappings)
     );
@@ -160,26 +161,26 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
 
   updateMapping(mapping) {
     console.log(mapping);
-
+    let mappings = Object.keys(this.subsequentStep.mappings);
     if (
-      !this.subsequentStep.mappings ||
-      this.subsequentStep.mappings.length == 0
+      !mappings ||
+      mappings.length == 0
     ) {
-      this.subsequentStep.mappings = [];
-      this.subsequentStep.mappings.push(mapping);
+      this.subsequentStep.mappings = {};
+      this.subsequentStep.mappings[id()] = mapping;
     } else {
       let updatedMapping = false;
-      for (var i = 0; i < this.subsequentStep.mappings; i++) {
+      for (var i = 0; i < mappings.length; i++) {
         if (
-          this.subsequentStep.mappings[i].stepInputId == mapping.stepInputId
+          this.subsequentStep.mappings[mappings[i]].stepInputId == mapping.stepInputId
         ) {
-          this.subsequentStep.mappings[i] = mapping;
+          this.subsequentStep.mappings[mappings[i]] = mapping;
           updatedMapping = true;
         }
       }
 
       if (!updatedMapping) {
-        this.subsequentStep.mappings.push(mapping);
+        this.subsequentStep.mappings[id()] = mapping;
       }
     }
 

@@ -22,9 +22,9 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
     public class UpdateGlobalValueCommandHandler : IRequestHandler<UpdateGlobalValueCommand, CommandResult<GlobalValue>>
     {
         IGlobalValuesRepository _globalValuesRepository { get; set; }
-        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        IConsensusCoreNode<CindiClusterState> _node;
 
-        public UpdateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+        public UpdateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState> node)
         {
             _globalValuesRepository = globalValuesRepository;
             _node = node;

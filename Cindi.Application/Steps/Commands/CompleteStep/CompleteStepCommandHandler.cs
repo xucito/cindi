@@ -40,7 +40,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private IBotKeysRepository _botKeysRepository;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
@@ -51,7 +51,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
+            IConsensusCoreNode<CindiClusterState> node
             )
         {
             _stepsRepository = stepsRepository;
@@ -79,7 +79,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             CindiClusterOptions options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-             IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
+             IConsensusCoreNode<CindiClusterState> node
     )
         {
             _stepsRepository = stepsRepository;

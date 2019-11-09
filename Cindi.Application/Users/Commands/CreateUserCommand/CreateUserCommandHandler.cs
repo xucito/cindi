@@ -22,18 +22,18 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
         IUsersRepository _usersRepository;
-        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        IConsensusCoreNode<CindiClusterState> _node;
 
         public CreateUserCommandHandler(
             IUsersRepository usersRepository,
             ILogger<CreateUserCommandHandler> logger,
             IServiceProvider prov,
             IDataRouter router,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
+            IConsensusCoreNode<CindiClusterState> node
     )
         {
             _usersRepository = usersRepository;
-            _node = (IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>>)prov.GetService(typeof(IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>>));
+            _node = (IConsensusCoreNode<CindiClusterState>)prov.GetService(typeof(IConsensusCoreNode<CindiClusterState>));
         }
 
         public async Task<CommandResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)

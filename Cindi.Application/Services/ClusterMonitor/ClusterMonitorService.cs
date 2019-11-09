@@ -21,10 +21,10 @@ namespace Cindi.Application.Services.ClusterMonitor
         private IMediator _mediator;
         Thread checkSuspendedStepsThread;
         private ILogger<ClusterMonitorService> _logger;
-        private IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node;
+        private IConsensusCoreNode<CindiClusterState> node;
 
         public ClusterMonitorService(IServiceScopeFactory serviceProvider,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node)
+            IConsensusCoreNode<CindiClusterState> _node)
         {
             var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();

@@ -34,10 +34,10 @@ namespace Cindi.Application.Services.ClusterState
         private Thread _initThread { get; set; }
         public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
-        public IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        public IConsensusCoreNode<CindiClusterState> _node;
         CindiClusterState state { get { return _node.GetState(); } }
 
-        public ClusterStateService(ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+        public ClusterStateService(ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider, IConsensusCoreNode<CindiClusterState> node)
         {
             _node = node;
 

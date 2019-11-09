@@ -28,10 +28,10 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
     {
         private readonly IWorkflowTemplatesRepository _workflowTemplatesRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
 
-        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState> node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
             _workflowTemplatesRepository = workflowTemplatesRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
@@ -154,7 +154,9 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                             if (result == null)
                                 throw new StepTemplateNotFoundException("Step Template does not exist " + step.Value.StepTemplateId);
 
-                            var flatMappedSubsequentSteps = request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Key)).SelectMany(lb => lb.Value.SubsequentSteps.Select(ss => ss.Key));
+                            var flatMappedSubsequentSteps = request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Key)).SelectMany(lb => lb.Value.SubsequentSteps.Select(ss => ss.Key)).ToList();
+                            //Add start as a valid step
+                            flatMappedSubsequentSteps.Add("start");
                             foreach (var mapping in step.Value.Mappings)
                             {
                                 if (mapping.Value.OutputReferences != null)

@@ -7,10 +7,10 @@
       </nb-option>
     </nb-select>
     <div *ngIf="selectedConditionType == 'StepStatus' && _condition != undefined">
-      Selected Step 
-      <nb-select fullWidth [(selected)]="''+_condition.workflowStepId" placeholder="Step">
-        <nb-option *ngFor="let step of options.steps" [value]="''+step.workflowStepId">
-          {{step.workflowStepId}}
+      Selected Step
+      <nb-select fullWidth [(selected)]="''+_condition.id" placeholder="Step">
+        <nb-option *ngFor="let step of options.steps" [value]="''+step.id">
+          {{step.id}}
         </nb-option>
       </nb-select>
       Selected Status
@@ -27,4 +27,4 @@
   </nb-card-body>
 </nb-card>
 
-{{_condition | json}}
+{{options | json}}

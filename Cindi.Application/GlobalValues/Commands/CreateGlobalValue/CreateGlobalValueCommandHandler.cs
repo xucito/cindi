@@ -24,9 +24,9 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
         IGlobalValuesRepository _globalValuesRepository { get; set; }
-        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        IConsensusCoreNode<CindiClusterState> _node;
 
-        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState> node)
         {
             _globalValuesRepository = globalValuesRepository;
             _node = node;

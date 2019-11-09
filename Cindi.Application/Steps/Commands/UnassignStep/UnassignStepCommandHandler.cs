@@ -27,12 +27,12 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
         public IStepsRepository _stepsRepository;
         public ILogger<UnassignStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
 
         public UnassignStepCommandHandler(IStepsRepository stepsRepository,
             ILogger<UnassignStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+             IConsensusCoreNode<CindiClusterState> node)
         {
             _stepsRepository = stepsRepository;
             _node = node;

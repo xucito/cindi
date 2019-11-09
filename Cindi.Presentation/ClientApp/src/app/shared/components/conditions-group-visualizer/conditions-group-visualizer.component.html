@@ -1,3 +1,4 @@
+
 <ngx-graph [draggingEnabled]="false" class="chart-container" [links]="edges" [nodes]="nodes">
 
   <ng-template #nodeTemplate let-node>
@@ -15,15 +16,15 @@
 
     <svg:g width="250" height="50" *ngIf="node.data.type == 'condition'"
       (click)="openWindow(stepStatusTemplate, node.data)">
-      <svg:g *ngIf=" node.data.condition.name=='StepStatus'">
+      <svg:g *ngIf=" node.data.condition.name =='StepStatus'">
         <svg:rect y=" 0" x="0" width="250" height="50" stroke-width="0.2" fill="white" stroke="black">
         </svg:rect>
         <svg:text y="15" x="10">{{node.data.condition.name}}</svg:text>
         <svg:text y="30" x="10">
-          Step {{node.data.condition.workflowStepId}} {{node.data.condition.comparer}} {{node.data.condition.status}}
+          Step {{node.data.condition.stepName}} {{node.data.condition.comparer}} {{node.data.condition.status}}
         </svg:text>
         <svg:text y="45" x="10" *ngIf="node.data.condition.statusCode != undefined">
-          Step {{node.data.condition.workflowStepId}} {{node.data.condition.comparer}} statusCode
+          Step {{node.data.condition.id}} {{node.data.condition.comparer}} statusCode
           {{node.data.condition.statusCode}}
         </svg:text>
         <svg:circle r="10" x="250" y="0" fill="red" (click)="deleteNode(node)"></svg:circle>
@@ -62,6 +63,7 @@
 
 <ng-template #newStepStatusTemplate let-node>
   <condition-selector [options]="node.data.options"
-    (onSubmit)="addNewCondition(node.id, $event,node.data.parent)"></condition-selector>
+    (onSubmit)="addNewCondition(node.id, $event, node.data.parent)"></condition-selector>
   {{node| json}}
 </ng-template>
+{{dependencies | json}}

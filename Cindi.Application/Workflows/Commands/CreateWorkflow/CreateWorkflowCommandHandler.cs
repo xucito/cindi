@@ -33,14 +33,14 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
         private IStepsRepository _stepsRepository;
         private IStepTemplatesRepository _stepTemplatesRepository;
         private IMediator _mediator;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
 
         public CreateWorkflowCommandHandler(IWorkflowsRepository workflowsRepository,
             IWorkflowTemplatesRepository workflowTemplatesRepository,
             IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             IMediator mediator,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+            IConsensusCoreNode<CindiClusterState> node)
         {
             _workflowsRepository = workflowsRepository;
             _workflowTemplatesRepository = workflowTemplatesRepository;

@@ -39,7 +39,7 @@ namespace Cindi.Presentation.Controllers
         public StepsController(ILoggerFactory logger,
             IOptionsMonitor<CindiClusterOptions> options) : base(logger.CreateLogger<StepsController>())
         {
-
+            _option = options.CurrentValue;
             options.OnChange((change) =>
             {
                 _option = change;

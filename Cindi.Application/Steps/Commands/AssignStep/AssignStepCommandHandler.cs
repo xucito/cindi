@@ -33,7 +33,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private IBotKeysRepository _botKeysRepository;
         private IGlobalValuesRepository _globalValuesRepository;
         public ILogger<AssignStepCommandHandler> Logger;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
 
         public AssignStepCommandHandler(
             IStepsRepository stepsRepository,
@@ -42,7 +42,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             IBotKeysRepository botKeysRepository,
             ILogger<AssignStepCommandHandler> logger,
             IGlobalValuesRepository globalValuesRepository,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node
+            IConsensusCoreNode<CindiClusterState> node
             )
         {
             _stepsRepository = stepsRepository;

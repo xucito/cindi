@@ -26,8 +26,8 @@
     <nb-list *ngIf="mapping != undefined">
       <nb-list-item *ngFor="let reference of mapping.outputReferences; let i = index">
         <div class="list-item">
-          <span *ngIf="reference.workflowStepId != -1">Step: {{reference.workflowStepId}}</span>
-          <span *ngIf="reference.workflowStepId == -1">Workflow Input</span>
+          <span *ngIf="reference.stepName != 'start'">Step: {{reference.stepName}}</span>
+          <span *ngIf="reference.stepName == 'start'">Workflow Input</span>
         </div>
         <div class="list-item">
           {{reference.outputId}}

@@ -79,7 +79,7 @@ namespace Cindi.Presentation
         {
 
             services.AddTransient<IDataRouter, CindiDataRouter>();
-            services.AddConsensusCore<CindiClusterState, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient), Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
+            services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient), s => new NodeStorageRepository(MongoClient), Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
@@ -180,7 +180,7 @@ namespace Cindi.Presentation
             IHostingEnvironment env,
             IClusterStateService service,
             ILogger<Startup> logger,
-            IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node,
+            IConsensusCoreNode<CindiClusterState> node,
             ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider)

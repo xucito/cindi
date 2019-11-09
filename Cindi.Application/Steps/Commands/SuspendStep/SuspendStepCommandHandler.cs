@@ -26,12 +26,12 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
         public IStepsRepository _stepsRepository;
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
 
         public SuspendStepCommandHandler(IStepsRepository stepsRepository,
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+             IConsensusCoreNode<CindiClusterState> node)
         {
             _stepsRepository = stepsRepository;
             _node = node;

@@ -19,8 +19,8 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
     public class CreateBotKeyCommandHandler : IRequestHandler<CreateBotKeyCommand, CommandResult<string>>
     {
         IBotKeysRepository _botKeyRepository;
-        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
-        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+        IConsensusCoreNode<CindiClusterState> _node;
+        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState> node)
         {
             _botKeyRepository = botKeyRepository;
             _node = node;

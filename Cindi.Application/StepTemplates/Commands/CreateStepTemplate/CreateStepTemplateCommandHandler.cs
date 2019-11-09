@@ -23,10 +23,10 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
         private readonly IStepTemplatesRepository _stepTemplateRepository;
-        private readonly IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        private readonly IConsensusCoreNode<CindiClusterState> _node;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler(IStepTemplatesRepository client, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler(IStepTemplatesRepository client, IConsensusCoreNode<CindiClusterState> node, ILogger<CreateStepTemplateCommandHandler> logger)
         {
             _stepTemplateRepository = client;
             _node = node;

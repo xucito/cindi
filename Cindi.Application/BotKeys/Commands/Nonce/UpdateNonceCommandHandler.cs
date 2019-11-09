@@ -21,9 +21,9 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
     {
         IBotKeysRepository _botKeyRepository;
         IMediator _mediator;
-        IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> _node;
+        IConsensusCoreNode<CindiClusterState> _node;
 
-        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IConsensusCoreNode<CindiClusterState, IBaseRepository<CindiClusterState>> node)
+        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IConsensusCoreNode<CindiClusterState> node)
         {
             _botKeyRepository = botKeyRepository;
             _mediator = mediator;

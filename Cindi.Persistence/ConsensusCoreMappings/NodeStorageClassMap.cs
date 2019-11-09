@@ -20,7 +20,6 @@ namespace Cindi.Persistence.ConsensusCoreMappings
             cm.AutoMap();
             cm.SetIsRootClass(true);
             cm.UnmapMember(c => c._saveThread);
-            cm.MapMember(s => s.ShardMetaData).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, LocalShardMetaData>>(DictionaryRepresentation.ArrayOfArrays));
             cm.MapMember(s => s.Logs).SetSerializer(new DictionaryInterfaceImplementerSerializer<SortedList<int, LogEntry>>(DictionaryRepresentation.ArrayOfArrays));
             /*AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(NodeStorage))).ToList()
                 .ForEach(type => cm.AddKnownType(type));*/

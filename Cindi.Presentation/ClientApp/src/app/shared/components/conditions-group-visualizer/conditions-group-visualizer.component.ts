@@ -1,6 +1,7 @@
 import { NbWindowService } from "@nebular/theme";
 import { Component, OnInit, Input, OnChanges } from "@angular/core";
 import { Graph, Node, Edge, Layout } from "@swimlane/ngx-graph";
+import { id } from "@swimlane/ngx-charts/release/utils";
 
 @Component({
   selector: "conditions-group-visualizer",
@@ -21,88 +22,15 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
   options: any;
   nextId: number;
 
-  @Input() availableSteps: any[] = [
-    {
-      workflowStepId: 0
-    },
-    {
-      workflowStepId: 1
-    }
-  ];
+  @Input() availableSteps: any[] = [ ];
 
-  @Input() dependencies: any = {
-    id: "1",
-    operator: "AND",
-    conditions: [
-      {
-        name: "StepStatus",
-        comparer: "is",
-        workflowStepId: 0,
-        stepTemplateReferenceId: null,
-        status: "successful",
-        id: "2",
-        description: null
-      }
-    ],
-    conditionGroups: [
-      {
-        id: "3",
-        operator: "AND",
-        conditions: [
-          {
-            name: "StepStatus",
-            comparer: "is",
-            workflowStepId: 0,
-            stepTemplateReferenceId: null,
-            status: "successful",
-            statusCode: 0,
-            id: "4",
-            description: null
-          }
-        ],
-        conditionGroups: [
-          {
-            id: "7",
-            operator: "AND",
-            conditions: [
-              {
-                name: "StepStatus",
-                comparer: "is",
-                workflowStepId: 0,
-                stepTemplateReferenceId: null,
-                status: "successful",
-                statusCode: 0,
-                id: "8",
-                description: null
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: "5",
-        operator: "AND",
-        conditions: [
-          {
-            name: "StepStatus",
-            comparer: "is",
-            workflowStepId: 0,
-            stepTemplateReferenceId: null,
-            status: "successful",
-            statusCode: 0,
-            id: "6",
-            description: null
-          }
-        ]
-      }
-    ]
-  };
+  @Input() dependencies: any = {};
 
   generateGraph() {
     let nodes: Node[] = [];
     let edges: Edge[] = [];
     //nodes.push({ id: this.dependencies.id, label: "Start" });
-    this.getNodesAndEdges(undefined, nodes, edges,"start", this.dependencies);
+    this.getNodesAndEdges(undefined, nodes, edges, "start", this.dependencies);
 
     this.edges = edges;
     this.nodes = nodes;
@@ -174,11 +102,11 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
       Object.keys(conditionGroup.conditions).forEach(element => {
         let condition = conditionGroup.conditions[element];
         nodes.push({
-          id: condition.id,
+          id: element,
           label: condition.name,
           data: {
             type: "condition",
-            condition: element,
+            condition: condition,
             options: {
               steps: this.availableSteps
             }
@@ -186,16 +114,22 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
         });
 
         edges.push({
-          id: condition.id,
+          id: element,
           source: conditonGroupId,
-          target: condition.id
+          target: element
         });
       });
     }
 
     if (conditionGroup.conditionGroups) {
       Object.keys(conditionGroup.conditionGroups).forEach(element => {
-        this.getNodesAndEdges(conditonGroupId, nodes, edges, element, conditionGroup.conditionGroups[element]);
+        this.getNodesAndEdges(
+          conditonGroupId,
+          nodes,
+          edges,
+          element,
+          conditionGroup.conditionGroups[element]
+        );
       });
     }
 
@@ -237,31 +171,38 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
 
   addConditionGroup(
     parentId: string,
+    newConditionGroupId: any,
     newConditionGroup: any,
+    conditionGroupId: any,
     conditionGroup: any
   ) {
-    if (conditionGroup.id == parentId) {
+    if (conditionGroupId == parentId) {
       //Create an empty array if it does not exist
       if (conditionGroup.conditionGroups == undefined) {
-        conditionGroup.conditionGroups = [];
+        conditionGroup.conditionGroups = {};
       }
-      conditionGroup.conditionGroups.push(newConditionGroup);
+      conditionGroup.conditionGroups[newConditionGroupId] = newConditionGroup;
       return true;
-    } else {
-      if (conditionGroup.conditionGroups != undefined) {
-        for (var i = 0; i < conditionGroup.conditionGroups.length; i++) {
+    }
+
+    if (conditionGroup.conditionGroups != undefined) {
+      Object.keys(conditionGroup.conditionGroups).forEach(
+        conditionGroupName => {
           if (
             this.addConditionGroup(
               parentId,
+              newConditionGroupId,
               newConditionGroup,
-              conditionGroup.conditionGroups[i]
+              conditionGroupName,
+              conditionGroup.conditionGroups[conditionGroupName]
             )
           ) {
             return true;
           }
         }
-      }
+      );
     }
+
     return false;
   }
 
@@ -311,16 +252,37 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
   }
 
   addNewConditionGroup(node, selectedOption) {
+    let newId = id();
+    this.addConditionGroup(
+      node.data.parent,
+      newId,
+      {
+        id: node.id,
+        conditions: {},
+        conditionGroups: {},
+        operator: selectedOption
+      },
+      "start",
+      this.dependencies
+    );
+    /*node.data.parent.conditionGroups[id()] = {
+      operator: "AND",
+      conditions: {},
+      conditionGroups: {}
+    };*/
+    this.generateGraph();
+    /*
     console.log(node);
     if (
       this.addConditionGroup(
         node.data.parent,
         {
           id: node.id,
-          conditions: [],
-          conditionGroups: [],
+          conditions: {},
+          conditionGroups: {},
           operator: selectedOption
         },
+        id(),
         this.dependencies
       )
     ) {
@@ -328,37 +290,39 @@ export class ConditionsGroupVisualizerComponent implements OnInit, OnChanges {
       console.log("Successfully added condition Group");
     } else {
       console.error("Failed to add condition group.");
-    }
+    }*/
   }
 
-  addCondition(condition, parentId, conditionGroup) {
-    if (conditionGroup.id == parentId) {
+  addCondition(condition, parentId, conditionGroupId, conditionGroup) {
+    if (conditionGroupId == parentId) {
       //Create an empty array if it does not exist
       if (conditionGroup.conditions == undefined) {
-        conditionGroup.conditions = [];
+        conditionGroup.conditions = {};
       }
-      conditionGroup.conditions.push(condition);
+      conditionGroup.conditions[id()] = condition;
       return true;
     } else {
       if (conditionGroup.conditionGroups != undefined) {
-        for (var i = 0; i < conditionGroup.conditionGroups.length; i++) {
-          if (
-            this.addCondition(
-              condition,
-              parentId,
-              conditionGroup.conditionGroups[i]
-            )
-          ) {
-            return true;
+        Object.keys(conditionGroup.conditionGroups).forEach(
+          conditionGroupName => {
+            if (
+              this.addCondition(
+                condition,
+                parentId,
+                conditionGroupName,
+                conditionGroup.conditionGroups[conditionGroupName]
+              )
+            ) {
+              return true;
+            }
           }
-        }
+        );
       }
     }
     return false;
   }
-  addNewCondition(newConditionId, condition, parentId) {
-    condition.id = newConditionId;
-    if (this.addCondition(condition, parentId, this.dependencies)) {
+  addNewCondition(condition, event, parentId) {
+    if (this.addCondition(event, parentId, "start", this.dependencies)) {
       console.log("Added new condition");
       this.generateGraph();
     } else {
