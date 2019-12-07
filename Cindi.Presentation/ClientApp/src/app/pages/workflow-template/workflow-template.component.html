@@ -1,5 +1,5 @@
 <nb-card>
-    <workflow-visualizer [workflowTemplate]="workflowTemplate"></workflow-visualizer>
+    <workflow-visualizer (onSave)="saveWorkflow($event)" [workflowTemplate]="workflowTemplate" [stepTemplates]="stepTemplates"></workflow-visualizer>
     <nb-card-header>
       <div class="headerText">
         Workflow Template: {{selectedId}}
@@ -9,7 +9,7 @@
       </nb-actions>-->
     </nb-card-header>
   </nb-card>
-
+<!--
   <template-view [inputDefinitions]="workflowTemplate?.inputDefinitions" [outputDefinitions]="workflowTemplate?.outputDefinitions"></template-view>
 
 
@@ -18,3 +18,4 @@
     <dynamic-form [readOnly]="false" [additionalProps]="data.workflowTemplate" (onInputAction)="actionInput($event)"
       (onSubmit)="submitNewWorkflow($event)" [inputs]="data.inputs"></dynamic-form>
   </ng-template>
+  -->

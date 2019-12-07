@@ -1,17 +1,15 @@
 <div class="row">
-  <div class="col-sm-12">
-    <button nbButton (click)="openSaveWindow(submitWorkflow)">Save & Submit</button>
-  </div>
-</div>
-<div class="row">
   <div class="col-sm-3">
     <nb-card>
       <nb-card-header>
         Workflow Inputs
       </nb-card-header>
       <nb-card-body>
-        <workflow-inputs  *ngIf="_workflowTemplate != undefined" (OnChange)="updateInputDefinitions($event)" [InputDefinitions]="_workflowTemplate.inputDefinitions">
+        <workflow-inputs *ngIf="_workflowTemplate != undefined" (OnChange)="updateInputDefinitions($event)"
+          [InputDefinitions]="_workflowTemplate.inputDefinitions">
         </workflow-inputs>
+        <button nbButton class="w-100" (click)="openSaveWindow(submitWorkflow)">Save & Submit</button>
+
       </nb-card-body>
     </nb-card>
   </div>
@@ -24,7 +22,8 @@
           </nb-card-header>
           <nb-card-body>
             <ngx-graph class="chart-container" [clusters]="clusters" [autoZoom]="true" [draggingEnabled]="false"
-              [links]="edges" [nodes]="nodes" layout="dagreCluster" [animate]="false" *ngIf="_workflowTemplate != undefined">
+              [links]="edges" [nodes]="nodes" layout="dagreCluster" [animate]="false"
+              *ngIf="_workflowTemplate != undefined">
               <ng-template #nodeTemplate let-node>
                 <svg:g *ngIf="node.meta.type == 'step'" (click)="selectStep(node)">
                   <svg:rect rx="5" ry="5" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height"
@@ -94,12 +93,8 @@
 
 <ng-template #submitWorkflow let-data>
   Name
-  <input nbInput fullWidth type="text" [ngModelOptions]="{standalone: true}"
-  [(ngModel)]="_workflowTemplate.name" >
+  <input nbInput fullWidth type="text" [ngModelOptions]="{standalone: true}" [(ngModel)]="_workflowTemplate.name">
   Version
-  <input nbInput fullWidth type="number" [ngModelOptions]="{standalone: true}"
-  [(ngModel)]="_workflowTemplate.version" >
+  <input nbInput fullWidth type="number" [ngModelOptions]="{standalone: true}" [(ngModel)]="_workflowTemplate.version">
   <Button nbButton (click)="save()">Save</Button>
 </ng-template>
-
-{{_workflowTemplate | json}}

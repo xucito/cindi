@@ -85,7 +85,8 @@ export class WorkflowVisualizerComponent implements OnInit, OnChanges {
 
   @Input()
   set workflowTemplate(workflowTemplate) {
-    this._workflowTemplate = workflowTemplate;
+    this._workflowTemplate = JSON.parse(JSON.stringify(workflowTemplate));
+    this.generateGraph();
   }
 
   @Input() editMode = false;

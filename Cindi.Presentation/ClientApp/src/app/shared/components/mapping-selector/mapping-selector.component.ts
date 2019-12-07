@@ -22,6 +22,7 @@ export class MappingSelectorComponent implements OnInit, OnChanges {
   }
   //_mapping: any;
   _options: any[];
+  availableOptions;
   @Input() mapping;
 
   @Input()
@@ -31,17 +32,31 @@ export class MappingSelectorComponent implements OnInit, OnChanges {
 
   increasePriority(i) {}
 
+  removeMapping(i) {
+    this.mapping.outputReferences.splice(i, 1);
+    this.filterOptions();
+  }
+
   filterOptions() {
     let alreadyMappedIds = [];
     this.mapping.outputReferences.forEach(element => {
       alreadyMappedIds.push(element.stepName + ":" + element.outputId);
     });
-    this._options.forEach(option => {
+    this.availableOptions = JSON.parse(JSON.stringify(this._options));
+
+    this.availableOptions.forEach(option => {
       option.mappings = option.mappings.filter(
         mapping =>
           alreadyMappedIds.indexOf(option.stepRefId + ":" + mapping.name) == -1
       );
     });
+    /*
+    this._options.forEach(option => {
+      option.mappings = option.mappings.filter(
+        mapping =>
+          alreadyMappedIds.indexOf(option.stepRefId + ":" + mapping.name) == -1
+      );
+    });*/
   }
 
   addOutputReference(option, mapping) {

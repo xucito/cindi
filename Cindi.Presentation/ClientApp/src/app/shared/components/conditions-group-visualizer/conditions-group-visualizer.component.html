@@ -64,6 +64,4 @@
 <ng-template #newStepStatusTemplate let-node>
   <condition-selector [options]="node.data.options"
     (onSubmit)="addNewCondition(node.id, $event, node.data.parent)"></condition-selector>
-  {{node| json}}
 </ng-template>
-{{dependencies | json}}

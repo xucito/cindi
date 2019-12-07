@@ -1,0 +1,20 @@
+Remove Name
+Remove id
+Remove version
+
+Replace "referenceId": with ReferenceId=
+Replace "description": with Description=
+Replace '"logicBlocks": {' with 'LogicBlocks = new Dictionary<string, LogicBlock> {'
+Replace '"dependencies": {' with ' Dependencies = new ConditionGroup() {'
+Replace '"subsequentSteps": {' with 'SubsequentSteps = new Dictionary<string, SubsequentStep> {'
+Replace '"operator":' with 'Operator ='
+Replace '"conditions":' with 'Conditions='
+Replace '"conditionGroups":' with 'ConditionGroups='
+Replace '"isPriority":' with IsPriority=
+Replace "mappings": with  Mappings= new Dictionary<string, Mapping> =
+Replace '"outputReferences": [' with 'OutputReferences = new StepOutputReference[] {'
+Replace ']' with '}'
+Replace '"stepInputId":' with ""
+Replace '"stepName":' with "StepName="
+Replace '"outputId":' with "OutputId="
+Replace '"priority":' with "Priority="

@@ -45,19 +45,14 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
     let edges: Edge[] = [];
     if (this.subsequentStep && this.stepTemplate) {
       Object.keys(this.stepTemplate.inputDefinitions).forEach(prop => {
-
         let foundMapping = [];
-        let foundMappingKeys = Object.keys(this.subsequentStep.mappings).forEach(
-          m =>
-          {
-            if(this.subsequentStep.mappings[m].stepInputId == prop)
-            {
-              foundMapping.push(this.subsequentStep.mappings[m])
-            }
+        let foundMappingKeys = Object.keys(
+          this.subsequentStep.mappings
+        ).forEach(m => {
+          if (this.subsequentStep.mappings.hasOwnProperty(prop)) {
+            foundMapping.push(this.subsequentStep.mappings[m]);
           }
-        );
-
-
+        });
 
         nodes.push({
           id: "field_" + prop,
@@ -71,7 +66,7 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
                     description: null,
                     stepInputId: prop
                   },
-             fieldType: this.stepTemplate.inputDefinitions[prop].type
+            fieldType: this.stepTemplate.inputDefinitions[prop].type
           },
           meta: {
             type: "field"
@@ -129,7 +124,7 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
             edges.push({
               id: id(),
               source: "step_" + reference.workflowStepId,
-              target: "field_" + mapping.stepInputId
+              target: "field_" + mappingKey
             });
           });
         }
@@ -142,7 +137,7 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
   openStepMappingWindow(contentTemplate, data) {
     console.log(data);
 
-    let mappingType =data.fieldType; //Get the type of the mapping
+    let mappingType = data.fieldType; //Get the type of the mapping
     const filteredMappings = JSON.parse(
       JSON.stringify(this.allPossibleMappings)
     );
@@ -162,25 +157,14 @@ export class StepMappingsVisualizerComponent implements OnInit, OnChanges {
   updateMapping(mapping) {
     console.log(mapping);
     let mappings = Object.keys(this.subsequentStep.mappings);
-    if (
-      !mappings ||
-      mappings.length == 0
-    ) {
+    if (!mappings || mappings.length == 0) {
       this.subsequentStep.mappings = {};
-      this.subsequentStep.mappings[id()] = mapping;
+      this.subsequentStep.mappings[mapping.stepInputId] = mapping;
     } else {
-      let updatedMapping = false;
-      for (var i = 0; i < mappings.length; i++) {
-        if (
-          this.subsequentStep.mappings[mappings[i]].stepInputId == mapping.stepInputId
-        ) {
-          this.subsequentStep.mappings[mappings[i]] = mapping;
-          updatedMapping = true;
-        }
-      }
-
-      if (!updatedMapping) {
-        this.subsequentStep.mappings[id()] = mapping;
+      if (this.subsequentStep.mappings.hasOwnProperty(mapping.stepInputId)) {
+        this.subsequentStep.mappings[mapping.stepInputId] = mapping;
+      } else {
+        this.subsequentStep.mappings[mapping.stepInputId] = mapping;
       }
     }
 
