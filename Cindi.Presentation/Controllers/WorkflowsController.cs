@@ -38,7 +38,7 @@ namespace Cindi.Presentation.Controllers
             {
                 command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
-                return Ok(new HttpCommandResult<Workflow>("step", result, null));
+                return Ok(new HttpCommandResult<Workflow>("workflow", result, result.Result));
             }
             catch (BaseException e)
             {

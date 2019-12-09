@@ -26,7 +26,7 @@ using Cindi.Domain.Exceptions.Workflows;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
-    public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult>
+    public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
         private IWorkflowsRepository _workflowsRepository;
         private IWorkflowTemplatesRepository _workflowTemplatesRepository;
@@ -50,7 +50,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             _node = node;
         }
 
-        public async Task<CommandResult> Handle(CreateWorkflowCommand request, CancellationToken cancellationToken)
+        public async Task<CommandResult<Workflow>> Handle(CreateWorkflowCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -184,8 +184,9 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 
             stopwatch.Stop();
 
-            return new CommandResult()
+            return new CommandResult<Workflow>()
             {
+                Result = workflow,
                 ObjectRefId = createdWorkflowId.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
