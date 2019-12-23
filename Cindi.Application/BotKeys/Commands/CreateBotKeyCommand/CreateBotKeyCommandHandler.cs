@@ -31,6 +31,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             byte[] salt = new byte[128 / 8];
+            Random rand = new Random();
 
             var plainTextKey = SecurityUtility.RandomString(32, false);
             Guid keyId = Guid.NewGuid();
@@ -43,11 +44,12 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     HashedIdKey = SecurityUtility.OneWayHash(plainTextKey, salt),
                     HashedIdKeySalt = salt,
                     PublicEncryptionKey = request.PublicEncryptionKey,
-                    BotName = request.BotKeyName,
+                    BotName = (request.BotKeyName == null || request.BotKeyName == "") ? BotGeneratorUtility.GenerateName(rand.Next(4,12)) : request.BotKeyName,
                     Id = keyId,
                     IsDisabled = false,
                     Nonce = 0,
-                    ShardType = typeof(BotKey).Name
+                    ShardType = typeof(BotKey).Name,
+                    RegisteredOn = DateTime.Now
         }
             }));
 

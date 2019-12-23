@@ -26,6 +26,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
@@ -103,6 +104,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             if (stepToComplete.IsComplete())
             {
+                if (JsonConvert.SerializeObject(stepToComplete.Outputs) == JsonConvert.SerializeObject(request.Outputs))
+                {
+                    throw new DuplicateStepUpdateException();
+                }
+
                 throw new InvalidStepStatusInputException("Step " + request.Id + " is already complete with status " + stepToComplete.Status + ".");
             }
 

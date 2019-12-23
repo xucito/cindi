@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Exceptions;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
@@ -63,6 +64,15 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var assignedStepSuccessfully = false;
                 Step unassignedStep = null;
                 var dateChecked = DateTime.UtcNow;
+
+                var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
+                if(botkey.IsDisabled)
+                {
+                    return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled.")) {
+                        Type = CommandResultTypes.Update,
+                        ElapsedMs = stopwatch.ElapsedMilliseconds
+                    };
+                }
                 do
                 {
                     unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending)).Where(s => !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefault();
@@ -265,7 +275,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 if (unassignedStep != null)
                 {
                     var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
-                    var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
 
                     //Decrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());

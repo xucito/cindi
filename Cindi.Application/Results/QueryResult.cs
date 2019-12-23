@@ -9,5 +9,7 @@ namespace Cindi.Application.Results
         public long? Count { get; set; }
         public T Result { get; set; }
         public long ElapsedMs { get; set; }
+        public bool IsSuccessful { get; set; } = true;
+        public string ErrorMessage { get; set; }
     }
 }

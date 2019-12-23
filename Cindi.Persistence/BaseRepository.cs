@@ -30,6 +30,8 @@ using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Options;
 using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.Models;
+using Cindi.Persistence.Metrics;
+using Cindi.Domain.Entities.Metrics;
 
 namespace Cindi.Persistence
 {
@@ -69,6 +71,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<CindiClusterState>(cs => CindiClusterStateClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<ShardOperation>(cs => ShardOperationClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<BaseState>(cs => BaseStateClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<Domain.Entities.Metrics.Metric>(cs => MetricsClassMap.Register(cs));
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
             BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());*/

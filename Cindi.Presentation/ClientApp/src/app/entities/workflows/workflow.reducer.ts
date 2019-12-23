@@ -1,4 +1,4 @@
-import { Action, createReducer, on } from "@ngrx/store";
+import { Action, createReducer, on, createSelector } from "@ngrx/store";
 import { EntityState, EntityAdapter, createEntityAdapter } from "@ngrx/entity";
 import { Workflow } from "./workflow.model";
 import * as WorkflowActions from "./workflow.actions";
@@ -59,4 +59,17 @@ export const {
   selectEntities,
   selectAll,
   selectTotal
-} = adapter.getSelectors();
+} = adapter.getSelectors((state: any) => state.workflows);
+
+
+export const getMostRecentWorkflows = createSelector(
+  selectAll,
+  (workflows, props) => {
+    if (props.validStatuses) {
+      workflows = workflows.filter(step => {
+        return props.validStatuses.includes(step.status);
+      });
+    }
+    return workflows.slice(0, props.hits);
+  }
+);

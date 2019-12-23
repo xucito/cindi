@@ -15,6 +15,7 @@ import * as fromStep from "../entities/steps/step.reducer";
 import * as fromWorkflows from "../entities/workflows/workflow.reducer";
 import * as fromWorkflowTemplates from "../entities/workflow-templates/workflow-template.reducer";
 import * as fromGlobalValues from "../entities/global-values/global-value.reducer";
+import * as fromBotKeys from "../entities/bot-keys/bot-key.reducer";
 
 export interface State {
   stepTemplates: fromStepTemplates.State;
@@ -22,6 +23,7 @@ export interface State {
   workflows: fromWorkflows.State,
   workflowTemplates: fromWorkflowTemplates.State,
   globalValues: fromGlobalValues.State,
+  botKeys: fromBotKeys.State,
   currentUser: any;
 }
 
@@ -34,7 +36,8 @@ export const ROOT_REDUCERS = new InjectionToken<
     steps: fromStep.reducer,
     workflows: fromWorkflows.reducer,
     workflowTemplates: fromWorkflowTemplates.reducer,
-    globalValues: fromGlobalValues.reducer
+    globalValues: fromGlobalValues.reducer,
+    botKeys: fromBotKeys.reducer
   })
 });
 
@@ -42,7 +45,9 @@ export function reducers(state: State | undefined, action: Action) {
   return combineReducers({
     stepTemplates: fromStepTemplates.reducer,
     currentUser: currentUserReducer,
-    steps: fromStep.reducer
+    steps: fromStep.reducer,
+    workflows: fromWorkflows.reducer,
+    botKeys: fromBotKeys.reducer
   });
 }
 

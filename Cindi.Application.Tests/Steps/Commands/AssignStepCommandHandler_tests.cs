@@ -302,5 +302,11 @@ namespace Cindi.Application.Tests.Steps.Commands
             Assert.Equal(1, (int)result.Result.Inputs["n-1"]);
             Assert.Equal(2, (int)result.Result.Inputs["n-2"]);
         }
+
+        [Fact]
+        public async void DoNotAssignToDisabledBotKey()
+        {
+            Assert.True(false);
+        }
     }
 }

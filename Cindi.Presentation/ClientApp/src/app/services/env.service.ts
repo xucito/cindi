@@ -10,7 +10,8 @@ export class EnvService {
 
   // API url
   public apiUrl = '';
-
+  //Route
+  public dynamicRoutingEnabled: Boolean = false;
   // Whether or not to enable debug mode
   public enableDebug = true;
 

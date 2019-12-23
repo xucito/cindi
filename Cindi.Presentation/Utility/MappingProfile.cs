@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.Users;
 using Cindi.Presentation.ViewModels;
@@ -15,6 +16,7 @@ namespace Cindi.Presentation.Utility
         {
             CreateMap<User, UserVM>();
             CreateMap<GlobalValue, GlobalValueVM>();
+            CreateMap<BotKey, GetBotKeyVM>();
         }
     }
 }

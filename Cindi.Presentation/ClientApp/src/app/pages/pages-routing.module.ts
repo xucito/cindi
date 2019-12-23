@@ -1,3 +1,4 @@
+import { BotsComponent } from './bots/bots.component';
 import { GlobalValuesComponent } from './global-values/global-values.component';
 import { WorkflowTemplate } from './../entities/workflow-templates/workflow-template.model';
 import { RouterModule, Routes } from "@angular/router";
@@ -45,6 +46,16 @@ const routes: Routes = [
           {
             path: ":id",
             component: WorkflowTemplateComponent
+          }
+        ]
+      },
+      {
+        path: "bots",
+        children: [
+          {
+            path: "",
+            component: BotsComponent,
+            pathMatch: "full"
           }
         ]
       },

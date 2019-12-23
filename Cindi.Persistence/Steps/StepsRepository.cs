@@ -152,6 +152,11 @@ namespace Cindi.Persistence.Steps
             }
         }
 
+        public async Task<IEnumerable<Step>> GetStepsAsync(DateTime fromDate, DateTime toDate)
+        {
+            return (await _steps.FindAsync(s => s.CreatedOn >= fromDate && s.CreatedOn <= toDate)).ToEnumerable();
+        }
+
         /*public async Task<JournalEntry> ReassignStepAsync(Guid stepId, string status)
         {
             if (!StepStatuses.IsValid(status))

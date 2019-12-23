@@ -1,3 +1,4 @@
+import { loadBotKeys } from './../entities/bot-keys/bot-key.actions';
 import { loadGlobalValues } from "./../entities/global-values/global-value.actions";
 import { loadWorkflowTemplates } from "./../entities/workflow-templates/workflow-template.actions";
 import { loadWorkflows } from "./../entities/workflows/workflow.actions";
@@ -26,10 +27,7 @@ export class PagesComponent {
   autoLoadStepsInterval;
   constructor(private store: Store<State>) {
     this.store.dispatch(loadSteps({ status: undefined }));
-    this.store.dispatch(loadStepTemplates());
-    this.store.dispatch(loadWorkflows({ status: undefined }));
-    this.store.dispatch(loadWorkflowTemplates());
-    this.store.dispatch(loadGlobalValues());
+    this.loadAll();
     this.autoSaveInterval = setInterval(() =>  {
       console.log("loaded");
       this.loadAll();
@@ -47,5 +45,6 @@ export class PagesComponent {
     this.store.dispatch(loadWorkflows({ status: undefined }));
     this.store.dispatch(loadWorkflowTemplates());
     this.store.dispatch(loadGlobalValues());
+    this.store.dispatch(loadBotKeys());
   }
 }

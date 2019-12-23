@@ -56,6 +56,8 @@ using System.IO;
 using Cindi.Application.Pipelines;
 using Cindi.Persistence.Workflows;
 using Cindi.Persistence.WorkflowTemplates;
+using Cindi.Persistence.Metrics;
+using Cindi.Persistence.MetricTicks;
 
 namespace Cindi.Presentation
 {
@@ -118,8 +120,13 @@ namespace Cindi.Presentation
             services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
             services.AddSingleton<IGlobalValuesRepository, GlobalValuesRepository>(s => new GlobalValuesRepository(MongoClient));
+            services.AddSingleton<IMetricsRepository, MetricsRepository>(s => new MetricsRepository(MongoClient));
+            services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(MongoClient));
             // services.AddSingleton<ClusterStateService>();
+
+
             services.AddSingleton<ClusterMonitorService>();
+            services.AddSingleton<MetricManagementService>();
 
 
 
@@ -183,7 +190,8 @@ namespace Cindi.Presentation
             IConsensusCoreNode<CindiClusterState> node,
             ClusterMonitorService monitor,
             IMediator mediator,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            MetricManagementService metricManagementService)
         {
             BootstrapThread = new Task(() =>
             {
@@ -245,6 +253,11 @@ namespace Cindi.Presentation
                             Name = Configuration.GetValue<string>("ClusterName")
                         }).GetAwaiter().GetResult();
                     }
+                }
+
+                if (node.IsLeader)
+                {
+                    metricManagementService.InitializeMetricStore();
                 }
             });
             BootstrapThread.Start();
