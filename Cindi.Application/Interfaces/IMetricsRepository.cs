@@ -7,6 +7,7 @@ namespace Cindi.Application.Interfaces
     public interface IMetricsRepository
     {
         Task<Metric> GetMetricAsync(int metricId);
+        Task<Metric> GetMetricAsync(string metricName);
         Task<IEnumerable<Metric>> GetMetricsAsync(int size = 10, int page = 0);
         Task<Metric> InsertMetricsAsync(Metric metrics);
     }

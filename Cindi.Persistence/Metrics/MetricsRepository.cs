@@ -72,5 +72,10 @@ namespace Cindi.Persistence.Metrics
                 throw e;
             }
         }
+
+        public async Task<Metric> GetMetricAsync(string metricName)
+        {
+            return (await _metrics.FindAsync(m => m.MetricName == metricName)).FirstOrDefault();
+        }
     }
 }

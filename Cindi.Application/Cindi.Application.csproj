@@ -19,4 +19,8 @@
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Metrics\Commands\" />
+  </ItemGroup>
+
 </Project>

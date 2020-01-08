@@ -15,6 +15,7 @@ import { WorkflowTemplateComponent } from './workflow-template/workflow-template
 import { GlobalValuesComponent } from './global-values/global-values.component';
 import { WorkflowDesignerComponent } from './workflow-designer/workflow-designer.component';
 import { BotsComponent } from './bots/bots.component';
+import { MonitoringComponent } from './monitoring/monitoring.component';
 
 @NgModule({
   imports: [
@@ -34,7 +35,8 @@ import { BotsComponent } from './bots/bots.component';
     WorkflowTemplateComponent,
     GlobalValuesComponent,
     WorkflowDesignerComponent,
-    BotsComponent
+    BotsComponent,
+    MonitoringComponent
   ],
 })
 export class PagesModule {

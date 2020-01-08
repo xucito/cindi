@@ -9,7 +9,6 @@ import {
 import { Graph, Node, Edge, Layout, ClusterNode } from "@swimlane/ngx-graph";
 import * as shape from "d3-shape";
 import { Subscription, Subject } from "rxjs";
-import { id, colorSets } from "@swimlane/ngx-charts/release/utils";
 import { Store, select } from "@ngrx/store";
 import {
   State,
@@ -19,6 +18,7 @@ import { NbWindowService } from "@nebular/theme";
 import { WorkflowTemplate } from "../../../entities/workflow-templates/workflow-template.model";
 import { ActivatedRoute } from "@angular/router";
 import { skipWhile, take } from "rxjs/operators";
+import { id } from '@swimlane/ngx-charts';
 
 @Component({
   selector: "workflow-visualizer",

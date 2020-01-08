@@ -31,15 +31,20 @@ namespace Cindi.Application.Services.ClusterMonitor
         int leaderMonitoringInterval = Timeout.Infinite;
         int nodeMonitoringInterval = Timeout.Infinite;
         int lastSecond = 0;
+        private IDatabaseMetricsCollector _databaseMetricsCollector;
+
+        private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
         private Timer monitoringTimer;
+        private const int secondsOfMetrics = 5;
 
         public ClusterMonitorService(
             IServiceScopeFactory serviceProvider,
             IConsensusCoreNode<CindiClusterState> _node,
             IStepsRepository stepsRepository,
             MetricManagementService metricManagementService,
-            IMetricTicksRepository metricTicksRepository)
+            IMetricTicksRepository metricTicksRepository,
+            IDatabaseMetricsCollector databaseMetricsCollector)
         {
             _metricManagementService = metricManagementService;
             var sp = serviceProvider.CreateScope().ServiceProvider;
@@ -50,6 +55,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             node = _node;
             _stepsRepository = stepsRepository;
             _metricTicksRepository = metricTicksRepository;
+            _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
             node.MetricGenerated += metricGenerated;
             Start();
@@ -134,7 +140,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         public async void CollectMetricsEventHandler(object args)
         {
             var currentDateTime = DateTime.Now;
-            if (lastSecond != currentDateTime.Second)
+            if (lastSecond != currentDateTime.Second && currentDateTime.Second % secondsOfMetrics == 0)
             {
                 lastSecond = currentDateTime.Second;
                 var truncatedTime = currentDateTime;
@@ -142,15 +148,30 @@ namespace Cindi.Application.Services.ClusterMonitor
                 // Console.WriteLine(truncatedTime.ToString("o"));
                 //  Console.WriteLine(currentDateTime.ToString("o"));
 
-                DateTime toDate = truncatedTime.AddSeconds(-5);
-                DateTime fromDate = truncatedTime.AddSeconds(-6);
-                var stepsCount = (await _stepsRepository.GetStepsAsync(fromDate, toDate)).ToList().Count();
-                _metricManagementService.EnqueueTick(new MetricTick()
+                DateTime toDate = truncatedTime;
+                DateTime fromDate = truncatedTime.AddSeconds(-secondsOfMetrics);
+
+                if (node.IsLeader)
                 {
-                    MetricId = 0,
-                    Date = truncatedTime.AddSeconds(-5),
-                    Value = stepsCount
-                });
+                    var stepsCount = (await _stepsRepository.GetStepsAsync(fromDate, toDate)).ToList().Count();
+                    _metricManagementService.EnqueueTick(new MetricTick()
+                    {
+                        MetricId = 0,
+                        Date = truncatedTime,
+                        Value = stepsCount
+                    });
+                }
+
+                if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
+                {
+                    Console.WriteLine("Enter");
+                    foreach(var metric in await _databaseMetricsCollector.GetMetricsAsync(node.NodeInfo.Id))
+                    {
+                        _metricManagementService.EnqueueTick(metric);
+                    }
+                    Interlocked.Decrement(ref _fetchingDbMetrics);
+                    Console.WriteLine("Exit");
+                }
                // Console.WriteLine("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") + " value:" + stepsCount);
             }
             /*

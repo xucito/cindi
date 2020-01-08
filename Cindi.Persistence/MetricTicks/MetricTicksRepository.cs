@@ -1,6 +1,9 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.Metrics;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -92,6 +95,61 @@ namespace Cindi.Persistence.MetricTicks
             if (tick == null)
                 return null;
             return tick.Date;
+        }
+
+        public async Task<object> GetMetricTicksAsync(DateTime fromDate, DateTime toDate, int metricId, string[] aggs, char interval = 'S', string subcategory = null, Guid? objectId = null, bool includeSubcategories = false)
+        {
+
+            var dateString = "";
+
+            switch(interval)
+            {
+                case 'Y':
+                    dateString = "%Y-01-01T00:00:00.000Z";
+                    break;
+                case 'm':
+                    dateString = "%Y-%m-01T00:00:00.000Z";
+                    break;
+                case 'd':
+                    dateString = "%Y-%m-%dT00:00:00.000Z";
+                    break;
+                case 'H':
+                    dateString = "%Y-%m-%dT%H:00:00.000Z";
+                    break;
+                case 'M':
+                    dateString = "%Y-%m-%dT%H:%M:00.000Z";
+                    break;
+                case 'S':
+                    dateString = "%Y-%m-%dT%H:%M:%S.000Z";
+                    break;
+            }
+
+            var filterDoc = new BsonDocument{{"date", new BsonDocument(){
+                        { "$dateToString", new BsonDocument { { "format", dateString }, { "date", "$Date"} } },
+                    } } };
+
+            var aggsDoc = new BsonDocument();
+
+            foreach (var agg in aggs)
+            {
+                aggsDoc[agg] = new BsonDocument { { "$" + agg, "$Value" } };
+            }
+
+            var idDocument = filterDoc;
+            if (includeSubcategories)
+            {
+                idDocument["subcategory"] = "$SubCategory";
+            }
+            var tick = await _metricTicks.Aggregate()
+                .Match(mt => mt.MetricId == metricId && mt.Date >= fromDate && mt.Date <= toDate)
+                //.Match(mt => metricIdsAndSubcategories.Contains(mt.MetricId + (mt.SubCategory != null ? "_" + mt.SubCategory : "")))
+                .Group(new BsonDocument{ {"_id", idDocument },
+            { aggsDoc
+                } })
+                .Sort(new BsonDocument { { "_id.date", -1 } })
+                .ToListAsync();
+
+            return JsonConvert.DeserializeObject<object>(tick.ToJson());
         }
     }
 }

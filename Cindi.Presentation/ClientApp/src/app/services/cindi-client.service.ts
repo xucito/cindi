@@ -143,4 +143,15 @@ export class CindiClientService {
   DeleteBotKey(botKeyId: string): Observable<any> {
     return this.http.delete(this.baseUrl + this.api + "bot-keys/" + botKeyId);
   }
+
+  GetMetrics(from: Date, to: Date, metricName: string, aggs: string[], interval: string, includeSubcategories: boolean = false): Observable<any> {
+    return this.http.post(this.baseUrl + this.api + "metrics/request",{
+      from: from,
+      to: to,
+      metricName: metricName,
+      aggs: aggs,
+      interval: interval,
+      includeSubcategories: includeSubcategories
+    });
+  }
 }

@@ -10,6 +10,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cindi.Application.Services
@@ -37,11 +38,13 @@ namespace Cindi.Application.Services
                 MetricTick tick;
                 while (true)
                 {
+                   // Console.WriteLine("Number of tasks " + _ticks.Count());
                     if (_node.InCluster)
                     {
                         if (_ticks.TryDequeue(out tick))
                         {
                             tick.Date = tick.Date.ToUniversalTime();
+                            tick.Id = Guid.NewGuid();
                             await _node.Handle(new WriteData()
                             {
                                 WaitForSafeWrite = true,

@@ -14,6 +14,8 @@ namespace Cindi.Application.SharedValues
         {
             AddMetric(QueuedStepsPerSecond);
             AddMetric(ClusterOperationElapsedMs);
+            AddMetric(DatabaseOperationLatencyMs);
+            AddMetric(DatabaseOperationCount);
         }
 
         public void AddMetric(Metric metric)
@@ -35,5 +37,7 @@ namespace Cindi.Application.SharedValues
 
         public static Metric QueuedStepsPerSecond { get { return GetMetric(0, "Queued Steps per Second", "queuedstepspersecond", MetricType.Cluster, "Number per seconds");  } }
         public static Metric ClusterOperationElapsedMs { get { return GetMetric(1, "Cluster Operation Elapsed Ms", "clusteroperationelapsedms", MetricType.Cluster, "Total Elapsed ms"); } }
+        public static Metric DatabaseOperationLatencyMs { get { return GetMetric(2, "Database Operation Latency Ms", "databaseoperationlatencyms", MetricType.Node, "Total Elapsed ms"); } }
+        public static Metric DatabaseOperationCount { get { return GetMetric(2, "Database Operation Count", "databaseoperationcount", MetricType.Node, "Total Operation Count"); } }
     }
 }

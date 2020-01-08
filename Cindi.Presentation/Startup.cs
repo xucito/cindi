@@ -125,6 +125,7 @@ namespace Cindi.Presentation
             // services.AddSingleton<ClusterStateService>();
 
 
+            services.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
 
@@ -188,10 +189,12 @@ namespace Cindi.Presentation
             IClusterStateService service,
             ILogger<Startup> logger,
             IConsensusCoreNode<CindiClusterState> node,
+            IDatabaseMetricsCollector collector,
             ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider,
-            MetricManagementService metricManagementService)
+            MetricManagementService metricManagementService
+            )
         {
             BootstrapThread = new Task(() =>
             {

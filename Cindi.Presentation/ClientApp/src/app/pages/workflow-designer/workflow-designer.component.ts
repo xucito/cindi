@@ -11,7 +11,6 @@ import {
 import { Graph, Node, Edge, Layout } from "@swimlane/ngx-graph";
 import * as shape from "d3-shape";
 import { Subscription, Subject } from "rxjs";
-import { id, colorSets } from "@swimlane/ngx-charts/release/utils";
 import { Store, select } from "@ngrx/store";
 import { WorkflowTemplate } from "../../entities/workflow-templates/workflow-template.model";
 import {

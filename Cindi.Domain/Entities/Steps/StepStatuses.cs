@@ -20,13 +20,14 @@ namespace Cindi.Domain.Entities.Steps
 
         private static Dictionary<string, int> _priorityDictionary = new Dictionary<string, int>()
         {
-            { Cancelled, 1 },
-            {Error,2 },
-            {Warning,3 },
-            {Successful,4 },
-            {Assigned,5 },
-            {Suspended, 6 },
-            {Unassigned,7},
+            { Assigned,1 },
+            {Suspended, 2 },
+            {Unassigned,3},
+            { Cancelled, 4 },
+            {Error,5 },
+            {Warning,6 },
+            {Successful,7 },
+
             {Unknown,8 }
         };
 
