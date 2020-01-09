@@ -8,7 +8,9 @@ using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -22,9 +24,9 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
     public class UpdateGlobalValueCommandHandler : IRequestHandler<UpdateGlobalValueCommand, CommandResult<GlobalValue>>
     {
         IGlobalValuesRepository _globalValuesRepository { get; set; }
-        IConsensusCoreNode<CindiClusterState> _node;
+        IClusterRequestHandler _node;
 
-        public UpdateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState> node)
+        public UpdateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IClusterRequestHandler node)
         {
             _globalValuesRepository = globalValuesRepository;
             _node = node;
@@ -69,7 +71,7 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
                         }
                 });
 
-                var result = await _node.Handle(new WriteData()
+                var result = await _node.Handle(new AddShardWriteOperation()
                 {
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
                     WaitForSafeWrite = true,

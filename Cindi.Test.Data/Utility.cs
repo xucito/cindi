@@ -10,9 +10,9 @@ namespace Cindi.Test.Global
 {
     public static class Utility
     {
-        public static Mock<IConsensusCoreNode<CindiClusterState>> GetMockConsensusCoreNode()
+        public static Mock<IClusterRequestHandler> GetMockConsensusCoreNode()
         {
-            return new Mock<IConsensusCoreNode<CindiClusterState>>();
+            return new Mock<IClusterRequestHandler>();
         }
     }
 }

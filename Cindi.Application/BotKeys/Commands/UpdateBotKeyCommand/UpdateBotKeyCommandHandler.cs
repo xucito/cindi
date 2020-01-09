@@ -4,7 +4,9 @@ using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -18,9 +20,9 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
     public class UpdateBotKeyCommandHandler : IRequestHandler<UpdateBotKeyCommand, CommandResult<BotKey>>
     {
         IBotKeysRepository _botKeyRepository;
-        IConsensusCoreNode<CindiClusterState> _node;
+        IClusterRequestHandler _node;
 
-        public UpdateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState> node)
+        public UpdateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IClusterRequestHandler node)
         {
             _botKeyRepository = botKeyRepository;
             _node = node;
@@ -60,7 +62,7 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
                 {
                     if (update)
                     {
-                        var result = await _node.Handle(new WriteData()
+                        var result = await _node.Handle(new AddShardWriteOperation()
                         {
                             Data = botKey,
                             WaitForSafeWrite = true,

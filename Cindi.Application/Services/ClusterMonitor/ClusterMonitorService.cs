@@ -7,6 +7,8 @@ using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Node.Services.Raft;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,7 +26,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         private IMediator _mediator;
         Thread checkSuspendedStepsThread;
         private ILogger<ClusterMonitorService> _logger;
-        private IConsensusCoreNode<CindiClusterState> node;
+        private IClusterRequestHandler node;
         private IStepsRepository _stepsRepository;
         private IMetricTicksRepository _metricTicksRepository;
         private MetricManagementService _metricManagementService;
@@ -32,6 +34,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         int nodeMonitoringInterval = Timeout.Infinite;
         int lastSecond = 0;
         private IDatabaseMetricsCollector _databaseMetricsCollector;
+        private NodeStateService _nodeStateService;
 
         private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
@@ -40,11 +43,12 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public ClusterMonitorService(
             IServiceScopeFactory serviceProvider,
-            IConsensusCoreNode<CindiClusterState> _node,
+            IClusterRequestHandler _node,
             IStepsRepository stepsRepository,
             MetricManagementService metricManagementService,
             IMetricTicksRepository metricTicksRepository,
-            IDatabaseMetricsCollector databaseMetricsCollector)
+            IDatabaseMetricsCollector databaseMetricsCollector,
+            NodeStateService nodeStateService)
         {
             _metricManagementService = metricManagementService;
             var sp = serviceProvider.CreateScope().ServiceProvider;
@@ -58,6 +62,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
             node.MetricGenerated += metricGenerated;
+            _nodeStateService = nodeStateService;
             Start();
         }
 
@@ -77,7 +82,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                 while (true)
                 {
                     //Do not run if it is uninitialized
-                    if (ClusterStateService.Initialized && node.IsLeader)
+                    if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
                         if (!printedMessage)
                         {
@@ -151,7 +156,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                 DateTime toDate = truncatedTime;
                 DateTime fromDate = truncatedTime.AddSeconds(-secondsOfMetrics);
 
-                if (node.IsLeader)
+                if (_nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     var stepsCount = (await _stepsRepository.GetStepsAsync(fromDate, toDate)).ToList().Count();
                     _metricManagementService.EnqueueTick(new MetricTick()
@@ -165,7 +170,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                 if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
                 {
                     Console.WriteLine("Enter");
-                    foreach(var metric in await _databaseMetricsCollector.GetMetricsAsync(node.NodeInfo.Id))
+                    foreach(var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
                     {
                         _metricManagementService.EnqueueTick(metric);
                     }

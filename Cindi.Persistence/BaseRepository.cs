@@ -67,9 +67,9 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<NodeStorage<CindiClusterState>>(gv => NodeStorageClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<Update>(gv => UpdateClassMap.Register(gv));
-            BsonClassMap.RegisterClassMap<LocalShardMetaData>(lsm => LocalShardMetaDataClassMap.Register(lsm));
+            BsonClassMap.RegisterClassMap<ShardMetadata>(lsm => LocalShardMetaDataClassMap.Register(lsm));
             BsonClassMap.RegisterClassMap<CindiClusterState>(cs => CindiClusterStateClassMap.Register(cs));
-            BsonClassMap.RegisterClassMap<ShardOperation>(cs => ShardOperationClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<ShardWriteOperation>(cs => ShardOperationClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<BaseState>(cs => BaseStateClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<Domain.Entities.Metrics.Metric>(cs => MetricsClassMap.Register(cs));
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());

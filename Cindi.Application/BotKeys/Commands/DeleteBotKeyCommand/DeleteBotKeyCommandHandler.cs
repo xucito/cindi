@@ -3,7 +3,9 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -17,8 +19,8 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
     public class DeleteBotKeyCommandHandler : IRequestHandler<DeleteBotKeyCommand, CommandResult>
     {
         IBotKeysRepository _botKeyRepository;
-        IConsensusCoreNode<CindiClusterState> _node;
-        public DeleteBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IConsensusCoreNode<CindiClusterState> node)
+        IClusterRequestHandler _node;
+        public DeleteBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IClusterRequestHandler node)
         {
             _botKeyRepository = botKeyRepository;
             _node = node;
@@ -38,7 +40,7 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
 
             if (botLockResult.IsSuccessful)
             {
-                await _node.Handle(new WriteData()
+                await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = botLockResult.Data,
                     WaitForSafeWrite = true,

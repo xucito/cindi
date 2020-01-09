@@ -10,7 +10,9 @@ using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -24,9 +26,9 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
         IGlobalValuesRepository _globalValuesRepository { get; set; }
-        IConsensusCoreNode<CindiClusterState> _node;
+        IClusterRequestHandler _node;
 
-        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IConsensusCoreNode<CindiClusterState> node)
+        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IClusterRequestHandler node)
         {
             _globalValuesRepository = globalValuesRepository;
             _node = node;
@@ -57,7 +59,7 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 DateTime.UtcNow
                 );
 
-            var result = _node.Handle(new WriteData()
+            var result = _node.Handle(new AddShardWriteOperation()
             {
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
                 WaitForSafeWrite = true,

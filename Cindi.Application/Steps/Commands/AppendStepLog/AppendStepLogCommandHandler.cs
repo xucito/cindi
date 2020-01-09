@@ -7,7 +7,9 @@ using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,11 +25,11 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
     {
         public IStepsRepository _stepsRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
 
         public AppendStepLogCommandHandler(IStepsRepository stepsRepository,
             ILogger<AppendStepLogCommandHandler> logger,
-            IConsensusCoreNode<CindiClusterState> node
+            IClusterRequestHandler node
             )
         {
             _stepsRepository = stepsRepository;
@@ -66,7 +68,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 
             //await _stepsRepository.UpdateStep(step);
 
-            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {
                 Data = step,
                 WaitForSafeWrite = true,

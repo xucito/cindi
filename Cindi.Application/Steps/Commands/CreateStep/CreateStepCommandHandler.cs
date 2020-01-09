@@ -10,7 +10,9 @@ using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -26,11 +28,11 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         private readonly IStepsRepository _stepsRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
         public CreateStepCommandHandler(IStepsRepository stepsRepository, 
             IStepTemplatesRepository steptemplatesRepository, 
             IClusterStateService service, 
-            IConsensusCoreNode<CindiClusterState> node)
+            IClusterRequestHandler node)
         {
             _stepsRepository = stepsRepository;
             _stepTemplatesRepository = steptemplatesRepository;
@@ -56,7 +58,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 newStep
                 );*/
 
-            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {
                 Data = newStep,
                 WaitForSafeWrite = true,

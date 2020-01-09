@@ -6,7 +6,9 @@ using Cindi.Domain.Exceptions.BotKeys;
 using ConsensusCore.Domain.Enums;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -21,9 +23,9 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
     {
         IBotKeysRepository _botKeyRepository;
         IMediator _mediator;
-        IConsensusCoreNode<CindiClusterState> _node;
+        IClusterRequestHandler _node;
 
-        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IConsensusCoreNode<CindiClusterState> node)
+        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IClusterRequestHandler node)
         {
             _botKeyRepository = botKeyRepository;
             _mediator = mediator;
@@ -47,7 +49,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             key.Nonce = request.Nonce;
 
-            await _node.Handle(new WriteData()
+            await _node.Handle(new AddShardWriteOperation()
             {
                 WaitForSafeWrite = true,
                 Data = key,

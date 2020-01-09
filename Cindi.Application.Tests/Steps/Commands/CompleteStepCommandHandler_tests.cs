@@ -34,7 +34,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
 
-        Mock<IConsensusCoreNode<CindiClusterState>> _node;
+        Mock<IClusterRequestHandler> _node;
 
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {

@@ -21,6 +21,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 using Cindi.Domain.Enums;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Shard;
 
 namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
@@ -28,10 +30,10 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
     {
         private readonly IWorkflowTemplatesRepository _workflowTemplatesRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
 
-        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IConsensusCoreNode<CindiClusterState> node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
             _workflowTemplatesRepository = workflowTemplatesRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
@@ -276,7 +278,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                 DateTime.UtcNow
             );
 
-            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {
                 Data = newWorkflowTemplate,
                 WaitForSafeWrite = true,

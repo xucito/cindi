@@ -58,6 +58,9 @@ using Cindi.Persistence.Workflows;
 using Cindi.Persistence.WorkflowTemplates;
 using Cindi.Persistence.Metrics;
 using Cindi.Persistence.MetricTicks;
+using ConsensusCore.Node.Services.Raft;
+using ConsensusCore.Node.Services.Data;
+using ConsensusCore.Node.Services.Tasks;
 
 namespace Cindi.Presentation
 {
@@ -81,7 +84,12 @@ namespace Cindi.Presentation
         {
 
             services.AddTransient<IDataRouter, CindiDataRouter>();
-            services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository>(s => new NodeStorageRepository(MongoClient), s => new NodeStorageRepository(MongoClient), Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
+            services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
+                s => new NodeStorageRepository(MongoClient), 
+                s => new NodeStorageRepository(MongoClient), 
+                s => new NodeStorageRepository(MongoClient), 
+                Configuration.GetSection("Node")
+                , Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
@@ -188,7 +196,11 @@ namespace Cindi.Presentation
             IHostingEnvironment env,
             IClusterStateService service,
             ILogger<Startup> logger,
-            IConsensusCoreNode<CindiClusterState> node,
+            IRaftService raftService,
+            IDataService dataService,
+            ITaskService taskService,
+            IStateMachine<CindiClusterState> stateMachine,
+            NodeStateService node,
             IDatabaseMetricsCollector collector,
             ClusterMonitorService monitor,
             IMediator mediator,
@@ -198,19 +210,14 @@ namespace Cindi.Presentation
         {
             BootstrapThread = new Task(() =>
             {
-                while (node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Yellow &&
-                node.NodeInfo.Status != ConsensusCore.Domain.Models.NodeStatus.Green
+                while (node.Status != ConsensusCore.Domain.Models.NodeStatus.Yellow &&
+                node.Status != ConsensusCore.Domain.Models.NodeStatus.Green
                 )
                 {
                     logger.LogInformation("Waiting for cluster to establish a quorum");
                     Thread.Sleep(1000);
                 }
-
-                if (node.GetState().Initialized)
-                { }
-
-                ClusterStateService.Initialized = node.GetState().Initialized;
-
+                ClusterStateService.Initialized = stateMachine.CurrentState.Initialized;
                 var key = Configuration.GetValue<string>("EncryptionKey");
                 if (key != null)
                 {
@@ -246,7 +253,7 @@ namespace Cindi.Presentation
                     var setPassword = Configuration.GetValue<string>("DefaultPassword");
 
 
-                    if (node.IsLeader)
+                    if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
                         // Thread.Sleep(5000);
                         var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
@@ -258,7 +265,7 @@ namespace Cindi.Presentation
                     }
                 }
 
-                if (node.IsLeader)
+                if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     metricManagementService.InitializeMetricStore();
                 }

@@ -3,7 +3,10 @@ using Cindi.Application.SharedValues;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Node.Services.Raft;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -19,19 +22,23 @@ namespace Cindi.Application.Services
     {
         readonly MetricLibrary _metricLibrary;
         ILogger<MetricManagementService> _logger;
-        IConsensusCoreNode<CindiClusterState> _node;
+        IClusterRequestHandler _node;
         private readonly ConcurrentQueue<MetricTick> _ticks = new ConcurrentQueue<MetricTick>();
         private readonly Task writeThread;
         IMetricsRepository _metricsRepository;
+        NodeStateService _nodeStateService;
 
         public MetricManagementService(ILogger<MetricManagementService> logger,
-            IConsensusCoreNode<CindiClusterState> node,
-            IMetricsRepository metricsRepository)
+            IClusterRequestHandler node,
+            IMetricsRepository metricsRepository,
+            NodeStateService nodeStateService
+            )
         {
             _logger = logger;
             _logger.LogInformation("Populating Metrics...");
             _metricLibrary = new MetricLibrary();
             _node = node;
+            _nodeStateService = nodeStateService;
             _metricsRepository = metricsRepository;
             writeThread = new Task(async () =>
             {
@@ -39,13 +46,13 @@ namespace Cindi.Application.Services
                 while (true)
                 {
                    // Console.WriteLine("Number of tasks " + _ticks.Count());
-                    if (_node.InCluster)
+                    if (_nodeStateService.InCluster)
                     {
                         if (_ticks.TryDequeue(out tick))
                         {
                             tick.Date = tick.Date.ToUniversalTime();
                             tick.Id = Guid.NewGuid();
-                            await _node.Handle(new WriteData()
+                            await _node.Handle(new AddShardWriteOperation()
                             {
                                 WaitForSafeWrite = true,
                                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
@@ -73,7 +80,7 @@ namespace Cindi.Application.Services
             foreach (var metric in _metricLibrary.Metrics.Where(m => !metrics.Contains(m.Key)))
             {
                 _logger.LogDebug("Adding metric " + metric.Key + " to database.");
-                await _node.Handle(new WriteData()
+                await _node.Handle(new AddShardWriteOperation()
                 {
                     WaitForSafeWrite = true,
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,

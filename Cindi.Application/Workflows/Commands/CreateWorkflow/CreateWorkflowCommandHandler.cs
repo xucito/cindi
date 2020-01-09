@@ -23,6 +23,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cindi.Domain.Exceptions.Workflows;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Shard;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
@@ -33,14 +35,14 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
         private IStepsRepository _stepsRepository;
         private IStepTemplatesRepository _stepTemplatesRepository;
         private IMediator _mediator;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
 
         public CreateWorkflowCommandHandler(IWorkflowsRepository workflowsRepository,
             IWorkflowTemplatesRepository workflowTemplatesRepository,
             IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             IMediator mediator,
-            IConsensusCoreNode<CindiClusterState> node)
+            IClusterRequestHandler node)
         {
             _workflowsRepository = workflowsRepository;
             _workflowTemplatesRepository = workflowTemplatesRepository;
@@ -81,7 +83,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var createdWorkflowId = Guid.NewGuid();
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
-            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {
                 Data = new Domain.Entities.Workflows.Workflow(
                 createdWorkflowId,
@@ -174,7 +176,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 });
 
                 //await _workflowsRepository.UpdateWorkflow(workflow);
-                await _node.Handle(new WriteData()
+                await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = workflow,
                     WaitForSafeWrite = true,

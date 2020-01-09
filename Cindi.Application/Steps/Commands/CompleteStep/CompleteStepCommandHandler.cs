@@ -27,6 +27,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Shard;
+using ConsensusCore.Node.Services.Raft;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
@@ -41,7 +44,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private IBotKeysRepository _botKeysRepository;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
+        private readonly NodeStateService _nodeStateService;
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
@@ -52,7 +56,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-            IConsensusCoreNode<CindiClusterState> node
+            IClusterRequestHandler node,
+            NodeStateService nodeStateService
             )
         {
             _stepsRepository = stepsRepository;
@@ -69,6 +74,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _mediator = mediator;
             _botKeysRepository = botKeysRepository;
             _node = node;
+            _nodeStateService = nodeStateService;
         }
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
@@ -80,7 +86,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             CindiClusterOptions options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-             IConsensusCoreNode<CindiClusterState> node
+             IClusterRequestHandler node,
+             NodeStateService nodeStateService
     )
         {
             _stepsRepository = stepsRepository;
@@ -93,6 +100,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _botKeysRepository = botKeysRepository;
             _node = node;
             _mediator = mediator;
+            _nodeStateService = nodeStateService;
         }
 
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
@@ -172,7 +180,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             //var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
 
-            await _node.Handle(new WriteData()
+            await _node.Handle(new AddShardWriteOperation()
             {
                 Data = stepToComplete,
                 WaitForSafeWrite = true,
@@ -222,7 +230,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                         // CheckIfYouObtainedALock
 
-                        while (!_node.HasEntryBeenCommitted(entryNumber))
+                        while (_nodeStateService.CommitIndex < entryNumber)
                         {
                             Logger.LogDebug("Waiting for entry " + entryNumber + " to be commited.");
                             Thread.Sleep(250);
@@ -393,7 +401,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         });
 
                         //await _workflowsRepository.UpdateWorkflow(workflow);
-                        await _node.Handle(new WriteData()
+                        await _node.Handle(new AddShardWriteOperation()
                         {
                             Data = workflow,
                             WaitForSafeWrite = true,
@@ -431,7 +439,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     });
 
                     //await _workflowsRepository.UpdateWorkflow(workflow);
-                    await _node.Handle(new WriteData()
+                    await _node.Handle(new AddShardWriteOperation()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,

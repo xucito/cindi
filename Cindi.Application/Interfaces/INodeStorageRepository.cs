@@ -4,11 +4,8 @@ using ConsensusCore.Domain.Services;
 
 namespace Cindi.Application.Interfaces
 {
-    public interface INodeStorageRepository: IBaseRepository<CindiClusterState>, IShardRepository
+    public interface INodeStorageRepository: IBaseRepository<CindiClusterState>, IShardRepository, IOperationCacheRepository
     {
         string DatabaseName { get; }
-
-        NodeStorage<CindiClusterState> LoadNodeData();
-        void SaveNodeData(NodeStorage<CindiClusterState> storage);
     }
 }
