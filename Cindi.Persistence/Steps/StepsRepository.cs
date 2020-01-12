@@ -51,7 +51,7 @@ namespace Cindi.Persistence.Steps
             _journalEntries = database.GetCollection<JournalEntry>("JournalEntries");
         }
 
-        public async Task<List<Step>> GetStepsAsync(int size = 10, int page = 0, string status = null, string[] stepTemplateIds = null, List<Expression<Func<Step, object>>> exclusions = null, SortOrder order = SortOrder.Descending, string sortField = "CreatedOn")
+        public async Task<List<Step>> GetStepsAsync(int size = 10, int page = 0, string status = null, string[] stepTemplateIds = null, List<Expression<Func<Step, object>>> exclusions = null, SortOrder order = SortOrder.Descending, string sortField = "CreatedOn", IEnumerable<Guid> notStep = null)
         {
             if (status != null && !StepStatuses.IsValid(status))
             {
@@ -71,6 +71,11 @@ namespace Cindi.Persistence.Steps
             {
                 filters.Add(builder.Eq("Status", status));
                 ignoreFilters = false;
+            }
+
+            if(notStep != null)
+            {
+                filters.Add(builder.Nin("Id", notStep));
             }
 
             var stepFilter = builder.And(filters);

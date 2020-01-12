@@ -169,13 +169,11 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                 if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
                 {
-                    Console.WriteLine("Enter");
                     foreach(var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
                     {
                         _metricManagementService.EnqueueTick(metric);
                     }
                     Interlocked.Decrement(ref _fetchingDbMetrics);
-                    Console.WriteLine("Exit");
                 }
                // Console.WriteLine("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") + " value:" + stepsCount);
             }

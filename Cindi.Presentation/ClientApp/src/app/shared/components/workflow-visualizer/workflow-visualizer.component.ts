@@ -18,7 +18,7 @@ import { NbWindowService } from "@nebular/theme";
 import { WorkflowTemplate } from "../../../entities/workflow-templates/workflow-template.model";
 import { ActivatedRoute } from "@angular/router";
 import { skipWhile, take } from "rxjs/operators";
-import { id } from '@swimlane/ngx-charts';
+import { id } from '@swimlane/ngx-charts/release/utils';
 
 @Component({
   selector: "workflow-visualizer",

@@ -11,3 +11,4 @@ services:
       - "Logging:File:LogDirectory=/var/log/cindi"
     ports:
       - 81:80
+      - 27017:27017

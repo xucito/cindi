@@ -54,7 +54,17 @@ namespace Cindi.Persistence.State
             return await _shardWriteOperationsQueue.Find(d => true).SortBy(d => d.TransactionDate).FirstOrDefaultAsync();
         }
 
-        public  bool IsOperationInQueue(string operationId)
+        public async Task<IEnumerable<ShardWriteOperation>> GetOperationQueueAsync()
+        {
+            return await _shardWriteOperationsQueue.Find(_ => true).ToListAsync();
+        }
+
+        public async Task<IEnumerable<ShardWriteOperation>> GetTransitQueueAsync()
+        {
+            return await _shardWriteOperationsTransit.Find(_ => true).ToListAsync();
+        }
+
+        public bool IsOperationInQueue(string operationId)
         {
             return (_shardWriteOperationsQueue.Find(d => d.Id == operationId).FirstOrDefault()) != null;
         }

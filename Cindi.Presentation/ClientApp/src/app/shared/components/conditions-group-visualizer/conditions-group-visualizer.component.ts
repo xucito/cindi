@@ -1,7 +1,7 @@
 import { NbWindowService } from "@nebular/theme";
 import { Component, OnInit, Input, OnChanges } from "@angular/core";
 import { Graph, Node, Edge, Layout } from "@swimlane/ngx-graph";
-import { id } from '@swimlane/ngx-charts';
+import { id } from '@swimlane/ngx-charts/release/utils';
 
 @Component({
   selector: "conditions-group-visualizer",

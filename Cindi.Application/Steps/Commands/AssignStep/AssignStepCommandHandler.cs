@@ -63,7 +63,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            HashSet<Guid> ignoreUnassignedSteps = new HashSet<Guid>();
+            List<Guid> ignoreUnassignedSteps = new List<Guid>();
             if (_clusterStateService.IsAssignmentEnabled())
             {
                 var assignedStepSuccessfully = false;
@@ -71,16 +71,20 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var dateChecked = DateTime.UtcNow;
 
                 var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
-                if(botkey.IsDisabled)
+                if (botkey.IsDisabled)
                 {
-                    return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled.")) {
+                    return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))
+                    {
                         Type = CommandResultTypes.Update,
                         ElapsedMs = stopwatch.ElapsedMilliseconds
                     };
                 }
+
+                ignoreUnassignedSteps.AddRange(_stateMachine.CurrentState.ObjectLocks.Select(ol => ol.Key));
+
                 do
                 {
-                    unassignedStep = (await _stepsRepository.GetStepsAsync(50, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending)).Where(s => !ignoreUnassignedSteps.Contains(s.Id) && !_stateMachine.CurrentState.ObjectLocks.ContainsKey(s.Id)).FirstOrDefault();
+                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending, "CreatedOn", ignoreUnassignedSteps.ToArray())).FirstOrDefault();
                     if (unassignedStep != null)
                     {
                         var assigned = await _node.Handle(new RequestDataShard()

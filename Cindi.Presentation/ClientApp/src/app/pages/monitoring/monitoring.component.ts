@@ -1,12 +1,16 @@
 import { CindiClientService } from "./../../services/cindi-client.service";
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { interval, Subscription } from "rxjs";
 
 @Component({
   selector: "monitoring",
   templateUrl: "./monitoring.component.html",
   styleUrls: ["./monitoring.component.css"]
 })
-export class MonitoringComponent implements OnInit {
+export class MonitoringComponent implements OnInit, OnDestroy {
+  ngOnDestroy(): void {
+    this.metricReload$.unsubscribe();
+  }
   ngOnInit() {}
   multi: any[];
   view: any[] = [500, 300];
@@ -26,7 +30,7 @@ export class MonitoringComponent implements OnInit {
   colorScheme = {
     domain: ["#5AA454", "#E44D25", "#CFC0BB", "#7aa3e5", "#a8385d", "#aae3f5"]
   };
-  metricReload;
+  metricReload$: Subscription;
 
   clusterMetrics;
   databaseMetrics;
@@ -36,14 +40,18 @@ export class MonitoringComponent implements OnInit {
   constructor(private cindiClient: CindiClientService) {
     Object.assign(this, this.multi);
 
-    this.metricReload = setInterval(() => {
-      this.currentTime = new Date();
-      this.pastTime = new Date(this.currentTime);
-      this.pastTime.setMinutes(this.pastTime.getMinutes() - 10);
-      this.GetClusterMetrics();
-      this.GetDatabaseMetrics();
-      console.log("loaded");
-    }, 5000);
+    this.LoadPage();
+    this.metricReload$ = interval(10000).subscribe(() => {
+      this.LoadPage();
+    });
+  }
+
+  LoadPage() {
+    this.currentTime = new Date();
+    this.pastTime = new Date(this.currentTime);
+    this.pastTime.setMinutes(this.pastTime.getMinutes() - 15);
+    this.GetClusterMetrics();
+    this.GetDatabaseMetrics();
   }
 
   GetDatabaseMetrics() {
@@ -53,7 +61,7 @@ export class MonitoringComponent implements OnInit {
         this.currentTime,
         "databaseoperationlatencyms",
         ["max"],
-        "S",
+        "M",
         true
       )
       .subscribe(result => {
@@ -87,7 +95,7 @@ export class MonitoringComponent implements OnInit {
         this.currentTime,
         "clusteroperationelapsedms",
         ["max"],
-        "S",
+        "M",
         true
       )
       .subscribe(result => {
@@ -111,8 +119,6 @@ export class MonitoringComponent implements OnInit {
             series: allMetrics[key]
           });
         });
-
-        console.log(result);
       });
   }
 }
