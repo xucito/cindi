@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace Cindi.Persistence.Workflows
 {
@@ -63,11 +64,26 @@ namespace Cindi.Persistence.Workflows
             return foundWorkflow;
         }
 
-        public async Task<List<Workflow>> GetWorkflowsAsync(Guid[] workflowIds)
+        public async Task<List<Workflow>> GetWorkflowsAsync(Guid[] workflowIds, List<Expression<Func<Workflow, object>>> exclusions = null)
         {
             var builder = Builders<Workflow>.Filter;
             var workflowFilter = builder.In("Id", workflowIds);
-            var workflows = (await _workflows.FindAsync(workflowFilter)).ToList();
+
+            FindOptions<Workflow> options = new FindOptions<Workflow>
+            {
+                NoCursorTimeout = false,
+                Skip = 0,
+            };
+
+            if (exclusions != null)
+            {
+                foreach (var exclusion in exclusions)
+                {
+                    options.Projection = Builders<Workflow>.Projection.Exclude(exclusion);
+                }
+            }
+
+            var workflows = (await _workflows.FindAsync(workflowFilter, options)).ToList();
 
             return workflows;
         }
@@ -94,7 +110,7 @@ namespace Cindi.Persistence.Workflows
             }
         }
 
-        public async Task<List<Workflow>> GetWorkflowsAsync(int size = 10, int page = 0, string status = null, string[] WorkflowTemplateIds = null)
+        public async Task<List<Workflow>> GetWorkflowsAsync(int size = 10, int page = 0, string status = null, string[] WorkflowTemplateIds = null, List<Expression<Func<Workflow, object>>> exclusions = null)
         {
             if (status != null && !WorkflowStatuses.IsValid(status))
             {
@@ -124,6 +140,7 @@ namespace Cindi.Persistence.Workflows
             }
 
             var sort = Builders<WorkflowMetadata>.Sort.Ascending("CreatedOn");
+
             FindOptions<WorkflowMetadata> options = new FindOptions<WorkflowMetadata>
             {
                 BatchSize = size,
@@ -133,9 +150,10 @@ namespace Cindi.Persistence.Workflows
                 Sort = sort
             };
 
+
             var validWorkflows = (await _workflowsMetadata.FindAsync(stepMetadataFilter, options)).ToList();
 
-            return await GetWorkflowsAsync(validWorkflows.Select(vs => vs.WorkflowId).ToArray());
+            return await GetWorkflowsAsync(validWorkflows.Select(vs => vs.WorkflowId).ToArray(), exclusions);
         }
 
         /// <summary>

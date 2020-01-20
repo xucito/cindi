@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using Cindi.Domain.Exceptions.Workflows;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Shard;
+using Cindi.Application.Services.ClusterState;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
@@ -69,13 +70,27 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 throw new InvalidInputsException("Invalid number of inputs, number passed was " + request.Inputs.Count() + " which is less then defined " + template.InputDefinitions.Count());
             }
 
+            var verifiedWorkflowInputs = new Dictionary<string, object>();
+
             if (template.InputDefinitions != null)
             {
-                foreach (var inputs in template.InputDefinitions)
+                foreach (var input in template.InputDefinitions)
                 {
-                    if (!request.Inputs.ContainsKey(inputs.Key))
+                    if (!request.Inputs.ContainsKey(input.Key))
                     {
-                        throw new MissingInputException("Workflow input data is missing " + inputs.Key);
+                        throw new MissingInputException("Workflow input data is missing " + input.Key);
+                    }
+                }
+
+                foreach(var input in request.Inputs)
+                {
+                    if (template.InputDefinitions.ContainsKey(input.Key) && template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
+                    {
+                        verifiedWorkflowInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, ClusterStateService.GetEncryptionKey()));
+                    }
+                    else
+                    {
+                        verifiedWorkflowInputs.Add(input.Key.ToLower(), input.Value);
                     }
                 }
             }
@@ -88,7 +103,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 Data = new Domain.Entities.Workflows.Workflow(
                 createdWorkflowId,
                 request.WorkflowTemplateId,
-                request.Inputs,
+                verifiedWorkflowInputs, //Encrypted inputs
                 request.Name,
                 request.CreatedBy,
                 DateTime.UtcNow

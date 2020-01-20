@@ -22,7 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
-using ConditionSerializer = Cindi.Persistence.Serializers.ConditionSerializer;
 using System.Linq;
 using Cindi.Persistence.WorkflowTemplates.Conditions;
 using Cindi.Persistence.ConsensusCoreMappings;
@@ -71,7 +70,9 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<CindiClusterState>(cs => CindiClusterStateClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<ShardWriteOperation>(cs => ShardOperationClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<BaseState>(cs => BaseStateClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<JournalEntry>(cs => JournalEntriesClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<Domain.Entities.Metrics.Metric>(cs => MetricsClassMap.Register(cs));
+            //BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
             BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());*/

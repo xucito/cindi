@@ -49,7 +49,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   LoadPage() {
     this.currentTime = new Date();
     this.pastTime = new Date(this.currentTime);
-    this.pastTime.setMinutes(this.pastTime.getMinutes() - 15);
+    this.pastTime.setMinutes(this.pastTime.getMinutes() - 30);
     this.GetClusterMetrics();
     this.GetDatabaseMetrics();
   }

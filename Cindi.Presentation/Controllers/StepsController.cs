@@ -107,7 +107,7 @@ namespace Cindi.Presentation.Controllers
                     return Ok(new HttpCommandResult<Step>("", result, null));
                 }
             }
-            catch(BotKeyAssignmentException e)
+            catch (BotKeyAssignmentException e)
             {
                 return BadRequest(command.BotId + " has been disabled for assignment.");
             }
@@ -187,7 +187,12 @@ namespace Cindi.Presentation.Controllers
                 }
                 catch (DuplicateStepUpdateException exception)
                 {
-                    return Ok();
+                    return Ok(new HttpCommandResult<Step>("step", new CommandResult() {
+                        Type = CommandResultTypes.None
+                    }, (await Mediator.Send(new GetStepQuery()
+                    {
+                        Id = id
+                    })).Result));
                 }
             }
         }
