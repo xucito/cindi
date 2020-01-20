@@ -5,7 +5,9 @@ using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -23,10 +25,10 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
         private readonly IStepTemplatesRepository _stepTemplateRepository;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler(IStepTemplatesRepository client, IConsensusCoreNode<CindiClusterState> node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler(IStepTemplatesRepository client, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
         {
             _stepTemplateRepository = client;
             _node = node;
@@ -56,7 +58,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 
             if (existingStepTemplate == null)
             {
-                var createdWorkflowTemplateId = await _node.Handle(new WriteData()
+                var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = newStepTemplate,
                     WaitForSafeWrite = true,

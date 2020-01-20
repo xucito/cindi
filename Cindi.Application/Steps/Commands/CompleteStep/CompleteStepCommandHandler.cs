@@ -26,6 +26,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Shard;
+using ConsensusCore.Node.Services.Raft;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
@@ -40,7 +44,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private IBotKeysRepository _botKeysRepository;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
+        private readonly NodeStateService _nodeStateService;
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
@@ -51,7 +56,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-            IConsensusCoreNode<CindiClusterState> node
+            IClusterRequestHandler node,
+            NodeStateService nodeStateService
             )
         {
             _stepsRepository = stepsRepository;
@@ -68,6 +74,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _mediator = mediator;
             _botKeysRepository = botKeysRepository;
             _node = node;
+            _nodeStateService = nodeStateService;
         }
 
         public CompleteStepCommandHandler(IStepsRepository stepsRepository,
@@ -79,7 +86,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             CindiClusterOptions options,
             IMediator mediator,
             IBotKeysRepository botKeysRepository,
-             IConsensusCoreNode<CindiClusterState> node
+             IClusterRequestHandler node,
+             NodeStateService nodeStateService
     )
         {
             _stepsRepository = stepsRepository;
@@ -92,6 +100,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _botKeysRepository = botKeysRepository;
             _node = node;
             _mediator = mediator;
+            _nodeStateService = nodeStateService;
         }
 
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
@@ -103,7 +112,12 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             if (stepToComplete.IsComplete())
             {
-                throw new InvalidStepStatusInputException("Step " + request.Id + " is already complete with status " + stepToComplete.Status + ".");
+                // if (JsonConvert.SerializeObject(stepToComplete.Outputs) == JsonConvert.SerializeObject(request.Outputs))
+                // {
+                Logger.LogWarning("Step " + request.Id + " is already complete with status " + stepToComplete.Status + ".");
+                throw new DuplicateStepUpdateException();
+                //}
+
             }
 
             if (!StepStatuses.IsCompleteStatus(request.Status))
@@ -166,7 +180,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             //var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
 
-            await _node.Handle(new WriteData()
+            await _node.Handle(new AddShardWriteOperation()
             {
                 Data = stepToComplete,
                 WaitForSafeWrite = true,
@@ -197,6 +211,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Get all the steps related to this task
                 var workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
 
+                foreach(var workflowStep in workflowSteps)
+                {
+                    workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _stepTemplatesRepository.GetStepTemplateAsync(workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
+                }
+
                 //Evaluate all logic blocks that have not been completed
                 var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key)).ToList();
 
@@ -216,7 +235,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                         // CheckIfYouObtainedALock
 
-                        while (!_node.HasEntryBeenCommitted(entryNumber))
+                        while (_nodeStateService.CommitIndex < entryNumber)
                         {
                             Logger.LogDebug("Waiting for entry " + entryNumber + " to be commited.");
                             Thread.Sleep(250);
@@ -228,63 +247,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
                     workflow = await _workflowsRepository.GetWorkflowAsync(updatedStep.WorkflowId.Value);
-
-                    //var ready = true;
-                    /*var Condition = logicBlock.Condition;
-
-                    if (Condition == "AND")
-                    {
-                        foreach (var prerequisite in logicBlock.PrerequisiteSteps)
-                        {
-                            // Check whether the pre-requisite is in the submited steps, if there is a single one missing, do not submit subsequent steps 
-                            var step = workflowSteps.Where(s => s.WorkflowStepId == prerequisite.WorkflowStepId).FirstOrDefault();
-                            if (step == null)
-                            {
-                                ready = false;
-                                break;
-                            }
-                            if (prerequisite.Status != step.Status || step.StatusCode != prerequisite.StatusCode)
-                            {
-                                ready = false;
-                                break;
-                            }
-                        }
-                    }
-                    //One of the conditions must be true, only effective the first time
-                    else if (Condition == "OR")
-                    {
-                        // In OR start off with No and set to Yes
-                        ready = false;
-
-                        foreach (var prerequisite in logicBlock.PrerequisiteSteps)
-                        {
-
-                            // Check whether the pre-requisite is in the submited steps, if there is a single one missing break but do not change ready
-                            var matchedSteps = workflowSteps.Where(s => s.WorkflowStepId == prerequisite.WorkflowStepId);
-
-                            if (matchedSteps.Count() > 1)
-                            {
-                                Logger.LogError("Detected duplicate pre-requisite steps for workflow " + workflow.Id + " at step reference " + prerequisite.WorkflowStepId);
-                            }
-
-                            if (matchedSteps == null)
-                            {
-                                break;
-                            }
-                            // If there are duplicates, match at least one to the next condition.
-                            if (matchedSteps.Where(matchedStep => prerequisite.Status == matchedStep.Status && matchedStep.StatusCode == prerequisite.StatusCode).Count() > 0)
-                            {
-                                ready = true;
-                                break;
-                            }
-
-                            if (ready)
-                            {
-                                break;
-                            }
-                        }
-                    }*/
-
+                    
                     //If the logic block is ready to be processed, submit the steps
                     if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))
                     {
@@ -329,10 +292,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                             {
                                                 try
                                                 {
-
                                                     // Get the output value based on the pre-requisite id
                                                     var outPutValue = DynamicDataUtility.GetData(parentStep.Outputs, highestPriorityReference.OutputId);
-
                                                     // Validate it is in the definition
                                                     verifiedInputs.Add(mapping.Key, outPutValue.Value);
 
@@ -354,7 +315,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     }
 
                                 }
-
 
                                 //Add the step TODO, add step priority
                                 await _mediator.Send(new CreateStepCommand()
@@ -387,7 +347,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         });
 
                         //await _workflowsRepository.UpdateWorkflow(workflow);
-                        await _node.Handle(new WriteData()
+                        await _node.Handle(new AddShardWriteOperation()
                         {
                             Data = workflow,
                             WaitForSafeWrite = true,
@@ -425,7 +385,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     });
 
                     //await _workflowsRepository.UpdateWorkflow(workflow);
-                    await _node.Handle(new WriteData()
+                    await _node.Handle(new AddShardWriteOperation()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,

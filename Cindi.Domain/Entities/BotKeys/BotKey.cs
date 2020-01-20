@@ -17,5 +17,6 @@ namespace Cindi.Domain.Entities.BotKeys
         public string PublicEncryptionKey { get; set; }
         public bool IsDisabled { get; set; }
         public double Nonce { get; set; } = 0;
+        public DateTime RegisteredOn { get; set; }
     }
 }

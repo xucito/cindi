@@ -1,3 +1,4 @@
+import { BotKeyEffects } from './entities/bot-keys/bot-key.effects';
 import { GlobalValueEffects } from './entities/global-values/global-value.effects';
 import { WorkflowTemplateEffects } from "./entities/workflow-templates/workflow-template.effects";
 /**
@@ -71,7 +72,8 @@ import { WorkflowEffects } from "./entities/workflows/workflow.effects";
       StepEffects,
       WorkflowEffects,
       WorkflowTemplateEffects,
-      GlobalValueEffects
+      GlobalValueEffects,
+      BotKeyEffects
     ]),
     ThemeModule.forRoot(),
     SharedModule,

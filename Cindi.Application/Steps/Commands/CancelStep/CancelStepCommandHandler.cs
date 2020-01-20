@@ -8,7 +8,9 @@ using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,12 +28,12 @@ namespace Cindi.Application.Steps.Commands.CancelStep
         public IStepsRepository _stepsRepository;
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
 
         public CancelStepCommandHandler(IStepsRepository stepsRepository,
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IConsensusCoreNode<CindiClusterState> node)
+             IClusterRequestHandler node)
         {
             _stepsRepository = stepsRepository;
             _node = node;
@@ -78,7 +80,7 @@ namespace Cindi.Application.Steps.Commands.CancelStep
                         }
                     });
 
-                    var result = await _node.Handle(new WriteData()
+                    var result = await _node.Handle(new AddShardWriteOperation()
                     {
                         Data = step,
                         WaitForSafeWrite = true,

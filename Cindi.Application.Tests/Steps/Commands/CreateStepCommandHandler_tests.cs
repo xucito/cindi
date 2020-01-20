@@ -46,7 +46,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             DefaultSuspensionTimeMs  = 0
         };
 
-        Mock<IConsensusCoreNode<CindiClusterState>> node;
+        Mock<IClusterRequestHandler> node;
 
         public CreateStepCommandHandler_Tests()
         {

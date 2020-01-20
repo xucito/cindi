@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Cindi.Application.Exceptions;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Application.Steps.Commands;
@@ -19,6 +20,7 @@ using Cindi.Application.Steps.Queries.GetStep;
 using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions;
+using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Presentation.Results;
 using Cindi.Presentation.Utility;
@@ -92,15 +94,22 @@ namespace Cindi.Presentation.Controllers
         [Route("assignment-requests")]
         public async Task<IActionResult> GetNextStep(AssignStepCommand command)
         {
-            command.BotId = new Guid(ClaimsUtility.GetId(User));
-            var result = await Mediator.Send(command);
-            if (result.ObjectRefId != "")
+            try
             {
-                return Ok(new HttpCommandResult<Step>("step", result, result.Result));
+                command.BotId = new Guid(ClaimsUtility.GetId(User));
+                var result = await Mediator.Send(command);
+                if (result.ObjectRefId != "")
+                {
+                    return Ok(new HttpCommandResult<Step>("step", result, result.Result));
+                }
+                else
+                {
+                    return Ok(new HttpCommandResult<Step>("", result, null));
+                }
             }
-            else
+            catch (BotKeyAssignmentException e)
             {
-                return Ok(new HttpCommandResult<Step>("", result, null));
+                return BadRequest(command.BotId + " has been disabled for assignment.");
             }
         }
 
@@ -163,18 +172,29 @@ namespace Cindi.Presentation.Controllers
                     CreatedBy = ClaimsUtility.GetId(User),
                     BotId = new Guid(ClaimsUtility.GetId(User))
                 };
-                var result = await Mediator.Send(completeStepCommand);
-                if (result.ObjectRefId != "")
+                try
                 {
-                    var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
-                    return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
+                    var result = await Mediator.Send(completeStepCommand);
+                    if (result.ObjectRefId != "")
+                    {
+                        var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                        return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
+                    }
+                    else
+                    {
+                        return Ok(new HttpCommandResult<Step>("", result, null));
+                    }
                 }
-                else
+                catch (DuplicateStepUpdateException exception)
                 {
-                    return Ok(new HttpCommandResult<Step>("", result, null));
+                    return Ok(new HttpCommandResult<Step>("step", new CommandResult() {
+                        Type = CommandResultTypes.None
+                    }, (await Mediator.Send(new GetStepQuery()
+                    {
+                        Id = id
+                    })).Result));
                 }
             }
-
         }
 
         [HttpPut]

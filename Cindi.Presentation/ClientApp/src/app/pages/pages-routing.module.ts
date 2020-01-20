@@ -1,3 +1,5 @@
+import { MonitoringComponent } from './monitoring/monitoring.component';
+import { BotsComponent } from './bots/bots.component';
 import { GlobalValuesComponent } from './global-values/global-values.component';
 import { WorkflowTemplate } from './../entities/workflow-templates/workflow-template.model';
 import { RouterModule, Routes } from "@angular/router";
@@ -49,6 +51,16 @@ const routes: Routes = [
         ]
       },
       {
+        path: "bots",
+        children: [
+          {
+            path: "",
+            component: BotsComponent,
+            pathMatch: "full"
+          }
+        ]
+      },
+      {
         path: "workflow-designer",
         children: [
           {
@@ -69,6 +81,16 @@ const routes: Routes = [
           {
             path: "",
             component: GlobalValuesComponent,
+            pathMatch: "full"
+          }
+        ]
+      },
+      {
+        path: "monitoring",
+        children: [
+          {
+            path: "",
+            component: MonitoringComponent,
             pathMatch: "full"
           }
         ]

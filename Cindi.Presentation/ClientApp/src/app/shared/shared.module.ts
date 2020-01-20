@@ -4,6 +4,7 @@ import { CommonModule } from "@angular/common";
 import { InputComponent } from "./components/dynamic-form/input/input.component";
 import { DynamicFormComponent } from "./components/dynamic-form/dynamic-form.component";
 import { StepViewComponent } from "./components/step-view/step-view.component";
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 import {
   NbLayoutModule,
   NbCardModule,
@@ -60,7 +61,8 @@ import { SelectStepTemplateComponent } from './components/select-step-template/s
     WorkflowVisualizerComponent,
     NgxGraphModule,
     ConditionsGroupVisualizerComponent,
-    LogicBlockVisualizerComponent
+    LogicBlockVisualizerComponent,
+    NgxChartsModule
   ],
   imports: [
     CommonModule,
@@ -78,7 +80,8 @@ import { SelectStepTemplateComponent } from './components/select-step-template/s
     NbActionsModule,
     NgxGraphModule,
     NbButtonModule,
-    NbStepperModule
+    NbStepperModule,
+    NgxChartsModule,
   ]
 })
 export class SharedModule {}

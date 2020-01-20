@@ -25,10 +25,21 @@ export const MENU_ITEMS: NbMenuItem[] = [
     title: "Global-Values",
     icon: "bookmark-outline",
     link: "/pages/global-values"
-  },  {
+  },
+  {
+    title: "Bots",
+    icon: "people-outline",
+    link: "/pages/bots"
+  },
+  {
     title: "Workflow-Designer",
-    icon: "bookmark-outline",
+    icon: "edit-2-outline",
     link: "/pages/workflow-designer"
+  },
+  {
+    title: "Monitoring",
+    icon: "heart-outline",
+    link: "/pages/monitoring"
   }/*,
   {
     title: "FEATURES",

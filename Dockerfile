@@ -25,6 +25,7 @@ RUN npm install -g npm
 
 RUN npm install
 RUN npm rebuild node-sass
+
 WORKDIR /app
 
 RUN dotnet build Cindi.Presentation.csproj

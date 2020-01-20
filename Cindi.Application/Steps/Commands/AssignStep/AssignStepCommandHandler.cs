@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Exceptions;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
@@ -11,8 +12,10 @@ using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.BaseClasses;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -33,7 +36,8 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private IBotKeysRepository _botKeysRepository;
         private IGlobalValuesRepository _globalValuesRepository;
         public ILogger<AssignStepCommandHandler> Logger;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
+        private readonly IStateMachine<CindiClusterState> _stateMachine;
 
         public AssignStepCommandHandler(
             IStepsRepository stepsRepository,
@@ -42,7 +46,8 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             IBotKeysRepository botKeysRepository,
             ILogger<AssignStepCommandHandler> logger,
             IGlobalValuesRepository globalValuesRepository,
-            IConsensusCoreNode<CindiClusterState> node
+            IClusterRequestHandler node,
+            IStateMachine<CindiClusterState> stateMachine
             )
         {
             _stepsRepository = stepsRepository;
@@ -52,27 +57,42 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             _globalValuesRepository = globalValuesRepository;
             Logger = logger;
             _node = node;
+            _stateMachine = stateMachine;
         }
         public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            HashSet<Guid> ignoreUnassignedSteps = new HashSet<Guid>();
+            List<Guid> ignoreUnassignedSteps = new List<Guid>();
             if (_clusterStateService.IsAssignmentEnabled())
             {
                 var assignedStepSuccessfully = false;
                 Step unassignedStep = null;
                 var dateChecked = DateTime.UtcNow;
+
+                var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
+                if (botkey.IsDisabled)
+                {
+                    return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))
+                    {
+                        Type = CommandResultTypes.Update,
+                        ElapsedMs = stopwatch.ElapsedMilliseconds
+                    };
+                }
+
+                ignoreUnassignedSteps.AddRange(_stateMachine.CurrentState.ObjectLocks.Select(ol => ol.Key));
+
                 do
                 {
-                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending)).Where(s => !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefault();
+                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending, "CreatedOn", ignoreUnassignedSteps.ToArray())).FirstOrDefault();
                     if (unassignedStep != null)
                     {
                         var assigned = await _node.Handle(new RequestDataShard()
                         {
                             Type = unassignedStep.ShardType,
                             ObjectId = unassignedStep.Id,
-                            CreateLock = true
+                            CreateLock = true,
+                            LockTimeoutMs = 30000
                         });
                         //Apply a lock on the item
                         if (assigned != null && assigned.IsSuccessful && assigned.AppliedLocked)
@@ -213,7 +233,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                     });
                                 }
 
-                                await _node.Handle(new WriteData()
+                                await _node.Handle(new AddShardWriteOperation()
                                 {
                                     Data = unassignedStep,
                                     WaitForSafeWrite = true,
@@ -265,7 +285,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 if (unassignedStep != null)
                 {
                     var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
-                    var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
 
                     //Decrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());

@@ -6,6 +6,21 @@ using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Results
 {
+    /// <summary>
+    /// Use for deletes
+    /// </summary>
+    public class HttpCommandResult : CommandResult
+    {
+        public string HRef { get; set; }
+
+        public HttpCommandResult(CommandResult result)
+        {
+            Type = result.Type;
+            ElapsedMs = result.ElapsedMs;
+            ObjectRefId = result.ObjectRefId;
+        }
+    }
+
     public class HttpCommandResult<T> : CommandResult
     {
         public string HRef { get; set; }

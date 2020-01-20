@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Cindi.Domain.Entities.Metrics;
 
 namespace Cindi.Application.Services
 {
@@ -24,6 +25,8 @@ namespace Cindi.Application.Services
         IWorkflowTemplatesRepository _workflowTemplateRepository;
         IStepsRepository _stepsRepository;
         IWorkflowsRepository _workflowRepository;
+        IMetricsRepository _metricsRepository;
+        IMetricTicksRepository _metricTicksRepository;
 
         public CindiDataRouter(IUsersRepository users,
             IBotKeysRepository botKeys,
@@ -31,7 +34,9 @@ namespace Cindi.Application.Services
             IStepTemplatesRepository stepTemplatesRepository,
             IWorkflowTemplatesRepository workflowTemplateRepository,
                     IStepsRepository stepsRepository,
-        IWorkflowsRepository workflowRepository)
+        IWorkflowsRepository workflowRepository,
+            IMetricsRepository metricsRepository,
+            IMetricTicksRepository metricTicksRepository)
         {
             _users = users;
             _botKeys = botKeys;
@@ -40,12 +45,23 @@ namespace Cindi.Application.Services
             _workflowTemplateRepository = workflowTemplateRepository;
             _stepsRepository = stepsRepository;
             _workflowRepository = workflowRepository;
+            _metricsRepository = metricsRepository;
+            _metricTicksRepository = metricTicksRepository;
         }
 
 
-        public Task<bool> DeleteDataAsync(ShardData data)
+        public async Task<bool> DeleteDataAsync(ShardData data)
         {
-            throw new NotImplementedException();
+            switch(data.ShardType)
+            {
+                case nameof(BotKey):
+                    await _botKeys.DeleteBotkey(data.Id);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
+            return true;
         }
 
         public async Task<ShardData> GetDataAsync(string type, Guid objectId)
@@ -92,12 +108,16 @@ namespace Cindi.Application.Services
                         return await _workflowRepository.InsertWorkflowAsync(t1);
                     case Step t1:
                         return await _stepsRepository.InsertStepAsync(t1);
+                    case Metric t1:
+                        return await _metricsRepository.InsertMetricsAsync(t1);
+                    case MetricTick t1:
+                        return await _metricTicksRepository.InsertMetricTicksAsync(t1);
                 }
-                return null;
+                throw new NotImplementedException();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                if(e.Message.Contains("E11000 duplicate key error collection"))
+                if (e.Message.Contains("E11000 duplicate key error collection"))
                 {
                     Console.WriteLine("Detected that there was a duplicate record in the database... Updating existing record and continueing");
                     return await UpdateDataAsync(data);

@@ -13,19 +13,32 @@ namespace Cindi.Application.Results
             get { return _type; }
             set
             {
-                if (value != CommandResultTypes.Update && value != CommandResultTypes.Create && value != CommandResultTypes.None)
+                if (value != CommandResultTypes.Update && value != CommandResultTypes.Create && value != CommandResultTypes.None && value != CommandResultTypes.Delete)
                 {
                     throw new InvalidCommandResultException(value);
                 }
                 _type = value;
             }
         }
+
+        public CommandResult() { }
+        public CommandResult(Exception e)
+        {
+            IsSuccessful = false;
+            ErrorMessage = e.Message;
+        }
+
         public long ElapsedMs { get; set; }
         public string ObjectRefId { get; set; }
+        public bool IsSuccessful { get; set; } = true;
+        public string ErrorMessage { get; set; }
     }
 
-    public class CommandResult<T>: CommandResult
+    public class CommandResult<T> : CommandResult
     {
+        public CommandResult(Exception e): base(e) {}
+        public CommandResult() { }
+
         public T Result { get; set; }
     }
 
@@ -34,5 +47,6 @@ namespace Cindi.Application.Results
         public static string Update = "update";
         public static string Create = "insert";
         public static string None = "none";
+        public static string Delete = "delete";
     }
 }

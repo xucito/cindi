@@ -17,6 +17,7 @@ import { StepCardComponent } from "./step-card/step-card.component";
 import { StepsFeedComponent } from "./steps-feed/steps-feed.component";
 import { StoreModule } from "@ngrx/store";
 import { StepTimeLineComponent } from './step-time-line/step-time-line.component';
+import { WorkflowFeedComponent } from './workflow-feed/workflow-feed.component';
 
 @NgModule({
   imports: [
@@ -35,7 +36,8 @@ import { StepTimeLineComponent } from './step-time-line/step-time-line.component
     StepActivityComponent,
     StepCardComponent,
     StepsFeedComponent,
-    StepTimeLineComponent
+    StepTimeLineComponent,
+    WorkflowFeedComponent
   ]
 })
 export class DashboardModule {}

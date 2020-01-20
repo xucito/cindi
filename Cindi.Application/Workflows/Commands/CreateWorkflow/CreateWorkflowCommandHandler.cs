@@ -23,6 +23,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cindi.Domain.Exceptions.Workflows;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Shard;
+using Cindi.Application.Services.ClusterState;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
@@ -33,14 +36,14 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
         private IStepsRepository _stepsRepository;
         private IStepTemplatesRepository _stepTemplatesRepository;
         private IMediator _mediator;
-        private readonly IConsensusCoreNode<CindiClusterState> _node;
+        private readonly IClusterRequestHandler _node;
 
         public CreateWorkflowCommandHandler(IWorkflowsRepository workflowsRepository,
             IWorkflowTemplatesRepository workflowTemplatesRepository,
             IStepsRepository stepsRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             IMediator mediator,
-            IConsensusCoreNode<CindiClusterState> node)
+            IClusterRequestHandler node)
         {
             _workflowsRepository = workflowsRepository;
             _workflowTemplatesRepository = workflowTemplatesRepository;
@@ -67,13 +70,27 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 throw new InvalidInputsException("Invalid number of inputs, number passed was " + request.Inputs.Count() + " which is less then defined " + template.InputDefinitions.Count());
             }
 
+            var verifiedWorkflowInputs = new Dictionary<string, object>();
+
             if (template.InputDefinitions != null)
             {
-                foreach (var inputs in template.InputDefinitions)
+                foreach (var input in template.InputDefinitions)
                 {
-                    if (!request.Inputs.ContainsKey(inputs.Key))
+                    if (!request.Inputs.ContainsKey(input.Key))
                     {
-                        throw new MissingInputException("Workflow input data is missing " + inputs.Key);
+                        throw new MissingInputException("Workflow input data is missing " + input.Key);
+                    }
+                }
+
+                foreach(var input in request.Inputs)
+                {
+                    if (template.InputDefinitions.ContainsKey(input.Key) && template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
+                    {
+                        verifiedWorkflowInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, ClusterStateService.GetEncryptionKey()));
+                    }
+                    else
+                    {
+                        verifiedWorkflowInputs.Add(input.Key.ToLower(), input.Value);
                     }
                 }
             }
@@ -81,12 +98,12 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var createdWorkflowId = Guid.NewGuid();
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
-            var createdWorkflowTemplateId = await _node.Handle(new WriteData()
+            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {
                 Data = new Domain.Entities.Workflows.Workflow(
                 createdWorkflowId,
                 request.WorkflowTemplateId,
-                request.Inputs,
+                verifiedWorkflowInputs, //Encrypted inputs
                 request.Name,
                 request.CreatedBy,
                 DateTime.UtcNow
@@ -174,7 +191,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 });
 
                 //await _workflowsRepository.UpdateWorkflow(workflow);
-                await _node.Handle(new WriteData()
+                await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = workflow,
                     WaitForSafeWrite = true,

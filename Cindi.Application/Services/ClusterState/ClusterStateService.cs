@@ -23,6 +23,8 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Raft;
 
 namespace Cindi.Application.Services.ClusterState
 {
@@ -34,17 +36,21 @@ namespace Cindi.Application.Services.ClusterState
         private Thread _initThread { get; set; }
         public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
-        public IConsensusCoreNode<CindiClusterState> _node;
-        CindiClusterState state { get { return _node.GetState(); } }
+        public IClusterRequestHandler _node;
+        CindiClusterState state { get { return _stateMachine.CurrentState; } }
+        private IStateMachine<CindiClusterState> _stateMachine;
 
-        public ClusterStateService(ILogger<ClusterStateService> logger, IServiceScopeFactory serviceProvider, IConsensusCoreNode<CindiClusterState> node)
+        public ClusterStateService(
+            ILogger<ClusterStateService> logger, 
+            IServiceScopeFactory serviceProvider, 
+            IClusterRequestHandler node,
+            IStateMachine<CindiClusterState> stateMachine)
         {
             _node = node;
-
+            _stateMachine = stateMachine;
             Initialized = state == null ? false : state.Initialized;
 
             _logger = logger;
-
             if (state == null)
             {
                 _logger.LogWarning("Existing cluster state not found. Creating new state.");

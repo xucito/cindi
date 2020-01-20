@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.Steps;
+using System.Linq.Expressions;
 
 namespace Cindi.Application.Interfaces
 {
@@ -11,7 +12,7 @@ namespace Cindi.Application.Interfaces
     {
         long CountWorkflows();
         Task<Workflow> GetWorkflowAsync(Guid WorkflowId);
-        Task<List<Workflow>> GetWorkflowsAsync(int size = 10, int page = 0, string status = null, string[] WorkflowTemplateIds = null);
+        Task<List<Workflow>> GetWorkflowsAsync(int size = 10, int page = 0, string status = null, string[] WorkflowTemplateIds = null, List<Expression<Func<Workflow, object>>> exclusions = null);
         Task<Workflow> InsertWorkflowAsync(Workflow Workflow);
         Task<List<Step>> GetWorkflowStepsAsync(Guid workflowId);
         Task<Workflow> UpdateWorkflow(Workflow Workflow);

@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 
 namespace Cindi.Presentation.ViewModels
 {
-    public class BotKeyVM
+    public class GetBotKeyVM
     {
         public string BotName { get; set; }
+        public bool IsDisabled { get; set; }
         public Guid Id { get; set; }
-
+        public DateTime RegisteredOn { get; set; }
     }
 }

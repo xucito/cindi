@@ -24,7 +24,7 @@ namespace Cindi.Application.Tests.StepTemplates
 
         Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
 
-        Mock<IConsensusCoreNode<CindiClusterState>> _node;
+        Mock<IClusterRequestHandler> _node;
 
         public CreateStepTemplateCommandHandler_Tests()
         {

@@ -1,6 +1,7 @@
 ﻿using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -10,9 +11,9 @@ namespace Cindi.Test.Global
 {
     public static class Utility
     {
-        public static Mock<IConsensusCoreNode<CindiClusterState>> GetMockConsensusCoreNode()
+        public static Mock<IClusterRequestHandler> GetMockConsensusCoreNode()
         {
-            return new Mock<IConsensusCoreNode<CindiClusterState>>();
+            return new Mock<IClusterRequestHandler>();
         }
     }
 }

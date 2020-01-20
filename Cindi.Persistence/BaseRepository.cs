@@ -22,7 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
-using ConditionSerializer = Cindi.Persistence.Serializers.ConditionSerializer;
 using System.Linq;
 using Cindi.Persistence.WorkflowTemplates.Conditions;
 using Cindi.Persistence.ConsensusCoreMappings;
@@ -30,6 +29,8 @@ using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Options;
 using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.Models;
+using Cindi.Persistence.Metrics;
+using Cindi.Domain.Entities.Metrics;
 
 namespace Cindi.Persistence
 {
@@ -65,10 +66,13 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<NodeStorage<CindiClusterState>>(gv => NodeStorageClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<Update>(gv => UpdateClassMap.Register(gv));
-            BsonClassMap.RegisterClassMap<LocalShardMetaData>(lsm => LocalShardMetaDataClassMap.Register(lsm));
+            BsonClassMap.RegisterClassMap<ShardMetadata>(lsm => LocalShardMetaDataClassMap.Register(lsm));
             BsonClassMap.RegisterClassMap<CindiClusterState>(cs => CindiClusterStateClassMap.Register(cs));
-            BsonClassMap.RegisterClassMap<ShardOperation>(cs => ShardOperationClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<ShardWriteOperation>(cs => ShardOperationClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<BaseState>(cs => BaseStateClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<JournalEntry>(cs => JournalEntriesClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<Domain.Entities.Metrics.Metric>(cs => MetricsClassMap.Register(cs));
+            //BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());
             BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());*/
