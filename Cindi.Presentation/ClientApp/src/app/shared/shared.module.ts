@@ -29,6 +29,7 @@ import { StepMappingsVisualizerComponent } from './components/step-mappings-visu
 import { WorkflowInputsComponent } from './components/workflow-inputs/workflow-inputs.component';
 import { MappingSelectorComponent } from './components/mapping-selector/mapping-selector.component';
 import { SelectStepTemplateComponent } from './components/select-step-template/select-step-template.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 @NgModule({
   declarations: [
@@ -47,6 +48,7 @@ import { SelectStepTemplateComponent } from './components/select-step-template/s
     SelectStepTemplateComponent
   ],
   exports: [
+    NgxDatatableModule,
     DynamicFormComponent,
     StepViewComponent,
     NbListModule,
@@ -65,6 +67,7 @@ import { SelectStepTemplateComponent } from './components/select-step-template/s
     NgxChartsModule
   ],
   imports: [
+    NgxDatatableModule,
     CommonModule,
     FormsModule,
     NbSelectModule,

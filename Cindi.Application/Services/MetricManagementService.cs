@@ -52,6 +52,7 @@ namespace Cindi.Application.Services
                         {
                             tick.Date = tick.Date.ToUniversalTime();
                             tick.Id = Guid.NewGuid();
+                            var startTime = DateTime.Now;
                             await _node.Handle(new AddShardWriteOperation()
                             {
                                 WaitForSafeWrite = true,
@@ -59,6 +60,7 @@ namespace Cindi.Application.Services
                                 Data = tick,
                                 Metric = false // Do not metric the metric write operations
                             });
+                            Console.WriteLine("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
                         }
                     }
                 }

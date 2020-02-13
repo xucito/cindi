@@ -211,7 +211,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Get all the steps related to this task
                 var workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
 
-                foreach(var workflowStep in workflowSteps)
+                foreach (var workflowStep in workflowSteps)
                 {
                     workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _stepTemplatesRepository.GetStepTemplateAsync(workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
                 }
@@ -247,7 +247,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
                     workflow = await _workflowsRepository.GetWorkflowAsync(updatedStep.WorkflowId.Value);
-                    
+
                     //If the logic block is ready to be processed, submit the steps
                     if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))
                     {

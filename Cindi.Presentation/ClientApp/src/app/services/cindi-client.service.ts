@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { EnvService } from "./env.service";
 import { Observable } from "rxjs";
-import { Router } from '@angular/router';
+import { Router } from "@angular/router";
 
 @Injectable({
   providedIn: "root"
@@ -15,23 +15,47 @@ export class CindiClientService {
     private http: HttpClient,
     private env: EnvService,
     private router: Router
-    /*,
+  ) /*,
   @Inject('BASE_URL') private baseUrl: string*/
-  ) {
+  {
     if (env.dynamicRoutingEnabled) {
-      console.log('myURL ' + location.origin);
+      console.log("myURL " + location.origin);
       this.baseUrl = location.origin;
     } else {
       this.baseUrl = env.apiUrl;
     }
   }
 
-  GetSteps(status: string = ""): Observable<any> {
-    if (status != "")
-      return this.http.get(this.baseUrl + this.api + "steps?status=" + status);
-    else {
-      return this.http.get(this.baseUrl + this.api + "steps?status=" + status);
+  GetSteps(
+    status: string = "",
+    page: number = 0,
+    size: number = 0
+  ): Observable<any> {
+    var queryString = "";
+    var hasQueries = false;
+    if (status != "") {
+      queryString += "status=" + status;
+      hasQueries = true;
     }
+
+    if (page != 0) {
+      if (hasQueries) {
+        queryString += "&";
+      }
+      queryString += "page=" + page;
+      hasQueries = true;
+    }
+
+    if (size != 0) {
+      if (hasQueries) {
+        queryString += "&";
+      }
+      queryString += "size=" + size;
+      hasQueries = true;
+    }
+    return this.http.get(
+      this.baseUrl + this.api + "steps" + (hasQueries ? "?" : "") + queryString
+    );
   }
 
   PutStep(id: string, status: string): Observable<any> {
@@ -133,7 +157,11 @@ export class CindiClientService {
     return this.http.get(this.baseUrl + this.api + "bot-keys?size=1000");
   }
 
-  UpdateBotKey(botKeyId: string, isDisabled: boolean = undefined, name: string = undefined): Observable<any> {
+  UpdateBotKey(
+    botKeyId: string,
+    isDisabled: boolean = undefined,
+    name: string = undefined
+  ): Observable<any> {
     return this.http.put(this.baseUrl + this.api + "bot-keys/" + botKeyId, {
       botName: name,
       isDisabled: isDisabled
@@ -144,8 +172,15 @@ export class CindiClientService {
     return this.http.delete(this.baseUrl + this.api + "bot-keys/" + botKeyId);
   }
 
-  GetMetrics(from: Date, to: Date, metricName: string, aggs: string[], interval: string, includeSubcategories: boolean = false): Observable<any> {
-    return this.http.post(this.baseUrl + this.api + "metrics/request",{
+  GetMetrics(
+    from: Date,
+    to: Date,
+    metricName: string,
+    aggs: string[],
+    interval: string,
+    includeSubcategories: boolean = false
+  ): Observable<any> {
+    return this.http.post(this.baseUrl + this.api + "metrics/request", {
       from: from,
       to: to,
       metricName: metricName,

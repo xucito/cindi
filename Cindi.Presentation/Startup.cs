@@ -119,7 +119,7 @@ namespace Cindi.Presentation
 
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
-            services.AddTransient<IStepsRepository, StepsRepository>(s => new StepsRepository(MongoClient));
+            services.AddTransient<EntityRepository<Step>>(s => new EntityRepository<Step>(MongoClient));
             services.AddTransient<IWorkflowsRepository, WorkflowsRepository>(s => new WorkflowsRepository(MongoClient));
             services.AddTransient<IWorkflowTemplatesRepository, WorkflowTemplatesRepository>(s => new WorkflowTemplatesRepository(MongoClient));
             // services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));

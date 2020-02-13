@@ -17,7 +17,7 @@ using Cindi.Domain.Enums;
 
 namespace Cindi.Persistence.Steps
 {
-    public class StepsRepository : BaseRepository, IStepsRepository
+    /*public class StepsRepository : BaseRepository, IStepsRepository
     {
         private IMongoCollection<Step> _steps;
         //private IMongoCollection<StepMetadata> _stepMetadata;
@@ -99,7 +99,7 @@ namespace Cindi.Persistence.Steps
             {
                 BatchSize = size,
                 NoCursorTimeout = false,
-                Skip = page,
+                Skip = page * size,
                 Limit = size,
                 Sort = sort
             };
@@ -161,30 +161,6 @@ namespace Cindi.Persistence.Steps
         {
             return (await _steps.FindAsync(s => s.CreatedOn >= fromDate && s.CreatedOn <= toDate)).ToEnumerable();
         }
-
-        /*public async Task<JournalEntry> ReassignStepAsync(Guid stepId, string status)
-        {
-            if (!StepStatuses.IsValid(status))
-            {
-                throw new InvalidStepStatusInputException(status + " is not a valid staus.");
-            }
-
-            var step = await GetStepAsync(stepId);
-
-            //Throw a error if you are assigning a step that is unassigned
-            if(status == StepStatuses.Assigned && step.Status != StepStatuses.Unassigned)
-            {
-                throw new InvalidStepQueueException("You cannot assign step " + stepId + " as it is not unassigned.");
-            }
-
-            //Throw a error if you try to complete a step without it being in a assigned
-            if(StepStatuses.IsCompleteStatus(status) && step.Status != StepStatuses.Assigned)
-            {
-                throw new InvalidStepQueueException("Cannot complete step with status " +  status + " when the step is not assigned first, the current status is " + step.Status);
-            }
-
-            return await InsertJournalEntryAsync(new JournalEntry() {
-            });
-        }*/
     }
+    */
 }

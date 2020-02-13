@@ -1,3 +1,4 @@
+import { WorkflowsComponent } from './workflows/workflows.component';
 import { MonitoringComponent } from './monitoring/monitoring.component';
 import { BotsComponent } from './bots/bots.component';
 import { GlobalValuesComponent } from './global-values/global-values.component';
@@ -12,12 +13,21 @@ import { StepTemplateComponent } from "./step-template/step-template.component";
 import { WorkflowTemplatesComponent } from "./workflow-templates/workflow-templates.component";
 import { WorkflowTemplateComponent } from './workflow-template/workflow-template.component';
 import {WorkflowDesignerComponent} from './workflow-designer/workflow-designer.component';
+import { StepsComponent } from './steps/steps.component';
 
 const routes: Routes = [
   {
     path: "",
     component: PagesComponent,
     children: [
+      {
+        path: "steps",
+        component: StepsComponent
+      },
+      {
+        path: "workflows",
+        component: WorkflowsComponent
+      },
       {
         path: "dashboard",
         component: DashboardComponent

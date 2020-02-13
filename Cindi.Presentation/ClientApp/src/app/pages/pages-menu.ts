@@ -12,6 +12,16 @@ export const MENU_ITEMS: NbMenuItem[] = [
     group: true
   },
   {
+    title: "Steps",
+    icon: "file-text-outline",
+    link: "/pages/steps"
+  },
+  {
+    title: "Workflows",
+    icon: "file-text-outline",
+    link: "/pages/workflows"
+  },
+  {
     title: "Step-Templates",
     icon: "file-text-outline",
     link: "/pages/step-templates"
