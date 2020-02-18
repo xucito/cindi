@@ -9,7 +9,8 @@
       <div class="col-sm-12">
         <ngx-datatable [rows]="rows" [columns]="columns" [columnMode]="ColumnMode.force" class="bootstrap"
           [headerHeight]="50" [footerHeight]="50" rowHeight="auto" [externalPaging]="true" [count]="page.totalElements"
-          [offset]="page.pageNumber" [limit]="page.size" (page)="setPage($event)">
+          [offset]="page.pageNumber" [limit]="page.size" (page)="setPage($event)" (sort)="onSort($event)"
+          [externalSorting]="true">
         </ngx-datatable>
       </div>
     </div>

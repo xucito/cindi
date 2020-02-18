@@ -30,7 +30,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 {
     public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, CommandResult<Step>>
     {
-        private readonly IStepsRepository _stepsRepository;
+        private readonly IEntityRepository _entityRepository;
         private readonly IClusterStateService _clusterStateService;
         private IStepTemplatesRepository _stepTemplateRepository;
         private IBotKeysRepository _botKeysRepository;
@@ -40,7 +40,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IStateMachine<CindiClusterState> _stateMachine;
 
         public AssignStepCommandHandler(
-            IStepsRepository stepsRepository,
+            IEntityRepository entityRepository,
             IClusterStateService stateService,
             IStepTemplatesRepository stepTemplateRepository,
             IBotKeysRepository botKeysRepository,
@@ -50,7 +50,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             IStateMachine<CindiClusterState> stateMachine
             )
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _clusterStateService = stateService;
             _stepTemplateRepository = stepTemplateRepository;
             _botKeysRepository = botKeysRepository;
@@ -84,7 +84,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 do
                 {
-                    unassignedStep = (await _stepsRepository.GetStepsAsync(1, 0, StepStatuses.Unassigned, request.StepTemplateIds, null, SortOrder.Ascending, "CreatedOn", ignoreUnassignedSteps.ToArray())).FirstOrDefault();
+                    unassignedStep = (await _entityRepository.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, "CreatedOn:1", 1, 0)).FirstOrDefault();
                     if (unassignedStep != null)
                     {
                         var assigned = await _node.Handle(new RequestDataShard()
@@ -241,7 +241,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                     RemoveLock = true
                                 });
 
-                                //await _stepsRepository.UpdateStep(unassignedStep);
+                                //await _entityRepository.UpdateStep(unassignedStep);
                                 if (inputsUpdated)
                                 {
                                     //Update the record with real values, this is not commited to DB

@@ -23,8 +23,7 @@ namespace Cindi.Application.Services
         IGlobalValuesRepository _globalValues;
         IStepTemplatesRepository _stepTemplatesRepository;
         IWorkflowTemplatesRepository _workflowTemplateRepository;
-        IStepsRepository _stepsRepository;
-        IWorkflowsRepository _workflowRepository;
+        IEntityRepository _entityRepository;
         IMetricsRepository _metricsRepository;
         IMetricTicksRepository _metricTicksRepository;
 
@@ -33,8 +32,7 @@ namespace Cindi.Application.Services
             IGlobalValuesRepository globalValues,
             IStepTemplatesRepository stepTemplatesRepository,
             IWorkflowTemplatesRepository workflowTemplateRepository,
-                    IStepsRepository stepsRepository,
-        IWorkflowsRepository workflowRepository,
+                    IEntityRepository entityRepository,
             IMetricsRepository metricsRepository,
             IMetricTicksRepository metricTicksRepository)
         {
@@ -43,8 +41,7 @@ namespace Cindi.Application.Services
             _globalValues = globalValues;
             _stepTemplatesRepository = stepTemplatesRepository;
             _workflowTemplateRepository = workflowTemplateRepository;
-            _stepsRepository = stepsRepository;
-            _workflowRepository = workflowRepository;
+            _entityRepository = entityRepository;
             _metricsRepository = metricsRepository;
             _metricTicksRepository = metricTicksRepository;
         }
@@ -52,7 +49,7 @@ namespace Cindi.Application.Services
 
         public async Task<bool> DeleteDataAsync(ShardData data)
         {
-            switch(data.ShardType)
+            switch (data.ShardType)
             {
                 case nameof(BotKey):
                     await _botKeys.DeleteBotkey(data.Id);
@@ -79,9 +76,9 @@ namespace Cindi.Application.Services
                 case nameof(WorkflowTemplate):
                     return await _workflowTemplateRepository.GetWorkflowTemplateAsync(objectId);
                 case nameof(Step):
-                    return await _stepsRepository.GetStepAsync(objectId);
+                    return await _entityRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == objectId);
                 case nameof(Workflow):
-                    return await _workflowRepository.GetWorkflowAsync(objectId);
+                    return await _entityRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == objectId);
                 default:
                     return null;
             }
@@ -104,15 +101,12 @@ namespace Cindi.Application.Services
                         return await _stepTemplatesRepository.InsertAsync(t1);
                     case WorkflowTemplate t1:
                         return await _workflowTemplateRepository.InsertWorkflowTemplateAsync(t1);
-                    case Workflow t1:
-                        return await _workflowRepository.InsertWorkflowAsync(t1);
-                    case Step t1:
-                        return await _stepsRepository.InsertStepAsync(t1);
                     case Metric t1:
                         return await _metricsRepository.InsertMetricsAsync(t1);
                     case MetricTick t1:
                         return await _metricTicksRepository.InsertMetricTicksAsync(t1);
                 }
+                return await _entityRepository.Insert(data);
                 throw new NotImplementedException();
             }
             catch (Exception e)
@@ -136,13 +130,10 @@ namespace Cindi.Application.Services
                 //return await _users.Upda(t1);
                 case BotKey t1:
                     return await _botKeys.UpdateBotKey(t1);
-                case Workflow t1:
-                    return await _workflowRepository.UpdateWorkflow(t1);
-                case Step t1:
-                    return await _stepsRepository.UpdateStep(t1);
                 case GlobalValue t1:
                     return await _globalValues.UpdateGlobalValue(t1);
             }
+            return await _entityRepository.Update(e => e.Id == data.Id, data);
             throw new Exception("Object type " + data.ShardType + "has no supported operations");
         }
     }

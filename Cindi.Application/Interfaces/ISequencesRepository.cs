@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 
 namespace Cindi.Application.Interfaces
 {
-    public interface IWorkflowsRepository
+    /*public interface IWorkflowsRepository
     {
         long CountWorkflows();
         Task<Workflow> GetWorkflowAsync(Guid WorkflowId);
@@ -16,5 +16,5 @@ namespace Cindi.Application.Interfaces
         Task<Workflow> InsertWorkflowAsync(Workflow Workflow);
         Task<List<Step>> GetWorkflowStepsAsync(Guid workflowId);
         Task<Workflow> UpdateWorkflow(Workflow Workflow);
-    }
+    }*/
 }

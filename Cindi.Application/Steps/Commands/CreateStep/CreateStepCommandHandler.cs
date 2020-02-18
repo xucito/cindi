@@ -25,16 +25,16 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
-        private readonly IStepsRepository _stepsRepository;
+        private readonly IEntityRepository _entityRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
         private readonly IClusterStateService _clusterStateService;
         private readonly IClusterRequestHandler _node;
-        public CreateStepCommandHandler(IStepsRepository stepsRepository, 
+        public CreateStepCommandHandler(IEntityRepository entityRepository, 
             IStepTemplatesRepository steptemplatesRepository, 
             IClusterStateService service, 
             IClusterRequestHandler node)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _stepTemplatesRepository = steptemplatesRepository;
             _clusterStateService = service;
             _node = node;
@@ -54,7 +54,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 
             var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.WorkflowId, ClusterStateService.GetEncryptionKey() );
 
-           /* var createdStepId = await _stepsRepository.InsertStepAsync(
+           /* var createdStepId = await _entityRepository.InsertStepAsync(
                 newStep
                 );*/
 

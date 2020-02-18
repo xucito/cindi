@@ -20,12 +20,12 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
 {
     public class UnencryptStepFieldQueryHandler : IRequestHandler<UnencryptStepFieldQuery, QueryResult<string>>
     {
-        private readonly IStepsRepository _stepsRepository;
+        private readonly IEntityRepository _entityRepository;
         private readonly IStepTemplatesRepository _stepTemplatesRepository;
 
-        public UnencryptStepFieldQueryHandler(IStepsRepository stepsRepository, IStepTemplatesRepository stepTemplatesRepository)
+        public UnencryptStepFieldQueryHandler(IEntityRepository entityRepository, IStepTemplatesRepository stepTemplatesRepository)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
         }
 
@@ -38,10 +38,10 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 throw new InvalidUnencryptionRequestException("No such encryption type " + request.Type);
             }
-            var step = await _stepsRepository.GetStepAsync(request.StepId);
+            var step = await _entityRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
 
 
-            if(step.CreatedBy != request.UserId)
+            if (step.CreatedBy != request.UserId)
             {
                 throw new InvalidStepPermissionException("Only the creating user can decrypt the step secret.");
             }
@@ -49,14 +49,14 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             var stepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(step.StepTemplateId);
 
             //Compare the to lower of inputs, TODO - this is inefficient
-            if(!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))
+            if (!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))
             {
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " does not exist on step template " + stepTemplate.Id);
             }
-            
+
             DynamicDataDescription kv = request.Type == StepEncryptionTypes.Inputs ? stepTemplate.InputDefinitions[request.FieldName.ToLower()] : stepTemplate.OutputDefinitions[request.FieldName.ToLower()];
-            
-            if(kv.Type != InputDataTypes.Secret)
+
+            if (kv.Type != InputDataTypes.Secret)
             {
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " is not a secret type.");
             }

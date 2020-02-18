@@ -1,7 +1,7 @@
-﻿using Cindi.Application.Workflows.Commands;
+﻿using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Application.Workflows.Commands;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
-using Cindi.Application.Workflows.Queries.GetWorkflow;
-using Cindi.Application.Workflows.Queries.GetWorkflows;
 using Cindi.Application.Workflows.Queries.GetWorkflowSteps;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Exceptions;
@@ -51,7 +51,7 @@ namespace Cindi.Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null)
         {
-            return Ok(await Mediator.Send(new GetWorkflowsQuery()
+            return Ok(await Mediator.Send(new GetEntitiesQuery<Workflow>()
             {
                 Page = page,
                 Size = size,
@@ -63,7 +63,7 @@ namespace Cindi.Presentation.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await Mediator.Send(new GetWorkflowQuery()
+            return Ok(await Mediator.Send(new GetEntityQuery<Workflow>()
             {
                 Id = id
             }));

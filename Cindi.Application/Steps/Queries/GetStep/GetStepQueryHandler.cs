@@ -13,18 +13,18 @@ namespace Cindi.Application.Steps.Queries.GetStep
 {
     public class GetStepQueryHandler : IRequestHandler<GetStepQuery, QueryResult<Step>>
     {
-        private readonly IStepsRepository _stepsRepository;
+        private readonly IEntityRepository _entityRepository;
 
-        public GetStepQueryHandler(IStepsRepository stepsRepository)
+        public GetStepQueryHandler(IEntityRepository entityRepository)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
 
         }
         public async Task<QueryResult<Step>> Handle(GetStepQuery request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var step = await _stepsRepository.GetStepAsync(request.Id);
+            var step = await _entityRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.Id);
 
             stopwatch.Stop();
             return new QueryResult<Step>()

@@ -4,9 +4,9 @@ using System.Text;
 
 namespace Cindi.Domain.Enums
 {
-    public enum SortOrder
+   /* public enum SortOrder
     {
-        Ascending,
-        Descending
-    }
+        Asc,
+        Desc
+    }*/
 }

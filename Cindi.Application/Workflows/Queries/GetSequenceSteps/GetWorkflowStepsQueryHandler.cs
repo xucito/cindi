@@ -6,6 +6,7 @@ using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,11 +15,11 @@ namespace Cindi.Application.Workflows.Queries.GetWorkflowSteps
 {
     public class GetWorkflowStepsQueryHandler : IRequestHandler<GetWorkflowStepsQuery, QueryResult<List<Step>>>
     {
-        private IWorkflowsRepository _workflowsRepository;
+        private IEntityRepository _entityRepository;
 
-        public GetWorkflowStepsQueryHandler(IWorkflowsRepository workflowsRepository)
+        public GetWorkflowStepsQueryHandler(IEntityRepository entityRepository)
         {
-            _workflowsRepository = workflowsRepository;
+            _entityRepository = entityRepository;
         }
 
         public async Task<QueryResult<List<Step>>> Handle(GetWorkflowStepsQuery request, CancellationToken cancellationToken)
@@ -26,7 +27,7 @@ namespace Cindi.Application.Workflows.Queries.GetWorkflowSteps
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var steps = await _workflowsRepository.GetWorkflowStepsAsync(request.WorkflowId);
+            var steps = (await _entityRepository.GetAsync<Step>(s => s.WorkflowId == request.WorkflowId)).ToList();
 
             stopwatch.Stop();
             return new QueryResult<List<Step>>()

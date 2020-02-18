@@ -31,23 +31,21 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private IWorkflowsRepository _workflowsRepository;
         private IWorkflowTemplatesRepository _workflowTemplatesRepository;
-        private IStepsRepository _stepsRepository;
+        private IEntityRepository _entityRepository;
         private IStepTemplatesRepository _stepTemplatesRepository;
         private IMediator _mediator;
         private readonly IClusterRequestHandler _node;
 
-        public CreateWorkflowCommandHandler(IWorkflowsRepository workflowsRepository,
+        public CreateWorkflowCommandHandler(
             IWorkflowTemplatesRepository workflowTemplatesRepository,
-            IStepsRepository stepsRepository,
+            IEntityRepository entityRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             IMediator mediator,
             IClusterRequestHandler node)
         {
-            _workflowsRepository = workflowsRepository;
             _workflowTemplatesRepository = workflowTemplatesRepository;
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
             _mediator = mediator;
             _node = node;
@@ -60,12 +58,12 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 
             WorkflowTemplate template = await _workflowTemplatesRepository.GetWorkflowTemplateAsync(request.WorkflowTemplateId);
 
-            if(template == null)
+            if (template == null)
             {
                 throw new WorkflowTemplateNotFoundException("Workflow Template " + request.WorkflowTemplateId + " not found.");
             }
 
-            if(template.InputDefinitions.Count() < request.Inputs.Count())
+            if (template.InputDefinitions.Count() < request.Inputs.Count())
             {
                 throw new InvalidInputsException("Invalid number of inputs, number passed was " + request.Inputs.Count() + " which is less then defined " + template.InputDefinitions.Count());
             }
@@ -82,7 +80,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     }
                 }
 
-                foreach(var input in request.Inputs)
+                foreach (var input in request.Inputs)
                 {
                     if (template.InputDefinitions.ContainsKey(input.Key) && template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
                     {
@@ -112,7 +110,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
             });
 
-            var workflow = await _workflowsRepository.GetWorkflowAsync(createdWorkflowId);
+            var workflow = await _entityRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
 
             //When there are no conditions to be met
 
@@ -125,7 +123,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.Value.StepTemplateId);
 
                     var verifiedInputs = new Dictionary<string, object>();
-                    
+
                     foreach (var mapping in subBlock.Value.Mappings)
                     {
                         string mappedValue = "";
@@ -150,27 +148,27 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                         Name = subBlock.Key
                     });
 
-                  /*  newStep = await _stepsRepository.InsertStepAsync(newStep);
+                    /*  newStep = await _entityRepository.InsertStepAsync(newStep);
 
-                    await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
-                    {
-                        SubjectId = newStep.Id,
-                        ChainId = 0,
-                        Entity = JournalEntityTypes.Step,
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                        Updates = new List<Update>()
-                        {
-                            new Update()
-                            {
-                                FieldName = "status",
-                                Value = StepStatuses.Unassigned,
-                                Type = UpdateType.Override
-                            }
-                        }
-                    });
+                      await _entityRepository.InsertJournalEntryAsync(new JournalEntry()
+                      {
+                          SubjectId = newStep.Id,
+                          ChainId = 0,
+                          Entity = JournalEntityTypes.Step,
+                          CreatedOn = DateTime.UtcNow,
+                          CreatedBy = SystemUsers.QUEUE_MANAGER,
+                          Updates = new List<Update>()
+                          {
+                              new Update()
+                              {
+                                  FieldName = "status",
+                                  Value = StepStatuses.Unassigned,
+                                  Type = UpdateType.Override
+                              }
+                          }
+                      });
 
-                    await _stepsRepository.UpsertStepMetadataAsync(newStep.Id); */
+                      await _entityRepository.UpsertStepMetadataAsync(newStep.Id); */
                 }
 
 

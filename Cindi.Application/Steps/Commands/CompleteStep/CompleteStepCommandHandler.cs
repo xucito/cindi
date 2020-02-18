@@ -35,10 +35,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 {
     public class CompleteStepCommandHandler : IRequestHandler<CompleteStepCommand, CommandResult>
     {
-        public IStepsRepository _stepsRepository;
+        public IEntityRepository _entityRepository;
         public IStepTemplatesRepository _stepTemplatesRepository;
         public IWorkflowTemplatesRepository _workflowTemplateRepository;
-        public IWorkflowsRepository _workflowsRepository;
         public IClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
@@ -47,10 +46,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private readonly IClusterRequestHandler _node;
         private readonly NodeStateService _nodeStateService;
 
-        public CompleteStepCommandHandler(IStepsRepository stepsRepository,
+        public CompleteStepCommandHandler(IEntityRepository entityRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             IWorkflowTemplatesRepository workflowTemplateRepository,
-            IWorkflowsRepository workflowsRepository,
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
@@ -60,10 +58,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             NodeStateService nodeStateService
             )
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
             _workflowTemplateRepository = workflowTemplateRepository;
-            _workflowsRepository = workflowsRepository;
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options.CurrentValue;
@@ -77,10 +74,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _nodeStateService = nodeStateService;
         }
 
-        public CompleteStepCommandHandler(IStepsRepository stepsRepository,
+        public CompleteStepCommandHandler(IEntityRepository entityRepository,
             IStepTemplatesRepository stepTemplatesRepository,
             IWorkflowTemplatesRepository workflowTemplateRepository,
-            IWorkflowsRepository workflowsRepository,
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
@@ -90,10 +86,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
              NodeStateService nodeStateService
     )
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _stepTemplatesRepository = stepTemplatesRepository;
             _workflowTemplateRepository = workflowTemplateRepository;
-            _workflowsRepository = workflowsRepository;
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options;
@@ -108,7 +103,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var stepToComplete = await _stepsRepository.GetStepAsync(request.Id);
+            var stepToComplete = await _entityRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.Id);
 
             if (stepToComplete.IsComplete())
             {
@@ -178,7 +173,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 Updates = finalUpdate
             });
 
-            //var updatedStepId = await _stepsRepository.UpdateStep(stepToComplete);
+            //var updatedStepId = await _entityRepository.UpdateStep(stepToComplete);
 
             await _node.Handle(new AddShardWriteOperation()
             {
@@ -187,13 +182,13 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
             });
 
-            var updatedStep = await _stepsRepository.GetStepAsync(stepToComplete.Id);
+            var updatedStep = await _entityRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == stepToComplete.Id);
 
             if (updatedStep.WorkflowId != null)
             {
                 //Keep track of whether a step has been added
                 var addedStep = false;
-                var workflow = await _workflowsRepository.GetWorkflowAsync(updatedStep.WorkflowId.Value);
+                var workflow = await _entityRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
 
                 if (workflow == null)
                 {
@@ -209,7 +204,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 }
 
                 //Get all the steps related to this task
-                var workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
+                var workflowSteps = (await _entityRepository.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
 
                 foreach (var workflowStep in workflowSteps)
                 {
@@ -246,7 +241,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
-                    workflow = await _workflowsRepository.GetWorkflowAsync(updatedStep.WorkflowId.Value);
+                    workflow = await _entityRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
 
                     //If the logic block is ready to be processed, submit the steps
                     if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))
@@ -360,7 +355,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Check if there are no longer any steps that are unassigned or assigned
 
                 var workflowStatus = workflow.Status;
-                workflowSteps = await _workflowsRepository.GetWorkflowStepsAsync(updatedStep.WorkflowId.Value);
+                workflowSteps = (await _entityRepository.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
                 var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
 
                 var newWorkflowStatus = WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);

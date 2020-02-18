@@ -29,7 +29,8 @@ export class CindiClientService {
   GetSteps(
     status: string = "",
     page: number = 0,
-    size: number = 0
+    size: number = 0,
+    sort?: string
   ): Observable<any> {
     var queryString = "";
     var hasQueries = false;
@@ -53,6 +54,16 @@ export class CindiClientService {
       queryString += "size=" + size;
       hasQueries = true;
     }
+
+    if(sort)
+    {
+      if (hasQueries) {
+        queryString += "&";
+      }
+      queryString += "sort=" + sort;
+      hasQueries = true;
+    }
+
     return this.http.get(
       this.baseUrl + this.api + "steps" + (hasQueries ? "?" : "") + queryString
     );

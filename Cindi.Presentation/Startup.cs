@@ -61,6 +61,10 @@ using Cindi.Persistence.MetricTicks;
 using ConsensusCore.Node.Services.Raft;
 using ConsensusCore.Node.Services.Data;
 using ConsensusCore.Node.Services.Tasks;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Domain.Entities.Workflows;
+using Cindi.Application.Entities.Queries.GetEntities;
+using Cindi.Application.Entities.Queries;
 
 namespace Cindi.Presentation
 {
@@ -93,7 +97,7 @@ namespace Cindi.Presentation
             //services.AddScoped<IMediator, Mediator>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
             services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
-            // services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
+            services.AddMediatR(Query);
             services.AddAutoMapper();
 
             services.AddMvc(options =>
@@ -119,8 +123,7 @@ namespace Cindi.Presentation
 
             //Add step template
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
-            services.AddTransient<EntityRepository<Step>>(s => new EntityRepository<Step>(MongoClient));
-            services.AddTransient<IWorkflowsRepository, WorkflowsRepository>(s => new WorkflowsRepository(MongoClient));
+            services.AddTransient<IEntityRepository, EntityRepository>(s => new EntityRepository(MongoClient));
             services.AddTransient<IWorkflowTemplatesRepository, WorkflowTemplatesRepository>(s => new WorkflowTemplatesRepository(MongoClient));
             // services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
             services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));

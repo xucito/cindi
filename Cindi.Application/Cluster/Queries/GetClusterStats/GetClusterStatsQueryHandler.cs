@@ -14,11 +14,11 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
 {
     public class GetClusterStatsQueryHandler : IRequestHandler<GetClusterStatsQuery, QueryResult<ClusterStats>>
     {
-        IStepsRepository _stepsRepository;
+        IEntityRepository _entityRepository;
 
-        public GetClusterStatsQueryHandler(IStepsRepository stepsRepository)
+        public GetClusterStatsQueryHandler(IEntityRepository entityRepository)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
         }
         public async Task<QueryResult<ClusterStats>> Handle(GetClusterStatsQuery request, CancellationToken cancellationToken)
         {
@@ -28,12 +28,12 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
             {
                 Steps = new StepStats()
                 {
-                    Suspended = _stepsRepository.CountSteps(StepStatuses.Suspended),
-                    Unassigned = _stepsRepository.CountSteps(StepStatuses.Unassigned),
-                    Assigned = _stepsRepository.CountSteps(StepStatuses.Assigned),
-                    Successful = _stepsRepository.CountSteps(StepStatuses.Successful),
-                    Warning = _stepsRepository.CountSteps(StepStatuses.Warning),
-                    Error = _stepsRepository.CountSteps(StepStatuses.Error),
+                    Suspended = _entityRepository.Count<Step>(s => s.Status == StepStatuses.Suspended),
+                    Unassigned = _entityRepository.Count<Step>(s => s.Status == StepStatuses.Unassigned),
+                    Assigned = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Assigned),
+                    Successful = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Successful),
+                    Warning = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Warning),
+                    Error = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Error),
                 }
 
             };

@@ -25,17 +25,17 @@ namespace Cindi.Application.Steps.Commands.CancelStep
 {
     public class CancelStepCommandHandler : IRequestHandler<CancelStepCommand, CommandResult>
     {
-        public IStepsRepository _stepsRepository;
+        public IEntityRepository _entityRepository;
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public CancelStepCommandHandler(IStepsRepository stepsRepository,
+        public CancelStepCommandHandler(IEntityRepository entityRepository,
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>

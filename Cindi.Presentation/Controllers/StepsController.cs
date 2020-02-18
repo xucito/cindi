@@ -19,6 +19,7 @@ using Cindi.Application.Steps.Queries;
 using Cindi.Application.Steps.Queries.GetStep;
 using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
@@ -187,7 +188,8 @@ namespace Cindi.Presentation.Controllers
                 }
                 catch (DuplicateStepUpdateException exception)
                 {
-                    return Ok(new HttpCommandResult<Step>("step", new CommandResult() {
+                    return Ok(new HttpCommandResult<Step>("step", new CommandResult()
+                    {
                         Type = CommandResultTypes.None
                     }, (await Mediator.Send(new GetStepQuery()
                     {
@@ -248,7 +250,7 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null, string sort = "CreatedOn:1")
         {
             return Ok(await Mediator.Send(new GetStepsQuery()
             {
@@ -257,7 +259,8 @@ namespace Cindi.Presentation.Controllers
                 Status = status,
                 Exclusions = new List<Expression<Func<Step, object>>>{
                     (s) => s.Journal
-                }
+                },
+                Sort = sort
             }));
         }
 

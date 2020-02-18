@@ -26,17 +26,17 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
 {
     public class UnassignStepCommandHandler : IRequestHandler<UnassignStepCommand, CommandResult>
     {
-        public IStepsRepository _stepsRepository;
+        public IEntityRepository _entityRepository;
         public ILogger<UnassignStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public UnassignStepCommandHandler(IStepsRepository stepsRepository,
+        public UnassignStepCommandHandler(IEntityRepository entityRepository,
             ILogger<UnassignStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>

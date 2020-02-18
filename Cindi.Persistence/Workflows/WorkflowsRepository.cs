@@ -13,7 +13,7 @@ using System.Linq.Expressions;
 
 namespace Cindi.Persistence.Workflows
 {
-    public class WorkflowsRepository : BaseRepository, IWorkflowsRepository
+    /*public class WorkflowsRepository : BaseRepository, IWorkflowsRepository
     {
         public IMongoCollection<Workflow> _workflows;
         private IMongoCollection<JournalEntry> _workflowsJournalEntries;
@@ -173,5 +173,5 @@ namespace Cindi.Persistence.Workflows
 
             return workflowToUpdate.Metadata;
         }
-    }
+    }*/
 }

@@ -1,85 +1,96 @@
 ﻿using Cindi.Application.Interfaces;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using ConsensusCore.Domain.BaseClasses;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Cindi.Persistence
 {
-    public class EntityRepository<T> : IEntityRepository<T> where T : class
+    public class EntityRepository : IEntityRepository
     {
         public string DatabaseName { get; } = "CindiDb";
-        public IMongoCollection<T> _entity;
+        private IMongoClient _client;
+        private IMongoDatabase _database;
 
         public EntityRepository(string mongoDbConnectionString, string databaseName)
         {
             DatabaseName = databaseName;
             var client = new MongoClient(mongoDbConnectionString);
-            SetCollection(client);
+            _database = client.GetDatabase(DatabaseName);
         }
 
         public EntityRepository(IMongoClient client)
         {
-            SetCollection(client);
+            _database = client.GetDatabase(DatabaseName);
         }
 
-        private void SetCollection(IMongoClient client)
+        public long Count<T>(Expression<Func<T, bool>> expression = null)
         {
-            var database = client.GetDatabase(DatabaseName);
-            _entity = database.GetCollection<T>(typeof(T).Name);
-        }
-
-        public async Task<IEnumerable<T>> GetAsync<TMember>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, Expression<Func<T, TMember>> sortBy = null, SortOrder order = SortOrder.Descending, int size = 10, int page = 0)
-        {
-            SortDefinition<T> sort = null;
-
-            if (sortBy != null)
+            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            if (expression == null)
             {
-                if (order == SortOrder.Descending)
-                {
-                    sort = Builders<T>.Sort.Descending(typeof(TMember).Name);
-                }
-                else
-                {
-                    sort = Builders<T>.Sort.Ascending(typeof(TMember).Name);
-                }
+                return _entity.EstimatedDocumentCount();
             }
+            return _entity.Find(expression).CountDocuments();
+        }
 
-            FindOptions<T> options = new FindOptions<T>
-            {
-                BatchSize = size,
-                NoCursorTimeout = false,
-                Skip = page * size,
-                Limit = size,
-                Sort = sort
-            };
-
+        public async Task<IEnumerable<T>> GetAsync<T>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, string sort = null, int size = 10, int page = 0)
+        {
+            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            ProjectionDefinition<T> definition = Builders<T>.Projection.Exclude("");
             if (exclusions != null)
             {
+                var first = true;
                 foreach (var exclusion in exclusions)
                 {
-                    options.Projection = Builders<T>.Projection.Exclude(exclusion);
+                    if (first)
+                    {
+                        first = false;
+                        definition = Builders<T>.Projection.Exclude(exclusion);
+                    }
+                    else
+                        definition.Exclude(exclusion);
                 }
             }
 
-            if (expression != null)
-                return (await _entity.FindAsync(expression, options)).ToEnumerable();
-            else
-                return (await _entity.FindAsync(FilterDefinition<T>.Empty, options)).ToEnumerable();
+            var transformedSortString = "";
+
+            if (sort != null)
+            {
+                foreach (var sortStatement in sort.Split(","))
+                {
+                    if (transformedSortString != "")
+                    {
+                        transformedSortString += ",";
+                    }
+                    transformedSortString += typeof(T).GetProperty(sortStatement.Split(":")[0], BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance).Name + ": " + sortStatement.Split(":")[1];
+                }
+            }
+
+            return await _entity.Find(expression != null ? expression : FilterDefinition<T>.Empty)
+                .Sort(sort != null ? "{" + transformedSortString + "}" : null)
+                .Limit(size).Skip(page * size)
+                .Project<T>(definition)
+                .ToListAsync<T>();
         }
 
-        public async Task<T> Insert(T entity)
+        public async Task<T> Insert<T>(T entity)
         {
+            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
             await _entity.InsertOneAsync(entity);
             return entity;
         }
 
-        public async Task<T> Update(Expression<Func<T, bool>> expression, T entity, bool isUpsert = false)
+        public async Task<T> Update<T>(Expression<Func<T, bool>> expression, T entity, bool isUpsert = false)
         {
+            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
             var result = await _entity.ReplaceOneAsync(
                   expression,
                   entity,
@@ -96,6 +107,12 @@ namespace Cindi.Persistence
             {
                 throw new Exception("Update on collection " + typeof(T).Name + " failed.");
             }
+        }
+
+        public async Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression)
+        {
+            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            return (await _entity.FindAsync(expression)).FirstOrDefault();
         }
     }
 }

@@ -14,25 +14,29 @@ namespace Cindi.Application.Steps.Queries.GetSteps
 {
     public class GetStepsQueryHandler : IRequestHandler<GetStepsQuery, QueryResult<List<Step>>>
     {
-        private readonly IStepsRepository _stepsRepository;
+        private readonly IEntityRepository _entityRepository;
 
-        public GetStepsQueryHandler(IStepsRepository stepsRepository)
+        public GetStepsQueryHandler(IEntityRepository entityRepository)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
         }
 
         public async Task<QueryResult<List<Step>>> Handle(GetStepsQuery request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var steps = (await _stepsRepository.GetStepsAsync(request.Size, request.Page, request.Status, null, request.Exclusions)).OrderByDescending(s => s.CreatedOn).ToList();
-            var stepCount = _stepsRepository.CountSteps(request.Status);
+            System.Linq.Expressions.Expression<Func<Step, bool>> expression;
+            if (request.Status != null)
+                expression = (s) => request.Status == null;
+            else
+                expression = (s) => true;
+            var steps = (await _entityRepository.GetAsync<Step>(expression, request.Exclusions, request.Sort, request.Size, request.Page)).OrderByDescending(s => s.CreatedOn).ToList();
             stopwatch.Stop();
 
             return new QueryResult<List<Step>>()
             {
                 Result = steps,
-                Count = stepCount,
+                Count = _entityRepository.Count<Step>(expression),
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };
         }

@@ -27,7 +27,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         Thread checkSuspendedStepsThread;
         private ILogger<ClusterMonitorService> _logger;
         private IClusterRequestHandler node;
-        private IStepsRepository _stepsRepository;
+        private IEntityRepository _entityRepository;
         private IMetricTicksRepository _metricTicksRepository;
         private MetricManagementService _metricManagementService;
         int leaderMonitoringInterval = Timeout.Infinite;
@@ -44,7 +44,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         public ClusterMonitorService(
             IServiceScopeFactory serviceProvider,
             IClusterRequestHandler _node,
-            IStepsRepository stepsRepository,
+            IEntityRepository entityRepository,
             MetricManagementService metricManagementService,
             IMetricTicksRepository metricTicksRepository,
             IDatabaseMetricsCollector databaseMetricsCollector,
@@ -57,7 +57,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
             _logger.LogInformation("Starting clean up service...");
             node = _node;
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _metricTicksRepository = metricTicksRepository;
             _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
@@ -158,7 +158,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                 if (_nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
-                    var stepsCount = (await _stepsRepository.GetStepsAsync(fromDate, toDate)).ToList().Count();
+                    var stepsCount = (await _entityRepository.GetAsync<Step>(s => s.CreatedOn > fromDate && s.CreatedOn <= toDate)).ToList().Count();
                     _metricManagementService.EnqueueTick(new MetricTick()
                     {
                         MetricId = 0,
@@ -169,13 +169,13 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                 if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
                 {
-                    foreach(var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
+                    foreach (var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
                     {
                         _metricManagementService.EnqueueTick(metric);
                     }
                     Interlocked.Decrement(ref _fetchingDbMetrics);
                 }
-               // Console.WriteLine("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") + " value:" + stepsCount);
+                // Console.WriteLine("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") + " value:" + stepsCount);
             }
             /*
             DateTime toDate = DateTime.Now;
@@ -183,7 +183,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             {
                 MetricId = 0,
                 Date = toDate,
-                Value = (await _stepsRepository.GetStepsAsync(toDate.AddSeconds(1), toDate)).ToList().Count()
+                Value = (await _entityRepository.GetStepsAsync(toDate.AddSeconds(1), toDate)).ToList().Count()
             });
             Console.WriteLine("Finished thread");*/
         }

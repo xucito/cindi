@@ -25,17 +25,17 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
 {
     public class SuspendStepCommandHandler : IRequestHandler<SuspendStepCommand, CommandResult>
     {
-        public IStepsRepository _stepsRepository;
+        public IEntityRepository _entityRepository;
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public SuspendStepCommandHandler(IStepsRepository stepsRepository,
+        public SuspendStepCommandHandler(IEntityRepository entityRepository,
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _stepsRepository = stepsRepository;
+            _entityRepository = entityRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>
