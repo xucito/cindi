@@ -1,6 +1,7 @@
-﻿using Cindi.Application.BotKeys.Queries.GetBotKey;
+﻿using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.BotKeys;
 using ConsensusCore.Domain.Enums;
@@ -21,13 +22,11 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 {
     public class UpdateNonceCommandHandler : IRequestHandler<UpdateNonceCommand, CommandResult>
     {
-        IBotKeysRepository _botKeyRepository;
         IMediator _mediator;
         IClusterRequestHandler _node;
 
-        public UpdateNonceCommandHandler(IBotKeysRepository botKeyRepository, IMediator mediator, IClusterRequestHandler node)
+        public UpdateNonceCommandHandler(IMediator mediator, IClusterRequestHandler node)
         {
-            _botKeyRepository = botKeyRepository;
             _mediator = mediator;
             _node = node;
         }
@@ -37,7 +36,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var key = (await _mediator.Send(new GetBotKeyQuery()
+            var key = (await _mediator.Send(new GetEntityQuery<BotKey>()
             {
                 Id = request.Id
             })).Result;

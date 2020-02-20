@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Users.Commands.CreateUserCommand;
-using Cindi.Application.Users.Queries.GetUserQuery;
-using Cindi.Application.Users.Queries.GetUsers;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
@@ -29,15 +30,20 @@ namespace Cindi.Presentation.Controllers
 
         // GET: api/<controller>
         [HttpGet]
-        public async Task<IActionResult> Get(int page = 0, int size = 100)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null, string sort = "CreatedOn:1")
         {
-            var username = ClaimsUtility.GetUsername(User);
-            var user = await Mediator.Send(new GetUsersQuery() {
+            return Ok(await Mediator.Send(new GetEntitiesQuery<User>()
+            {
                 Page = page,
-                Size = size
-            });
-
-            return Ok(user);
+                Size = size,
+                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<User, bool>>> {
+                   status == null ? null : ExpressionBuilder.BuildPredicate<User>("Status", OperatorComparer.Equals, status)
+                }),
+                Exclusions = new List<Expression<Func<User, object>>>{
+                    (s) => s.Journal
+                },
+                Sort = sort
+            }));
         }
 
         // GET api/<controller>/5
@@ -51,12 +57,12 @@ namespace Cindi.Presentation.Controllers
         public async Task<IActionResult> Get()
         {
             var username = ClaimsUtility.GetUsername(User);
-            var user = await Mediator.Send(new GetUserQuery()
+            var user = (await Mediator.Send(new GetEntityQuery<User>()
             {
-                Username = username
-            });
+                Expression = u => u.Username == username
+            }));
 
-            return Ok(new HttpQueryResult<User, UserVM>(user,Mapper.Map<UserVM>(user.Result)));
+            return Ok(new HttpQueryResult<User, UserVM>(user, Mapper.Map<UserVM>(user.Result)));
         }
 
         // POST api/<controller>

@@ -2,6 +2,8 @@
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Entities.BotKeys;
+using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
@@ -33,8 +35,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IEntityRepository _entityRepository;
         private readonly IClusterStateService _clusterStateService;
         private IStepTemplatesRepository _stepTemplateRepository;
-        private IBotKeysRepository _botKeysRepository;
-        private IGlobalValuesRepository _globalValuesRepository;
         public ILogger<AssignStepCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
         private readonly IStateMachine<CindiClusterState> _stateMachine;
@@ -43,9 +43,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             IEntityRepository entityRepository,
             IClusterStateService stateService,
             IStepTemplatesRepository stepTemplateRepository,
-            IBotKeysRepository botKeysRepository,
             ILogger<AssignStepCommandHandler> logger,
-            IGlobalValuesRepository globalValuesRepository,
             IClusterRequestHandler node,
             IStateMachine<CindiClusterState> stateMachine
             )
@@ -53,8 +51,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             _entityRepository = entityRepository;
             _clusterStateService = stateService;
             _stepTemplateRepository = stepTemplateRepository;
-            _botKeysRepository = botKeysRepository;
-            _globalValuesRepository = globalValuesRepository;
             Logger = logger;
             _node = node;
             _stateMachine = stateMachine;
@@ -70,7 +66,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 Step unassignedStep = null;
                 var dateChecked = DateTime.UtcNow;
 
-                var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
+                var botkey = await _entityRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
                 if (botkey.IsDisabled)
                 {
                     return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))
@@ -127,7 +123,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //Copy by reference
                                             if (isReferenceByValue)
                                             {
-                                                var foundGlobalValue = await _globalValuesRepository.GetGlobalValueAsync(convertedValue);
+                                                var foundGlobalValue = await _entityRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -149,7 +145,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //copy by value
                                             else
                                             {
-                                                var foundGlobalValue = await _globalValuesRepository.GetGlobalValueAsync(convertedValue);
+                                                var foundGlobalValue = await _entityRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);

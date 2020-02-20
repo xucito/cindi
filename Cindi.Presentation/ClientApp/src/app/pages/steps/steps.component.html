@@ -1,7 +1,7 @@
 <nb-card size="giant">
 
   <nb-card-header>
-    <span>Step Feed</span>
+    <span>Steps</span>
   </nb-card-header>
 
   <nb-card-body class="body">
@@ -10,7 +10,7 @@
         <ngx-datatable [rows]="rows" [columns]="columns" [columnMode]="ColumnMode.force" class="bootstrap"
           [headerHeight]="50" [footerHeight]="50" rowHeight="auto" [externalPaging]="true" [count]="page.totalElements"
           [offset]="page.pageNumber" [limit]="page.size" (page)="setPage($event)" (sort)="onSort($event)"
-          [externalSorting]="true">
+          [externalSorting]="true" class="material" [loadingIndicator]="isLoading">
         </ngx-datatable>
       </div>
     </div>

@@ -2,7 +2,7 @@
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Workflows.Commands;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
-using Cindi.Application.Workflows.Queries.GetWorkflowSteps;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Controllers
@@ -49,13 +50,19 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null, string sort = "CreatedOn:1")
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<Workflow>()
             {
                 Page = page,
                 Size = size,
-                Status = status
+                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<Workflow, bool>>> {
+                   status == null ? null : ExpressionBuilder.BuildPredicate<Workflow>("Status", OperatorComparer.Equals, status)
+                }),
+                Exclusions = new List<Expression<Func<Workflow, object>>>{
+                    (s) => s.Journal
+                },
+                Sort = sort
             }));
         }
 
@@ -73,9 +80,14 @@ namespace Cindi.Presentation.Controllers
         [Route("{id}/steps")]
         public async Task<IActionResult> GetWorkflowSteps(Guid id)
         {
-            return Ok(await Mediator.Send(new GetWorkflowStepsQuery()
+            return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
             {
-                WorkflowId = id
+                Page = 0,
+                Size = 1000,
+                Expression = (s) => s.WorkflowId == id,
+                Exclusions = new List<Expression<Func<Step, object>>>{
+                    (s) => s.Journal
+                }
             }));
         }
 

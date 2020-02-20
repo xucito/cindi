@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Exceptions;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
@@ -16,8 +18,6 @@ using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Steps.Commands.SuspendStep;
 using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Application.Steps.Queries;
-using Cindi.Application.Steps.Queries.GetStep;
-using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
@@ -59,9 +59,9 @@ namespace Cindi.Presentation.Controllers
                 command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
 
-                Step step = (await Mediator.Send(new GetStepQuery()
+                Step step = (await Mediator.Send(new GetEntityQuery<Step>()
                 {
-                    Id = new Guid(result.ObjectRefId),
+                    Expression = s => s.Id == new Guid(result.ObjectRefId),
                     Exclude = (s) => s.Journal
                 })).Result;
 
@@ -72,9 +72,9 @@ namespace Cindi.Presentation.Controllers
 
                     while (!StepStatuses.IsCompleteStatus(step.Status) && stopwatch.ElapsedMilliseconds < ms)
                     {
-                        step = (await Mediator.Send(new GetStepQuery()
+                        step = (await Mediator.Send(new GetEntityQuery<Step>()
                         {
-                            Id = new Guid(result.ObjectRefId)
+                            Expression = s => s.Id == new Guid(result.ObjectRefId)
                         })).Result;
                     }
 
@@ -127,7 +127,7 @@ namespace Cindi.Presentation.Controllers
             var result = await Mediator.Send(appendCommand);
             if (result.ObjectRefId != "")
             {
-                var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
                 return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
             }
             else
@@ -153,7 +153,7 @@ namespace Cindi.Presentation.Controllers
 
                 if (result.ObjectRefId != "")
                 {
-                    var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                    var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
                     return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
                 }
                 else
@@ -178,7 +178,7 @@ namespace Cindi.Presentation.Controllers
                     var result = await Mediator.Send(completeStepCommand);
                     if (result.ObjectRefId != "")
                     {
-                        var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                        var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
                         return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
                     }
                     else
@@ -191,9 +191,9 @@ namespace Cindi.Presentation.Controllers
                     return Ok(new HttpCommandResult<Step>("step", new CommandResult()
                     {
                         Type = CommandResultTypes.None
-                    }, (await Mediator.Send(new GetStepQuery()
+                    }, (await Mediator.Send(new GetEntityQuery<Step>()
                     {
-                        Id = id
+                        Expression = s => s.Id == id
                     })).Result));
                 }
             }
@@ -240,7 +240,7 @@ namespace Cindi.Presentation.Controllers
             var result = await Mediator.Send(request);
             if (result.ObjectRefId != "")
             {
-                var resolvedStep = (await Mediator.Send(new GetStepQuery() { Id = new Guid(result.ObjectRefId) })).Result;
+                var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
                 return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
             }
             else
@@ -252,11 +252,13 @@ namespace Cindi.Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null, string sort = "CreatedOn:1")
         {
-            return Ok(await Mediator.Send(new GetStepsQuery()
+            return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
             {
                 Page = page,
                 Size = size,
-                Status = status,
+                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<Step, bool>>> {
+                   status == null ? null : ExpressionBuilder.BuildPredicate<Step>("Status", OperatorComparer.Equals, status)
+                }),
                 Exclusions = new List<Expression<Func<Step, object>>>{
                     (s) => s.Journal
                 },
@@ -268,9 +270,9 @@ namespace Cindi.Presentation.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await Mediator.Send(new GetStepQuery()
+            return Ok(await Mediator.Send(new GetEntityQuery<Step>()
             {
-                Id = id
+                Expression = s => s.Id == id
             }));
         }
     }

@@ -1,3 +1,18 @@
-<p>
-  workflows works!
-</p>
+<nb-card size="giant">
+
+  <nb-card-header>
+    <span>Workflow</span>
+  </nb-card-header>
+
+  <nb-card-body class="body">
+    <div class="row">
+      <div class="col-sm-12">
+        <ngx-datatable [rows]="rows" [columns]="columns" [columnMode]="ColumnMode.force" class="bootstrap"
+          [headerHeight]="50" [footerHeight]="50" rowHeight="auto" [externalPaging]="true" [count]="page.totalElements"
+          [offset]="page.pageNumber" [limit]="page.size" (page)="setPage($event)" (sort)="onSort($event)"
+          [externalSorting]="true" class="material" [loadingIndicator]="isLoading">
+        </ngx-datatable>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

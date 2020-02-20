@@ -14,5 +14,6 @@ namespace Cindi.Application.Interfaces
         Task<T> Insert<T>(T entity);
         Task<T> Update<T>(Expression<Func<T, bool>> expression, T entity, bool isUpsert = false);
         long Count<T>(Expression<Func<T, bool>> expression = null);
+        Task<bool> Delete<T>(Expression<Func<T, bool>> expression);
     }
 }

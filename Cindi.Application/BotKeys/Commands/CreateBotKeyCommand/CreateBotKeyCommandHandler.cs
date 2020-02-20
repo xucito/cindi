@@ -20,11 +20,9 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 {
     public class CreateBotKeyCommandHandler : IRequestHandler<CreateBotKeyCommand, CommandResult<string>>
     {
-        IBotKeysRepository _botKeyRepository;
         IClusterRequestHandler _node;
-        public CreateBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IClusterRequestHandler node)
+        public CreateBotKeyCommandHandler(IClusterRequestHandler node)
         {
-            _botKeyRepository = botKeyRepository;
             _node = node;
         }
 

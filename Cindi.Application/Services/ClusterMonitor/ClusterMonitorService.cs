@@ -1,7 +1,7 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Queries;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
-using Cindi.Application.Steps.Queries.GetSteps;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
@@ -42,7 +42,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         private const int secondsOfMetrics = 5;
 
         public ClusterMonitorService(
-            IServiceScopeFactory serviceProvider,
+            IServiceProvider sp,
             IClusterRequestHandler _node,
             IEntityRepository entityRepository,
             MetricManagementService metricManagementService,
@@ -51,7 +51,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             NodeStateService nodeStateService)
         {
             _metricManagementService = metricManagementService;
-            var sp = serviceProvider.CreateScope().ServiceProvider;
+            // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
 
@@ -97,11 +97,11 @@ namespace Cindi.Application.Services.ClusterMonitor
                             int cleanedCount = 0;
                             do
                             {
-                                var steps = await _mediator.Send(new GetStepsQuery
+                                var steps = await _mediator.Send(new GetEntitiesQuery<Step>
                                 {
                                     Page = 0,
                                     Size = 1000,
-                                    Status = StepStatuses.Suspended
+                                    Expression = (s) => s.Status == StepStatuses.Suspended
                                 });
 
                                 totalSteps = steps.Count.Value;

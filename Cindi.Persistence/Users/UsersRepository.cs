@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Persistence.Users
 {
-    public class UsersRepository : BaseRepository, IUsersRepository
+   /* public class UsersRepository : BaseRepository, IUsersRepository
     {
         private IMongoCollection<User> _users;
 
@@ -106,5 +106,5 @@ namespace Cindi.Persistence.Users
             var user = await _users.FindAsync(u => u.Id == id);
             return user.FirstOrDefault();
         }
-    }
+    }*/
 }

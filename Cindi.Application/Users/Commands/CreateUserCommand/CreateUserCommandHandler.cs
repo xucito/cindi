@@ -23,18 +23,18 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
-        IUsersRepository _usersRepository;
+        IEntityRepository _entitiesRepository;
         IClusterRequestHandler _node;
 
         public CreateUserCommandHandler(
-            IUsersRepository usersRepository,
+            IEntityRepository entitiesRepository,
             ILogger<CreateUserCommandHandler> logger,
             IServiceProvider prov,
             IDataRouter router,
             IClusterRequestHandler node
     )
         {
-            _usersRepository = usersRepository;
+            _entitiesRepository = entitiesRepository;
             _node = (IClusterRequestHandler)prov.GetService(typeof(IClusterRequestHandler));
         }
 
@@ -45,11 +45,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
 
             var salt = SecurityUtility.GenerateSalt(128);
             Guid id = Guid.NewGuid();
-            var createdUser = await _node.Handle(new AddShardWriteOperation()
-            {
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                Data = new Domain.Entities.Users.User(
+            var createdUser = await _entitiesRepository.Insert(new Domain.Entities.Users.User(
                 request.Username.ToLower(),
                 SecurityUtility.OneWayHash(request.Password, salt),
                 request.Username.ToLower(),
@@ -57,9 +53,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
                 request.CreatedBy,
                 DateTime.UtcNow,
                 id
-            ),
-
-            });
+            ));
 
             return new CommandResult()
             {

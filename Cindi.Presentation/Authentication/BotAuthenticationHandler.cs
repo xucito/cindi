@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.BotKeys.Commands.Nonce;
-using Cindi.Application.BotKeys.Queries.GetBotKey;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -54,7 +55,7 @@ namespace Cindi.Presentation.Authentication
             }
             var id = authHeader;
 
-            var key = await _mediator.Send(new GetBotKeyQuery()
+            var key = await _mediator.Send(new GetEntityQuery<BotKey>()
             {
                 Id = new Guid(id)
             });

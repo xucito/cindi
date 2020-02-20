@@ -26,7 +26,8 @@ export class CindiClientService {
     }
   }
 
-  GetSteps(
+  GetEntity(
+    controllerName: string,
     status: string = "",
     page: number = 0,
     size: number = 0,
@@ -65,7 +66,7 @@ export class CindiClientService {
     }
 
     return this.http.get(
-      this.baseUrl + this.api + "steps" + (hasQueries ? "?" : "") + queryString
+      this.baseUrl + this.api + controllerName + (hasQueries ? "?" : "") + queryString
     );
   }
 

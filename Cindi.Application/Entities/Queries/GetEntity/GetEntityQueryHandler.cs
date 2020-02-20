@@ -24,7 +24,7 @@ namespace Cindi.Application.Entities.Queries.GetEntity
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var result = await _entityRepository.GetFirstOrDefaultAsync<T>(e => e.Id == request.Id);
+            var result = await _entityRepository.GetFirstOrDefaultAsync<T>(request.Expression);
 
             stopwatch.Stop();
             return new QueryResult<T>()

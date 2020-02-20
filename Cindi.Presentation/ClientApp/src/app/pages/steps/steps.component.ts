@@ -2,16 +2,14 @@ import { CindiClientService } from "./../../services/cindi-client.service";
 import { Component, OnInit } from "@angular/core";
 import { Page } from "../../shared/model/page";
 import { ColumnMode } from "@swimlane/ngx-datatable";
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 
 @Component({
   selector: "steps",
   templateUrl: "./steps.component.html",
   styleUrls: ["./steps.component.css"]
 })
-export class StepsComponent implements OnInit {
-  ColumnMode = ColumnMode;
-  page = new Page();
-  rows = [];
+export class StepsComponent  extends DataTableComponent implements OnInit {
   columns = [
     { name: "id", prop: "truncatedid" },
     { name: "stepTemplateId" },
@@ -21,12 +19,8 @@ export class StepsComponent implements OnInit {
   ];
 
   constructor(private cindiData: CindiClientService) {
-    this.page.pageNumber = 0;
-    this.page.size = 20;
-    this.setPage({
-      offset: 0,
-      pageSize: 20
-    });
+    super();
+    this.resetDataTable();
   }
 
   ngOnInit() {}
@@ -34,65 +28,60 @@ export class StepsComponent implements OnInit {
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.page.size = pageInfo.pageSize;
-
-    // cache results
-    // if(this.cache[this.page.pageNumber]) return;
-
+    this.isLoading = true;
     this.cindiData
-      .GetSteps("", this.page.pageNumber, this.page.size)
-      .subscribe(pagedData => {
-        // calc start
-        const start = this.page.pageNumber * this.page.size;
-
-        pagedData.result.forEach(element => {
-          element.truncatedid = element.id.slice(0, 8);
-        });
-
-        // copy rows
-        // const rows = [...this.rows];
-
-        // insert rows into new position
-        //rows.splice(start, 0, ...pagedData.result);
-
-        // set rows to our new rows
-        this.rows = pagedData.result;
-
-        this.page.totalElements = pagedData.count;
-
-        this.page.totalPages = pagedData.count / this.page.size;
-        // add flag for results
-        // this.cache[this.page.pageNumber] = true;
-      });
-  }
-
-  onSort(event) {
-    // event was triggered, start sort sequence
-    console.log("Sort Event", event);
-    // emulate a server request with a timeout
-    setTimeout(() => {
-      var sortStatement = "";
-
-      event.sorts.forEach(element => {
-        sortStatement += element.prop + ":" + (element.dir == "desc" ? -1 : 1);
-      });
-      this.cindiData
-        .GetSteps("", this.page.pageNumber, this.page.size, sortStatement)
-        .subscribe(pagedData => {
-          // calc start
-          const start = this.page.pageNumber * this.page.size;
-
+      .GetEntity("steps", "", this.page.pageNumber, this.page.size)
+      .subscribe(
+        pagedData => {
           pagedData.result.forEach(element => {
             element.truncatedid = element.id.slice(0, 8);
           });
 
           this.rows = pagedData.result;
-
           this.page.totalElements = pagedData.count;
-
           this.page.totalPages = pagedData.count / this.page.size;
-          // add flag for results
-          // this.cache[this.page.pageNumber] = true;
-        });
-    }, 1000);
+        },
+        error => {
+          console.error(error);
+        },
+        () => {
+          this.isLoading = false;
+        }
+      );
+  }
+
+  onSort(event) {
+    // event was triggered, start sort sequence
+    console.log("Sort Event", event);
+    this.isLoading = true;
+    var sortStatement = "";
+
+    event.sorts.forEach(element => {
+      sortStatement += element.prop + ":" + (element.dir == "desc" ? -1 : 1);
+    });
+    this.cindiData
+      .GetEntity(
+        "steps",
+        "",
+        this.page.pageNumber,
+        this.page.size,
+        sortStatement
+      )
+      .subscribe(
+        pagedData => {
+          pagedData.result.forEach(element => {
+            element.truncatedid = element.id.slice(0, 8);
+          });
+          this.rows = pagedData.result;
+          this.page.totalElements = pagedData.count;
+          this.page.totalPages = pagedData.count / this.page.size;
+        },
+        error => {
+          console.error(error);
+        },
+        () => {
+          this.isLoading = false;
+        }
+      );
   }
 }

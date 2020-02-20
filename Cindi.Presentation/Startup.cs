@@ -36,7 +36,6 @@ using Cindi.Presentation.Authentication;
 using Cindi.Persistence.Users;
 using Swashbuckle.AspNetCore.Filters;
 using Cindi.Application.Cluster.Commands.InitializeCluster;
-using Cindi.Persistence.BotKeys;
 using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
 using AutoMapper;
@@ -65,6 +64,9 @@ using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Application.Entities.Queries.GetEntities;
 using Cindi.Application.Entities.Queries;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Cindi.Presentation.Utility;
 
 namespace Cindi.Presentation
 {
@@ -84,8 +86,14 @@ namespace Cindi.Presentation
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
+        public IServiceProvider ConfigureServices(IServiceCollection services)
+        {    // Add services to the collection
+            services.AddOptions();
+            // Create a container-builder and register dependencies
+            var builder = new ContainerBuilder();
+
+
+
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
                 s => new NodeStorageRepository(MongoClient),
@@ -95,9 +103,8 @@ namespace Cindi.Presentation
                 , Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-            services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
-            services.AddMediatR(Query);
+            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+           // services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             services.AddAutoMapper();
 
             services.AddMvc(options =>
@@ -125,11 +132,7 @@ namespace Cindi.Presentation
             services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
             services.AddTransient<IEntityRepository, EntityRepository>(s => new EntityRepository(MongoClient));
             services.AddTransient<IWorkflowTemplatesRepository, WorkflowTemplatesRepository>(s => new WorkflowTemplatesRepository(MongoClient));
-            // services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
-            services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
-            services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
-            services.AddSingleton<IGlobalValuesRepository, GlobalValuesRepository>(s => new GlobalValuesRepository(MongoClient));
             services.AddSingleton<IMetricsRepository, MetricsRepository>(s => new MetricsRepository(MongoClient));
             services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(MongoClient));
             // services.AddSingleton<ClusterStateService>();
@@ -137,6 +140,7 @@ namespace Cindi.Presentation
 
             services.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
             services.AddSingleton<ClusterMonitorService>();
+
             services.AddSingleton<MetricManagementService>();
 
 
@@ -190,7 +194,25 @@ namespace Cindi.Presentation
                                                                          .AllowAnyHeader()));
 
 
+
+
+            builder.RegisterMediatr();
+            builder.Register<ServiceFactory>(ctx =>
+            {
+                var c = ctx.Resolve<IComponentContext>();
+                return t => c.Resolve(t);
+            });
+
+            builder.Populate(services);
+
             BaseRepository.RegisterClassMaps();
+
+
+
+            var AutofacContainer = builder.Build();
+
+            // this will be used as the service-provider for the application!
+            return new AutofacServiceProvider(AutofacContainer);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

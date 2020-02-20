@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Persistence.GlobalValues
 {
-    public class GlobalValuesRepository : BaseRepository, IGlobalValuesRepository
+    /*public class GlobalValuesRepository : BaseRepository, IGlobalValuesRepository
     {
         public IMongoCollection<GlobalValue> _globalValues;
         private IMongoCollection<JournalEntry> _journalEntries;
@@ -95,5 +95,5 @@ namespace Cindi.Persistence.GlobalValues
                 throw new Exception("Update of global Value " + globalValue.Id + " failed.");
             }
         }
-    }
+    }*/
 }

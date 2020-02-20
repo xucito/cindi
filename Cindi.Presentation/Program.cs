@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetEscapades.Extensions.Logging.RollingFile;
+using Autofac.Extensions.DependencyInjection;
 
 namespace Cindi.Presentation
 {
@@ -45,6 +46,7 @@ namespace Cindi.Presentation
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureServices(services => services.AddAutofac())
                 .ConfigureLogging(builder =>
                 {
                     if (_fileLoggingOptions != null && EnableLogToFile)

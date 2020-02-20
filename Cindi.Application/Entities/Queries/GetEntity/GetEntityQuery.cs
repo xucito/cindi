@@ -10,7 +10,7 @@ namespace Cindi.Application.Entities.Queries.GetEntity
 {
     public class GetEntityQuery<T> : IRequest<QueryResult<T>>
     {
-        public Guid Id { get; set; }
+        public Expression<Func<T, bool>> Expression { get; set; }
         [JsonIgnore]
         public Expression<Func<T, object>> Exclude = null;
     }

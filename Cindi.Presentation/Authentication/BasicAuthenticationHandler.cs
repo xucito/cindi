@@ -1,5 +1,6 @@
-﻿using Cindi.Application.Users.Commands.AuthenticateUserCommand;
-using Cindi.Application.Users.Queries.GetUserQuery;
+﻿using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Application.Users.Commands.AuthenticateUserCommand;
 using Cindi.Domain.Entities.Users;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -50,10 +51,10 @@ namespace Cindi.Presentation.Authentication
                     Username = username,
                     Password = password,
                 });
-                user = (await _mediator.Send(new GetUserQuery()
+                user = (await _mediator.Send(new GetEntitiesQuery<User>()
                 {
-                    Username = userId.ObjectRefId
-                })).Result;
+                    Expression = u =>u.Username == userId.ObjectRefId
+                })).Result.FirstOrDefault();
             }
             catch(Exception e)
             {

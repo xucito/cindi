@@ -30,6 +30,7 @@ using Newtonsoft.Json;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node.Services.Raft;
+using Cindi.Domain.Entities.BotKeys;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
@@ -42,7 +43,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private IMediator _mediator;
-        private IBotKeysRepository _botKeysRepository;
         private readonly IClusterRequestHandler _node;
         private readonly NodeStateService _nodeStateService;
 
@@ -53,7 +53,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            IBotKeysRepository botKeysRepository,
             IClusterRequestHandler node,
             NodeStateService nodeStateService
             )
@@ -69,7 +68,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 _option = change;
             });
             _mediator = mediator;
-            _botKeysRepository = botKeysRepository;
             _node = node;
             _nodeStateService = nodeStateService;
         }
@@ -81,7 +79,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
             IMediator mediator,
-            IBotKeysRepository botKeysRepository,
              IClusterRequestHandler node,
              NodeStateService nodeStateService
     )
@@ -92,7 +89,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options;
-            _botKeysRepository = botKeysRepository;
             _node = node;
             _mediator = mediator;
             _nodeStateService = nodeStateService;
@@ -127,7 +123,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 request.Outputs = new Dictionary<string, object>();
             }
 
-            var botkey = await _botKeysRepository.GetBotKeyAsync(request.BotId);
+            var botkey = await _entityRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
 
             var unencryptedOuputs = DynamicDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
             var finalUpdate = new List<Domain.ValueObjects.Update>()

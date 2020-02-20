@@ -27,8 +27,8 @@ namespace Cindi.Application.Entities.Queries.GetEntities
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             System.Linq.Expressions.Expression<Func<T, bool>> expression;
-            if (request.Status != null)
-                expression = (s) => request.Status == null;
+            if (request.Expression != null)
+                expression = request.Expression;
             else
                 expression = (s) => true;
             var entities = (await _entityRepository.GetAsync<T>(expression, request.Exclusions, request.Sort, request.Size, request.Page)).ToList();

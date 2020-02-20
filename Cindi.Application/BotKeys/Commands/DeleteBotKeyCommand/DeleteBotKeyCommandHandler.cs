@@ -18,11 +18,9 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
 {
     public class DeleteBotKeyCommandHandler : IRequestHandler<DeleteBotKeyCommand, CommandResult>
     {
-        IBotKeysRepository _botKeyRepository;
         IClusterRequestHandler _node;
-        public DeleteBotKeyCommandHandler(IBotKeysRepository botKeyRepository, IClusterRequestHandler node)
+        public DeleteBotKeyCommandHandler(IClusterRequestHandler node)
         {
-            _botKeyRepository = botKeyRepository;
             _node = node;
         }
 

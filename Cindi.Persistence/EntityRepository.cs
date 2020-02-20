@@ -33,7 +33,7 @@ namespace Cindi.Persistence
 
         public long Count<T>(Expression<Func<T, bool>> expression = null)
         {
-            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            IMongoCollection<T> _entity = GetDatabaseCollection<T>();
             if (expression == null)
             {
                 return _entity.EstimatedDocumentCount();
@@ -41,9 +41,14 @@ namespace Cindi.Persistence
             return _entity.Find(expression).CountDocuments();
         }
 
+        public IMongoCollection<T> GetDatabaseCollection<T>()
+        {
+            return _database.GetCollection<T>(EntitiesTableMap.GetTableName<T>());
+        }
+
         public async Task<IEnumerable<T>> GetAsync<T>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, string sort = null, int size = 10, int page = 0)
         {
-            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            IMongoCollection<T> _entity = GetDatabaseCollection<T>();
             ProjectionDefinition<T> definition = Builders<T>.Projection.Exclude("");
             if (exclusions != null)
             {
@@ -81,16 +86,27 @@ namespace Cindi.Persistence
                 .ToListAsync<T>();
         }
 
+        public async Task<bool> Delete<T>(Expression<Func<T, bool>> expression)
+        {
+            IMongoCollection<T> _entity = GetDatabaseCollection<T>();
+            var result = await _entity.DeleteOneAsync(expression);
+            if (result.IsAcknowledged)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public async Task<T> Insert<T>(T entity)
         {
-            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            IMongoCollection<T> _entity = GetDatabaseCollection<T>();
             await _entity.InsertOneAsync(entity);
             return entity;
         }
 
         public async Task<T> Update<T>(Expression<Func<T, bool>> expression, T entity, bool isUpsert = false)
         {
-            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            IMongoCollection<T> _entity = GetDatabaseCollection<T>();
             var result = await _entity.ReplaceOneAsync(
                   expression,
                   entity,
@@ -111,7 +127,7 @@ namespace Cindi.Persistence
 
         public async Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression)
         {
-            IMongoCollection<T> _entity = _database.GetCollection<T>(typeof(T).Name);
+            IMongoCollection<T> _entity = GetDatabaseCollection<T>();
             return (await _entity.FindAsync(expression)).FirstOrDefault();
         }
     }
