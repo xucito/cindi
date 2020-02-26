@@ -29,7 +29,8 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
         private readonly IClusterRequestHandler _node;
-        public CreateStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public CreateStepCommandHandler(
+            IEntitiesRepository entitiesRepository,
             IClusterStateService service, 
             IClusterRequestHandler node)
         {
@@ -50,7 +51,14 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
-            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.WorkflowId, ClusterStateService.GetEncryptionKey() );
+            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, 
+                request.CreatedBy, 
+                request.Name, request.Description, 
+                request.Inputs, 
+                request.Tests, request.WorkflowId, 
+                ClusterStateService.GetEncryptionKey(),
+                request.ExecutionTemplateId,
+                request.ExecutionScheduleId);
 
            /* var createdStepId = await _entitiesRepository.InsertStepAsync(
                 newStep

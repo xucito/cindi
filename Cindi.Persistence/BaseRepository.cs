@@ -32,6 +32,7 @@ using ConsensusCore.Domain.Models;
 using Cindi.Persistence.Metrics;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.BotKeys;
+using Cindi.Domain.Entities.ExecutionTemplates;
 
 namespace Cindi.Persistence
 {
@@ -75,6 +76,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<Domain.Entities.Metrics.Metric>(cs => MetricsClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<MetricTick>(cs => MetricTickClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<BotKey>(cs => BotKeyClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<ExecutionTemplate>(cs => ExecutionTemplateClassMap.Register(cs));
             //BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());

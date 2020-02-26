@@ -1,4 +1,5 @@
 ﻿using Cindi.Domain.Entities.BotKeys;
+using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.Steps;
@@ -24,7 +25,8 @@ namespace Cindi.Persistence
             { typeof(StepTemplate), "StepTemplates" },
             { typeof(WorkflowTemplate), "WorkflowTemplates" },
             { typeof(Metric), "Metrics" },
-            { typeof(MetricTick), "MetricTicks" }
+            { typeof(MetricTick), "MetricTicks" },
+            { typeof(ExecutionTemplate), "ExecutionTemplates" }
         };
 
         public static Dictionary<Type, string> Table1 { get => Table; set => Table = value; }

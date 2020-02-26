@@ -219,5 +219,17 @@ namespace Cindi.Application.Tests.Steps.Commands
         {
             Assert.True(false);
         }
+
+        [Fact]
+        public async void PassExecutionTemplateId()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void PassExecutionScheduleId()
+        {
+            Assert.True(false);
+        }
     }
 }

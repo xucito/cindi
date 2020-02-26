@@ -39,7 +39,9 @@ namespace Cindi.Domain.Entities.Steps
             string createdBy = "", 
             Dictionary<string, object> inputs = null, 
             string encryptionString = "",
-            Guid? workflowId = null) : base(
+            Guid? workflowId = null,
+            Guid? executionTemplateId = null,
+            Guid? executionScheduleId = null) : base(
             new Journal(new JournalEntry()
             {
                 Updates = new List<Update>()
@@ -102,6 +104,18 @@ namespace Cindi.Domain.Entities.Steps
                     {
                         FieldName = "assignedto",
                         Value = null,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "executiontemplateid",
+                        Value = executionTemplateId,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "executionscheduleid",
+                        Value = executionScheduleId,
                         Type = UpdateType.Create
                     }
                 }
@@ -171,6 +185,9 @@ namespace Cindi.Domain.Entities.Steps
         public Guid? AssignedTo { get; set; }
 
         public DateTime? SuspendedUntil { get; set; }
+
+        public Guid? ExecutionTemplateId { get; set; }
+        public Guid? ExecutionScheduleId { get; set; }
 
         public void RemoveDelimiters()
         {

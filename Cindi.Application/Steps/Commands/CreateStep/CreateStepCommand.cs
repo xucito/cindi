@@ -23,11 +23,11 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
         public Dictionary<string, object> Inputs { get; set; }
-
         public List<string> Tests { get; set; }
-
         public string CreatedBy { get; set; }
         public Guid? WorkflowId { get; set; }
+        public Guid? ExecutionTemplateId { get; set; }
+        public Guid? ExecutionScheduleId { get; set; }
 
     }
 }

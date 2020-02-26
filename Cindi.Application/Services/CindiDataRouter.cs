@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Cindi.Domain.Entities.Metrics;
+using Cindi.Domain.Entities.ExecutionTemplates;
 
 namespace Cindi.Application.Services
 {
@@ -59,35 +60,10 @@ namespace Cindi.Application.Services
                     return await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == objectId);
                 case nameof(Workflow):
                     return await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == objectId);
+                case nameof(ExecutionTemplate):
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(w => w.Id == objectId);
                 default:
                     return null;
-            }
-        }
-
-        public Type GetShardDataType(ShardData data)
-        {
-            switch (data)
-            {
-                case User t1:
-                    return typeof(User);
-                case BotKey t1:
-                    return typeof(BotKey);
-                case GlobalValue t1:
-                    return typeof(GlobalValue);
-                case StepTemplate t1:
-                    return typeof(StepTemplate);
-                case WorkflowTemplate t1:
-                    return typeof(WorkflowTemplate);
-                case Metric t1:
-                    return typeof(Metric);
-                case MetricTick t1:
-                    return typeof(MetricTick);
-                case Step t1:
-                    return typeof(Step);
-                case Workflow t1:
-                    return typeof(Workflow);
-                default:
-                    throw new Exception("Missing shard data cast for type " + data.ShardType);
             }
         }
 
@@ -115,6 +91,8 @@ namespace Cindi.Application.Services
                     case Step t1:
                         return await _entitiesRepository.Insert(t1);
                     case Workflow t1:
+                        return await _entitiesRepository.Insert(t1);
+                    case ExecutionTemplate t1:
                         return await _entitiesRepository.Insert(t1);
                 }
                 throw new Exception("Object type " + data.ShardType + "has no supported operations");
@@ -145,6 +123,8 @@ namespace Cindi.Application.Services
                 case Workflow t1:
                     return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
                 case Step t1:
+                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                case ExecutionTemplate t1:
                     return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
             }
             throw new Exception("Object type " + data.ShardType + "has no supported operations");

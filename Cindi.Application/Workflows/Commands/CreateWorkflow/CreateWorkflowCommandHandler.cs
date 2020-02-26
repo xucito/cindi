@@ -99,7 +99,9 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 verifiedWorkflowInputs, //Encrypted inputs
                 request.Name,
                 request.CreatedBy,
-                DateTime.UtcNow
+                DateTime.UtcNow,
+                request.ExecutionTemplateId,
+                request.ExecutionScheduleId
             ),
                 WaitForSafeWrite = true,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
