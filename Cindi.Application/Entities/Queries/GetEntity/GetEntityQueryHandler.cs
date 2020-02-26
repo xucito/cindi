@@ -13,18 +13,18 @@ namespace Cindi.Application.Entities.Queries.GetEntity
 {
     public class GetEntityQueryHandler<T> : IRequestHandler<GetEntityQuery<T>, QueryResult<T>> where T: ShardData
     {
-        private readonly IEntityRepository _entityRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
 
-        public GetEntityQueryHandler(IEntityRepository entityRepository)
+        public GetEntityQueryHandler(IEntitiesRepository entitiesRepository)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
 
         }
         public async Task<QueryResult<T>> Handle(GetEntityQuery<T> request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var result = await _entityRepository.GetFirstOrDefaultAsync<T>(request.Expression);
+            var result = await _entitiesRepository.GetFirstOrDefaultAsync<T>(request.Expression);
 
             stopwatch.Stop();
             return new QueryResult<T>()

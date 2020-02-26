@@ -6,7 +6,7 @@ using Cindi.Domain.Enums;
 
 namespace Cindi.Application.Interfaces
 {
-    public interface IEntityRepository
+    public interface IEntitiesRepository
     {
         string DatabaseName { get; }
         Task<IEnumerable<T>> GetAsync<T>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, string sort = null, int size = 10, int page = 0);

@@ -2,6 +2,7 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Utility;
@@ -20,13 +21,11 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
 {
     public class UnencryptStepFieldQueryHandler : IRequestHandler<UnencryptStepFieldQuery, QueryResult<string>>
     {
-        private readonly IEntityRepository _entityRepository;
-        private readonly IStepTemplatesRepository _stepTemplatesRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
 
-        public UnencryptStepFieldQueryHandler(IEntityRepository entityRepository, IStepTemplatesRepository stepTemplatesRepository)
+        public UnencryptStepFieldQueryHandler(IEntitiesRepository entitiesRepository)
         {
-            _entityRepository = entityRepository;
-            _stepTemplatesRepository = stepTemplatesRepository;
+            _entitiesRepository = entitiesRepository;
         }
 
         public async Task<QueryResult<string>> Handle(UnencryptStepFieldQuery request, CancellationToken cancellationToken)
@@ -38,7 +37,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 throw new InvalidUnencryptionRequestException("No such encryption type " + request.Type);
             }
-            var step = await _entityRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
+            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
 
 
             if (step.CreatedBy != request.UserId)
@@ -46,7 +45,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
                 throw new InvalidStepPermissionException("Only the creating user can decrypt the step secret.");
             }
 
-            var stepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(step.StepTemplateId);
+            var stepTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
 
             //Compare the to lower of inputs, TODO - this is inefficient
             if (!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))

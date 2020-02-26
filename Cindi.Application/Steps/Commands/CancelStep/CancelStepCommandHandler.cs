@@ -25,17 +25,17 @@ namespace Cindi.Application.Steps.Commands.CancelStep
 {
     public class CancelStepCommandHandler : IRequestHandler<CancelStepCommand, CommandResult>
     {
-        public IEntityRepository _entityRepository;
+        public IEntitiesRepository _entitiesRepository;
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public CancelStepCommandHandler(IEntityRepository entityRepository,
+        public CancelStepCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>
@@ -54,15 +54,18 @@ namespace Cindi.Application.Steps.Commands.CancelStep
             {
                 Type = "Step",
                 ObjectId = request.StepId,
-                CreateLock = true
+                CreateLock = true,
+                LockTimeoutMs = 10000
             });
 
             // Applied the lock successfully
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
                 var step = (Step)stepLockResult.Data;
+                // You can only cancel steps that are unassigned, suspended or assigned
                 if (step.Status == StepStatuses.Unassigned ||
-                    step.Status == StepStatuses.Suspended )
+                    step.Status == StepStatuses.Suspended || 
+                    step.Status == StepStatuses.Assigned)
                 {
                     step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
                     {

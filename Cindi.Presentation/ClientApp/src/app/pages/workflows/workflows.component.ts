@@ -21,8 +21,6 @@ export class WorkflowsComponent implements OnInit {
   ];
 
   constructor(private cindiData: CindiClientService) {
-    this.page.pageNumber = 0;
-    this.page.size = 20;
     this.setPage({
       offset: 0,
       pageSize: 10

@@ -7,11 +7,7 @@
   <nb-card-body class="body">
     <div class="row">
       <div class="col-sm-12">
-        <ngx-datatable [rows]="rows" [columns]="columns" [columnMode]="ColumnMode.force" class="bootstrap"
-          [headerHeight]="50" [footerHeight]="50" rowHeight="auto" [externalPaging]="true" [count]="page.totalElements"
-          [offset]="page.pageNumber" [limit]="page.size" (page)="setPage($event)" (sort)="onSort($event)"
-          [externalSorting]="true" class="material" [loadingIndicator]="isLoading">
-        </ngx-datatable>
+        <data-table [columns]="columns" [page]="page" [rows]="rows" (onSortChange)="onSort($event)" (onPageChange)="setPage($event)"></data-table>
       </div>
     </div>
   </nb-card-body>

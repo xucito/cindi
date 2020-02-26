@@ -1,7 +1,7 @@
-﻿using Cindi.Application.StepTemplates.Commands;
+﻿using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Application.StepTemplates.Commands;
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
-using Cindi.Application.StepTemplates.Queries.GetStepTemplate;
-using Cindi.Application.StepTemplates.Queries.GetStepTemplates;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Controllers
@@ -31,7 +32,7 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
-                if(command.OutputDefinitions == null)
+                if (command.OutputDefinitions == null)
                 {
                     command.OutputDefinitions = new Dictionary<string, Domain.ValueObjects.DynamicDataDescription>();
                 }
@@ -49,12 +50,17 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string sort = "CreatedOn:1")
         {
-            return Ok(await Mediator.Send(new GetStepTemplatesQuery()
+            return Ok(await Mediator.Send(new GetEntitiesQuery<StepTemplate>()
             {
                 Page = 0,
-                Size = 100
+                Size = 100,
+                Expression = null,
+                Exclusions = new List<Expression<Func<StepTemplate, object>>>{
+                    (s) => s.Journal
+                },
+                Sort = sort
             }));
         }
 
@@ -62,9 +68,9 @@ namespace Cindi.Presentation.Controllers
         [Route("{name}/{version}")]
         public async Task<IActionResult> Get(string name, string version)
         {
-            return Ok(await Mediator.Send(new GetStepTemplateQuery()
+            return Ok(await Mediator.Send(new GetEntityQuery<StepTemplate>()
             {
-                Id = name + ":" + version
+                Expression = st => st.ReferenceId == name + ":" + version
             }));
         }
     }

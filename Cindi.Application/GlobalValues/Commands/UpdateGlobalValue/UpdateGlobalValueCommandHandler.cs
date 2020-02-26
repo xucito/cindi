@@ -24,19 +24,19 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
     public class UpdateGlobalValueCommandHandler : IRequestHandler<UpdateGlobalValueCommand, CommandResult<GlobalValue>>
     {
         IClusterRequestHandler _node;
-        IEntityRepository _entityRepository;
+        IEntitiesRepository _entitiesRepository;
 
-        public UpdateGlobalValueCommandHandler(IEntityRepository entityRepository, IClusterRequestHandler node)
+        public UpdateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
         {
             _node = node;
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
         }
         public async Task<CommandResult<GlobalValue>> Handle(UpdateGlobalValueCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             GlobalValue existingValue;
-            if ((existingValue = await _entityRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name)) == null)
+            if ((existingValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name)) == null)
             {
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " does not exist.");
             }

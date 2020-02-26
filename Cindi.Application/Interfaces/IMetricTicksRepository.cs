@@ -7,8 +7,6 @@ namespace Cindi.Application.Interfaces
 {
     public interface IMetricTicksRepository
     {
-        Task<bool> DeleteMetricTicks(string ObjectId, DateTime toDate, int metricId);
-        Task<Dictionary<int, SortedDictionary<DateTime, MetricTick>>> GetMetricTicksAsync(string objectId, DateTime fromDate, int[] metricIds);
         /// <summary>
         /// 
         /// </summary>

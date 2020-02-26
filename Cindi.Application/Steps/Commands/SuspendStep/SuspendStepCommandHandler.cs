@@ -25,17 +25,17 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
 {
     public class SuspendStepCommandHandler : IRequestHandler<SuspendStepCommand, CommandResult>
     {
-        public IEntityRepository _entityRepository;
+        public IEntitiesRepository _entitiesRepository;
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public SuspendStepCommandHandler(IEntityRepository entityRepository,
+        public SuspendStepCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>
@@ -54,7 +54,8 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             {
                 Type = "Step",
                 ObjectId = request.StepId,
-                CreateLock = true
+                CreateLock = true,
+                LockTimeoutMs = 10000
             });
 
             // Applied the lock successfully
@@ -83,6 +84,12 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                                 Type = UpdateType.Override,
                                 FieldName = "suspendeduntil",
                                 Value = request.SuspendedUntil
+                            },
+                            new Update()
+                            {
+                                FieldName = "assignedto",
+                                Type = UpdateType.Override,
+                                Value = null
                             }
 
                         }

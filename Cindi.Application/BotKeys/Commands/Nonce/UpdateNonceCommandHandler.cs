@@ -38,7 +38,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             var key = (await _mediator.Send(new GetEntityQuery<BotKey>()
             {
-                Id = request.Id
+               Expression = bk => bk.Id == request.Id
             })).Result;
 
             if (key.Nonce >= request.Nonce)

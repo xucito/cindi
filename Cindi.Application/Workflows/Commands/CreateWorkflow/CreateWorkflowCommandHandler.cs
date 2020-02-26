@@ -26,27 +26,22 @@ using Cindi.Domain.Exceptions.Workflows;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Shard;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Entities.StepTemplates;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private IWorkflowTemplatesRepository _workflowTemplatesRepository;
-        private IEntityRepository _entityRepository;
-        private IStepTemplatesRepository _stepTemplatesRepository;
+        private IEntitiesRepository _entitiesRepository;
         private IMediator _mediator;
         private readonly IClusterRequestHandler _node;
 
         public CreateWorkflowCommandHandler(
-            IWorkflowTemplatesRepository workflowTemplatesRepository,
-            IEntityRepository entityRepository,
-            IStepTemplatesRepository stepTemplatesRepository,
+            IEntitiesRepository entitiesRepository,
             IMediator mediator,
             IClusterRequestHandler node)
         {
-            _workflowTemplatesRepository = workflowTemplatesRepository;
-            _entityRepository = entityRepository;
-            _stepTemplatesRepository = stepTemplatesRepository;
+            _entitiesRepository = entitiesRepository;
             _mediator = mediator;
             _node = node;
         }
@@ -56,7 +51,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WorkflowTemplate template = await _workflowTemplatesRepository.GetWorkflowTemplateAsync(request.WorkflowTemplateId);
+            WorkflowTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
 
             if (template == null)
             {
@@ -110,7 +105,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
             });
 
-            var workflow = await _entityRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
+            var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
 
             //When there are no conditions to be met
 
@@ -120,7 +115,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             {
                 foreach (var subBlock in block.Value.SubsequentSteps)
                 {
-                    var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.Value.StepTemplateId);
+                    var newStepTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
 
                     var verifiedInputs = new Dictionary<string, object>();
 
@@ -148,9 +143,9 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                         Name = subBlock.Key
                     });
 
-                    /*  newStep = await _entityRepository.InsertStepAsync(newStep);
+                    /*  newStep = await _entitiesRepository.InsertStepAsync(newStep);
 
-                      await _entityRepository.InsertJournalEntryAsync(new JournalEntry()
+                      await _entitiesRepository.InsertJournalEntryAsync(new JournalEntry()
                       {
                           SubjectId = newStep.Id,
                           ChainId = 0,
@@ -168,7 +163,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                           }
                       });
 
-                      await _entityRepository.UpsertStepMetadataAsync(newStep.Id); */
+                      await _entitiesRepository.UpsertStepMetadataAsync(newStep.Id); */
                 }
 
 

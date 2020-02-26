@@ -1,25 +1,14 @@
-<nb-card>
+<nb-card size="giant">
+
   <nb-card-header>
-    Global Values
+    <span>Global Values</span>
   </nb-card-header>
-  <nb-card-body>
-    <nb-list>
-      <nb-list-item *ngFor="let globalValue of globalValues">
-        <div class="list-item w-50">
-          <div class="caption">
-            Version: {{globalValue.type}}</div>
-          <div class="value">
-            {{globalValue.name}} </div>
-        </div>
-        <div class="list-item w-50">
-          <span *ngIf="globalValue.type != 'secret'">
-            {{globalValue.value}}
-          </span>
-          <span *ngIf="globalValue.type == 'secret'">
-            *********
-          </span>
-        </div>
-      </nb-list-item>
-    </nb-list>
+
+  <nb-card-body class="body">
+    <div class="row">
+      <div class="col-sm-12">
+          <data-table [columns]="columns" [page]="page" [rows]="rows" (onAction)="onAction($event)" (onSortChange)="onSort($event)" (onPageChange)="setPage($event)"></data-table>
+      </div>
+    </div>
   </nb-card-body>
 </nb-card>

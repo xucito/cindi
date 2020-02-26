@@ -30,6 +30,7 @@ import { WorkflowInputsComponent } from './components/workflow-inputs/workflow-i
 import { MappingSelectorComponent } from './components/mapping-selector/mapping-selector.component';
 import { SelectStepTemplateComponent } from './components/select-step-template/select-step-template.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { DataTableComponent } from './components/data-table/data-table.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     StepMappingsVisualizerComponent,
     WorkflowInputsComponent,
     MappingSelectorComponent,
-    SelectStepTemplateComponent
+    SelectStepTemplateComponent,
+    DataTableComponent
   ],
   exports: [
     NgxDatatableModule,
@@ -64,7 +66,8 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     NgxGraphModule,
     ConditionsGroupVisualizerComponent,
     LogicBlockVisualizerComponent,
-    NgxChartsModule
+    NgxChartsModule,
+    DataTableComponent
   ],
   imports: [
     NgxDatatableModule,

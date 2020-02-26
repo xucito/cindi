@@ -26,17 +26,17 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
 {
     public class UnassignStepCommandHandler : IRequestHandler<UnassignStepCommand, CommandResult>
     {
-        public IEntityRepository _entityRepository;
+        public IEntitiesRepository _entitiesRepository;
         public ILogger<UnassignStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public UnassignStepCommandHandler(IEntityRepository entityRepository,
+        public UnassignStepCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<UnassignStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>
@@ -55,13 +55,14 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
             {
                 Type = "Step",
                 ObjectId = request.StepId,
-                CreateLock = true
+                CreateLock = true,
+                LockTimeoutMs = 10000
             });
 
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
                 var step = (Step)stepLockResult.Data;
-                if (step.Status != StepStatuses.Suspended)
+                if (step.Status != StepStatuses.Suspended && step.Status != StepStatuses.Assigned)
                 {
                     Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
                     return new CommandResult()
@@ -83,12 +84,18 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                                 Type = UpdateType.Override,
                                 FieldName = "status",
                                 Value = StepStatuses.Unassigned,
+                            },
+                            new Update()
+                            {
+                                FieldName = "assignedto",
+                                Type = UpdateType.Override,
+                                Value = null
                             }
 
                         }
                 });
 
-                var result =  await _node.Handle(new AddShardWriteOperation()
+                var result = await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = step,
                     WaitForSafeWrite = true,

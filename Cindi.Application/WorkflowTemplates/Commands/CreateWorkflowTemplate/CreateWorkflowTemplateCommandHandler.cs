@@ -23,20 +23,19 @@ using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 using Cindi.Domain.Enums;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Shard;
+using Cindi.Domain.Entities.Workflows;
 
 namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
     public class CreateWorkflowTemplateCommandHandler : IRequestHandler<CreateWorkflowTemplateCommand, CommandResult>
     {
-        private readonly IWorkflowTemplatesRepository _workflowTemplatesRepository;
-        private readonly IStepTemplatesRepository _stepTemplatesRepository;
         private readonly IClusterRequestHandler _node;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
+        private IEntitiesRepository _entitiesRepository;
 
-        public CreateWorkflowTemplateCommandHandler(IWorkflowTemplatesRepository workflowTemplatesRepository, IStepTemplatesRepository stepTemplatesRepository, IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
-            _workflowTemplatesRepository = workflowTemplatesRepository;
-            _stepTemplatesRepository = stepTemplatesRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
         }
@@ -46,7 +45,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var existingWorkflowTemplate = await _workflowTemplatesRepository.GetWorkflowTemplateAsync(request.Name + ":" + request.Version);
+            var existingWorkflowTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.Name + ":" + request.Version);
 
             if (existingWorkflowTemplate != null)
             {
@@ -63,7 +62,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             {
                 foreach (var ss in lg.Value.SubsequentSteps)
                 {
-                    var st = await _stepTemplatesRepository.GetStepTemplateAsync(ss.Value.StepTemplateId);
+                    var st = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == ss.Value.StepTemplateId);
                     if (st == null)
                     {
                         throw new StepTemplateNotFoundException("Template " + ss.Value.StepTemplateId + " cannot be found.");
@@ -87,7 +86,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                     {
                         stepRefs.Add(subStep.Key);
                     }
-                    allStepTemplates.Add(await _stepTemplatesRepository.GetStepTemplateAsync(subStep.Value.StepTemplateId));
+                    allStepTemplates.Add(await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == subStep.Value.StepTemplateId));
                 }
             }
 
@@ -109,12 +108,12 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 
             Dictionary<string, ConditionGroupValidation> validations = new Dictionary<string, ConditionGroupValidation>();
 
-            foreach(var lb in request.LogicBlocks)
+            foreach (var lb in request.LogicBlocks)
             {
                 validations.Add(lb.Key, null);
             }
 
-            foreach(var startingLb in startingLogicBlock)
+            foreach (var startingLb in startingLogicBlock)
             {
                 validations[startingLb.Key] = new ConditionGroupValidation()
                 {
@@ -131,12 +130,12 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                 foreach (var block in request.LogicBlocks.Where(lb => !validatedLogicBlockIds.Contains(lb.Key)))
                 {
                     var validation = block.Value.Dependencies.ValidateConditionGroup(request.LogicBlocks.Where(lb => validatedLogicBlockIds.Contains(lb.Key)).Select(vlb => vlb.Value));
-                    
-                    if(validations[block.Key] == null || !validations[block.Key].IsValid)
+
+                    if (validations[block.Key] == null || !validations[block.Key].IsValid)
                     {
                         validations[block.Key] = validation;
                     }
-                    
+
                     if (validation.IsValid)
                     {
                         // Mark to re-evaluate the rest of the logicblocks
@@ -146,7 +145,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                         foreach (var step in block.Value.SubsequentSteps)
                         {
                             //Check whether the step template exists
-                            var result = await _stepTemplatesRepository.GetStepTemplateAsync(step.Value.StepTemplateId);
+                            var result = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == step.Value.StepTemplateId);
 
                             foreach (var mapping in step.Value.Mappings)
                             {

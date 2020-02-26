@@ -18,21 +18,21 @@ namespace Cindi.Application.Metrics.Queries.GetMetrics
     public class GetMetricsQueryHandler : IRequestHandler<GetMetricsQuery, QueryResult<object>>
     {
         ILogger<GetMetricsQueryHandler> _logger;
-        IMetricsRepository _metricsRepository;
+        IEntitiesRepository _entitiesRepository;
         IMetricTicksRepository _metricTicksRepository;
 
         public GetMetricsQueryHandler(ILogger<GetMetricsQueryHandler> logger,
-            IMetricsRepository metricsRepository,
+            IEntitiesRepository entitiesRepository,
             IMetricTicksRepository metricTicksRepository)
         {
-            _metricsRepository = metricsRepository;
+            _entitiesRepository = entitiesRepository;
             _metricTicksRepository = metricTicksRepository;
             _logger = logger;
         }
 
         public async Task<QueryResult<object>> Handle(GetMetricsQuery request, CancellationToken cancellationToken)
         {
-            var foundMetric = await _metricsRepository.GetMetricAsync(request.MetricName);
+            var foundMetric = await _entitiesRepository.GetFirstOrDefaultAsync<Metric>(m => m.MetricName == request.MetricName);
             if (foundMetric == null)
             {
                 throw new NotImplementedException("No metric " + request.MetricName);

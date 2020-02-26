@@ -16,20 +16,20 @@ namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
 {
     public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, CommandResult>
     {
-        IEntityRepository _entityRepository;
+        IEntitiesRepository _entitiesRepository;
 
-        public AuthenticateUserCommandHandler(IEntityRepository entityRepository,
+        public AuthenticateUserCommandHandler(IEntitiesRepository entitiesRepository,
                 ILogger<AuthenticateUserCommandHandler> logger
             )
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
 
         }
         public async Task<CommandResult> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var user = await _entityRepository.GetFirstOrDefaultAsync<User>(u => u.Username == request.Username.ToLower());
+            var user = await _entitiesRepository.GetFirstOrDefaultAsync<User>(u => u.Username == request.Username.ToLower());
 
             if (user != null)
             {

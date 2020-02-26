@@ -10,46 +10,28 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MediatR;
-using System.Reflection;
 using Swashbuckle.AspNetCore.Swagger;
-using Cindi.Application.StepTemplates.Commands;
 using MongoDB.Driver;
-using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
-using Cindi.Application.StepTemplates.Queries.GetStepTemplates;
-using MongoDB.Bson.Serialization;
-using Cindi.Domain.Entities.StepTemplates;
-using Cindi.Persistence.StepTemplates;
-using Cindi.Persistence.Steps;
-using Cindi.Domain.Entities.Steps;
 using Cindi.Application.Interfaces;
 using Cindi.Persistence;
-using Cindi.Application.Steps.Commands;
-using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Services.ClusterState;
-using Cindi.Presentation.Transformers;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Cindi.Application.Options;
 using Cindi.Application.Services.ClusterMonitor;
 using Microsoft.AspNetCore.Authentication;
 using Cindi.Presentation.Authentication;
-using Cindi.Persistence.Users;
-using Swashbuckle.AspNetCore.Filters;
 using Cindi.Application.Cluster.Commands.InitializeCluster;
 using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
 using AutoMapper;
-using Cindi.Persistence.GlobalValues;
 using Cindi.Persistence.State;
 using ConsensusCore.Node.Utility;
 using SlugifyParameterTransformer = Cindi.Presentation.Transformers.SlugifyParameterTransformer;
-using ConsensusCore.Node;
 using ConsensusCore.Domain.Interfaces;
 using Cindi.Application.Services;
 using ConsensusCore.Node.Services;
 using System.Threading;
-using ConsensusCore.Node.Controllers;
-using ConsensusCore.Domain.Services;
 using Cindi.Domain.Entities.States;
 using System.IO;
 using Cindi.Application.Pipelines;
@@ -127,13 +109,9 @@ namespace Cindi.Presentation
                     configuration.RootPath = "ClientApp/dist";
                 });
             }
-
-            //Add step template
-            services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
-            services.AddTransient<IEntityRepository, EntityRepository>(s => new EntityRepository(MongoClient));
-            services.AddTransient<IWorkflowTemplatesRepository, WorkflowTemplatesRepository>(s => new WorkflowTemplatesRepository(MongoClient));
+            
+            services.AddTransient<IEntitiesRepository, EntitiesRepository>(s => new EntitiesRepository(MongoClient));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
-            services.AddSingleton<IMetricsRepository, MetricsRepository>(s => new MetricsRepository(MongoClient));
             services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(MongoClient));
             // services.AddSingleton<ClusterStateService>();
 

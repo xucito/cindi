@@ -20,10 +20,10 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
     public class UpdateBotKeyCommandHandler : IRequestHandler<UpdateBotKeyCommand, CommandResult<BotKey>>
     {
         IClusterRequestHandler _node;
-        IEntityRepository _entityRepository;
-        public UpdateBotKeyCommandHandler(IEntityRepository entityRepository, IClusterRequestHandler node)
+        IEntitiesRepository _entitiesRepository;
+        public UpdateBotKeyCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
         }
 
@@ -32,7 +32,7 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var botKey = await _entityRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.Id);
+            var botKey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.Id);
 
             var update = false;
 

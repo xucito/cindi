@@ -18,24 +18,12 @@ namespace Cindi.Application.Services
 {
     public class CindiDataRouter : IDataRouter
     {
-        IStepTemplatesRepository _stepTemplatesRepository;
-        IWorkflowTemplatesRepository _workflowTemplateRepository;
-        IEntityRepository _entityRepository;
-        IMetricsRepository _metricsRepository;
-        IMetricTicksRepository _metricTicksRepository;
+        IEntitiesRepository _entitiesRepository;
 
         public CindiDataRouter(
-            IStepTemplatesRepository stepTemplatesRepository,
-            IWorkflowTemplatesRepository workflowTemplateRepository,
-                    IEntityRepository entityRepository,
-            IMetricsRepository metricsRepository,
-            IMetricTicksRepository metricTicksRepository)
+            IEntitiesRepository entitiesRepository)
         {
-            _stepTemplatesRepository = stepTemplatesRepository;
-            _workflowTemplateRepository = workflowTemplateRepository;
-            _entityRepository = entityRepository;
-            _metricsRepository = metricsRepository;
-            _metricTicksRepository = metricTicksRepository;
+            _entitiesRepository = entitiesRepository;
         }
 
 
@@ -44,7 +32,7 @@ namespace Cindi.Application.Services
             switch (data.ShardType)
             {
                 case nameof(BotKey):
-                    await _entityRepository.Delete<BotKey>(bk => bk.Id == data.Id);
+                    await _entitiesRepository.Delete<BotKey>(bk => bk.Id == data.Id);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -58,19 +46,19 @@ namespace Cindi.Application.Services
             switch (type)
             {
                 case nameof(User):
-                    return await _entityRepository.GetFirstOrDefaultAsync<User>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<User>(s => s.Id == objectId);
                 case nameof(BotKey):
-                    return await _entityRepository.GetFirstOrDefaultAsync<BotKey>(w => w.Id == objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(w => w.Id == objectId);
                 case nameof(GlobalValue):
-                    return await _entityRepository.GetFirstOrDefaultAsync<GlobalValue>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(s => s.Id == objectId);
                 case nameof(StepTemplate):
-                    return await _stepTemplatesRepository.GetStepTemplateAsync(objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(s => s.Id == objectId);
                 case nameof(WorkflowTemplate):
-                    return await _workflowTemplateRepository.GetWorkflowTemplateAsync(objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(s => s.Id == objectId);
                 case nameof(Step):
-                    return await _entityRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == objectId);
                 case nameof(Workflow):
-                    return await _entityRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == objectId);
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == objectId);
                 default:
                     return null;
             }
@@ -111,23 +99,23 @@ namespace Cindi.Application.Services
                 switch (data)
                 {
                     case User t1:
-                        return await _entityRepository.Insert(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case BotKey t1:
-                        return await _entityRepository.Insert(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case GlobalValue t1:
-                        return await _entityRepository.Insert(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case StepTemplate t1:
-                        return await _stepTemplatesRepository.InsertAsync(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case WorkflowTemplate t1:
-                        return await _workflowTemplateRepository.InsertWorkflowTemplateAsync(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case Metric t1:
-                        return await _metricsRepository.InsertMetricsAsync(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case MetricTick t1:
-                        return await _metricTicksRepository.InsertMetricTicksAsync(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case Step t1:
-                        return await _entityRepository.Insert(t1);
+                        return await _entitiesRepository.Insert(t1);
                     case Workflow t1:
-                        return await _entityRepository.Insert(t1);
+                        return await _entitiesRepository.Insert(t1);
                 }
                 throw new Exception("Object type " + data.ShardType + "has no supported operations");
             }
@@ -151,13 +139,13 @@ namespace Cindi.Application.Services
                     throw new Exception();
                 //return await _users.Upda(t1);
                 case BotKey t1:
-                    return await _entityRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
                 case GlobalValue t1:
-                    return await _entityRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
                 case Workflow t1:
-                    return await _entityRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
                 case Step t1:
-                    return await _entityRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
             }
             throw new Exception("Object type " + data.ShardType + "has no supported operations");
         }

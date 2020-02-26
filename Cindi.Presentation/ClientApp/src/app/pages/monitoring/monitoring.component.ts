@@ -61,7 +61,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
         this.currentTime,
         "databaseoperationlatencyms",
         ["max"],
-        "M",
+        "S",
         true
       )
       .subscribe(result => {
@@ -95,7 +95,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
         this.currentTime,
         "clusteroperationelapsedms",
         ["max"],
-        "M",
+        "S",
         true
       )
       .subscribe(result => {

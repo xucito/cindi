@@ -14,11 +14,11 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
 {
     public class GetClusterStatsQueryHandler : IRequestHandler<GetClusterStatsQuery, QueryResult<ClusterStats>>
     {
-        IEntityRepository _entityRepository;
+        IEntitiesRepository _entitiesRepository;
 
-        public GetClusterStatsQueryHandler(IEntityRepository entityRepository)
+        public GetClusterStatsQueryHandler(IEntitiesRepository entitiesRepository)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
         }
         public async Task<QueryResult<ClusterStats>> Handle(GetClusterStatsQuery request, CancellationToken cancellationToken)
         {
@@ -28,12 +28,12 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
             {
                 Steps = new StepStats()
                 {
-                    Suspended = _entityRepository.Count<Step>(s => s.Status == StepStatuses.Suspended),
-                    Unassigned = _entityRepository.Count<Step>(s => s.Status == StepStatuses.Unassigned),
-                    Assigned = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Assigned),
-                    Successful = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Successful),
-                    Warning = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Warning),
-                    Error = _entityRepository.Count<Step>(s => s.Status ==StepStatuses.Error),
+                    Suspended = _entitiesRepository.Count<Step>(s => s.Status == StepStatuses.Suspended),
+                    Unassigned = _entitiesRepository.Count<Step>(s => s.Status == StepStatuses.Unassigned),
+                    Assigned = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Assigned),
+                    Successful = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Successful),
+                    Warning = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Warning),
+                    Error = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Error),
                 }
 
             };

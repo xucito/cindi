@@ -23,16 +23,16 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 {
     public class AppendStepLogCommandHandler : IRequestHandler<AppendStepLogCommand, CommandResult>
     {
-        public IEntityRepository _entityRepository;
+        public IEntitiesRepository _entitiesRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
 
-        public AppendStepLogCommandHandler(IEntityRepository entityRepository,
+        public AppendStepLogCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<AppendStepLogCommandHandler> logger,
             IClusterRequestHandler node
             )
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
             Logger = logger;
             _node = node;
         }
@@ -41,7 +41,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var step = await _entityRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
             if (StepStatuses.IsCompleteStatus(step.Status))
             {
@@ -66,7 +66,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                         }
             });
 
-            //await _entityRepository.UpdateStep(step);
+            //await _entitiesRepository.UpdateStep(step);
 
             var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {

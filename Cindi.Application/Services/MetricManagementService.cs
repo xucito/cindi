@@ -25,13 +25,13 @@ namespace Cindi.Application.Services
         IClusterRequestHandler _node;
         private readonly ConcurrentQueue<MetricTick> _ticks = new ConcurrentQueue<MetricTick>();
         private readonly Task writeThread;
-        IMetricsRepository _metricsRepository;
         NodeStateService _nodeStateService;
+        IEntitiesRepository _entitiesRepository;
 
         public MetricManagementService(ILogger<MetricManagementService> logger,
             IClusterRequestHandler node,
-            IMetricsRepository metricsRepository,
-            NodeStateService nodeStateService
+            NodeStateService nodeStateService,
+            IEntitiesRepository entitiesRepository
             )
         {
             _logger = logger;
@@ -39,13 +39,13 @@ namespace Cindi.Application.Services
             _metricLibrary = new MetricLibrary();
             _node = node;
             _nodeStateService = nodeStateService;
-            _metricsRepository = metricsRepository;
+            _entitiesRepository = entitiesRepository;
             writeThread = new Task(async () =>
             {
                 MetricTick tick;
                 while (true)
                 {
-                   // Console.WriteLine("Number of tasks " + _ticks.Count());
+                    // Console.WriteLine("Number of tasks " + _ticks.Count());
                     if (_nodeStateService.InCluster)
                     {
                         if (_ticks.TryDequeue(out tick))
@@ -60,7 +60,7 @@ namespace Cindi.Application.Services
                                 Data = tick,
                                 Metric = false // Do not metric the metric write operations
                             });
-                            Console.WriteLine("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
+                            _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
                         }
                     }
                 }
@@ -78,7 +78,7 @@ namespace Cindi.Application.Services
 
         public async void InitializeMetricStore()
         {
-            var metrics = (await _metricsRepository.GetMetricsAsync(100, 0)).Select(m => m.MetricId);
+            var metrics = (await _entitiesRepository.GetAsync<Metric>(null, null, null, 100)).Select(m => m.MetricId);
             foreach (var metric in _metricLibrary.Metrics.Where(m => !metrics.Contains(m.Key)))
             {
                 _logger.LogDebug("Adding metric " + metric.Key + " to database.");

@@ -31,7 +31,15 @@ namespace Cindi.Persistence.State
 
         public async Task<bool> AddShardWriteOperationAsync(ShardWriteOperation operation)
         {
-            await _shardWriteOperations.InsertOneAsync(operation);
+            try
+            {
+                await _shardWriteOperations.InsertOneAsync(operation);
+            }
+            //Return true if the operation already exists
+            catch(MongoDuplicateKeyException e)
+            {
+                return true;
+            }
             return true;
         }
 

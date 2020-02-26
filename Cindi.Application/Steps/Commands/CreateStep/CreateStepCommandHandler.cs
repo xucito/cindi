@@ -4,6 +4,7 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
@@ -25,17 +26,14 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
-        private readonly IEntityRepository _entityRepository;
-        private readonly IStepTemplatesRepository _stepTemplatesRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
         private readonly IClusterRequestHandler _node;
-        public CreateStepCommandHandler(IEntityRepository entityRepository, 
-            IStepTemplatesRepository steptemplatesRepository, 
+        public CreateStepCommandHandler(IEntitiesRepository entitiesRepository,
             IClusterStateService service, 
             IClusterRequestHandler node)
         {
-            _entityRepository = entityRepository;
-            _stepTemplatesRepository = steptemplatesRepository;
+            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
             _node = node;
         }
@@ -45,7 +43,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var resolvedTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(request.StepTemplateId);
+            var resolvedTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
 
             if (resolvedTemplate == null)
             {
@@ -54,7 +52,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 
             var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, request.CreatedBy, request.Name, request.Description, request.Inputs, request.Tests, request.WorkflowId, ClusterStateService.GetEncryptionKey() );
 
-           /* var createdStepId = await _entityRepository.InsertStepAsync(
+           /* var createdStepId = await _entitiesRepository.InsertStepAsync(
                 newStep
                 );*/
 

@@ -13,20 +13,20 @@ using System.Threading.Tasks;
 
 namespace Cindi.Persistence
 {
-    public class EntityRepository : IEntityRepository
+    public class EntitiesRepository : IEntitiesRepository
     {
         public string DatabaseName { get; } = "CindiDb";
         private IMongoClient _client;
         private IMongoDatabase _database;
 
-        public EntityRepository(string mongoDbConnectionString, string databaseName)
+        public EntitiesRepository(string mongoDbConnectionString, string databaseName)
         {
             DatabaseName = databaseName;
             var client = new MongoClient(mongoDbConnectionString);
             _database = client.GetDatabase(DatabaseName);
         }
 
-        public EntityRepository(IMongoClient client)
+        public EntitiesRepository(IMongoClient client)
         {
             _database = client.GetDatabase(DatabaseName);
         }

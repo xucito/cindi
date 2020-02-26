@@ -23,11 +23,11 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
-        IEntityRepository _entitiesRepository;
+        IEntitiesRepository _entitiesRepository;
         IClusterRequestHandler _node;
 
         public CreateUserCommandHandler(
-            IEntityRepository entitiesRepository,
+            IEntitiesRepository entitiesRepository,
             ILogger<CreateUserCommandHandler> logger,
             IServiceProvider prov,
             IDataRouter router,

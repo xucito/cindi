@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Controllers
 {
-    public class WorkflowsController: BaseController
+    public class WorkflowsController : BaseController
     {
         public WorkflowsController(ILoggerFactory logger) : base(logger.CreateLogger<WorkflowsController>())
         {
@@ -30,7 +30,7 @@ namespace Cindi.Presentation.Controllers
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            if(command.Inputs == null)
+            if (command.Inputs == null)
             {
                 //Set to an empty dictionary if null
                 command.Inputs = new Dictionary<string, object>();
@@ -72,7 +72,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<Workflow>()
             {
-                Id = id
+                Expression = w => w.Id == id
             }));
         }
 

@@ -7,6 +7,7 @@ using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
@@ -32,25 +33,22 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 {
     public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, CommandResult<Step>>
     {
-        private readonly IEntityRepository _entityRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private IStepTemplatesRepository _stepTemplateRepository;
         public ILogger<AssignStepCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
         private readonly IStateMachine<CindiClusterState> _stateMachine;
 
         public AssignStepCommandHandler(
-            IEntityRepository entityRepository,
+            IEntitiesRepository entitiesRepository,
             IClusterStateService stateService,
-            IStepTemplatesRepository stepTemplateRepository,
             ILogger<AssignStepCommandHandler> logger,
             IClusterRequestHandler node,
             IStateMachine<CindiClusterState> stateMachine
             )
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
             _clusterStateService = stateService;
-            _stepTemplateRepository = stepTemplateRepository;
             Logger = logger;
             _node = node;
             _stateMachine = stateMachine;
@@ -66,7 +64,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 Step unassignedStep = null;
                 var dateChecked = DateTime.UtcNow;
 
-                var botkey = await _entityRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+                var botkey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
                 if (botkey.IsDisabled)
                 {
                     return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))
@@ -80,7 +78,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 do
                 {
-                    unassignedStep = (await _entityRepository.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, "CreatedOn:1", 1, 0)).FirstOrDefault();
+                    unassignedStep = (await _entitiesRepository.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, "CreatedOn:1", 1, 0)).FirstOrDefault();
                     if (unassignedStep != null)
                     {
                         var assigned = await _node.Handle(new RequestDataShard()
@@ -88,7 +86,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             Type = unassignedStep.ShardType,
                             ObjectId = unassignedStep.Id,
                             CreateLock = true,
-                            LockTimeoutMs = 30000
+                            LockTimeoutMs = 10000
                         });
                         //Apply a lock on the item
                         if (assigned != null && assigned.IsSuccessful && assigned.AppliedLocked)
@@ -99,7 +97,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             //Inputs that have been converted to reference expression
                             Dictionary<string, object> convertedInputs = new Dictionary<string, object>();
 
-                            var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
+                            var template = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
                             try
                             {
                                 //This should not throw a error externally, the server should loop to the next one and log a error
@@ -123,7 +121,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //Copy by reference
                                             if (isReferenceByValue)
                                             {
-                                                var foundGlobalValue = await _entityRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -145,7 +143,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //copy by value
                                             else
                                             {
-                                                var foundGlobalValue = await _entityRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -204,11 +202,18 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             Value = StepStatuses.Assigned
                                        },
                                         new Update()
-                                            {
-                                                FieldName = "inputs",
-                                                Type = UpdateType.Override,
-                                                Value = convertedInputs
-                                            }}
+                                        {
+                                            FieldName = "inputs",
+                                            Type = UpdateType.Override,
+                                            Value = convertedInputs
+                                        },
+                                        new Update()
+                                        {
+                                            FieldName = "assignedto",
+                                            Type = UpdateType.Override,
+                                            Value = request.BotId
+                                        }
+                                        }
                                     });
                                 }
                                 else
@@ -237,7 +242,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                     RemoveLock = true
                                 });
 
-                                //await _entityRepository.UpdateStep(unassignedStep);
+                                //await _entitiesRepository.UpdateStep(unassignedStep);
                                 if (inputsUpdated)
                                 {
                                     //Update the record with real values, this is not commited to DB
@@ -280,7 +285,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 if (unassignedStep != null)
                 {
-                    var template = await _stepTemplateRepository.GetStepTemplateAsync(unassignedStep.StepTemplateId);
+                    var template = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
 
                     //Decrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());

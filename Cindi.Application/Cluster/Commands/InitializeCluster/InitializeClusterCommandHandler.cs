@@ -18,14 +18,14 @@ namespace Cindi.Application.Cluster.Commands.InitializeCluster
 {
     public class InitializeClusterCommandHandler : IRequestHandler<InitializeClusterCommand, CommandResult<NewClusterResult>>
     {
-        IEntityRepository _entitiesRepository;
+        IEntitiesRepository _entitiesRepository;
         ILogger<InitializeClusterCommandHandler> _logger;
         private IMediator _mediator;
         private IClusterStateService _clusterState;
 
         public InitializeClusterCommandHandler(
         ILogger<InitializeClusterCommandHandler> logger,
-        IEntityRepository entitiesRepository,
+        IEntitiesRepository entitiesRepository,
         IMediator mediator,
         IClusterStateService clusterState
         )

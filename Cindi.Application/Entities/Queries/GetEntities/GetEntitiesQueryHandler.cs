@@ -15,11 +15,11 @@ namespace Cindi.Application.Entities.Queries.GetEntities
 {
     public class GetEntitiesQueryHandler<T> : IRequestHandler<GetEntitiesQuery<T>, QueryResult<List<T>>>
     {
-        private readonly IEntityRepository _entityRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
 
-        public GetEntitiesQueryHandler(IEntityRepository entityRepository)
+        public GetEntitiesQueryHandler(IEntitiesRepository entitiesRepository)
         {
-            _entityRepository = entityRepository;
+            _entitiesRepository = entitiesRepository;
         }
 
         public async Task<QueryResult<List<T>>> Handle(GetEntitiesQuery<T> request, CancellationToken cancellationToken)
@@ -31,13 +31,13 @@ namespace Cindi.Application.Entities.Queries.GetEntities
                 expression = request.Expression;
             else
                 expression = (s) => true;
-            var entities = (await _entityRepository.GetAsync<T>(expression, request.Exclusions, request.Sort, request.Size, request.Page)).ToList();
+            var entities = (await _entitiesRepository.GetAsync<T>(expression, request.Exclusions, request.Sort, request.Size, request.Page)).ToList();
             stopwatch.Stop();
 
             return new QueryResult<List<T>>()
             {
                 Result = entities,
-                Count = _entityRepository.Count<T>(expression),
+                Count = _entitiesRepository.Count<T>(expression),
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };
         }

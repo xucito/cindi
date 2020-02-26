@@ -24,13 +24,13 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
-        private readonly IStepTemplatesRepository _stepTemplateRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterRequestHandler _node;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler(IStepTemplatesRepository client, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
         {
-            _stepTemplateRepository = client;
+            _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
         }
@@ -54,7 +54,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 DateTime.UtcNow
              );
 
-            var existingStepTemplate = await _stepTemplateRepository.GetStepTemplateAsync(newStepTemplate.ReferenceId);
+            var existingStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
 
             if (existingStepTemplate == null)
             {

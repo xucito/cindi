@@ -1,7 +1,7 @@
-﻿using Cindi.Application.Workflows.Commands;
+﻿using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Application.Workflows.Commands;
 using Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate;
-using Cindi.Application.WorkflowTemplates.Queries.GetWorkFlowTemplate;
-using Cindi.Application.WorkflowTemplates.Queries.GetWorkflowTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Exceptions;
 using Cindi.Persistence;
@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Cindi.Presentation.Controllers
@@ -54,12 +55,17 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string sort = "CreatedOn:1")
         {
-            return Ok(await Mediator.Send(new GetWorkflowTemplatesQuery()
+            return Ok(await Mediator.Send(new GetEntitiesQuery<WorkflowTemplate>()
             {
                 Page = 0,
-                Size = 100
+                Size = 100,
+                Expression = null,
+                Exclusions = new List<Expression<Func<WorkflowTemplate, object>>>{
+                    (s) => s.Journal
+                },
+                Sort = sort
             }));
         }
 
@@ -67,9 +73,9 @@ namespace Cindi.Presentation.Controllers
         [Route("{name}/{version}")]
         public async Task<IActionResult> Get(string name, string version)
         {
-            return Ok(await Mediator.Send(new GetWorkflowTemplateQuery()
+            return Ok(await Mediator.Send(new GetEntityQuery<WorkflowTemplate>()
             {
-                Id = name + ":" + version
+                Expression = st => st.ReferenceId == name + ":" + version
             }));
         }
     }

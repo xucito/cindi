@@ -57,7 +57,7 @@ namespace Cindi.Presentation.Authentication
 
             var key = await _mediator.Send(new GetEntityQuery<BotKey>()
             {
-                Id = new Guid(id)
+                Expression = bk => bk.Id == new Guid(id)
             });
 
 

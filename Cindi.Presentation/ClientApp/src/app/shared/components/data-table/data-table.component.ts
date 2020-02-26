@@ -1,31 +1,63 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, Input, Output, EventEmitter } from "@angular/core";
 import { ColumnMode } from "@swimlane/ngx-datatable";
 import { Page } from "../../model/page";
 
-export abstract class DataTableComponent {
+@Component({
+  selector: "data-table",
+  templateUrl: "./data-table.component.html",
+  styleUrls: ["./data-table.component.css"]
+})
+export class DataTableComponent {
   ColumnMode = ColumnMode;
-  page = new Page();
-  rows = [];
   isLoading = false;
-  columns = [];
 
-  constructor() {}
+  @Input() columns: any[] = [];
+  @Input() rows: any[] = [];
+  @Input() page: Page = new Page();
 
-  abstract setPage(pageInfo: any): void;
-  abstract onSort(event: any): void;
+  @Output() onPageChange = new EventEmitter();
+  @Output() onSortChange = new EventEmitter();
+  @Output() onAction = new EventEmitter();
+
+  constructor() {
+  }
+
   reload() {
-    this.setPage({
+    this.onPageChange.emit({
       offset: this.page.pageNumber,
       pageSize: this.page.size
     });
   }
 
-  resetDataTable() {
-    this.page.pageNumber = 0;
-    this.page.size = 20;
-    this.setPage({
-      offset: 0,
-      pageSize: 10
+  getDisplayColumns() {
+    return this.columns.filter(
+      c => ((c.type == undefined))
+    );
+  }
+
+  getButtonColumns() {
+    return this.columns.filter(
+      c => ((c.type == 'button'))
+    );
+  }
+
+
+  setPage(event)
+  {
+    this.onPageChange.emit(event);
+  }
+
+  onSort(event)
+  {
+    this.onSortChange.emit(event);
+  }
+
+  emitAction(action, row)
+  {
+    console.log("Detected action ")
+    this.onAction.emit({
+      action: action,
+      value: row
     });
   }
 }
