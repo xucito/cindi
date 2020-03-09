@@ -54,8 +54,8 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<StepTemplate>()
             {
-                Page = 0,
-                Size = 100,
+                Page = page,
+                Size = size,
                 Expression = null,
                 Exclusions = new List<Expression<Func<StepTemplate, object>>>{
                     (s) => s.Journal

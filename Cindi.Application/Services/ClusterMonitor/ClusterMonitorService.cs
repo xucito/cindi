@@ -1,11 +1,16 @@
 ﻿using Cindi.Application.Entities.Queries;
+using Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSchedule;
+using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
+using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Enums;
 using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Node.Services.Raft;
@@ -13,8 +18,11 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,60 +84,175 @@ namespace Cindi.Application.Services.ClusterMonitor
         public void Start()
         {
             monitoringTimer.Change(0, 10);
-            checkSuspendedStepsThread = new Thread(async () =>
+            checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
+            checkSuspendedStepsThread.Start();
+            checkSuspendedStepsThread = new Thread(async () => await CheckScheduledExecutions());
+            checkSuspendedStepsThread.Start();
+        }
+
+        public async Task CheckSuspendedSteps()
+        {
+            bool printedMessage = false;
+            while (true)
             {
-                bool printedMessage = false;
-                while (true)
+                //Do not run if it is uninitialized
+                if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
+                    if (!printedMessage)
+                    {
+                        _logger.LogInformation("Detected I am cluster leader, starting to clean up cluster");
+                        printedMessage = true;
+                    }
+                    try
+                    {
+                        var page = 0;
+                        long stepPosition = 0;
+                        long totalSteps = 0;
+                        int cleanedCount = 0;
+                        do
+                        {
+                            var steps = await _mediator.Send(new GetEntitiesQuery<Step>
+                            {
+                                Page = 0,
+                                Size = 1000,
+                                Expression = (s) => s.Status == StepStatuses.Suspended,
+                                Exclusions = new List<Expression<Func<Step, object>>>{
+                                        (s) => s.Journal
+                                    },
+                            });
+
+                            totalSteps = steps.Count.Value;
+                            stepPosition += steps.Count.Value;
+                            page++;
+
+                            foreach (var step in steps.Result)
+                            {
+                                if (step.SuspendedUntil != null && step.SuspendedUntil < DateTime.UtcNow)
+                                {
+                                    await _mediator.Send(new UnassignStepCommand
+                                    {
+                                        StepId = step.Id
+                                    });
+                                    cleanedCount++;
+                                }
+                            }
+                        }
+                        while (stepPosition < totalSteps);
+                        if (cleanedCount > 0)
+                        {
+                            _logger.LogInformation("Cleaned " + cleanedCount + " steps");
+                        }
+                        Thread.Sleep(1000);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("Failed to check suspended threads with exception " + e.Message + Environment.NewLine + e.StackTrace);
+                    }
+                }
+                else
+                {
+                    printedMessage = false;
+                    Thread.Sleep(3000);
+                }
+            }
+        }
+
+        public async Task CheckScheduledExecutions()
+        {
+            bool printedMessage = false;
+            var stopwatch = new Stopwatch();
+            ConcurrentDictionary<Guid, DateTime> skipSchedules = new ConcurrentDictionary<Guid, DateTime>();
+            while (true)
+            {
+                try
+                {
+                    List<Guid> enableScheduleList = new List<Guid>();
+                    foreach (var skippedSchedule in skipSchedules)
+                    {
+                        if (skippedSchedule.Value < DateTime.UtcNow)
+                        {
+                            enableScheduleList.Add(skippedSchedule.Key);
+                        }
+                    }
+
+                    foreach (var es in enableScheduleList)
+                    {
+                        skipSchedules.TryRemove(es, out _);
+                    }
+
                     //Do not run if it is uninitialized
                     if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
+                        stopwatch.Restart();
+                        var startDate = DateTime.Now;
+
                         if (!printedMessage)
                         {
-                            _logger.LogInformation("Detected I am cluster leader, starting to clean up cluster");
+                            _logger.LogInformation("Detected I am cluster leader, starting to run schedule up cluster");
                             printedMessage = true;
                         }
-                        try
+                        Guid[] skip = skipSchedules.Select(ss => ss.Key).ToArray();
+                        
+                        var pageSize = 10;
+                        var totalSize = _entitiesRepository.Count<ExecutionSchedule>(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id));
+                        int runTasks = 0;
+                        for (var i = 0; i < totalSize / pageSize; i++)
                         {
-                            var page = 0;
-                            long stepPosition = 0;
-                            long totalSteps = 0;
-                            int cleanedCount = 0;
-                            do
+                            Console.WriteLine("Pulling " + (i * pageSize + 1) + "-" + (i * pageSize + pageSize));
+                            var executionSchedules = await _entitiesRepository.GetAsync<ExecutionSchedule>(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id), null, null, pageSize, i);
+
+                            var tasks = executionSchedules.Select((es) => Task.Run(async () =>
                             {
-                                var steps = await _mediator.Send(new GetEntitiesQuery<Step>
+                                try
                                 {
-                                    Page = 0,
-                                    Size = 1000,
-                                    Expression = (s) => s.Status == StepStatuses.Suspended
-                                });
-
-                                totalSteps = steps.Count.Value;
-                                stepPosition += steps.Count.Value;
-                                page++;
-
-                                foreach (var step in steps.Result)
-                                {
-                                    if (step.SuspendedUntil != null && step.SuspendedUntil < DateTime.UtcNow)
+                                    await _mediator.Send(new RecalculateExecutionScheduleCommand()
                                     {
-                                        await _mediator.Send(new UnassignStepCommand
-                                        {
-                                            StepId = step.Id
-                                        });
-                                        cleanedCount++;
-                                    }
+                                        Name = es.Name
+                                    });
+                                    _logger.LogDebug("Executing schedule " + es.Name + " last run " + es.NextRun.ToString("o") + " current run " + DateTime.Now.ToString("o"));
+
+                                    await _mediator.Send(new ExecuteExecutionTemplateCommand()
+                                    {
+                                        Name = es.ExecutionTemplateName,
+                                        ExecutionScheduleId = es.Id,
+                                        CreatedBy = SystemUsers.SCHEDULE_MANAGER
+                                    });
                                 }
-                            }
-                            while (stepPosition < totalSteps);
-                            if (cleanedCount > 0)
-                            {
-                                _logger.LogInformation("Cleaned " + cleanedCount + " steps");
-                            }
-                            Thread.Sleep(1000);
+                                catch (Exception e)
+                                {
+                                    _logger.LogError("Failed to run schedule with exception " + e.Message + " skipping the schedule for 5 minutes" + Environment.NewLine + e.StackTrace);
+                                    skipSchedules.TryAdd(es.Id, DateTime.UtcNow.AddMinutes(5));
+                                }
+                                Interlocked.Increment(ref runTasks);
+                            }));
+
+                            await Task.WhenAll(tasks);
                         }
-                        catch (Exception e)
+
+                        var totalTime = stopwatch.ElapsedMilliseconds;
+
+                        _metricManagementService.EnqueueTick(new MetricTick()
                         {
-                            _logger.LogError("Failed to check suspended threads with exception " + e.Message + Environment.NewLine + e.StackTrace);
+                            MetricId = 0,
+                            Date = DateTime.Now,
+                            Value = totalTime
+                        });
+
+                        if (TimeSpan.FromMilliseconds(totalTime) > TimeSpan.FromSeconds(5))
+                        {
+                            _logger.LogWarning("Scheduler took longer then 5 second to complete a loop, submitted " + runTasks + " steps, took " + (totalTime) + " milliseconds.");
+                        }
+
+                        _metricManagementService.EnqueueTick(new MetricTick()
+                        {
+                            MetricId = (int)MetricIds.SchedulerLatencyMs,
+                            Date = startDate,
+                            Value = totalTime
+                        });
+
+                        if (totalTime < 1000)
+                        {
+                            Thread.Sleep(1000 - Convert.ToInt32(totalTime));
                         }
                     }
                     else
@@ -138,8 +261,11 @@ namespace Cindi.Application.Services.ClusterMonitor
                         Thread.Sleep(3000);
                     }
                 }
-            });
-            checkSuspendedStepsThread.Start();
+                catch (Exception e)
+                {
+
+                }
+            }
         }
 
         public async void CollectMetricsEventHandler(object args)
@@ -150,8 +276,6 @@ namespace Cindi.Application.Services.ClusterMonitor
                 lastSecond = currentDateTime.Second;
                 var truncatedTime = currentDateTime;
                 truncatedTime = truncatedTime.AddTicks(-(truncatedTime.Ticks % TimeSpan.TicksPerSecond));
-                // Console.WriteLine(truncatedTime.ToString("o"));
-                //  Console.WriteLine(currentDateTime.ToString("o"));
 
                 DateTime toDate = truncatedTime;
                 DateTime fromDate = truncatedTime.AddSeconds(-secondsOfMetrics);
@@ -161,7 +285,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     var stepsCount = (await _entitiesRepository.GetAsync<Step>(s => s.CreatedOn > fromDate && s.CreatedOn <= toDate)).ToList().Count();
                     _metricManagementService.EnqueueTick(new MetricTick()
                     {
-                        MetricId = 0,
+                        MetricId = (int)MetricIds.QueuedStepsPerSecond,
                         Date = truncatedTime,
                         Value = stepsCount
                     });

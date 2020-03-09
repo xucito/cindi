@@ -1,7 +1,9 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Exceptions;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
+using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
@@ -58,6 +60,11 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 
             if (existingStepTemplate == null)
             {
+                if (request.Name.First() == '_' && request.CreatedBy != SystemUsers.SYSTEM_TEMPLATES_MANAGER)
+                {
+                    throw new InvalidStepTemplateException("Only system workflows can start with _");
+                }
+
                 var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = newStepTemplate,
@@ -70,7 +77,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 Logger.LogDebug("Found existing step template");
 
                 BaseException exception;
-                if(!existingStepTemplate.IsEqual(newStepTemplate, out exception))
+                if (!existingStepTemplate.IsEqual(newStepTemplate, out exception))
                 {
                     throw exception;
                 }

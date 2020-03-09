@@ -59,8 +59,8 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<WorkflowTemplate>()
             {
-                Page = 0,
-                Size = 100,
+                Page = page,
+                Size = size,
                 Expression = null,
                 Exclusions = new List<Expression<Func<WorkflowTemplate, object>>>{
                     (s) => s.Journal

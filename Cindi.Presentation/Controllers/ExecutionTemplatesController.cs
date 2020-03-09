@@ -21,9 +21,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Cindi.Presentation.Controllers
 {
-    public class ExecutionTemplateController : BaseController
+    public class ExecutionTemplatesController : BaseController
     {
-        public ExecutionTemplateController(ILoggerFactory logger) : base(logger.CreateLogger<ExecutionTemplateController>())
+        public ExecutionTemplatesController(ILoggerFactory logger) : base(logger.CreateLogger<ExecutionTemplatesController>())
         {
         }
 
@@ -61,8 +61,8 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<ExecutionTemplate>()
             {
-                Page = 0,
-                Size = 100,
+                Page = page,
+                Size = size,
                 Expression = null,
                 Exclusions = new List<Expression<Func<ExecutionTemplate, object>>>{
                     (s) => s.Journal

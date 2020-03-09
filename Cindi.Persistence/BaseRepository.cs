@@ -33,6 +33,7 @@ using Cindi.Persistence.Metrics;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.ExecutionTemplates;
+using Cindi.Domain.Entities.ExecutionSchedule;
 
 namespace Cindi.Persistence
 {
@@ -63,7 +64,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<NodeInformation>();
             BsonClassMap.RegisterClassMap<Index>();
             BsonClassMap.RegisterClassMap<BaseTask>(); 
-            BsonClassMap.RegisterClassMap<ObjectLock>();
+            BsonClassMap.RegisterClassMap<Lock>();
             BsonClassMap.RegisterClassMap<LogicBlockLock>();
             BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<NodeStorage<CindiClusterState>>(gv => NodeStorageClassMap.Register(gv));
@@ -77,6 +78,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<MetricTick>(cs => MetricTickClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<BotKey>(cs => BotKeyClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<ExecutionTemplate>(cs => ExecutionTemplateClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<ExecutionSchedule>(cs => ExecutionScheduleClassMap.Register(cs));
             //BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());

@@ -91,4 +91,9 @@ export class GlobalValuesComponent  {
       );
   }
 
+  onAction(event)
+  {
+
+  }
+
 }

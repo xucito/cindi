@@ -50,6 +50,18 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            
+            Step step;
+            if ((step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => (e.Status == StepStatuses.Suspended || e.Status == StepStatuses.Assigned) && e.Id == request.StepId)) == null)
+            {
+                Logger.LogWarning("Step " + request.StepId + " has a status that cannot be unassigned.");
+                return new CommandResult()
+                {
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    ObjectRefId = request.StepId.ToString(),
+                    Type = CommandResultTypes.None
+                };
+            }
 
             var stepLockResult = await _node.Handle(new RequestDataShard()
             {
@@ -61,7 +73,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
 
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
-                var step = (Step)stepLockResult.Data;
+                step = (Step)stepLockResult.Data;
                 if (step.Status != StepStatuses.Suspended && step.Status != StepStatuses.Assigned)
                 {
                     Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");

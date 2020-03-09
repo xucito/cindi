@@ -10,6 +10,7 @@ using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Cindi.Application.Cluster.Queries;
 using Cindi.Application.Cluster.Queries.GetClusterStats;
 using Cindi.Application.Interfaces;
+using Cindi.Application.InternalBots;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.States;

@@ -49,6 +49,12 @@ using Cindi.Application.Entities.Queries;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Cindi.Presentation.Utility;
+using Cindi.Application.InternalBots;
+using Cindi.DotNetCore.BotExtensions;
+using Cindi.Application.InternalBots.InternalSteps;
+using Cindi.Domain.Entities.StepTemplates;
+using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
+using Cindi.Domain.Enums;
 
 namespace Cindi.Presentation
 {
@@ -75,7 +81,6 @@ namespace Cindi.Presentation
             var builder = new ContainerBuilder();
 
 
-
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
                 s => new NodeStorageRepository(MongoClient),
@@ -86,7 +91,7 @@ namespace Cindi.Presentation
 
             //services.AddScoped<IMediator, Mediator>();
             //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-           // services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
+            // services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             services.AddAutoMapper();
 
             services.AddMvc(options =>
@@ -102,6 +107,7 @@ namespace Cindi.Presentation
                 DbConnectionString = Configuration.GetValue<string>("DBConnectionString")
             });
 
+
             if (EnableUI)
             {
                 services.AddSpaStaticFiles(configuration =>
@@ -109,7 +115,7 @@ namespace Cindi.Presentation
                     configuration.RootPath = "ClientApp/dist";
                 });
             }
-            
+
             services.AddTransient<IEntitiesRepository, EntitiesRepository>(s => new EntitiesRepository(MongoClient));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
             services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(MongoClient));
@@ -118,10 +124,8 @@ namespace Cindi.Presentation
 
             services.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
             services.AddSingleton<ClusterMonitorService>();
-
             services.AddSingleton<MetricManagementService>();
-
-
+            services.AddSingleton<InternalBotManager>();
 
 
             //Authentication
@@ -170,10 +174,7 @@ namespace Cindi.Presentation
             services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
                                                                         .AllowAnyMethod()
                                                                          .AllowAnyHeader()));
-
-
-
-
+            services.AddHttpClient();
             builder.RegisterMediatr();
             builder.Register<ServiceFactory>(ctx =>
             {
@@ -207,7 +208,8 @@ namespace Cindi.Presentation
             ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider,
-            MetricManagementService metricManagementService
+            MetricManagementService metricManagementService,
+            InternalBotManager internalBotManager
             )
         {
             BootstrapThread = new Task(() =>
@@ -219,6 +221,10 @@ namespace Cindi.Presentation
                     logger.LogInformation("Waiting for cluster to establish a quorum");
                     Thread.Sleep(1000);
                 }
+
+
+                var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+
                 ClusterStateService.Initialized = stateMachine.CurrentState.Initialized;
                 var key = Configuration.GetValue<string>("EncryptionKey");
                 if (key != null)
@@ -258,7 +264,6 @@ namespace Cindi.Presentation
                     if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
                         // Thread.Sleep(5000);
-                        var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
                         med.Send(new InitializeClusterCommand()
                         {
                             DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
@@ -271,6 +276,20 @@ namespace Cindi.Presentation
                 {
                     metricManagementService.InitializeMetricStore();
                 }
+
+                foreach (var template in InternalStepLibrary.All)
+                {
+                    med.Send(new CreateStepTemplateCommand()
+                    {
+                        Name = template.Name,
+                        InputDefinitions = template.InputDefinitions,
+                        OutputDefinitions = template.OutputDefinitions,
+                        CreatedBy = SystemUsers.SYSTEM_TEMPLATES_MANAGER,
+                        Version = template.Version,
+                        Description = template.Description
+                    }).GetAwaiter().GetResult();
+                }
+                internalBotManager.AddAdditionalBot();
             });
             BootstrapThread.Start();
 

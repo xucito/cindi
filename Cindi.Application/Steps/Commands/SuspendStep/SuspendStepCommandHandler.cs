@@ -50,6 +50,18 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            Step step;
+
+            if ((step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => (e.Status == StepStatuses.Suspended) && e.Id == request.StepId)) == null)
+            {
+                return new CommandResult()
+                {
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    ObjectRefId = request.StepId.ToString(),
+                    Type = CommandResultTypes.None
+                };
+            }
+
             var stepLockResult = await _node.Handle(new RequestDataShard()
             {
                 Type = "Step",
@@ -61,7 +73,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             // Applied the lock successfully
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
-                var step = (Step)stepLockResult.Data;
+                step = (Step)stepLockResult.Data;
                 if (step.Status == StepStatuses.Unassigned ||
                     step.Status == StepStatuses.Suspended ||
                     step.Status == StepStatuses.Assigned // You should only be suspending a assigned step if it is being suspended by the bot assigned, check to be done in presentation

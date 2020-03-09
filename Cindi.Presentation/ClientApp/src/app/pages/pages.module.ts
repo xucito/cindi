@@ -18,6 +18,8 @@ import { BotsComponent } from './bots/bots.component';
 import { MonitoringComponent } from './monitoring/monitoring.component';
 import { StepComponent } from './step/step.component';
 import { StepsComponent } from './steps/steps.component';
+import { ExecutionTemplatesComponent } from './execution-templates/execution-templates.component';
+import { ExecutionSchedulesComponent } from './execution-schedules/execution-schedules.component';
 
 @NgModule({
   imports: [
@@ -40,7 +42,9 @@ import { StepsComponent } from './steps/steps.component';
     BotsComponent,
     MonitoringComponent,
     StepComponent,
-    StepsComponent
+    StepsComponent,
+    ExecutionTemplatesComponent,
+    ExecutionSchedulesComponent
   ],
 })
 export class PagesModule {

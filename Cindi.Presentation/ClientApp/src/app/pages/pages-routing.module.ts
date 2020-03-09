@@ -14,6 +14,8 @@ import { WorkflowTemplatesComponent } from "./workflow-templates/workflow-templa
 import { WorkflowTemplateComponent } from './workflow-template/workflow-template.component';
 import {WorkflowDesignerComponent} from './workflow-designer/workflow-designer.component';
 import { StepsComponent } from './steps/steps.component';
+import { ExecutionTemplatesComponent } from './execution-templates/execution-templates.component';
+import { ExecutionSchedulesComponent } from './execution-schedules/execution-schedules.component';
 
 const routes: Routes = [
   {
@@ -101,6 +103,26 @@ const routes: Routes = [
           {
             path: "",
             component: MonitoringComponent,
+            pathMatch: "full"
+          }
+        ]
+      },
+      {
+        path: "execution-templates",
+        children: [
+          {
+            path: "",
+            component: ExecutionTemplatesComponent,
+            pathMatch: "full"
+          }
+        ]
+      },
+      {
+        path: "execution-schedules",
+        children: [
+          {
+            path: "",
+            component: ExecutionSchedulesComponent,
             pathMatch: "full"
           }
         ]

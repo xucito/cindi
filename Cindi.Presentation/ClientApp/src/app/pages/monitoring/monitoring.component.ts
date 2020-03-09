@@ -34,6 +34,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
 
   clusterMetrics;
   databaseMetrics;
+  schedulerMetrics;
   pastTime;
   currentTime;
 
@@ -52,6 +53,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     this.pastTime.setMinutes(this.pastTime.getMinutes() - 30);
     this.GetClusterMetrics();
     this.GetDatabaseMetrics();
+    this.GetSchedulerMetrics();
   }
 
   GetDatabaseMetrics() {
@@ -115,6 +117,40 @@ export class MonitoringComponent implements OnInit, OnDestroy {
 
         Object.keys(allMetrics).forEach(key => {
           this.clusterMetrics.push({
+            name: key,
+            series: allMetrics[key]
+          });
+        });
+      });
+  }
+
+  GetSchedulerMetrics() {
+    this.cindiClient
+      .GetMetrics(
+        this.pastTime,
+        this.currentTime,
+        "schedulerlatency",
+        ["max"],
+        "S",
+        true
+      )
+      .subscribe(result => {
+        var metrics = result.result;
+        let allMetrics = {};
+        metrics.forEach(metric => {
+          if (!allMetrics.hasOwnProperty(metric._id.subcategory)) {
+            allMetrics[metric._id.subcategory] = [];
+          }
+          allMetrics[metric._id.subcategory].push({
+            name: new Date(metric._id.date),
+            value: metric.max
+          });
+        });
+
+        this.schedulerMetrics = [];
+
+        Object.keys(allMetrics).forEach(key => {
+          this.schedulerMetrics.push({
             name: key,
             series: allMetrics[key]
           });

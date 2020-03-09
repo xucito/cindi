@@ -222,10 +222,11 @@ namespace Cindi.Domain.Entities.StepTemplates
                     {
                         if (!inputs.Select(i => i.Key).Contains(id.Key))
                         {
-                            missingInputs += id.Key + " ";
+                            inputs.Add(id.Key, null);
+                            //missingInputs += id.Key + " ";
                         }
                     }
-                    throw new InvalidStepInputException("Missing step inputs for step template " + Id + ", expected " + InputDefinitions.Count() + " got " + inputs.Count() + " missing ");
+                    //throw new InvalidStepInputException("Missing step inputs for step template " + Id + ", expected " + InputDefinitions.Count() + " got " + inputs.Count() + " missing ");
                 }
 
                 foreach (var input in inputs)

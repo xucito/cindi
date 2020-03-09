@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.ExecutionTemplates;
+using Cindi.Domain.Entities.ExecutionSchedule;
 
 namespace Cindi.Application.Services
 {
@@ -34,6 +35,9 @@ namespace Cindi.Application.Services
             {
                 case nameof(BotKey):
                     await _entitiesRepository.Delete<BotKey>(bk => bk.Id == data.Id);
+                    break;
+                case nameof(ExecutionSchedule):
+                    await _entitiesRepository.Delete<ExecutionSchedule>(bk => bk.Id == data.Id);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -62,6 +66,8 @@ namespace Cindi.Application.Services
                     return await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == objectId);
                 case nameof(ExecutionTemplate):
                     return await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(w => w.Id == objectId);
+                case nameof(ExecutionSchedule):
+                    return await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(w => w.Id == objectId);
                 default:
                     return null;
             }
@@ -94,6 +100,8 @@ namespace Cindi.Application.Services
                         return await _entitiesRepository.Insert(t1);
                     case ExecutionTemplate t1:
                         return await _entitiesRepository.Insert(t1);
+                    case ExecutionSchedule t1:
+                        return await _entitiesRepository.Insert(t1);
                 }
                 throw new Exception("Object type " + data.ShardType + "has no supported operations");
             }
@@ -125,6 +133,8 @@ namespace Cindi.Application.Services
                 case Step t1:
                     return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
                 case ExecutionTemplate t1:
+                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                case ExecutionSchedule t1:
                     return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
             }
             throw new Exception("Object type " + data.ShardType + "has no supported operations");

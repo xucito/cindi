@@ -74,7 +74,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     };
                 }
 
-                ignoreUnassignedSteps.AddRange(_stateMachine.CurrentState.ObjectLocks.Select(ol => ol.Key));
+                ignoreUnassignedSteps.AddRange(_stateMachine.CurrentState.Locks.Where(l => l.Key.Contains("_object")).Select(ol => new Guid(ol.Key.Split(':').Last())));
 
                 do
                 {

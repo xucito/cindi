@@ -47,7 +47,7 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
                 CreateLock = true
             });
 
-            if (globalValueLock.IsSuccessful)
+            if (globalValueLock.IsSuccessful && globalValueLock.AppliedLocked)
             {
                 existingValue = (GlobalValue)globalValueLock.Data;
                 existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()

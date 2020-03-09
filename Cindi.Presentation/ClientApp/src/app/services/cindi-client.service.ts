@@ -180,6 +180,16 @@ export class CindiClientService {
     });
   }
 
+  UpdateExecutionSchedule(
+    name: string,
+    update: any,
+    runImmediately: boolean
+  ): Observable<any> {
+    return this.http.put(this.baseUrl + this.api + "execution-schedules/" + name + "?runImmediately=" + runImmediately,
+      update
+    );
+  }
+
   DeleteBotKey(botKeyId: string): Observable<any> {
     return this.http.delete(this.baseUrl + this.api + "bot-keys/" + botKeyId);
   }

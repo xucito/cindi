@@ -19,7 +19,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
             cm.MapMember(s => s.Nodes).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, NodeInformation>>(DictionaryRepresentation.ArrayOfArrays));
             cm.MapMember(s => s.Indexes).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<string, Index>>(DictionaryRepresentation.ArrayOfArrays));
             cm.MapMember(s => s.ClusterTasks).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, BaseTask>>(DictionaryRepresentation.ArrayOfArrays));
-            cm.MapMember(s => s.ObjectLocks).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, ObjectLock>>(DictionaryRepresentation.ArrayOfArrays));
+            cm.MapMember(s => s.Locks).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<string, Lock>>(DictionaryRepresentation.ArrayOfArrays));
         }
     }
 }
