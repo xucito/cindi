@@ -10,6 +10,8 @@ namespace Cindi.Domain.Enums
         ClusterOperationElapsedMs,
         DatabaseOperationLatency,
         DatabaseOperationCount,
-        SchedulerLatencyMs
+        SchedulerLatencyMs,
+        DatabaseOperationsPerSecond,
+        DatabaseTotalSizeBytes
     }
 }

@@ -86,8 +86,7 @@ namespace Cindi.Presentation
                 s => new NodeStorageRepository(MongoClient),
                 s => new NodeStorageRepository(MongoClient),
                 s => new NodeStorageRepository(MongoClient),
-                Configuration.GetSection("Node")
-                , Configuration.GetSection("Cluster"));
+                Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
             //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
@@ -289,7 +288,7 @@ namespace Cindi.Presentation
                         Description = template.Description
                     }).GetAwaiter().GetResult();
                 }
-                internalBotManager.AddAdditionalBot();
+                //internalBotManager.AddAdditionalBot();
             });
             BootstrapThread.Start();
 

@@ -211,7 +211,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         while (_clusterStateService.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Key))
                         {
                             Console.WriteLine("Found " + ("workflow:" + updatedStep.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
-                            Thread.Sleep(1000);
+                            await Task.Delay(1000);
                         }
 
                         int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
@@ -221,7 +221,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         while (_nodeStateService.CommitIndex < entryNumber)
                         {
                             Logger.LogDebug("Waiting for entry " + entryNumber + " to be commited.");
-                            Thread.Sleep(250);
+                            await Task.Delay(250);
                         }
 
                         //Check whether you got the lock
@@ -230,6 +230,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
                     workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
+                    workflow.Inputs = DynamicDataUtility.DecryptDynamicData(workflowTemplate.InputDefinitions, workflow.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                     //If the logic block is ready to be processed, submit the steps
                     if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))

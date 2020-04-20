@@ -2,7 +2,25 @@
 
 FROM microsoft/dotnet:2.2-aspnetcore-runtime AS base
 
+# Configure mongodb
+RUN echo nameserver 8.8.8.8 > /etc/resolv.conf
+
+RUN apt update
+
+RUN apt install gnupg -y
+
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+
+RUN echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+
+RUN apt-get update
+
+RUN apt-get install -y mongodb-org
+
 FROM microsoft/dotnet:2.2-sdk AS build
+
+RUN apt-get update -yq && apt-get upgrade -yq && apt-get install -yq curl git nano
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && apt-get install -yq nodejs build-essential
 
 WORKDIR /app
 
@@ -19,8 +37,6 @@ COPY ./Cindi.Persistence/. /Cindi.Persistence/
 
 WORKDIR ./ClientApp/
 
-RUN apt-get update -yq && apt-get upgrade -yq && apt-get install -yq curl git nano
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && apt-get install -yq nodejs build-essential
 RUN npm install -g npm
 
 RUN npm install
@@ -33,21 +49,6 @@ RUN dotnet build Cindi.Presentation.csproj
 RUN dotnet publish -c Release -o out Cindi.Presentation.csproj
 
 FROM base AS final
-
-# Configure mongodb
-RUN echo nameserver 8.8.8.8 > /etc/resolv.conf
-
-RUN apt update
-
-RUN apt install gnupg -y
-
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
-
-RUN echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
-
-RUN apt-get update
-
-RUN apt-get install -y mongodb-org
 
 COPY ./docker/startup.sh /etc/init.d/startup.sh
 

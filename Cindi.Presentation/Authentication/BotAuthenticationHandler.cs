@@ -59,14 +59,13 @@ namespace Cindi.Presentation.Authentication
             {
                 Expression = bk => bk.Id == new Guid(id)
             });
-
-
+            
             if (key.Count == 0)
             {
                 return AuthenticateResult.Fail("Bot Id is not valid.");
             }
 
-            double nonce = Double.Parse(SecurityUtility.RsaDecryptWithPublic(nonceHeaders.First(), key.Result.PublicEncryptionKey));
+            /*double nonce = Double.Parse(SecurityUtility.RsaDecryptWithPublic(nonceHeaders.First(), key.Result.PublicEncryptionKey));
 
             if (nonce <= key.Result.Nonce)
             {
@@ -77,7 +76,7 @@ namespace Cindi.Presentation.Authentication
             {
                 Id = key.Result.Id,
                 Nonce = nonce
-            });
+            });*/
 
             var claims = new[] {
                 new Claim("id", key.Result.Id.ToString()),

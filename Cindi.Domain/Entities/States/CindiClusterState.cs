@@ -7,6 +7,7 @@ using ConsensusCore.Domain.BaseClasses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cindi.Domain.Entities.States
@@ -22,6 +23,10 @@ namespace Cindi.Domain.Entities.States
         public byte[] EncryptionKeySalt { get; private set; }
         public bool AllowAutoRegistration { get; private set; } = true;
         public bool Initialized { get; private set; } = false;
+        /// <summary>
+        /// Uses date time maths
+        /// </summary>
+        public int MetricRetentionPeriod { get; set; }
 
         public override void ApplyCommandToState(BaseCommand command)
         {
@@ -55,6 +60,10 @@ namespace Cindi.Domain.Entities.States
                     if (t1.Initialized != null)
                     {
                         Initialized = t1.Initialized.Value;
+                    }
+                    if (t1.MetricRetentionPeriod != null)
+                    {
+                        MetricRetentionPeriod = t1.MetricRetentionPeriod.Value;
                     }
                     break;
                 case UpdateLogicBlockLock t1:

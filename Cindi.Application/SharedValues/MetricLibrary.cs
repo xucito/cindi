@@ -17,6 +17,8 @@ namespace Cindi.Application.SharedValues
             AddMetric(DatabaseOperationLatencyMs);
             AddMetric(DatabaseOperationCount);
             AddMetric(SchedulerLatencyMs);
+            AddMetric(DatabaseOperationsPerSecond);
+            AddMetric(DatabaseTotalSizeBytes);
         }
 
         public void AddMetric(Metric metric)
@@ -36,10 +38,12 @@ namespace Cindi.Application.SharedValues
             };
         }
 
-        public static Metric QueuedStepsPerSecond { get { return GetMetric(MetricIds.QueuedStepsPerSecond, "Queued Steps per Second", "queuedstepspersecond", MetricType.Cluster, "Number per seconds"); } }
+        public static Metric QueuedStepsPerSecond { get { return GetMetric(MetricIds.QueuedStepsPerSecond, "Queued Steps per Second", "queuedstepspersecond", MetricType.Cluster, "Number per second"); } }
         public static Metric ClusterOperationElapsedMs { get { return GetMetric(MetricIds.ClusterOperationElapsedMs, "Cluster Operation Elapsed Ms", "clusteroperationelapsedms", MetricType.Cluster, "Total Elapsed ms"); } }
         public static Metric DatabaseOperationLatencyMs { get { return GetMetric(MetricIds.DatabaseOperationLatency, "Database Operation Latency Ms", "databaseoperationlatencyms", MetricType.Node, "Total Elapsed ms"); } }
         public static Metric DatabaseOperationCount { get { return GetMetric(MetricIds.DatabaseOperationCount, "Database Operation Count", "databaseoperationcount", MetricType.Node, "Total Operation Count"); } }
         public static Metric SchedulerLatencyMs { get { return GetMetric(MetricIds.SchedulerLatencyMs, "Delay in the scheduler intervals", "schedulerlatency", MetricType.Cluster, "Total Elapsed ms"); } }
+        public static Metric DatabaseOperationsPerSecond { get { return GetMetric(MetricIds.DatabaseOperationsPerSecond, "Database Operations per Second", "databaseoperationspersecond", MetricType.Node, "Number per second"); } }
+        public static Metric DatabaseTotalSizeBytes { get { return GetMetric(MetricIds.DatabaseTotalSizeBytes, "Database Total Size in Bytes", "databasetotalsizebytes", MetricType.Node, "Total in Bytes"); } }
     }
 }

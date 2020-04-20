@@ -7,6 +7,7 @@ using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Node.Services.Raft;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -27,11 +28,15 @@ namespace Cindi.Application.Services
         private readonly Task writeThread;
         NodeStateService _nodeStateService;
         IEntitiesRepository _entitiesRepository;
+        IConfiguration _configuration;
+        bool EnableMetrics = false;
 
-        public MetricManagementService(ILogger<MetricManagementService> logger,
+        public MetricManagementService(
+            ILogger<MetricManagementService> logger,
             IClusterRequestHandler node,
             NodeStateService nodeStateService,
-            IEntitiesRepository entitiesRepository
+            IEntitiesRepository entitiesRepository,
+            IConfiguration configuration
             )
         {
             _logger = logger;
@@ -40,45 +45,54 @@ namespace Cindi.Application.Services
             _node = node;
             _nodeStateService = nodeStateService;
             _entitiesRepository = entitiesRepository;
-            writeThread = new Task(async () =>
+            _configuration = configuration;
+            EnableMetrics = _configuration.GetValue<bool>("EnableMonitoring");
+            if (EnableMetrics)
             {
-                MetricTick tick;
-                while (true)
+                writeThread = new Task(async () =>
                 {
+                    MetricTick tick;
+                    while (true)
+                    {
                     // Console.WriteLine("Number of tasks " + _ticks.Count());
                     if (_nodeStateService.InCluster)
-                    {
-                        if (_ticks.TryDequeue(out tick))
                         {
-                            tick.Date = tick.Date.ToUniversalTime();
-                            tick.Id = Guid.NewGuid();
-                            var startTime = DateTime.Now;
-                            await _node.Handle(new AddShardWriteOperation()
+                            if (_ticks.TryDequeue(out tick))
                             {
-                                WaitForSafeWrite = true,
-                                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                                Data = tick,
-                                Metric = false // Do not metric the metric write operations
+                                tick.Date = tick.Date.ToUniversalTime();
+                                tick.Id = Guid.NewGuid();
+                                var startTime = DateTime.Now;
+                                await _node.Handle(new AddShardWriteOperation()
+                                {
+                                    WaitForSafeWrite = true,
+                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                                    Data = tick,
+                                    Metric = false // Do not metric the metric write operations
                             });
-                            _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
+                                _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
 
-                            if(_ticks.Count > 100)
-                            {
-                                _logger.LogWarning("Tick count is greater then 100...");
+                                if (_ticks.Count > 100)
+                                {
+                                    _logger.LogWarning("Tick count is greater then 100...");
+                                }
                             }
                         }
+                        await Task.Delay(10);
                     }
-                }
-            });
+                });
 
-            writeThread.Start();
+                writeThread.Start();
+            }
         }
 
 
         public void EnqueueTick(MetricTick tick)
         {
-            tick.Id = Guid.NewGuid();
-            _ticks.Enqueue(tick);
+            if (EnableMetrics)
+            {
+                tick.Id = Guid.NewGuid();
+                _ticks.Enqueue(tick);
+            }
         }
 
         public async void InitializeMetricStore()

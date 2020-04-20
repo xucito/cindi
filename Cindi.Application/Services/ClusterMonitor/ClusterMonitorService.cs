@@ -17,6 +17,7 @@ using ConsensusCore.Node.Services.Raft;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -43,11 +44,12 @@ namespace Cindi.Application.Services.ClusterMonitor
         int lastSecond = 0;
         private IDatabaseMetricsCollector _databaseMetricsCollector;
         private NodeStateService _nodeStateService;
+        private IOptions<ClusterOptions> _clusterOptions;
 
         private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
         private Timer monitoringTimer;
-        private const int secondsOfMetrics = 5;
+        private int secondsOfMetrics = 5;
 
         public ClusterMonitorService(
             IServiceProvider sp,
@@ -56,7 +58,8 @@ namespace Cindi.Application.Services.ClusterMonitor
             MetricManagementService metricManagementService,
             IMetricTicksRepository metricTicksRepository,
             IDatabaseMetricsCollector databaseMetricsCollector,
-            NodeStateService nodeStateService)
+            NodeStateService nodeStateService,
+            IOptions<ClusterOptions> clusterOptions)
         {
             _metricManagementService = metricManagementService;
             // var sp = serviceProvider.CreateScope().ServiceProvider;
@@ -71,6 +74,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
             node.MetricGenerated += metricGenerated;
             _nodeStateService = nodeStateService;
+            _clusterOptions = clusterOptions;
             Start();
         }
 
@@ -83,7 +87,8 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public void Start()
         {
-            monitoringTimer.Change(0, 10);
+            monitoringTimer.Change(0, 100);
+            secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();
             checkSuspendedStepsThread = new Thread(async () => await CheckScheduledExecutions());
@@ -142,7 +147,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         {
                             _logger.LogInformation("Cleaned " + cleanedCount + " steps");
                         }
-                        Thread.Sleep(1000);
+                        await Task.Delay(1000);
                     }
                     catch (Exception e)
                     {
@@ -152,7 +157,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                 else
                 {
                     printedMessage = false;
-                    Thread.Sleep(3000);
+                    await Task.Delay(3000);
                 }
             }
         }
@@ -162,6 +167,8 @@ namespace Cindi.Application.Services.ClusterMonitor
             bool printedMessage = false;
             var stopwatch = new Stopwatch();
             ConcurrentDictionary<Guid, DateTime> skipSchedules = new ConcurrentDictionary<Guid, DateTime>();
+            var lastLatencyCheck = DateTime.Now;
+            long maxLatency = 0;
             while (true)
             {
                 try
@@ -192,13 +199,13 @@ namespace Cindi.Application.Services.ClusterMonitor
                             printedMessage = true;
                         }
                         Guid[] skip = skipSchedules.Select(ss => ss.Key).ToArray();
-                        
+
                         var pageSize = 10;
                         var totalSize = _entitiesRepository.Count<ExecutionSchedule>(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id));
                         int runTasks = 0;
-                        for (var i = 0; i < totalSize / pageSize; i++)
+                        for (var i = 0; i < (totalSize + pageSize - 1) / pageSize; i++)
                         {
-                            Console.WriteLine("Pulling " + (i * pageSize + 1) + "-" + (i * pageSize + pageSize));
+                            _logger.LogDebug("Pulling " + (i * pageSize + 1) + "-" + (i * pageSize + pageSize));
                             var executionSchedules = await _entitiesRepository.GetAsync<ExecutionSchedule>(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id), null, null, pageSize, i);
 
                             var tasks = executionSchedules.Select((es) => Task.Run(async () =>
@@ -243,22 +250,32 @@ namespace Cindi.Application.Services.ClusterMonitor
                             _logger.LogWarning("Scheduler took longer then 5 second to complete a loop, submitted " + runTasks + " steps, took " + (totalTime) + " milliseconds.");
                         }
 
-                        _metricManagementService.EnqueueTick(new MetricTick()
+                        if(maxLatency < totalTime)
                         {
-                            MetricId = (int)MetricIds.SchedulerLatencyMs,
-                            Date = startDate,
-                            Value = totalTime
-                        });
+                            maxLatency = totalTime;
+                        }
+                        if ((DateTime.Now - lastLatencyCheck).TotalMilliseconds > _clusterOptions.Value.MetricsIntervalMs)
+                        {
+                            _metricManagementService.EnqueueTick(new MetricTick()
+                            {
+                                MetricId = (int)MetricIds.SchedulerLatencyMs,
+                                Date = startDate,
+                                Value = totalTime
+                            });
+                            _logger.LogDebug("Adding a scheduler metric with " + totalTime + " for " + DateTime.Now.ToString("o"));
+                            lastLatencyCheck = DateTime.Now;
+                            maxLatency = 0;
+                        }
 
                         if (totalTime < 1000)
                         {
-                            Thread.Sleep(1000 - Convert.ToInt32(totalTime));
+                            await Task.Delay(1000 - Convert.ToInt32(totalTime));
                         }
                     }
                     else
                     {
                         printedMessage = false;
-                        Thread.Sleep(3000);
+                        await Task.Delay(3000);
                     }
                 }
                 catch (Exception e)
@@ -299,17 +316,8 @@ namespace Cindi.Application.Services.ClusterMonitor
                     }
                     Interlocked.Decrement(ref _fetchingDbMetrics);
                 }
-                // Console.WriteLine("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") + " value:" + stepsCount);
+                _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") );
             }
-            /*
-            DateTime toDate = DateTime.Now;
-            _metricManagementService.EnqueueTick(new MetricTick()
-            {
-                MetricId = 0,
-                Date = toDate,
-                Value = (await _entitiesRepository.GetStepsAsync(toDate.AddSeconds(1), toDate)).ToList().Count()
-            });
-            Console.WriteLine("Finished thread");*/
         }
 
         void metricGenerated(object sender, ConsensusCore.Domain.Models.Metric e)

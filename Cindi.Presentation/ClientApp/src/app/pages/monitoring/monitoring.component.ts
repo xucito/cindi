@@ -1,6 +1,7 @@
 import { CindiClientService } from "./../../services/cindi-client.service";
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import { interval, Subscription } from "rxjs";
+import { interval, Subscription, forkJoin, Observable } from "rxjs";
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: "monitoring",
@@ -8,6 +9,35 @@ import { interval, Subscription } from "rxjs";
   styleUrls: ["./monitoring.component.css"]
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
+
+  generatedGraphs = [
+    {
+      metricName: "databaseoperationlatencyms",
+      aggs: [ "max" ],
+      interval: 'S'
+    },
+    {
+      metricName: "clusteroperationelapsedms",
+      aggs: [ "max" ],
+      interval: 'S'
+    },
+    {
+      metricName: "schedulerlatency",
+      aggs: [ "max" ],
+      interval: 'S'
+    },
+    {
+      metricName: "databasetotalsizebytes",
+      aggs: [ "max" ],
+      interval: 'S'
+    },
+    {
+      metricName: "databaseoperationcount",
+      aggs: [ "max" ],
+      interval: 'S'
+    }
+  ]
+
   ngOnDestroy(): void {
     this.metricReload$.unsubscribe();
   }
@@ -32,6 +62,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   };
   metricReload$: Subscription;
 
+  results: any[] = [];
   clusterMetrics;
   databaseMetrics;
   schedulerMetrics;
@@ -40,7 +71,6 @@ export class MonitoringComponent implements OnInit, OnDestroy {
 
   constructor(private cindiClient: CindiClientService) {
     Object.assign(this, this.multi);
-
     this.LoadPage();
     this.metricReload$ = interval(10000).subscribe(() => {
       this.LoadPage();
@@ -51,22 +81,36 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     this.currentTime = new Date();
     this.pastTime = new Date(this.currentTime);
     this.pastTime.setMinutes(this.pastTime.getMinutes() - 30);
-    this.GetClusterMetrics();
+
+    let tasks = [];
+    this.generatedGraphs.forEach(element => {
+      tasks.push(this.GetMetrics(element.metricName, element.aggs, element.interval));
+    });
+
+    forkJoin(tasks).subscribe(
+      (results) => {
+        let reload = [];
+        results.forEach(element => {
+          reload.push(element);
+        });
+        this.results = reload;
+      }
+    );
+    /*this.GetClusterMetrics();
     this.GetDatabaseMetrics();
-    this.GetSchedulerMetrics();
+    this.GetSchedulerMetrics();*/
   }
 
-  GetDatabaseMetrics() {
-    this.cindiClient
+  GetMetrics(metricName: string, aggs: any[], interval: string): Observable<any> {
+    return this.cindiClient
       .GetMetrics(
         this.pastTime,
         this.currentTime,
-        "databaseoperationlatencyms",
-        ["max"],
-        "S",
+        metricName,
+        aggs,
+        interval,
         true
-      )
-      .subscribe(result => {
+      ).pipe(map(result => {
         var metrics = result.result;
         let allMetrics = {};
         metrics.forEach(metric => {
@@ -79,17 +123,19 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           });
         });
 
-        this.databaseMetrics = [];
+        let metricsCache = [];
 
         Object.keys(allMetrics).forEach(key => {
-          this.databaseMetrics.push({
+          metricsCache.push({
             name: key,
             series: allMetrics[key]
           });
         });
-      });
-  }
 
+        return metricsCache;
+      }));
+  }
+/*
   GetClusterMetrics() {
     this.cindiClient
       .GetMetrics(
@@ -156,5 +202,5 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           });
         });
       });
-  }
+  }*/
 }

@@ -1,47 +1,14 @@
 <div class="row">
-  <nb-card>
 
+  <nb-card *ngFor="let metric of generatedGraphs; let i = index">
     <nb-card-header>
-      <span>Cluster Operations</span>
+      <span>{{metric.metricName}}</span>
     </nb-card-header>
-
     <nb-card-body class="body">
-      <div>
+      <div *ngIf="results[i]">
         <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [legend]="false" [showXAxisLabel]="showXAxisLabel"
-          [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="'Operation Time Ms'"
-          [results]="clusterMetrics" [animations]="false">
-        </ngx-charts-line-chart>
-      </div>
-    </nb-card-body>
-  </nb-card>
-
-  <nb-card>
-
-    <nb-card-header>
-      <span>Database Operations</span>
-    </nb-card-header>
-
-    <nb-card-body class="body">
-      <div>
-        <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [legend]="false" [showXAxisLabel]="showXAxisLabel"
-          [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="'Operation Time Ms'"
-          [results]="databaseMetrics" [animations]="false">
-        </ngx-charts-line-chart>
-      </div>
-    </nb-card-body>
-  </nb-card>
-
-  <nb-card>
-
-    <nb-card-header>
-      <span>Scheduler Latency</span>
-    </nb-card-header>
-
-    <nb-card-body class="body">
-      <div>
-        <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [legend]="false" [showXAxisLabel]="showXAxisLabel"
-          [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="'Scheduler Latency Ms'"
-          [results]="schedulerMetrics" [animations]="false">
+          [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="''"
+          [results]="results[i]" [animations]="false">
         </ngx-charts-line-chart>
       </div>
     </nb-card-body>

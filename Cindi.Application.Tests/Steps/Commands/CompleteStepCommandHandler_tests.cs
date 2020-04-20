@@ -159,6 +159,19 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, new System.Threading.CancellationToken())).ObjectRefId);
 
         }
+        
+
+        [Fact]
+        public async void DecryptStepOutputSecretForSubsequentStep()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void DecryptWorkflowInputSecretForSubsequentStep()
+        {
+            Assert.True(false);
+        }
 
 
         [Fact]
