@@ -16,6 +16,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         {
             cm.AutoMap();
             cm.SetIsRootClass(true);
+            cm.SetIgnoreExtraElements(true);
             cm.MapMember(s => s.Nodes).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, NodeInformation>>(DictionaryRepresentation.ArrayOfArrays));
             cm.MapMember(s => s.Indexes).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<string, Index>>(DictionaryRepresentation.ArrayOfArrays));
             cm.MapMember(s => s.ClusterTasks).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, BaseTask>>(DictionaryRepresentation.ArrayOfArrays));

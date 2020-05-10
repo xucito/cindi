@@ -38,14 +38,15 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
                 {
                     Type = typeof(T).Name,
                     ObjectId = entity.Id,
-                    CreateLock = true
+                    CreateLock = true,
+                    LockTimeoutMs = 3000
                 });
 
                 if (objectLock.IsSuccessful)
                 {
                     await _node.Handle(new AddShardWriteOperation()
                     {
-                        Data = objectLock.Data,
+                        Data = entity,
                         WaitForSafeWrite = true,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
                         RemoveLock = true
@@ -55,7 +56,8 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
                     {
                         ObjectRefId = entity.Id.ToString(),
                         Type = CommandResultTypes.Delete,
-                        ElapsedMs = stopwatch.ElapsedMilliseconds
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        IsSuccessful = true
                     };
                 }
                 else

@@ -91,5 +91,20 @@ namespace Cindi.Presentation.Controllers
             }));
         }
 
+        [HttpGet]
+        [Route("{id}/scan")]
+        public async Task<IActionResult> ScanWorkflow(Guid id)
+        {
+            return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
+            {
+                Page = 0,
+                Size = 1000,
+                Expression = (s) => s.WorkflowId == id,
+                Exclusions = new List<Expression<Func<Step, object>>>{
+                    (s) => s.Journal
+                }
+            }));
+        }
+
     }
 }

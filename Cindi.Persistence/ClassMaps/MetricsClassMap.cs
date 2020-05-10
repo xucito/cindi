@@ -8,9 +8,10 @@ namespace Cindi.Persistence.Metrics
 {
     public static class MetricsClassMap
     {
-        public static void Register(BsonClassMap<Metric> metric)
+        public static void Register(BsonClassMap<Metric> cm)
         {
-            metric.AutoMap();
+            cm.AutoMap();
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

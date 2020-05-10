@@ -376,7 +376,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
                     });
                 }
-                //await _workflowsRepository.UpsertWorkflowMetadataAsync(workflow.Id);
             }
 
             return new CommandResult()

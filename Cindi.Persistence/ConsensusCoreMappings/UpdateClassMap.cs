@@ -14,6 +14,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
             cm.AutoMap();
         //   cm.GetMemberMap(c => c.Value).SetSerializer(new ObjectSerializer());
             cm.SetIsRootClass(true);
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

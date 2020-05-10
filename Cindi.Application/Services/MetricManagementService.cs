@@ -68,7 +68,7 @@ namespace Cindi.Application.Services
                                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
                                     Data = tick,
                                     Metric = false // Do not metric the metric write operations
-                            });
+                                });
                                 _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
 
                                 if (_ticks.Count > 100)

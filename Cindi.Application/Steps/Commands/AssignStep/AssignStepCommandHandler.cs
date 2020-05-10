@@ -58,7 +58,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             List<Guid> ignoreUnassignedSteps = new List<Guid>();
-            if (_clusterStateService.IsAssignmentEnabled())
+            if (_clusterStateService.GetSettings.AssignmentEnabled)
             {
                 var assignedStepSuccessfully = false;
                 Step unassignedStep = null;

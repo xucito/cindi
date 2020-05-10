@@ -12,6 +12,7 @@ namespace Cindi.Persistence.StepTemplates
         {
             cm.AutoMap();
             cm.SetIdMember(cm.GetMemberMap(c => c.Id));
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

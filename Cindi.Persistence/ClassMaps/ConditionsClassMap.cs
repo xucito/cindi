@@ -13,6 +13,7 @@ namespace Cindi.Persistence.WorkflowTemplates.Conditions
         {
             cm.AutoMap();
             cm.SetIsRootClass(true);
+            cm.SetIgnoreExtraElements(true);
             var featureType = typeof(Condition);
             featureType.Assembly.GetTypes()
                 .Where(type => featureType.IsAssignableFrom(type)).ToList()

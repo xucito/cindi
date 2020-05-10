@@ -55,6 +55,7 @@ using Cindi.Application.InternalBots.InternalSteps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Enums;
+using Cindi.Application.Cluster.Commands.UpdateClusterState;
 
 namespace Cindi.Presentation
 {
@@ -274,6 +275,14 @@ namespace Cindi.Presentation
                 if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     metricManagementService.InitializeMetricStore();
+                    if(service.GetSettings == null)
+                    {
+                        logger.LogWarning("No setting detected, resetting settings to default.");
+                        med.Send(new UpdateClusterStateCommand()
+                        {
+                            DefaultIfNull = true
+                        }).GetAwaiter().GetResult(); ;
+                    }
                 }
 
                 foreach (var template in InternalStepLibrary.All)

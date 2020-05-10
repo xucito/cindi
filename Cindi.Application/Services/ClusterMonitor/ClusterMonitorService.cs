@@ -1,7 +1,9 @@
-﻿using Cindi.Application.Entities.Queries;
+﻿using Cindi.Application.Entities.Command.DeleteEntity;
+using Cindi.Application.Entities.Queries;
 using Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSchedule;
 using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
 using Cindi.Application.Interfaces;
+using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Domain.Entities.ExecutionSchedule;
@@ -9,6 +11,7 @@ using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
+using Cindi.Domain.Utilities;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
@@ -34,6 +37,7 @@ namespace Cindi.Application.Services.ClusterMonitor
     {
         private IMediator _mediator;
         Thread checkSuspendedStepsThread;
+        Thread dataCleanupThread;
         private ILogger<ClusterMonitorService> _logger;
         private IClusterRequestHandler node;
         private IEntitiesRepository _entitiesRepository;
@@ -45,6 +49,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         private IDatabaseMetricsCollector _databaseMetricsCollector;
         private NodeStateService _nodeStateService;
         private IOptions<ClusterOptions> _clusterOptions;
+        private IClusterStateService _state;
 
         private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
@@ -65,6 +70,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
+            _state = sp.GetService<IClusterStateService>();
 
             _logger.LogInformation("Starting clean up service...");
             node = _node;
@@ -93,6 +99,61 @@ namespace Cindi.Application.Services.ClusterMonitor
             checkSuspendedStepsThread.Start();
             checkSuspendedStepsThread = new Thread(async () => await CheckScheduledExecutions());
             checkSuspendedStepsThread.Start();
+            dataCleanupThread = new Thread(async () => await CleanUpData());
+            dataCleanupThread.Start();
+        }
+
+        public async Task CleanUpData()
+        {
+            while(true)
+            {
+                if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                {
+
+                    var page = 0;
+                    long tickPosition = 0;
+                    long totalMetricTicks = 0;
+                    int cleanedCount = 0;
+                    CommandResult result = null;
+                    do
+                    {
+                        /*var ticks = await _mediator.Send(new GetEntitiesQuery<MetricTick>
+                        {
+                            Page = 0,
+                            Size = 1000,
+                            Expression = (s) => s.Date < DateTime.Now.AddMinutes(-1)
+                        });
+
+                        totalMetricTicks = ticks.Count.Value;
+                        tickPosition += ticks.Count.Value;
+                        page++;
+
+                        foreach(var tick in ticks.Result)
+                        {*/
+
+                        var startTime = DateTime.Now;
+                        if (_state.GetSettings != null)
+                        {
+                            try
+                            {
+                                result = await _mediator.Send(new DeleteEntityCommand<MetricTick>
+                                {
+                                    Expression = (s) => s.Date < DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod))
+                                });
+                                _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
+                            }
+                            _logger.LogDebug("Cleanup took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
+                        }
+                        // }
+                    }
+                    while (result != null && result.IsSuccessful);
+                    await Task.Delay(30000);
+                }
+            }
         }
 
         public async Task CheckSuspendedSteps()
@@ -187,6 +248,9 @@ namespace Cindi.Application.Services.ClusterMonitor
                         skipSchedules.TryRemove(es, out _);
                     }
 
+
+                   // _logger.LogInformation("Starting scheduler loop.");
+
                     //Do not run if it is uninitialized
                     if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
@@ -203,6 +267,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         var pageSize = 10;
                         var totalSize = _entitiesRepository.Count<ExecutionSchedule>(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id));
                         int runTasks = 0;
+                        _logger.LogDebug("Found " + totalSize + " execution schedules to execute.");
                         for (var i = 0; i < (totalSize + pageSize - 1) / pageSize; i++)
                         {
                             _logger.LogDebug("Pulling " + (i * pageSize + 1) + "-" + (i * pageSize + pageSize));
@@ -280,7 +345,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                 }
                 catch (Exception e)
                 {
-
+                    _logger.LogError("Encountered error " + e.Message + " while trying to complete scheduled execution loop." + Environment.NewLine + e.StackTrace);
                 }
             }
         }

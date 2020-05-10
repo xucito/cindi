@@ -19,6 +19,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
             cm.AutoMap();
             //cm.SetIsRootClass(true);
             cm.MapMember(s => s.LockedLogicBlocks).SetSerializer(new DictionaryInterfaceImplementerSerializer<Dictionary<string, LogicBlockLock>>(DictionaryRepresentation.ArrayOfArrays));
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

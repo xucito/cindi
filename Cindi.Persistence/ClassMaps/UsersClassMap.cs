@@ -17,6 +17,7 @@ namespace Cindi.Persistence.Users
             //  cm.MapIdProperty(c => c.Username);
           //  cm.SetIdMember(cm.GetMemberMap(c => c.Username));
             cm.SetIgnoreExtraElements(true);
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

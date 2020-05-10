@@ -14,6 +14,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         {
             cm.AutoMap();
             cm.SetIsRootClass(true);
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

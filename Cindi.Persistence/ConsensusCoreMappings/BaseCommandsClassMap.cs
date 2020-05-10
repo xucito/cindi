@@ -14,6 +14,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
             cm.AutoMap();
             AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(BaseCommand))).ToList()
                 .ForEach(type => cm.AddKnownType(type));
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

@@ -1,5 +1,3 @@
-@echo off
-
 set /p v="What version is this? "
 
 docker build -f ./Dockerfile -t cindi:%v% .

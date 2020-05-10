@@ -41,8 +41,8 @@ namespace Cindi.Application.Services.ClusterState
         private IStateMachine<CindiClusterState> _stateMachine;
 
         public ClusterStateService(
-            ILogger<ClusterStateService> logger, 
-            IServiceScopeFactory serviceProvider, 
+            ILogger<ClusterStateService> logger,
+            IServiceScopeFactory serviceProvider,
             IClusterRequestHandler node,
             IStateMachine<CindiClusterState> stateMachine)
         {
@@ -157,8 +157,9 @@ namespace Cindi.Application.Services.ClusterState
             return passPhrase;
         }
 
-        public bool AutoRegistrationEnabled { get { return state.AllowAutoRegistration; } }
+        public bool AutoRegistrationEnabled { get { return state.Settings.AllowAutoRegistration; } }
 
+        public ClusterSettings GetSettings { get { return state.Settings; } }
 
         public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
@@ -239,7 +240,7 @@ namespace Cindi.Application.Services.ClusterState
             }
         }*/
 
-        public void ChangeAssignmentEnabled(bool newState)
+        /*public void ChangeAssignmentEnabled(bool newState)
         {
             lock (_locker)
             {
@@ -254,21 +255,14 @@ namespace Cindi.Application.Services.ClusterState
                     }
                 }
                 }).GetAwaiter().GetResult();
-                /*
-                if (newState != state.AssignmentEnabled)
-                {
-                    state.AssignmentEnabled = newState;
-                    changeDetected = true;
-                }
-                */
             }
-        }
+        }*/
 
-        public void SetAllowAutoRegistration(bool allowAutoRegistration)
+       /* public void SetAllowAutoRegistration(bool allowAutoRegistration)
         {
             lock (_locker)
             {
-                if (allowAutoRegistration != state.AllowAutoRegistration)
+                if (allowAutoRegistration != state.Options.AllowAutoRegistration)
                 {
                     _node.Handle(new ExecuteCommands()
                     {
@@ -283,12 +277,12 @@ namespace Cindi.Application.Services.ClusterState
                     });
                 }
             }
-        }
+        }*/
 
-        public bool IsAssignmentEnabled()
+        /*public bool IsAssignmentEnabled()
         {
-            return state.AssignmentEnabled;
-        }
+            return state.Options.AssignmentEnabled;
+        }*/
 
         public bool WasLockObtained(Guid lockKey, Guid workflowId, string logicBlockId)
         {

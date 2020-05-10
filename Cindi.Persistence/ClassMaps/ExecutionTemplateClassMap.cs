@@ -16,6 +16,7 @@ namespace Cindi.Persistence.Steps
         public static void Register(BsonClassMap<ExecutionTemplate> cm)
         {
             cm.AutoMap();
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

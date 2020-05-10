@@ -144,28 +144,6 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                         WorkflowId = createdWorkflowId,
                         Name = subBlock.Key
                     });
-
-                    /*  newStep = await _entitiesRepository.InsertStepAsync(newStep);
-
-                      await _entitiesRepository.InsertJournalEntryAsync(new JournalEntry()
-                      {
-                          SubjectId = newStep.Id,
-                          ChainId = 0,
-                          Entity = JournalEntityTypes.Step,
-                          CreatedOn = DateTime.UtcNow,
-                          CreatedBy = SystemUsers.QUEUE_MANAGER,
-                          Updates = new List<Update>()
-                          {
-                              new Update()
-                              {
-                                  FieldName = "status",
-                                  Value = StepStatuses.Unassigned,
-                                  Type = UpdateType.Override
-                              }
-                          }
-                      });
-
-                      await _entitiesRepository.UpsertStepMetadataAsync(newStep.Id); */
                 }
 
 
@@ -176,16 +154,15 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     CreatedOn = DateTime.UtcNow,
                     Updates = new List<Update>()
                     {
-                    new Update()
-                    {
-                        FieldName = "completedlogicblocks",
-                        Type = UpdateType.Append,
-                        Value = block.Key //Add the logic block
-                    }
+                        new Update()
+                        {
+                            FieldName = "completedlogicblocks",
+                            Type = UpdateType.Append,
+                            Value = block.Key //Add the logic block
+                        }
                     }
                 });
-
-                //await _workflowsRepository.UpdateWorkflow(workflow);
+                
                 await _node.Handle(new AddShardWriteOperation()
                 {
                     Data = workflow,

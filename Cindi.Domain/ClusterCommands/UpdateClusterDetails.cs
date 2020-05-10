@@ -14,7 +14,8 @@ namespace Cindi.Domain.ClusterRPC
         public byte[] EncryptionKeySalt { get; set; } = null;
         public bool? AllowAutoRegistration { get; set; } = null;
         public bool? Initialized { get; set; } = null;
-        public int? MetricRetentionPeriod { get; set; } = null;
+        public string MetricRetentionPeriod { get; set; } = null;
+        public bool DefaultIfNull { get; set; } = false;
 
         public override string CommandName => "UpdateClusterDetails";
     }

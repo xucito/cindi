@@ -64,7 +64,7 @@ namespace Cindi.Presentation.Controllers
             }
         }
 
-        [HttpPut("state")]
+        [HttpPut("settings")]
         public async Task<IActionResult> Create(UpdateClusterStateCommand command)
         {
             var stopwatch = new Stopwatch();

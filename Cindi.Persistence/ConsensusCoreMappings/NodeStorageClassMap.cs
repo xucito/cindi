@@ -24,6 +24,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
             /*AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(NodeStorage))).ToList()
                 .ForEach(type => cm.AddKnownType(type));*/
             cm.UnmapMember(c => c.CommandsQueue);
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

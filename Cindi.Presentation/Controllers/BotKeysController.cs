@@ -36,7 +36,7 @@ namespace Cindi.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(CreateBotKeyCommand command)
         {
-            if (!_clusterState.AutoRegistrationEnabled)
+            if (!_clusterState.GetSettings.AllowAutoRegistration)
             {
                 if (ClaimsUtility.GetId(User) == null)
                 {

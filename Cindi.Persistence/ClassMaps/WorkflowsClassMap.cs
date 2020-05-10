@@ -8,10 +8,11 @@ namespace Cindi.Persistence.Workflows
 {
     public static class WorkflowsClassMap
     {
-        public static void Register(BsonClassMap<WorkflowMetadata> sm)
+        public static void Register(BsonClassMap<WorkflowMetadata> cm)
         {
-            sm.AutoMap();
-            sm.MapIdMember(s => s.WorkflowId);
+            cm.AutoMap();
+            cm.MapIdMember(s => s.WorkflowId);
+            cm.SetIgnoreExtraElements(true);
         }
 
         public static void Register(BsonClassMap<Workflow> sm)
