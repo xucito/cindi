@@ -32,6 +32,7 @@ namespace Cindi.Application.Results
         public string ObjectRefId { get; set; }
         public bool IsSuccessful { get; set; } = true;
         public string ErrorMessage { get; set; }
+        public string[] Messages { get; set; }
     }
 
     public class CommandResult<T> : CommandResult

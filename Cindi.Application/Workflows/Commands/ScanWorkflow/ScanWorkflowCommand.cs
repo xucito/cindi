@@ -9,5 +9,6 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
     public class ScanWorkflowCommand : IRequest<CommandResult>
     {
         public Guid WorkflowId { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

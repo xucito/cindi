@@ -2,6 +2,7 @@
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Workflows.Commands;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
+using Cindi.Application.Workflows.Commands.ScanWorkflow;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Exceptions;
@@ -95,15 +96,11 @@ namespace Cindi.Presentation.Controllers
         [Route("{id}/scan")]
         public async Task<IActionResult> ScanWorkflow(Guid id)
         {
-            return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
+            return Ok(await Mediator.Send(new ScanWorkflowCommand()
             {
-                Page = 0,
-                Size = 1000,
-                Expression = (s) => s.WorkflowId == id,
-                Exclusions = new List<Expression<Func<Step, object>>>{
-                    (s) => s.Journal
-                }
-            }));
+                CreatedBy = ClaimsUtility.GetId(User),
+                WorkflowId = id
+        }));
         }
 
     }

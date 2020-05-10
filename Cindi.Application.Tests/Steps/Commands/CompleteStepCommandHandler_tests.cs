@@ -15,6 +15,7 @@ using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -3,6 +3,7 @@ using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.CompleteStep;
+using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
@@ -64,8 +65,9 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 
         public async Task<CommandResult> Handle(ScanWorkflowCommand request, CancellationToken cancellationToken)
         {
-            /*var stopwatch = new Stopwatch();
+            var stopwatch = new Stopwatch();
             stopwatch.Start();
+            List<string> messages = new List<string>();
 
             var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == request.WorkflowId);
 
@@ -107,8 +109,6 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 
                     int entryNumber = await _clusterStateService.LockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
 
-                    // CheckIfYouObtainedALock
-
                     while (_nodeStateService.CommitIndex < entryNumber)
                     {
                         Logger.LogDebug("Waiting for entry " + entryNumber + " to be commited.");
@@ -116,11 +116,11 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                     }
 
                     //Check whether you got the lock
-                    lockObtained = _clusterStateService.WasLockObtained(lockId, request.WorkflowId.Value, logicBlock.Key);
+                    lockObtained = _clusterStateService.WasLockObtained(lockId, request.WorkflowId, logicBlock.Key);
                 }
 
                 //When the logic block is released, recheck whether this logic block has been evaluated
-                workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
+                workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == request.WorkflowId);
                 workflow.Inputs = DynamicDataUtility.DecryptDynamicData(workflowTemplate.InputDefinitions, workflow.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                 //If the logic block is ready to be processed, submit the steps
@@ -200,7 +200,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                                 WorkflowId = workflow.Id,
                                 Name = substep.Key //create the step with the right subsequent step
                             });
-                            addedStep = true;
+                            messages.Add("Started step " + substep.Key);
                         }
                     }
 
@@ -229,13 +229,13 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
                     });
                 }
-                await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
+                await _clusterStateService.UnlockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
             }
 
             //Check if there are no longer any steps that are unassigned or assigned
 
             var workflowStatus = workflow.Status;
-            workflowSteps = (await _entitiesRepository.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
+            workflowSteps = (await _entitiesRepository.GetAsync<Step>(s => s.WorkflowId == request.WorkflowId)).ToList();
             var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
 
             var newWorkflowStatus = WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
@@ -267,15 +267,15 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
                 });
             }
-        }
 
             return new CommandResult()
-        {
-            ObjectRefId = request.Id.ToString(),
+            {
+                ObjectRefId = request.WorkflowId.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
-                Type = CommandResultTypes.Update
-            };*/
-            return null;
-        }
+                Type = CommandResultTypes.Update,
+                IsSuccessful = true,
+                Messages = messages.ToArray()
+            };
+            }
     }
 }
