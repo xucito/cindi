@@ -221,7 +221,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             {
                 try
                 {
-                    _logger.LogInformation("Started clean up workflow executions");
+                    _logger.LogDebug("Started clean up of workflow.");
                     if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
                         var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => !WorkflowStatuses.CompletedStatus.Contains(w.Status) && w.CreatedOn < DateTime.Now.AddMinutes(-5));

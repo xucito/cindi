@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Start the first process
-/usr/bin/mongod --fork --logpath /var/log/mongodb/output
+/usr/bin/mongod --bind_ip_all --fork --logpath /var/log/mongodb/output
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start my_first_process: $status"
