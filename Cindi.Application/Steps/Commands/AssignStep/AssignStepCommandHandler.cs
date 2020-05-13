@@ -37,21 +37,18 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IClusterStateService _clusterStateService;
         public ILogger<AssignStepCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
-        private readonly IStateMachine<CindiClusterState> _stateMachine;
 
         public AssignStepCommandHandler(
             IEntitiesRepository entitiesRepository,
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
-            IClusterRequestHandler node,
-            IStateMachine<CindiClusterState> stateMachine
+            IClusterRequestHandler node
             )
         {
             _entitiesRepository = entitiesRepository;
             _clusterStateService = stateService;
             Logger = logger;
             _node = node;
-            _stateMachine = stateMachine;
         }
         public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
@@ -74,7 +71,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     };
                 }
 
-                ignoreUnassignedSteps.AddRange(_stateMachine.CurrentState.Locks.Where(l => l.Key.Contains("_object")).Select(ol => new Guid(ol.Key.Split(':').Last())));
+                ignoreUnassignedSteps.AddRange(_clusterStateService.GetState().Locks.Where(l => l.Key.Contains("_object")).Select(ol => new Guid(ol.Key.Split(':').Last())));
 
                 do
                 {

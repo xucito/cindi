@@ -6,10 +6,12 @@ using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
+using Cindi.Application.Workflows.Commands.ScanWorkflow;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
 using ConsensusCore.Domain.Interfaces;
@@ -37,6 +39,8 @@ namespace Cindi.Application.Services.ClusterMonitor
     {
         private IMediator _mediator;
         Thread checkSuspendedStepsThread;
+        Thread checkScheduledExecutions;
+        Thread cleanupWorkflowsExecutions;
         Thread dataCleanupThread;
         private ILogger<ClusterMonitorService> _logger;
         private IClusterRequestHandler node;
@@ -97,10 +101,12 @@ namespace Cindi.Application.Services.ClusterMonitor
             secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();
-            checkSuspendedStepsThread = new Thread(async () => await CheckScheduledExecutions());
-            checkSuspendedStepsThread.Start();
+            checkScheduledExecutions = new Thread(async () => await CheckScheduledExecutions());
+            checkScheduledExecutions.Start();
             dataCleanupThread = new Thread(async () => await CleanUpData());
             dataCleanupThread.Start();
+            cleanupWorkflowsExecutions = new Thread(async () => await CleanupWorkflowsExecutions());
+            cleanupWorkflowsExecutions.Start();
         }
 
         public async Task CleanUpData()
@@ -117,20 +123,6 @@ namespace Cindi.Application.Services.ClusterMonitor
                     CommandResult result = null;
                     do
                     {
-                        /*var ticks = await _mediator.Send(new GetEntitiesQuery<MetricTick>
-                        {
-                            Page = 0,
-                            Size = 1000,
-                            Expression = (s) => s.Date < DateTime.Now.AddMinutes(-1)
-                        });
-
-                        totalMetricTicks = ticks.Count.Value;
-                        tickPosition += ticks.Count.Value;
-                        page++;
-
-                        foreach(var tick in ticks.Result)
-                        {*/
-
                         var startTime = DateTime.Now;
                         if (_state.GetSettings != null)
                         {
@@ -220,6 +212,34 @@ namespace Cindi.Application.Services.ClusterMonitor
                     printedMessage = false;
                     await Task.Delay(3000);
                 }
+            }
+        }
+
+        public async Task CleanupWorkflowsExecutions()
+        {
+            while (true)
+            {
+                try
+                {
+                    _logger.LogInformation("Started clean up workflow executions");
+                    if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                    {
+                        var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => !WorkflowStatuses.CompletedStatus.Contains(w.Status) && w.CreatedOn < DateTime.Now.AddMinutes(-5));
+                        foreach (var workflow in runningWorkflows)
+                        {
+                            await _mediator.Send(new ScanWorkflowCommand()
+                            {
+                                WorkflowId = workflow.Id,
+                                CreatedBy = SystemUsers.CLEANUP_MANAGER
+                            });
+                        }
+                    }
+                }
+                catch(Exception e)
+                {
+                    _logger.LogError("Failed to clean up workflow executions with error " + e.Message + Environment.NewLine + e.StackTrace);
+                }
+                await Task.Delay(60000);
             }
         }
 

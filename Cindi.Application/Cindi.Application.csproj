@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <Folder Include="Metrics\Commands\" />
-    <Folder Include="Workflows\Queries\" />
   </ItemGroup>
 
   <ItemGroup>

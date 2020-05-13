@@ -3,15 +3,18 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Node;
+using ConsensusCore.Node.Communication.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -40,13 +43,10 @@ namespace Cindi.Application.Tests.StepTemplates
         public async void DetectDuplicateStepTemplates()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
-
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            entitiesRepository.Setup(st => st.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             var mockStateLogger = new Mock<ILogger<CreateStepTemplateCommandHandler>>();
-            var handler = new CreateStepTemplateCommandHandler(stepTemplatesRepository.Object, _node.Object, mockStateLogger.Object);
+            var handler = new CreateStepTemplateCommandHandler(entitiesRepository.Object, _node.Object, mockStateLogger.Object);
 
             var result = await handler.Handle(new CreateStepTemplateCommand()
             {

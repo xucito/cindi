@@ -44,15 +44,13 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private readonly IClusterRequestHandler _node;
-        private readonly NodeStateService _nodeStateService;
 
         public CompleteStepCommandHandler(IEntitiesRepository entitiesRepository,
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            IClusterRequestHandler node,
-            NodeStateService nodeStateService
+            IClusterRequestHandler node
             )
         {
             _entitiesRepository = entitiesRepository;
@@ -65,7 +63,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             });
             _mediator = mediator;
             _node = node;
-            _nodeStateService = nodeStateService;
         }
 
         public CompleteStepCommandHandler(IEntitiesRepository entitiesRepository,
@@ -83,7 +80,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _option = options;
             _node = node;
             _mediator = mediator;
-            _nodeStateService = nodeStateService;
         }
 
         public async Task<CommandResult> Handle(CompleteStepCommand request, CancellationToken cancellationToken)
@@ -161,8 +157,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 Updates = finalUpdate
             });
 
-            //var updatedStepId = await _entitiesRepository.UpdateStep(stepToComplete);
-
             await _node.Handle(new AddShardWriteOperation()
             {
                 Data = stepToComplete,
@@ -215,14 +209,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         }
 
                         int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
-
-                        // CheckIfYouObtainedALock
-
-                        while (_nodeStateService.CommitIndex < entryNumber)
-                        {
-                            Logger.LogDebug("Waiting for entry " + entryNumber + " to be commited.");
-                            await Task.Delay(250);
-                        }
 
                         //Check whether you got the lock
                         lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);

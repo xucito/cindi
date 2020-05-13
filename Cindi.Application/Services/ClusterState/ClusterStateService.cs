@@ -176,7 +176,8 @@ namespace Cindi.Application.Services.ClusterState
                             CreatedOn = DateTime.Now
                         }
                     }
-                }
+                },
+                WaitForCommits = true
             })).EntryNo;
             //state.LockedLogicBlocks.Add(block.LogicBlockId, DateTime.UtcNow);
         }
@@ -195,7 +196,8 @@ namespace Cindi.Application.Services.ClusterState
                             LogicBlockId = logicBlockId
                         }
                     }
-                }
+                },
+                WaitForCommits = true
             })).IsSuccessful;
             //state.LockedLogicBlocks.Remove(logicBlockId);
         }

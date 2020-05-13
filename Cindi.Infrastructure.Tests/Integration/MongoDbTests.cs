@@ -19,10 +19,10 @@ using Cindi.Persistence.WorkflowTemplates;
 using Cindi.Persistence.Workflows;
 
 namespace Cindi.Infrastructure.Tests.Integration
-{
+{ /*
     public class MongoDb_Tests : IAsyncLifetime, IClassFixture<MongoDBFixture>
     {
-        public string TestDBId;
+       public string TestDBId;
         public StepTemplatesRepository stepTemplatesRepository;
         public StepsRepository stepsRepository;
         public WorkflowTemplatesRepository workflowTemplatesRepository;
@@ -321,5 +321,5 @@ namespace Cindi.Infrastructure.Tests.Integration
             sequenceRepository = new WorkflowsRepository(GlobalTestSettings.CindiDBConnectionString, TestDBId);
             return Task.CompletedTask;
         }
-    }
+}*/
 }

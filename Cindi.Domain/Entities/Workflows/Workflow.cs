@@ -86,6 +86,12 @@ namespace Cindi.Domain.Entities.Workflows
                         FieldName = "executionscheduleid",
                         Value = executionScheduleId,
                         Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "completedlogicblocks",
+                        Value = new List<string>(),
+                        Type = UpdateType.Create
                     }
                 }
             })

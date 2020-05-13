@@ -64,7 +64,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 newStep
                 );*/
 
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
+            await _node.Handle(new AddShardWriteOperation()
             {
                 Data = newStep,
                 WaitForSafeWrite = true,

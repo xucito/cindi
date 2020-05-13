@@ -17,6 +17,9 @@ using Xunit;
 using static Cindi.Test.Global.TestData.FibonacciSampleData;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
 using Cindi.Domain.Exceptions.Workflows;
+using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Domain.Entities.WorkflowsTemplates;
+using System.Linq.Expressions;
 
 namespace Cindi.Application.Tests.Workflows.Commands
 {
@@ -54,13 +57,10 @@ namespace Cindi.Application.Tests.Workflows.Commands
         public async void DetectExtraInput()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IWorkflowsRepository> workflowsRepository = new Mock<IWorkflowsRepository>();
-            Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
-            workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.ReferenceId)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
 
-            var handler = new CreateWorkflowCommandHandler(workflowsRepository.Object, workflowTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object, _node.Object);
+            var handler = new CreateWorkflowCommandHandler(entitiesRepository.Object,  _mediator.Object, _node.Object);
 
             await Assert.ThrowsAsync<InvalidInputsException>(async () => await handler.Handle(new CreateWorkflowCommand()
             {
@@ -77,12 +77,9 @@ namespace Cindi.Application.Tests.Workflows.Commands
         public async void DetectMissingInput()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IWorkflowsRepository> workflowsRepository = new Mock<IWorkflowsRepository>();
-            Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
-            workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.ReferenceId)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            var handler = new CreateWorkflowCommandHandler(workflowsRepository.Object, workflowTemplatesRepository.Object, stepsRepository.Object, stepTemplatesRepository.Object, _mediator.Object, _node.Object);
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            var handler = new CreateWorkflowCommandHandler(entitiesRepository.Object, _mediator.Object, _node.Object);
 
             await Assert.ThrowsAsync<MissingInputException>(async () => await handler.Handle(new CreateWorkflowCommand()
             {

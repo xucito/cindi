@@ -2,6 +2,7 @@
 using Cindi.Application.Workflows.Commands;
 using Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.WorkflowTemplates.Conditions;
 using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -24,19 +26,21 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
 {
     public class CreateWorkflowTemplateCommandHandler_tests
     {
+        Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+
         [Fact]
         public async void DetectMissingStepTemplates()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
-            workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.Id)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            Mock<IStepTemplatesRepository> stepsRepository = new Mock<IStepTemplatesRepository>();
+            
+           // entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            
 
             var node = Utility.GetMockConsensusCoreNode();
 
             var mockStateLogger = new Mock<ILogger<CreateWorkflowTemplateCommandHandler>>();
 
-            var handler = new CreateWorkflowTemplateCommandHandler(workflowTemplatesRepository.Object, stepsRepository.Object, node.Object, mockStateLogger.Object);
+            var handler = new CreateWorkflowTemplateCommandHandler(entitiesRepository.Object, node.Object, mockStateLogger.Object);
 
             await Assert.ThrowsAsync<StepTemplateNotFoundException>(async () => await handler.Handle(new CreateWorkflowTemplateCommand()
             {
@@ -51,16 +55,16 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
         public async void DetectMissingWorkflowStepMapping()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
-            workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.Id)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            Mock<IStepTemplatesRepository> stepsRepository = new Mock<IStepTemplatesRepository>();
-            stepsRepository.Setup(sr => sr.GetStepTemplateAsync(It.IsAny<string>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            
+           // entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+
+           entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
 
             var node = Utility.GetMockConsensusCoreNode();
 
             var mockStateLogger = new Mock<ILogger<CreateWorkflowTemplateCommandHandler>>();
 
-            var handler = new CreateWorkflowTemplateCommandHandler(workflowTemplatesRepository.Object, stepsRepository.Object, node.Object, mockStateLogger.Object);
+             var handler = new CreateWorkflowTemplateCommandHandler(entitiesRepository.Object, node.Object, mockStateLogger.Object);
 
             await Assert.ThrowsAsync<MissingStepException>(async () =>
             await handler.Handle(new CreateWorkflowTemplateCommand()
@@ -80,7 +84,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new Dictionary<string, SubsequentStep>{
                         {"0",
                          new SubsequentStep(){
-                             StepTemplateId =StepTemplate.ReferenceId,
+                             StepTemplateId = FibonacciSampleData.StepTemplate.ReferenceId,
                                       Mappings = new Dictionary<string, Mapping>(){
                                           {"n-1",
                                       new Mapping()
@@ -116,7 +120,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new Dictionary<string, SubsequentStep> {
                         { "1",
                          new SubsequentStep(){
-                             StepTemplateId =StepTemplate.ReferenceId,
+                             StepTemplateId =FibonacciSampleData.StepTemplate.ReferenceId,
                                       Mappings = new Dictionary<string, Mapping>(){
                                           {"n-1",
                                       new Mapping()
@@ -161,16 +165,13 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
         public async void DetectMissingWorkflowStepOutputMapping()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
-            workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.Id)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            Mock<IStepTemplatesRepository> stepsRepository = new Mock<IStepTemplatesRepository>();
-            stepsRepository.Setup(sr => sr.GetStepTemplateAsync(It.IsAny<string>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-
+            //entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+           entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             var node = Utility.GetMockConsensusCoreNode();
 
             var mockStateLogger = new Mock<ILogger<CreateWorkflowTemplateCommandHandler>>();
 
-            var handler = new CreateWorkflowTemplateCommandHandler(workflowTemplatesRepository.Object, stepsRepository.Object, node.Object, mockStateLogger.Object);
+             var handler = new CreateWorkflowTemplateCommandHandler(entitiesRepository.Object, node.Object, mockStateLogger.Object);
 
             await Assert.ThrowsAsync<MissingOutputException>(async () =>
             await handler.Handle(new CreateWorkflowTemplateCommand()
@@ -191,7 +192,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new Dictionary<string, SubsequentStep> {
                         { "0",
                          new SubsequentStep(){
-                             StepTemplateId =StepTemplate.ReferenceId,
+                             StepTemplateId =FibonacciSampleData.StepTemplate.ReferenceId,
                                       Mappings = new Dictionary<string, Mapping>(){
                                           {"n-1",
                                       new Mapping()
@@ -229,7 +230,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
                     SubsequentSteps = new Dictionary<string, SubsequentStep>{
                         { "1",
                          new SubsequentStep(){
-                             StepTemplateId =StepTemplate.ReferenceId,
+                             StepTemplateId =FibonacciSampleData.StepTemplate.ReferenceId,
                                       Mappings = new Dictionary<string, Mapping>(){
                                           {"n-1",
                                       new Mapping()
@@ -276,15 +277,15 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
         {
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IWorkflowTemplatesRepository> workflowTemplatesRepository = new Mock<IWorkflowTemplatesRepository>();
-            workflowTemplatesRepository.Setup(sr => sr.GetWorkflowTemplateAsync(data.workflowTemplateWithInputs.Id)).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            Mock<IStepTemplatesRepository> stepsRepository = new Mock<IStepTemplatesRepository>();
+            
+            //entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            
 
             var node = Utility.GetMockConsensusCoreNode();
 
             var mockStateLogger = new Mock<ILogger<CreateWorkflowTemplateCommandHandler>>();
 
-            var handler = new CreateWorkflowTemplateCommandHandler(workflowTemplatesRepository.Object, stepsRepository.Object, node.Object, mockStateLogger.Object);
+             var handler = new CreateWorkflowTemplateCommandHandler(entitiesRepository.Object, node.Object, mockStateLogger.Object);
 
             await Assert.ThrowsAsync<NoValidStartingLogicBlockException>(async () => await handler.Handle(new CreateWorkflowTemplateCommand()
             {

@@ -29,6 +29,14 @@ namespace Cindi.Domain.Entities.Workflows
             return false;
         }
 
+        public static string[] CompletedStatus { get {
+                return new string[] {
+            Successful,
+            Warning,
+            Error
+        };
+            } }
+
         public static string ConvertStepStatusToWorkflowStatus(string stepStatus)
         {
             if(stepStatus == StepStatuses.Error)
