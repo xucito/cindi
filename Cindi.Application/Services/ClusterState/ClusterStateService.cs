@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Raft;
+using ConsensusCore.Domain.SystemCommands;
 
 namespace Cindi.Application.Services.ClusterState
 {
@@ -167,14 +168,11 @@ namespace Cindi.Application.Services.ClusterState
             {
                 Commands = new List<BaseCommand>()
                 {
-                    new UpdateLogicBlockLock(){
-                        Action = LockBlockActions.APPLY,
-                        Lock = new LogicBlockLock(){
-                            WorkflowId = workflowid,
-                            LockerCode = lockKey,
-                            LogicBlockId = logicBlockId,
-                            CreatedOn = DateTime.Now
-                        }
+                    new SetLock(){
+                        Name = "Workflow:" + workflowid + ":" + logicBlockId,
+                        LockId = lockKey,
+                        CreatedOn = DateTime.Now,
+                        TimeoutMs = 30000
                     }
                 },
                 WaitForCommits = true
@@ -188,13 +186,10 @@ namespace Cindi.Application.Services.ClusterState
             {
                 Commands = new List<BaseCommand>()
                 {
-                    new UpdateLogicBlockLock(){
-                        Action = LockBlockActions.REMOVE,
-                        Lock = new LogicBlockLock(){
-                            WorkflowId = workflowid,
-                            LockerCode = lockKey,
-                            LogicBlockId = logicBlockId
-                        }
+                    new RemoveLock()
+                    {
+                            Name = "Workflow:" + workflowid + ":" + logicBlockId,
+                            LockId =lockKey
                     }
                 },
                 WaitForCommits = true
@@ -288,7 +283,7 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool WasLockObtained(Guid lockKey, Guid workflowId, string logicBlockId)
         {
-            if (state.LockedLogicBlocks.ContainsKey(workflowId + ":" + logicBlockId) && state.LockedLogicBlocks[(workflowId + ":" + logicBlockId)].LockerCode == lockKey)
+            if (state.Locks.ContainsKey("Workflow:" + workflowId + ":" + logicBlockId) && state.Locks[("Workflow:" + workflowId + ":" + logicBlockId)].LockId == lockKey)
             {
                 return true;
             }
@@ -298,7 +293,7 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool IsLogicBlockLocked(Guid workflowId, string logicBlockId)
         {
-            if (state.LockedLogicBlocks.ContainsKey(workflowId + ":" + logicBlockId))
+            if (state.Locks.ContainsKey(workflowId + ":" + logicBlockId))
             {
                 return true;
             }

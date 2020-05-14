@@ -97,7 +97,6 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 
             if (!workflowStillRunning)
             {
-
                 if(workflow.CompletedLogicBlocks == null)
                 {
                     workflow.CompletedLogicBlocks = new List<string>();

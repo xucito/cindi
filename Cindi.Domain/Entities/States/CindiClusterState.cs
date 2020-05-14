@@ -19,7 +19,7 @@ namespace Cindi.Domain.Entities.States
     {
         public const string DefaultId = "State";
         public string Id { get; private set; } = DefaultId;
-        public Dictionary<string, LogicBlockLock> LockedLogicBlocks = new Dictionary<string, LogicBlockLock>();
+        //public Dictionary<string, LogicBlockLock> LockedLogicBlocks = new Dictionary<string, LogicBlockLock>();
         public string Version { get; private set; } = "1.0";
         public string EncryptionKeyHash { get; private set; }
         public byte[] EncryptionKeySalt { get; private set; }
@@ -90,9 +90,8 @@ namespace Cindi.Domain.Entities.States
                     {
                         Settings.MetricRetentionPeriod = "24h";
                     }
-
                     break;
-                case UpdateLogicBlockLock t1:
+                /*case UpdateLogicBlockLock t1:
                     if (t1.Action == LockBlockActions.APPLY)
                     {
                         LockedLogicBlocks.Add(t1.Lock.WorkflowId + ":" + t1.Lock.LogicBlockId, t1.Lock);
@@ -121,7 +120,7 @@ namespace Cindi.Domain.Entities.States
                         Console.WriteLine("Received a logic block update for " + t1.Lock.WorkflowId + " that did not contain a action");
                     }
                     break;
-
+                    */
                 default:
                     throw new NotImplementedException();
             }
