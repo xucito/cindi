@@ -35,7 +35,7 @@
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="AutoMapper" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.1.0" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.3.8-alpha" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.4.1-alpha" />
     <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="3.0.3" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="6.0.1" />

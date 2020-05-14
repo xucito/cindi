@@ -111,7 +111,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public async Task CleanUpData()
         {
-            while(true)
+            while (true)
             {
                 if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
@@ -219,13 +219,13 @@ namespace Cindi.Application.Services.ClusterMonitor
         {
             while (true)
             {
-                try
+                _logger.LogDebug("Started clean up of workflow.");
+                if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
-                    _logger.LogDebug("Started clean up of workflow.");
-                    if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                    var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => !WorkflowStatuses.CompletedStatus.Contains(w.Status) && w.CreatedOn < DateTime.Now.AddMinutes(-5));
+                    foreach (var workflow in runningWorkflows)
                     {
-                        var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => !WorkflowStatuses.CompletedStatus.Contains(w.Status) && w.CreatedOn < DateTime.Now.AddMinutes(-5));
-                        foreach (var workflow in runningWorkflows)
+                        try
                         {
                             await _mediator.Send(new ScanWorkflowCommand()
                             {
@@ -233,11 +233,12 @@ namespace Cindi.Application.Services.ClusterMonitor
                                 CreatedBy = SystemUsers.CLEANUP_MANAGER
                             });
                         }
+                        catch (Exception e)
+                        {
+                            _logger.LogError("Failed to clean up workflow " + workflow.Id + " with error " + e.Message + Environment.NewLine + e.StackTrace);
+                        }
+
                     }
-                }
-                catch(Exception e)
-                {
-                    _logger.LogError("Failed to clean up workflow executions with error " + e.Message + Environment.NewLine + e.StackTrace);
                 }
                 await Task.Delay(60000);
             }
@@ -269,7 +270,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     }
 
 
-                   // _logger.LogInformation("Starting scheduler loop.");
+                    // _logger.LogInformation("Starting scheduler loop.");
 
                     //Do not run if it is uninitialized
                     if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
@@ -335,7 +336,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                             _logger.LogWarning("Scheduler took longer then 5 second to complete a loop, submitted " + runTasks + " steps, took " + (totalTime) + " milliseconds.");
                         }
 
-                        if(maxLatency < totalTime)
+                        if (maxLatency < totalTime)
                         {
                             maxLatency = totalTime;
                         }
@@ -401,7 +402,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     }
                     Interlocked.Decrement(ref _fetchingDbMetrics);
                 }
-                _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o") );
+                _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o"));
             }
         }
 

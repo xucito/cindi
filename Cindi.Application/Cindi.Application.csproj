@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Cindi.DotNetCore.BotExtensions" Version="1.2.0" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.3.8-alpha" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.4.1-alpha" />
     <PackageReference Include="Cronos" Version="0.7.0" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="2.2.0" />

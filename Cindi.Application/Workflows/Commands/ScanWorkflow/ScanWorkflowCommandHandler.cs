@@ -97,6 +97,12 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 
             if (!workflowStillRunning)
             {
+
+                if(workflow.CompletedLogicBlocks == null)
+                {
+                    workflow.CompletedLogicBlocks = new List<string>();
+                }
+
                 //Evaluate all logic blocks that have not been completed
                 var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key)).ToList();
 

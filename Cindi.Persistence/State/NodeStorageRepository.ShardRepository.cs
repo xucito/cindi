@@ -2,6 +2,7 @@
 using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.BaseClasses;
+using ConsensusCore.Domain.Enums;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.Models;
 using ConsensusCore.Domain.Services;
@@ -98,6 +99,11 @@ namespace Cindi.Persistence.State
                 result.Add(operation.Pos, operation);
             }
             return result;
+        }
+
+        public async Task<List<ShardWriteOperation>> GetShardWriteOperationsAsync(ShardOperationOptions option)
+        {
+            return await _shardWriteOperations.Find(lsm => lsm.Operation == option).ToListAsync();
         }
 
         public int GetTotalShardWriteOperationsCount(Guid shardId)

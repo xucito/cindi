@@ -14,6 +14,7 @@ namespace Cindi.Domain.Entities.Workflows
         public static string Warning { get { return "warning"; } }
         public static string Error { get { return "error"; } }
         public static string Unknown { get { return "unknown"; } }
+        public static string Cancelled { get { return "cancelled"; } }
 
         public static bool IsValid(string value)
         {
@@ -22,7 +23,8 @@ namespace Cindi.Domain.Entities.Workflows
                 value == Warning ||
                 value == Error || 
                 value == Queued || 
-                value == Unknown)
+                value == Unknown ||
+                value == Cancelled)
             {
                 return true;
             }
@@ -33,7 +35,8 @@ namespace Cindi.Domain.Entities.Workflows
                 return new string[] {
             Successful,
             Warning,
-            Error
+            Error,
+            Cancelled
         };
             } }
 
@@ -62,6 +65,10 @@ namespace Cindi.Domain.Entities.Workflows
             if (stepStatus == StepStatuses.Unknown)
             {
                 return Unknown;
+            }
+            if(stepStatus == StepStatuses.Cancelled)
+            {
+                return Cancelled;
             }
             throw new InvalidWorkflowStatusException(stepStatus + " is not a valid Step statuses.");
         }
