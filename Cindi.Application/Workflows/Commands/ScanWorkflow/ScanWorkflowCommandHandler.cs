@@ -126,8 +126,14 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                     workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == request.WorkflowId);
                     workflow.Inputs = DynamicDataUtility.DecryptDynamicData(workflowTemplate.InputDefinitions, workflow.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
+
+                    if (workflow.CompletedLogicBlocks == null)
+                    {
+                        workflow.CompletedLogicBlocks = new List<string>();
+                    }
+
                     //If the logic block is ready to be processed, submit the steps
-                    if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) && !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))
+                    if (logicBlock.Value.Dependencies.Evaluate(workflowSteps) &&  !workflow.CompletedLogicBlocks.Contains(logicBlock.Key))
                     {
                         foreach (var substep in logicBlock.Value.SubsequentSteps)
                         {
