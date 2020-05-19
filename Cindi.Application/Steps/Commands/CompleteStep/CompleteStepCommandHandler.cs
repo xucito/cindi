@@ -168,8 +168,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             if (updatedStep.WorkflowId != null)
             {
-                //Keep track of whether a step has been added
-                var addedStep = false;
                 var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
 
                 if (workflow == null)
@@ -192,6 +190,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 {
                     workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
                 }
+                //Keep track of whether a step has been added
+                bool stepCreated = false;
 
                 //Evaluate all logic blocks that have not been completed
                 var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key)).ToList();
@@ -283,9 +283,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                         // Validate it is in the definition
                                         verifiedInputs.Add(mapping.Key, DynamicDataUtility.GetData(workflow.Inputs, highestPriorityReference.OutputId).Value);
                                     }
-
                                 }
-
+                                stepCreated = true;
                                 //Add the step TODO, add step priority
                                 await _mediator.Send(new CreateStepCommand()
                                 {
@@ -295,7 +294,6 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                                     WorkflowId = workflow.Id,
                                     Name = substep.Key //create the step with the right subsequent step
                                 });
-                                addedStep = true;
                             }
                         }
 
@@ -332,12 +330,10 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 var workflowStatus = workflow.Status;
                 workflowSteps = (await _entitiesRepository.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
                 var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
-
-                var newWorkflowStatus = WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
+                var newWorkflowStatus = stepCreated ? WorkflowStatuses.ConvertStepStatusToWorkflowStatus(StepStatuses.Unassigned) : WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
 
                 if (newWorkflowStatus != workflow.Status)
                 {
-
                     workflow.UpdateJournal(
                     new JournalEntry()
                     {

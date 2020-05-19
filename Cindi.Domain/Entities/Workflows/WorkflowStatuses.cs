@@ -8,7 +8,7 @@ namespace Cindi.Domain.Entities.Workflows
 {
     public class WorkflowStatuses
     {
-        public static string Queued { get { return "queued"; } }
+       // public static string Queued { get { return "queued"; } }
         public static string Started { get { return "started"; } }
         public static string Successful { get { return "successful"; } }
         public static string Warning { get { return "warning"; } }
@@ -22,7 +22,7 @@ namespace Cindi.Domain.Entities.Workflows
                 value == Successful ||
                 value == Warning ||
                 value == Error || 
-                value == Queued || 
+                //value == Queued || 
                 value == Unknown ||
                 value == Cancelled)
             {
@@ -54,13 +54,9 @@ namespace Cindi.Domain.Entities.Workflows
             {
                 return Successful;
             }
-            if (stepStatus == StepStatuses.Assigned || stepStatus == StepStatuses.Suspended)
+            if (stepStatus == StepStatuses.Assigned || stepStatus == StepStatuses.Suspended || stepStatus == StepStatuses.Unassigned)
             {
                 return Started;
-            }
-            if (stepStatus == StepStatuses.Unassigned)
-            {
-                return Queued;
             }
             if (stepStatus == StepStatuses.Unknown)
             {

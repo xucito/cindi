@@ -44,6 +44,83 @@ namespace Cindi.Test.Global.TestData
         {
         };
 
+        public static readonly WorkflowTemplate ConcurrentWorkflowTemplate = new WorkflowTemplate(Guid.NewGuid(),
+            "ConcurrentFibonacci:0",
+            "",
+            new Dictionary<string, DynamicDataDescription>(),
+            new Dictionary<string, LogicBlock>()
+            {
+                {  "0",
+                new LogicBlock()
+                {
+                    Dependencies = new ConditionGroup
+                    {
+                        Operator = "OR",
+                        Conditions = new Dictionary<string, Condition>(){},
+                    },
+                    SubsequentSteps = new Dictionary<string, SubsequentStep> {
+                        { ""+0,
+                         new SubsequentStep(){
+                             StepTemplateId =StepTemplate.ReferenceId,
+                                      Mappings = new Dictionary<string, Mapping>(){
+                                          {"n-1",
+                                      new Mapping()
+                                       {
+                                           DefaultValue = new DefaultValue(){
+                                               Value = 1
+                                           }
+                                       }
+                                          },
+                                      {"n-2",
+                                      new Mapping(){
+                                           DefaultValue = new DefaultValue(){
+                                               Value = 1
+                                           }
+                                       }
+                                          }
+                                   }
+                         } }
+                }
+                }
+                },
+                {  "1",
+                new LogicBlock()
+                {
+                    Dependencies = new ConditionGroup
+                    {
+                        Operator = "OR",
+                        Conditions = new Dictionary<string, Condition>(){},
+                    },
+                    SubsequentSteps = new Dictionary<string, SubsequentStep> {
+                        { ""+1,
+                         new SubsequentStep(){
+                             StepTemplateId =StepTemplate.ReferenceId,
+                                      Mappings = new Dictionary<string, Mapping>(){
+                                          {"n-1",
+                                      new Mapping()
+                                       {
+                                           DefaultValue = new DefaultValue(){
+                                               Value = 1
+                                           }
+                                       }
+                                          },
+                                      {"n-2",
+                                      new Mapping(){
+                                           DefaultValue = new DefaultValue(){
+                                               Value = 1
+                                           }
+                                       }
+                                          }
+                                   }
+                         } }
+                }
+                }
+                }
+            },
+            "admin",
+            DateTime.Now
+            );
+
         public static readonly WorkflowTemplate WorkflowTemplate = new WorkflowTemplate(Guid.NewGuid(),
             "Fibonacci:0",
             "",

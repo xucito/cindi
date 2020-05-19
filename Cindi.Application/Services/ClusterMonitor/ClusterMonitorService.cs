@@ -97,7 +97,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public void Start()
         {
-            monitoringTimer.Change(0, 100);
+            monitoringTimer.Change(0, _clusterOptions.Value.MetricsIntervalMs);
             secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();

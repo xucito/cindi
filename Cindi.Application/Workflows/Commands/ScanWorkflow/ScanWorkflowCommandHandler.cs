@@ -95,6 +95,8 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                 }
             }
 
+            bool stepCreated = false;
+
             if (!workflowStillRunning)
             {
                 if(workflow.CompletedLogicBlocks == null)
@@ -193,9 +195,8 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                                         // Validate it is in the definition
                                         verifiedInputs.Add(mapping.Key, DynamicDataUtility.GetData(workflow.Inputs, highestPriorityReference.OutputId).Value);
                                     }
-
                                 }
-
+                                stepCreated = true;
                                 //Add the step TODO, add step priority
                                 await _mediator.Send(new CreateStepCommand()
                                 {
@@ -242,8 +243,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                 var workflowStatus = workflow.Status;
                 workflowSteps = (await _entitiesRepository.GetAsync<Step>(s => s.WorkflowId == request.WorkflowId)).ToList();
                 var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
-
-                var newWorkflowStatus = WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
+                var newWorkflowStatus = stepCreated ? WorkflowStatuses.ConvertStepStatusToWorkflowStatus(StepStatuses.Unassigned) : WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
 
                 if (newWorkflowStatus != workflow.Status)
                 {

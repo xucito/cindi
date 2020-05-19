@@ -7,6 +7,7 @@ using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Test.Global;
+using Cindi.Test.Global.TestData;
 using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -79,6 +80,52 @@ namespace Cindi.Application.Tests.Workflows.Commands
             }, new System.Threading.CancellationToken());
             Assert.Single(result.Messages);
             Assert.Contains("is running", result.Messages[0]);
+        }
+
+        [Fact]
+        public async void DetectMissingStartingStep()
+        {
+
+        }
+
+        [Fact]
+        public async void RerunFailedWorkflowStepCreation()
+        {
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+
+            FibonacciWorkflowData data = new FibonacciWorkflowData(5);
+
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
+                new Workflow(Guid.NewGuid(),
+                FibonacciSampleData.ConcurrentWorkflowTemplate.ReferenceId,
+                new Dictionary<string, object>(),
+                "",
+                "admin",
+                DateTime.Now
+            )));
+
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            entitiesRepository.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
+                    new Step()
+                        {
+                            Status = StepStatuses.Error,
+                            Name  = "0"
+                        }
+                    }));
+            var mockStateLogger = new Mock<ILogger<ScanWorkflowCommandHandler>>();
+
+            clusterMoq.Setup(cm => cm.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(true);
+
+            var handler = new ScanWorkflowCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, _node.Object);
+
+            var result = await handler.Handle(new ScanWorkflowCommand()
+            {
+                WorkflowId = Guid.NewGuid()
+            }, new System.Threading.CancellationToken());
+
+            Assert.Single(result.Messages);
+            Assert.Contains("Started workflow step 1", result.Messages[0]);
         }
 
         [Fact]
