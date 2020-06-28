@@ -28,7 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="NewFolder\" />
+    <Folder Include="Enum\" />
+    <Folder Include="Options\" />
+    <Folder Include="ValueObjects\" />
   </ItemGroup>
 
 </Project>

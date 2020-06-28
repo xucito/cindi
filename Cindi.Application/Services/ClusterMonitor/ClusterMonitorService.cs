@@ -97,7 +97,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public void Start()
         {
-            monitoringTimer.Change(0, _clusterOptions.Value.MetricsIntervalMs);
+            monitoringTimer.Change(0, 100);
             secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();
@@ -123,22 +123,27 @@ namespace Cindi.Application.Services.ClusterMonitor
                     CommandResult result = null;
                     do
                     {
-                        var startTime = DateTime.Now;
                         if (_state.GetSettings != null)
                         {
+                            var entities = await _entitiesRepository.GetAsync<MetricTick>((s) => s.Date < DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod)));
                             try
                             {
-                                result = await _mediator.Send(new DeleteEntityCommand<MetricTick>
+                                foreach (var tick in entities)
                                 {
-                                    Expression = (s) => s.Date < DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod))
-                                });
-                                _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
+                                    var startTime = DateTime.Now;
+                                    result = await _mediator.Send(new DeleteEntityCommand<MetricTick>
+                                    {
+                                        Entity = tick
+                                    });
+                                    _logger.LogDebug("Cleanup of record " + result.ObjectRefId + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
+                                   // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
+                                }
                             }
                             catch (Exception e)
                             {
                                 _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
                             }
-                            _logger.LogDebug("Cleanup took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
+                            
                         }
                         // }
                     }

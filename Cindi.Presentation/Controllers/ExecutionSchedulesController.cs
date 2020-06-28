@@ -100,9 +100,13 @@ namespace Cindi.Presentation.Controllers
         [Route("{name}")]
         public async Task<IActionResult> Delete(string name)
         {
-            return Ok(await Mediator.Send(new DeleteEntityCommand<ExecutionSchedule>()
+            var result = await Mediator.Send(new GetEntityQuery<ExecutionSchedule>()
             {
                 Expression = de => de.Name == name
+            });
+            return Ok(await Mediator.Send(new DeleteEntityCommand<ExecutionSchedule>()
+            {
+                Entity = result.Result
             }));
         }
     }

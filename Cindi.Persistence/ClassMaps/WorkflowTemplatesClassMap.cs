@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Cindi.Persistence.WorkflowTemplates
 {
-    public static class WorkflowTemplatesEntriesMap
+    public static class WorkflowTemplatesClassMap
     {
         public static void Register(BsonClassMap<WorkflowTemplate> cm)
         {

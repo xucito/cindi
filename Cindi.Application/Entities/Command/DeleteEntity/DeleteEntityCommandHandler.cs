@@ -30,47 +30,20 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var entity = await _entitiesRepository.GetFirstOrDefaultAsync(request.Expression);
-
-            if (entity != null)
+            var result = await _node.Handle(new AddShardWriteOperation()
             {
-                var objectLock = await _node.Handle(new RequestDataShard()
-                {
-                    Type = typeof(T).Name,
-                    ObjectId = entity.Id,
-                    CreateLock = true,
-                    LockTimeoutMs = 3000
-                });
-
-                if (objectLock.IsSuccessful)
-                {
-                    await _node.Handle(new AddShardWriteOperation()
-                    {
-                        Data = entity,
-                        WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                        RemoveLock = true
-                    });
-
-                    return new CommandResult()
-                    {
-                        ObjectRefId = entity.Id.ToString(),
-                        Type = CommandResultTypes.Delete,
-                        ElapsedMs = stopwatch.ElapsedMilliseconds,
-                        IsSuccessful = true
-                    };
-                }
-                else
-                {
-                    throw new FailedClusterOperationException("Failed to apply cluster operation with for entity " + entity.Id + " of type " + nameof(T));
-                }
-            }
+                Data = request.Entity,
+                WaitForSafeWrite = true,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
+                RemoveLock = false
+            });
 
             return new CommandResult()
             {
+                ObjectRefId = request.Entity.Id.ToString(),
                 Type = CommandResultTypes.Delete,
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
-                IsSuccessful = false
+                IsSuccessful = result.IsSuccessful
             };
 
         }

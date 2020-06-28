@@ -10,6 +10,6 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
 {
     public class DeleteEntityCommand<T> : IRequest<CommandResult> where T : ShardData
     {
-        public Expression<Func<T, bool>> Expression { get; set; }
+        public ShardData Entity { get; set; }
     }
 }

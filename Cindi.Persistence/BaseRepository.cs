@@ -34,6 +34,8 @@ using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Entities.ExecutionSchedule;
+using Cindi.Domain.Entities.WorkflowsTemplates;
+using Cindi.Persistence.WorkflowTemplates;
 
 namespace Cindi.Persistence
 {
@@ -52,6 +54,7 @@ namespace Cindi.Persistence
         {
             BsonClassMap.RegisterClassMap<WorkflowMetadata>(cm => WorkflowsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<Workflow>(seq => WorkflowsClassMap.Register(seq));
+            BsonClassMap.RegisterClassMap<WorkflowTemplate>(seq => WorkflowTemplatesClassMap.Register(seq));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<Journal>(je => JournalsClassMap.Register(je));
             BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));

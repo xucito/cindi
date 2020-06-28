@@ -113,7 +113,21 @@ namespace Cindi.Application.Services
                 if (e.Message.Contains("E11000 duplicate key error collection"))
                 {
                     Console.WriteLine("Detected that there was a duplicate record in the database... Updating existing record and continueing");
-                    return await UpdateDataAsync(data);
+                    try
+                    {
+                        return await UpdateDataAsync(data);
+                    }
+                    catch(Exception updateError)
+                    {
+                        if(updateError.Message.Contains("has no supported update operations"))
+                        {
+                            return data;
+                        }
+                        else
+                        {
+                            throw updateError;
+                        }
+                    }
                 }
                 throw e;
             }
@@ -140,7 +154,7 @@ namespace Cindi.Application.Services
                 case ExecutionSchedule t1:
                     return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
             }
-            throw new Exception("Object type " + data.ShardType + "has no supported operations");
+            throw new Exception("Object type " + data.ShardType + " has no supported update operations");
         }
     }
 }

@@ -26,6 +26,7 @@ WORKDIR /app
 
 # Copy csproj and restore as distinct layers
 COPY ./Cindi.Presentation/Cindi.Presentation.csproj ./
+COPY ./nuget.config ./
 
 # Copy everything else and build
 COPY ./Cindi.Presentation/. ./
