@@ -106,9 +106,13 @@ namespace Cindi.Persistence.State
             return await _shardWriteOperations.Find(lsm => lsm.Operation == option).ToListAsync();
         }
 
-        public int GetTotalShardWriteOperationsCount(Guid shardId)
+        public int GetLastShardWriteOperationPos(Guid shardId)
         {
-            return (int)_shardWriteOperations.CountDocuments(c => c.Data.ShardId == shardId);
+            var lastOperation = _shardWriteOperations.Find(c => c.Data.ShardId == shardId).SortByDescending(s => s.Pos).FirstOrDefault();
+            if (lastOperation != null)
+                return (int)lastOperation.Pos;
+            else
+                return 0;
         }
 
         public bool IsObjectMarkedForDeletion(Guid shardId, Guid objectId)
