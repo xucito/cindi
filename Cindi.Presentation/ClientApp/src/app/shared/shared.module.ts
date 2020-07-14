@@ -15,7 +15,9 @@ import {
   NbButtonModule,
   NbSelectModule,
   NbInputModule,
-  NbAccordionModule
+  NbAccordionModule,
+  NbBadgeModule,
+  NbAlertModule
 } from "@nebular/theme";
 import { CodemirrorModule } from "@ctrl/ngx-codemirror";
 import { TemplateViewComponent } from "./components/template-view/template-view.component";
@@ -67,7 +69,11 @@ import { DataTableComponent } from './components/data-table/data-table.component
     ConditionsGroupVisualizerComponent,
     LogicBlockVisualizerComponent,
     NgxChartsModule,
-    DataTableComponent
+    DataTableComponent,
+    CodemirrorModule,
+    FormsModule,
+    NbBadgeModule,
+    NbAlertModule
   ],
   imports: [
     NgxDatatableModule,
@@ -88,6 +94,8 @@ import { DataTableComponent } from './components/data-table/data-table.component
     NbButtonModule,
     NbStepperModule,
     NgxChartsModule,
+    NbBadgeModule,
+    NbAlertModule
   ]
 })
 export class SharedModule {}

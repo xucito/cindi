@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { NbMenuModule } from '@nebular/theme';
+import { NbMenuModule, NbCheckboxModule } from '@nebular/theme';
 
 import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
@@ -20,6 +20,7 @@ import { StepComponent } from './step/step.component';
 import { StepsComponent } from './steps/steps.component';
 import { ExecutionTemplatesComponent } from './execution-templates/execution-templates.component';
 import { ExecutionSchedulesComponent } from './execution-schedules/execution-schedules.component';
+import { ConsoleComponent } from './console/console.component';
 
 @NgModule({
   imports: [
@@ -27,7 +28,8 @@ import { ExecutionSchedulesComponent } from './execution-schedules/execution-sch
     ThemeModule,
     NbMenuModule,
     DashboardModule,
-    SharedModule
+    SharedModule,
+    NbCheckboxModule
   ],
   declarations: [
     PagesComponent,
@@ -44,7 +46,8 @@ import { ExecutionSchedulesComponent } from './execution-schedules/execution-sch
     StepComponent,
     StepsComponent,
     ExecutionTemplatesComponent,
-    ExecutionSchedulesComponent
+    ExecutionSchedulesComponent,
+    ConsoleComponent
   ],
 })
 export class PagesModule {

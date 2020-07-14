@@ -9,23 +9,28 @@ export const MENU_ITEMS: NbMenuItem[] = [
   },
   {
     title: "Steps",
-    icon: "file-text-outline",
+    icon: "arrow-circle-right-outline",
     link: "/pages/steps"
   },
   {
     title: "Workflows",
-    icon: "file-text-outline",
+    icon: "shuffle-2-outline",
     link: "/pages/workflows"
   },
   {
     title: "Execution-Schedules",
-    icon: "heart-outline",
+    icon: "clock-outline",
     link: "/pages/execution-schedules"
   },
   {
     title: "Monitoring",
     icon: "heart-outline",
     link: "/pages/monitoring"
+  },
+  {
+    title: "Console",
+    icon: "browser-outline",
+    link: "/pages/console"
   },
   {
     title: "Templates",
@@ -43,7 +48,7 @@ export const MENU_ITEMS: NbMenuItem[] = [
       },
       {
         title: "Execution-Templates",
-        icon: "heart-outline",
+        icon: "book-outline",
         link: "/pages/execution-templates"
       },
       {

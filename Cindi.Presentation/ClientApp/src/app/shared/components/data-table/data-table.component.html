@@ -6,12 +6,17 @@
   <!-- Column Templates -->
   <ngx-datatable-column *ngFor="let column of getDisplayColumns()" [resizeable]="true" [sortable]="true"
     [draggable]="false" [canAutoResize]="true" [name]="column.name">
-    <ng-template let-row="row" ngx-datatable-cell-template>
+    <ng-template  let-row="row" ngx-datatable-cell-template>
+      <div *ngIf="column.type != 'datetime'">
       {{row[column.prop]}}
+    </div>
+    <div *ngIf="column.type == 'datetime'">
+        {{row[column.prop] | date:'MM/dd h:mm:ss'}}
+      </div>
     </ng-template>
   </ngx-datatable-column>
 
-  <ngx-datatable-column>
+  <ngx-datatable-column [canAutoResize]="true" [resizeable]="true" [width]="300" >
     <ng-template let-row="row" ngx-datatable-cell-template>
       <nb-actions size="small">
         <nb-action [style.display]="row['hide' + action.action] == undefined ? 'block' : 'none'" [icon]="action.icon"

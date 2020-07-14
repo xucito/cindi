@@ -2,6 +2,7 @@
 
   <nb-card-header>
     <span>Steps</span>
+    <nb-checkbox (valueChange)="toggleRefresh()" [value]="enableReload">Auto Refresh</nb-checkbox>
   </nb-card-header>
 
   <nb-card-body class="body">

@@ -26,6 +26,9 @@ import { ConvertTemplateToInputs } from "../../shared/utility/data-mapper";
 import { loadSteps } from "../../entities/steps/step.actions";
 import { StepStatuses } from "../../entities/steps/step-statuses.enum";
 import { NotificationService } from '../../shared/services/notification.service';
+import { Observable, Subscription } from 'rxjs';
+import 'rxjs/add/observable/interval';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: "steps",
@@ -40,7 +43,7 @@ export class StepsComponent implements OnInit {
   columns = [
     { name: "id", prop: "truncatedid" },
     { name: "stepTemplateId" },
-    { name: "createdOn" },
+    { name: "createdOn", type: "datetime"},
     { name: "status" },
     { name: "workflowId" },
     { name: "Clone", icon: "copy", action: "clone", type: "button" },
@@ -48,12 +51,15 @@ export class StepsComponent implements OnInit {
     { name: "Stop", icon: "close-circle", action: "stop", type: "button" },
     { name: "Pause", icon: "pause-circle", action: "pause", type: "button" },
     { name: "Play", icon: "play-circle", action: "play", type: "button" },
-    { name: "Retry", icon: "sync-outline", action: "retry", type: "button" }
+    { name: "Retry", icon: "sync-outline", action: "retry", type: "button" },
+    { name: "Go", icon: "book-open-outline", action: "go", type: "button" }
   ];
 
   rows = [];
   page: Page = new Page();
   isLoading = false;
+  reload$: Subscription;
+  enableReload: boolean = true;
 
   constructor(
     private cindiData: CindiClientService,
@@ -61,15 +67,37 @@ export class StepsComponent implements OnInit {
     private stepTemplateStore: Store<fromStepTemplate.State>,
     private windowService: NbWindowService,
     private toastrService: NbToastrService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {
+    this.page.sortStatement = "createdOn:-1";
     this.setPage({
       offset: 0,
       pageSize: 10
     });
+
+    this.reload$ = Observable.interval(5000)
+    .subscribe((val) => { this.reload(); });
   }
 
   ngOnInit() {}
+
+  toggleRefresh()
+  {
+    this.enableReload = !this.enableReload;
+  }
+
+  reload()
+  {
+    if(this.enableReload)
+    {
+    this.setPage({
+      offset: this.page.pageNumber,
+      pageSize: this.page.size
+    });
+  }
+  }
 
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
@@ -90,16 +118,14 @@ export class StepsComponent implements OnInit {
               element.hidestop = true;
               element.hidepause = true;
               element.hideplay = true;
-              element.hideretry = true;
             } else if (element.status == StepStatuses.Assigned) {
               element.hidepause = true;
               element.hideplay = true;
             } else if (element.status == StepStatuses.Suspended) {
               element.hidepause = true;
-              element.hideretry = true;
+              element.hideretry = false;
             } else if (element.status == StepStatuses.Unassigned) {
               element.hideplay = true;
-              element.hideretry = true;
             }
           });
 
@@ -218,6 +244,8 @@ export class StepsComponent implements OnInit {
       case "retry":
         this.updateStep(event.value.id, "unassigned");
         break;
+      case "go":
+        this.router.navigate([event.value.id], { relativeTo: this.route });
     }
   }
 

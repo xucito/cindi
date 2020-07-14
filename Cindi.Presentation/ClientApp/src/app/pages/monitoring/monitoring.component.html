@@ -1,16 +1,27 @@
-<div class="row">
+<nb-card>
 
-  <nb-card *ngFor="let metric of generatedGraphs; let i = index">
-    <nb-card-header>
-      <span>{{metric.metricName}}</span>
-    </nb-card-header>
-    <nb-card-body class="body">
-      <div *ngIf="results[i]">
-        <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [legend]="false" [showXAxisLabel]="showXAxisLabel"
-          [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="''"
-          [results]="results[i]" [animations]="false">
-        </ngx-charts-line-chart>
-      </div>
-    </nb-card-body>
-  </nb-card>
-</div>
+  <nb-card-header>
+    <span>Monitoring</span>
+    <nb-select (selectedChange)="toggleTimeframe($event)" [(selected)]="offsetMinutes">
+      <nb-option value="15">15 mins</nb-option>
+      <nb-option value="60">1 hr</nb-option>
+      <nb-option value="720">12 hr</nb-option>
+      <nb-option value="1440">24 hr</nb-option>
+    </nb-select>
+  </nb-card-header>
+
+</nb-card>
+    <div class="row">
+    <nb-card *ngFor="let metric of generatedGraphs; let i = index">
+      <nb-card-header>
+        <span>{{metric.metricName}}</span>
+      </nb-card-header>
+      <nb-card-body class="body">
+        <div *ngIf="results[i]">
+          <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [legend]="false" [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="''" [results]="results[i]"
+            [animations]="false">
+          </ngx-charts-line-chart>
+        </div>
+      </nb-card-body>
+    </nb-card></div>

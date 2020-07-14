@@ -31,7 +31,7 @@ export class DataTableComponent {
 
   getDisplayColumns() {
     return this.columns.filter(
-      c => ((c.type == undefined))
+      c => ((c.type == undefined || c.type == 'datetime'))
     );
   }
 

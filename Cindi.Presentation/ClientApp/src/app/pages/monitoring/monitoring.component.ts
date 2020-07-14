@@ -43,7 +43,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   }
   ngOnInit() {}
   multi: any[];
-  view: any[] = [500, 300];
+  view: any[] = [((window.innerWidth-500)/2), 300];
 
   // options
   legend: boolean = true;
@@ -68,19 +68,39 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   schedulerMetrics;
   pastTime;
   currentTime;
+  offsetMinutes;
 
   constructor(private cindiClient: CindiClientService) {
     Object.assign(this, this.multi);
+    this.offsetMinutes = '15';
     this.LoadPage();
     this.metricReload$ = interval(10000).subscribe(() => {
       this.LoadPage();
     });
   }
 
+  toggleTimeframe($event)
+  {
+    this.offsetMinutes = $event;
+    if($event > 15)
+    {
+      this.generatedGraphs.forEach(element => {
+        element.interval = "M"
+      });
+    }
+    else
+    {
+      this.generatedGraphs.forEach(element => {
+        element.interval = "S"
+      });
+    }
+    this.LoadPage();
+  }
+
   LoadPage() {
     this.currentTime = new Date();
     this.pastTime = new Date(this.currentTime);
-    this.pastTime.setMinutes(this.pastTime.getMinutes() - 30);
+    this.pastTime.setMinutes(this.pastTime.getMinutes() - this.offsetMinutes);
 
     let tasks = [];
     this.generatedGraphs.forEach(element => {
