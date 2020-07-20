@@ -11,6 +11,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -101,9 +102,9 @@ namespace Cindi.Persistence.State
             return result;
         }
 
-        public async Task<List<ShardWriteOperation>> GetShardWriteOperationsAsync(Guid shardId, ShardOperationOptions option)
+        public async Task<List<ShardWriteOperation>> GetShardWriteOperationsAsync(Guid shardId, ShardOperationOptions option, int limit)
         {
-            return await _shardWriteOperations.Find(lsm => lsm.Operation == option && lsm.Data.ShardId == shardId).ToListAsync();
+            return await _shardWriteOperations.Find(lsm => lsm.Operation == option && lsm.Data.ShardId == shardId).SortBy(l => l.TransactionDate).Limit(limit).ToListAsync();
         }
 
         public int GetLastShardWriteOperationPos(Guid shardId)
@@ -136,6 +137,14 @@ namespace Cindi.Persistence.State
         {
             var result = await _shardWriteOperations.DeleteOneAsync(d => d.Pos == pos && d.Data.ShardId == shardId);
             return result.IsAcknowledged;
+        }
+
+        public async Task<bool> DeleteShardWriteOperationsAsync(List<ShardWriteOperation> shardWriteOperations)
+        {
+            // throw new NotImplementedException();
+            var ids = shardWriteOperations.Select(swo => swo.Id);
+            await _shardWriteOperations.DeleteManyAsync(d => ids.Contains(d.Id));
+            return true;
         }
     }
 }
