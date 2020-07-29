@@ -164,6 +164,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
             });
 
+            Logger.LogInformation("Updated step " + stepToComplete.Id + " with status " + stepToComplete.Status);
+
             var updatedStep = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == stepToComplete.Id);
 
             if (updatedStep.WorkflowId != null)
@@ -194,10 +196,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 bool stepCreated = false;
 
                 //Evaluate all logic blocks that have not been completed
-                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key)).ToList();
+                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key) && lb.Value.Dependencies.ContainsStep(updatedStep.Name)).ToList();
 
                 foreach (var logicBlock in logicBlocks)
                 {
+                    Logger.LogInformation("Processing logic block " + logicBlock.Key + " for workflow " + workflow.Id);
                     var lockId = Guid.NewGuid();
                     bool lockObtained = false;
                     while (!lockObtained)

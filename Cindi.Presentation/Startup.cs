@@ -56,6 +56,7 @@ using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Enums;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace Cindi.Presentation
 {
@@ -81,6 +82,10 @@ namespace Cindi.Presentation
             // Create a container-builder and register dependencies
             var builder = new ContainerBuilder();
 
+            services.AddResponseCompression(options =>
+            {
+                options.Providers.Add<GzipCompressionProvider>();
+            });
 
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
@@ -190,6 +195,14 @@ namespace Cindi.Presentation
 
             var AutofacContainer = builder.Build();
 
+            System.Net.ServicePointManager.ServerCertificateValidationCallback +=
+            delegate (object sender, System.Security.Cryptography.X509Certificates.X509Certificate certificate,
+                                    System.Security.Cryptography.X509Certificates.X509Chain chain,
+                                    System.Net.Security.SslPolicyErrors sslPolicyErrors)
+            {
+                return true; // **** Always accept
+            };
+
             // this will be used as the service-provider for the application!
             return new AutofacServiceProvider(AutofacContainer);
         }
@@ -275,7 +288,7 @@ namespace Cindi.Presentation
                 if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     metricManagementService.InitializeMetricStore();
-                    if(service.GetSettings == null)
+                    if (service.GetSettings == null)
                     {
                         logger.LogWarning("No setting detected, resetting settings to default.");
                         med.Send(new UpdateClusterStateCommand()
@@ -305,6 +318,8 @@ namespace Cindi.Presentation
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseHttpsRedirection();
 
             app.UseSwagger();
 

@@ -17,6 +17,16 @@ RUN apt-get update
 
 RUN apt-get install -y mongodb-org
 
+RUN apt-get install wget && \
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg && \
+ mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/ &&\
+wget -q https://packages.microsoft.com/config/ubuntu/18.04/prod.list &&\
+ mv prod.list /etc/apt/sources.list.d/microsoft-prod.list 
+
+RUN apt-get install -y apt-transport-https && \
+  apt-get update && \
+  apt-get install -y dotnet-sdk-2.2
+
 FROM microsoft/dotnet:2.2-sdk AS build
 
 RUN apt-get update -yq && apt-get upgrade -yq && apt-get install -yq curl git nano

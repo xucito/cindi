@@ -50,9 +50,14 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Step step;
+            Step step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
-            if ((step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => (e.Status == StepStatuses.Suspended) && e.Id == request.StepId)) == null)
+            if(step == null)
+            {
+                throw new Exception("Failed to find step " + step.Id); 
+            }
+
+            if (step.Status == StepStatuses.Suspended)
             {
                 return new CommandResult()
                 {
@@ -73,6 +78,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             // Applied the lock successfully
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
+                Logger.LogInformation("Applied lock on step " + request.StepId + " with lock id " + stepLockResult.LockId);
                 step = (Step)stepLockResult.Data;
                 if (step.Status == StepStatuses.Unassigned ||
                     step.Status == StepStatuses.Suspended ||
@@ -112,7 +118,8 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                         Data = step,
                         WaitForSafeWrite = true,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                        RemoveLock = true
+                        RemoveLock = true,
+                        LockId = stepLockResult.LockId.Value
                     });
 
                     if (result.IsSuccessful)

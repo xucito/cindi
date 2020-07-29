@@ -236,7 +236,8 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                     Data = unassignedStep,
                                     WaitForSafeWrite = true,
                                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                                    RemoveLock = true
+                                    RemoveLock = true,
+                                    LockId = assigned.LockId.Value
                                 });
 
                                 //await _entitiesRepository.UpdateStep(unassignedStep);

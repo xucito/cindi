@@ -16,6 +16,7 @@ namespace Cindi.Presentation
     {
         public static FileLoggerOptions _fileLoggingOptions { get; set; }
         public static bool EnableLogToFile { get; set; }
+        public static IConfiguration configuration;
 
         public static void Main(string[] args)
         {
@@ -25,6 +26,8 @@ namespace Cindi.Presentation
                 .AddCommandLine(args)
                 .AddEnvironmentVariables()
                 .Build();
+
+            configuration = config;
 
             _fileLoggingOptions = config.GetSection("Logging:File").Get<FileLoggerOptions>();
             // config.Bind("Logging:File",_fileLoggingOptions);//.Bind(_fileLoggingOptions);
@@ -40,12 +43,16 @@ namespace Cindi.Presentation
             {
                 Console.WriteLine("WARNING: Logs are not being persisted to disk, this can be configured using the setting Logging:File:Enabled");
             }
-
+            
             CreateWebHostBuilder(args).Build().Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureKestrel(serverOptions =>
+                {
+                    serverOptions.Configure(configuration.GetSection("Kestrel"));
+                })
                 .ConfigureServices(services => services.AddAutofac())
                 .ConfigureLogging(builder =>
                 {
