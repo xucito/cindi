@@ -4,6 +4,7 @@ using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -22,22 +23,25 @@ namespace Cindi.Presentation.Authentication
         private IMediator _mediator;
         private ILogger<BotAuthenticationHandler> _logger;
         private Stopwatch stopwatch;
+        private IMemoryCache _cache;
 
         public BotAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
             ISystemClock clock,
-            IMediator mediator)
+            IMediator mediator,
+            IMemoryCache cache)
             : base(options, logger, encoder, clock)
         {
             _mediator = mediator;
             _logger = logger.CreateLogger<BotAuthenticationHandler>();
 
-            if(_logger.IsEnabled(LogLevel.Debug))
+            if (_logger.IsEnabled(LogLevel.Debug))
             {
                 stopwatch = new Stopwatch();
             }
+            _cache = cache;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -55,15 +59,29 @@ namespace Cindi.Presentation.Authentication
             }
             var id = authHeader;
 
-            var key = await _mediator.Send(new GetEntityQuery<BotKey>()
+            BotKey botkey;
+
+            if (!_cache.TryGetValue(id, out botkey))
             {
-                Expression = bk => bk.Id == new Guid(id)
-            });
-            
-            if (key.Count == 0)
-            {
-                return AuthenticateResult.Fail("Bot Id is not valid.");
+                // Set cache options.
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    // Keep in cache for this time, reset time if accessed.
+                    .SetSlidingExpiration(TimeSpan.FromSeconds(10));
+                var result = await _mediator.Send(new GetEntityQuery<BotKey>()
+                {
+                    Expression = bk => bk.Id == new Guid(id)
+                });
+
+                if (result.Count == 0)
+                {
+                    return AuthenticateResult.Fail("Bot " + id.ToString() + " is not valid.");
+                }
+
+                botkey = result.Result;
+                // Save data in cache.
+                _cache.Set(id, botkey, cacheEntryOptions);
             }
+
 
             /*double nonce = Double.Parse(SecurityUtility.RsaDecryptWithPublic(nonceHeaders.First(), key.Result.PublicEncryptionKey));
 
@@ -79,7 +97,7 @@ namespace Cindi.Presentation.Authentication
             });*/
 
             var claims = new[] {
-                new Claim("id", key.Result.Id.ToString()),
+                new Claim("id", botkey.Id.ToString()),
                 new Claim("authenticationType", "bot")
             };
             var identity = new ClaimsIdentity(claims, Scheme.Name);

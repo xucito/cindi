@@ -20,6 +20,7 @@ using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
 using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -37,18 +38,21 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IClusterStateService _clusterStateService;
         public ILogger<AssignStepCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
+        private IMemoryCache _cache;
 
         public AssignStepCommandHandler(
             IEntitiesRepository entitiesRepository,
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
-            IClusterRequestHandler node
+            IClusterRequestHandler node,
+            IMemoryCache cache
             )
         {
             _entitiesRepository = entitiesRepository;
             _clusterStateService = stateService;
             Logger = logger;
             _node = node;
+            _cache = cache;
         }
         public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
@@ -60,8 +64,19 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var assignedStepSuccessfully = false;
                 Step unassignedStep = null;
                 var dateChecked = DateTime.UtcNow;
+                BotKey botkey;
 
-                var botkey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+                if(!_cache.TryGetValue(request.BotId, out botkey))
+                {
+                    // Set cache options.
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        // Keep in cache for this time, reset time if accessed.
+                        .SetSlidingExpiration(TimeSpan.FromSeconds(10));
+                    botkey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+                    // Save data in cache.
+                    _cache.Set(request.BotId, botkey, cacheEntryOptions);
+                }
+
                 if (botkey.IsDisabled)
                 {
                     return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))

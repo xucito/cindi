@@ -79,11 +79,15 @@ namespace Cindi.Persistence
                 }
             }
 
-            return await _entity.Find(expression != null ? expression : FilterDefinition<T>.Empty)
-                .Sort(sort != null ? "{" + transformedSortString + "}" : null)
-                .Limit(size).Skip(page * size)
-                .Project<T>(definition)
-                .ToListAsync<T>();
+            var statement = _entity.Find(expression != null ? expression : FilterDefinition<T>.Empty)
+                .Sort(sort != null && sort != "" ? "{" + transformedSortString + "}" : null)
+                .Limit(size).Skip(page * size);
+
+            if (exclusions != null)
+            {
+                statement = statement.Project<T>(definition);
+            }
+            return await statement.ToListAsync<T>();
         }
 
         public async Task<bool> Delete<T>(Expression<Func<T, bool>> expression)
