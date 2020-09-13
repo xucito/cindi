@@ -30,6 +30,12 @@ namespace Cindi.Presentation.Controllers
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            
+            if(command.ReferenceId == null && (command.Name == null || command.Version == null))
+            {
+                return BadRequest("Either referenceId needs to be set or name and version must be set.");
+            }
+
             try
             {
                 if (command.OutputDefinitions == null)

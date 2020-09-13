@@ -42,10 +42,17 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            if(request.ReferenceId != null)
+            {
+                request.Name = request.ReferenceId.Split(':')[0];
+                request.Version = request.ReferenceId.Split(':')[1];
+            }
+
+
             var newId = Guid.NewGuid();
             var newStepTemplate = new StepTemplate(
                 newId,
-                request.Name + ":" + request.Version,
+                request.ReferenceId == null ? request.Name + ":" + request.Version : request.ReferenceId,
                 request.Description,
                 request.AllowDynamicInputs,
                 request.InputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
