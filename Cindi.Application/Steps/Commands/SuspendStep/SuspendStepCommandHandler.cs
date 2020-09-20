@@ -25,17 +25,17 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
 {
     public class SuspendStepCommandHandler : IRequestHandler<SuspendStepCommand, CommandResult>
     {
-        public IStepsRepository _stepsRepository;
+        public IEntitiesRepository _entitiesRepository;
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
 
-        public SuspendStepCommandHandler(IStepsRepository stepsRepository,
+        public SuspendStepCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
              IClusterRequestHandler node)
         {
-            _stepsRepository = stepsRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
             options.OnChange((change) =>
@@ -50,17 +50,36 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            Step step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+
+            if(step == null)
+            {
+                throw new Exception("Failed to find step " + step.Id); 
+            }
+
+            if (step.Status == StepStatuses.Suspended)
+            {
+                return new CommandResult()
+                {
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    ObjectRefId = request.StepId.ToString(),
+                    Type = CommandResultTypes.None
+                };
+            }
+
             var stepLockResult = await _node.Handle(new RequestDataShard()
             {
                 Type = "Step",
                 ObjectId = request.StepId,
-                CreateLock = true
+                CreateLock = true,
+                LockTimeoutMs = 10000
             });
 
             // Applied the lock successfully
             if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
             {
-                var step = (Step)stepLockResult.Data;
+                Logger.LogInformation("Applied lock on step " + request.StepId + " with lock id " + stepLockResult.LockId);
+                step = (Step)stepLockResult.Data;
                 if (step.Status == StepStatuses.Unassigned ||
                     step.Status == StepStatuses.Suspended ||
                     step.Status == StepStatuses.Assigned // You should only be suspending a assigned step if it is being suspended by the bot assigned, check to be done in presentation
@@ -83,6 +102,12 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                                 Type = UpdateType.Override,
                                 FieldName = "suspendeduntil",
                                 Value = request.SuspendedUntil
+                            },
+                            new Update()
+                            {
+                                FieldName = "assignedto",
+                                Type = UpdateType.Override,
+                                Value = null
                             }
 
                         }
@@ -93,7 +118,8 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                         Data = step,
                         WaitForSafeWrite = true,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                        RemoveLock = true
+                        RemoveLock = true,
+                        LockId = stepLockResult.LockId.Value
                     });
 
                     if (result.IsSuccessful)

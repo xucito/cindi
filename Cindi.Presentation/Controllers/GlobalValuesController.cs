@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.GlobalValues.Commands.CreateGlobalValue;
 using Cindi.Application.GlobalValues.Commands.UpdateGlobalValue;
-using Cindi.Application.GlobalValues.Queries.GetGlobalValue;
-using Cindi.Application.GlobalValues.Queries.GetGlobalValues;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Presentation.Results;
 using Cindi.Presentation.Utility;
@@ -25,24 +26,31 @@ namespace Cindi.Presentation.Controllers
 
         // GET: api/<controller>
         [HttpGet]
-        public async Task<IActionResult> Get(int page = 0, int size = 10)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null, string sort = "CreatedOn:1")
         {
-            var globalValues = await Mediator.Send(new GetGlobalValuesQuery()
+            var globalValues = await Mediator.Send(new GetEntitiesQuery<GlobalValue>()
             {
                 Page = page,
-                Size = size
+                Size = size,
+                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<GlobalValue, bool>>> {
+                   status == null ? null : ExpressionBuilder.BuildPredicate<GlobalValue>("Status", OperatorComparer.Equals, status)
+                }),
+                Exclusions = new List<Expression<Func<GlobalValue, object>>>{
+                    (s) => s.Journal
+                },
+                Sort = sort
             });
 
-            return Ok(new HttpQueryResult<IEnumerable<GlobalValue>, IEnumerable<GlobalValueVM>>(globalValues, Mapper.Map<IEnumerable<GlobalValueVM>>(globalValues.Result)));
+            return Ok(new HttpQueryResult<List<GlobalValue>, List<GlobalValueVM>>(globalValues, Mapper.Map<List<GlobalValueVM>>(globalValues.Result)));
         }
 
         // GET api/<controller>/5
         [HttpGet("{name}")]
         public async Task<IActionResult> Get(string name)
         {
-            var globalValue = await Mediator.Send(new GetGlobalValueQuery()
+            var globalValue = await Mediator.Send(new GetEntityQuery<GlobalValue>()
             {
-                Name = name
+                Expression = gv => gv.Name == name
             });
 
             return Ok(new HttpQueryResult<GlobalValue, GlobalValueVM>(globalValue, Mapper.Map<GlobalValueVM>(globalValue.Result)));

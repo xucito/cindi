@@ -3,22 +3,8 @@
     Workflow Templates
   </nb-card-header>
   <nb-card-body>
-    <nb-list>
-      <nb-list-item *ngFor="let workflowTemplate of workflowTemplates">
-        <div class="step-template-name" (click)="navigateToWorkflowTemplate(workflowTemplate.referenceId)">
-          <div class="caption">
-            Version: {{workflowTemplate.version}}
-          </div>
-          <div class="value">
-            {{workflowTemplate.name}}
-          </div>
-        </div>
-        <nb-actions size="small">
-          <nb-action icon="eye-outline" (click)="navigateToWorkflowTemplate(workflowTemplate.referenceId)"></nb-action>
-          <nb-action icon="play-circle-outline" (click)="openWindow(contentTemplate, workflowTemplate)"></nb-action>
-        </nb-actions>
-      </nb-list-item>
-    </nb-list>
+      <data-table [columns]="columns" [page]="page" [rows]="rows" (onSortChange)="onSort($event)"
+      (onPageChange)="setPage($event)" (onAction)="onAction($event)"></data-table>
   </nb-card-body>
 </nb-card>
 

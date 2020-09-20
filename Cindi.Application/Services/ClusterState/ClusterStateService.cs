@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Raft;
+using ConsensusCore.Domain.SystemCommands;
 
 namespace Cindi.Application.Services.ClusterState
 {
@@ -41,8 +42,8 @@ namespace Cindi.Application.Services.ClusterState
         private IStateMachine<CindiClusterState> _stateMachine;
 
         public ClusterStateService(
-            ILogger<ClusterStateService> logger, 
-            IServiceScopeFactory serviceProvider, 
+            ILogger<ClusterStateService> logger,
+            IServiceScopeFactory serviceProvider,
             IClusterRequestHandler node,
             IStateMachine<CindiClusterState> stateMachine)
         {
@@ -157,8 +158,9 @@ namespace Cindi.Application.Services.ClusterState
             return passPhrase;
         }
 
-        public bool AutoRegistrationEnabled { get { return state.AllowAutoRegistration; } }
+        public bool AutoRegistrationEnabled { get { return state.Settings.AllowAutoRegistration; } }
 
+        public ClusterSettings GetSettings { get { return state.Settings; } }
 
         public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
@@ -166,16 +168,14 @@ namespace Cindi.Application.Services.ClusterState
             {
                 Commands = new List<BaseCommand>()
                 {
-                    new UpdateLogicBlockLock(){
-                        Action = LockBlockActions.APPLY,
-                        Lock = new LogicBlockLock(){
-                            WorkflowId = workflowid,
-                            LockerCode = lockKey,
-                            LogicBlockId = logicBlockId,
-                            CreatedOn = DateTime.Now
-                        }
+                    new SetLock(){
+                        Name = "Workflow:" + workflowid + ":" + logicBlockId,
+                        LockId = lockKey,
+                        CreatedOn = DateTime.Now,
+                        TimeoutMs = 30000
                     }
-                }
+                },
+                WaitForCommits = true
             })).EntryNo;
             //state.LockedLogicBlocks.Add(block.LogicBlockId, DateTime.UtcNow);
         }
@@ -186,15 +186,13 @@ namespace Cindi.Application.Services.ClusterState
             {
                 Commands = new List<BaseCommand>()
                 {
-                    new UpdateLogicBlockLock(){
-                        Action = LockBlockActions.REMOVE,
-                        Lock = new LogicBlockLock(){
-                            WorkflowId = workflowid,
-                            LockerCode = lockKey,
-                            LogicBlockId = logicBlockId
-                        }
+                    new RemoveLock()
+                    {
+                            Name = "Workflow:" + workflowid + ":" + logicBlockId,
+                            LockId =lockKey
                     }
-                }
+                },
+                WaitForCommits = true
             })).IsSuccessful;
             //state.LockedLogicBlocks.Remove(logicBlockId);
         }
@@ -239,7 +237,7 @@ namespace Cindi.Application.Services.ClusterState
             }
         }*/
 
-        public void ChangeAssignmentEnabled(bool newState)
+        /*public void ChangeAssignmentEnabled(bool newState)
         {
             lock (_locker)
             {
@@ -254,21 +252,14 @@ namespace Cindi.Application.Services.ClusterState
                     }
                 }
                 }).GetAwaiter().GetResult();
-                /*
-                if (newState != state.AssignmentEnabled)
-                {
-                    state.AssignmentEnabled = newState;
-                    changeDetected = true;
-                }
-                */
             }
-        }
+        }*/
 
-        public void SetAllowAutoRegistration(bool allowAutoRegistration)
+       /* public void SetAllowAutoRegistration(bool allowAutoRegistration)
         {
             lock (_locker)
             {
-                if (allowAutoRegistration != state.AllowAutoRegistration)
+                if (allowAutoRegistration != state.Options.AllowAutoRegistration)
                 {
                     _node.Handle(new ExecuteCommands()
                     {
@@ -283,16 +274,16 @@ namespace Cindi.Application.Services.ClusterState
                     });
                 }
             }
-        }
+        }*/
 
-        public bool IsAssignmentEnabled()
+        /*public bool IsAssignmentEnabled()
         {
-            return state.AssignmentEnabled;
-        }
+            return state.Options.AssignmentEnabled;
+        }*/
 
         public bool WasLockObtained(Guid lockKey, Guid workflowId, string logicBlockId)
         {
-            if (state.LockedLogicBlocks.ContainsKey(workflowId + ":" + logicBlockId) && state.LockedLogicBlocks[(workflowId + ":" + logicBlockId)].LockerCode == lockKey)
+            if (state.Locks.ContainsKey("Workflow:" + workflowId + ":" + logicBlockId) && state.Locks[("Workflow:" + workflowId + ":" + logicBlockId)].LockId == lockKey)
             {
                 return true;
             }
@@ -302,7 +293,7 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool IsLogicBlockLocked(Guid workflowId, string logicBlockId)
         {
-            if (state.LockedLogicBlocks.ContainsKey(workflowId + ":" + logicBlockId))
+            if (state.Locks.ContainsKey(workflowId + ":" + logicBlockId))
             {
                 return true;
             }

@@ -7,10 +7,10 @@ using System.Text;
 
 namespace Cindi.Domain.ClusterCommands
 {
-    public class UpdateLogicBlockLock : BaseCommand
+    /*public class UpdateLogicBlockLock : BaseCommand
     {
         public LockBlockActions Action { get; set; }
         public LogicBlockLock Lock { get; set; }
         public override string CommandName => "UpdateLogicBlockLock";
-    }
+    }*/
 }

@@ -31,6 +31,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using ConsensusCore.Node.Communication.Controllers;
+using ConsensusCore.Domain.RPCs.Shard;
+using Cindi.Domain.Entities.StepTemplates;
+using System.Linq.Expressions;
 
 namespace Cindi.Application.Tests.Steps.Commands
 {
@@ -41,12 +45,12 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
 
+        Mock<IClusterRequestHandler> _node;
+
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {
             DefaultSuspensionTimeMs  = 0
         };
-
-        Mock<IClusterRequestHandler> node;
 
         public CreateStepCommandHandler_Tests()
         {
@@ -56,16 +60,15 @@ namespace Cindi.Application.Tests.Steps.Commands
                 return "GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY";
             };
 
-            node = Utility.GetMockConsensusCoreNode();
+            _node = Utility.GetMockConsensusCoreNode();
         }
 
         [Fact]
         public async void DetectMissingTemplate()
         {
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
+            var handler = new CreateStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, _node.Object);
 
             await Assert.ThrowsAsync<StepTemplateNotFoundException>(async () =>
             {
@@ -81,12 +84,13 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectCorrectTemplate()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            
+           entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _node.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
+
+            var handler = new CreateStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, _node.Object);
 
             var commandResult = await handler.Handle(new CreateStepCommand()
             {
@@ -106,12 +110,12 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectNoInputs()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            
+           entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _node.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
+            var handler = new CreateStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, _node.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
@@ -123,12 +127,12 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectTooManyInputs()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            
+           entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _node.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
+            var handler = new CreateStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, _node.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
@@ -146,11 +150,11 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectMissingInputs()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            
+           entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _node.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
+            var handler = new CreateStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, _node.Object);
 
             await Assert.ThrowsAsync<InvalidStepInputException>(async () => await handler.Handle(new CreateStepCommand()
             {
@@ -166,18 +170,16 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void CreateStepWithSecret()
         {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
-
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
+            var stepTemplate = await entitiesRepository.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "This is a test"}
             }, null, null, ClusterStateService.GetEncryptionKey());
 
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.InsertStepAsync(Moq.It.IsAny<Step>())).Returns(Task.FromResult(newStep));
+            _node.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
 
-            var handler = new CreateStepCommandHandler(stepsRepository.Object, stepTemplatesRepository.Object, clusterMoq.Object, node.Object);
+            var handler = new CreateStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, _node.Object);
 
             var step = await handler.Handle(new CreateStepCommand()
             {
@@ -216,6 +218,18 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         [Fact]
         public async void DontEncryptReferenceSecrets()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void PassExecutionTemplateId()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void PassExecutionScheduleId()
         {
             Assert.True(false);
         }

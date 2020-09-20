@@ -17,12 +17,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         public static void Register(BsonClassMap<CindiClusterState> cm)
         {
             cm.AutoMap();
-            //cm.SetIsRootClass(true);
-            cm.MapMember(s => s.LockedLogicBlocks).SetSerializer(new DictionaryInterfaceImplementerSerializer<Dictionary<string, LogicBlockLock>>(DictionaryRepresentation.ArrayOfArrays));
-            /*cm.MapMember(s => s.Nodes).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, NodeInformation>>(DictionaryRepresentation.ArrayOfArrays));
-            cm.MapMember(s => s.Indexes).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<string, Index>>(DictionaryRepresentation.ArrayOfArrays));
-            cm.MapMember(s => s.ClusterTasks).SetSerializer(new DictionaryInterfaceImplementerSerializer<ConcurrentDictionary<Guid, BaseTask>>(DictionaryRepresentation.ArrayOfArrays));
-    */   
-    }
+            cm.SetIgnoreExtraElements(true);
+        }
     }
 }

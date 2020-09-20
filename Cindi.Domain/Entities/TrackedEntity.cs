@@ -47,16 +47,34 @@ namespace Cindi.Domain.Entities
                 if (latestValue != null && latestValue.Update.Type == UpdateType.Append)
                 {
                     List<object> appendedList = new List<object>();
+
+                    if (property.Name == "CompletedLogicBlocks")
+                    {
+
+                    }
+
                     foreach (var entry in Journal.GetAllUpdates(property.Name.ToLower()))
                     {
-                        appendedList.Add(entry.Update.Value);
+                        if(entry.Update.Value is IEnumerable)
+                        {
+                            foreach(var update in (IEnumerable)entry.Update.Value)
+                            {
+                                appendedList.Add(update);
+                            }
+                        }
+                        else
+                        {
+                            appendedList.Add(entry.Update.Value);
+                        }
                     }
 
                     property.SetValue(this, ConvertList(appendedList, property.PropertyType));
                 }
                 else
                 {
-                    property.SetValue(this, latestValue == null ? null : ConvertObject(latestValue.Update.Value, property.PropertyType));
+                    property.SetValue(this, latestValue == null ? 
+                        null : 
+                        ConvertObject(latestValue.Update.Value, property.PropertyType));
                 }
             }
         }

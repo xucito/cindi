@@ -24,6 +24,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
         public string StepTemplateReferenceId { get; set; }
 
         private string _status { get; set; }
+        
 
         public string Status
         {
@@ -87,6 +88,11 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
                 IsValid = false,
                 Reason = "Step with workflowStepId " + StepName + " does not exist or complete before this step."
             };
+        }
+
+        public override bool ContainsStep(string stepName)
+        {
+            return StepName == stepName;
         }
     }
 

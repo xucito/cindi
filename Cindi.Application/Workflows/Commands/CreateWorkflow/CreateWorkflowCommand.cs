@@ -14,5 +14,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
         //Default to an empty dictionary
         public Dictionary<string, object> Inputs { get; set; } = new Dictionary<string, object>();
         public string CreatedBy { get; set; }
+        public Guid? ExecutionTemplateId { get; set; }
+        public Guid? ExecutionScheduleId { get; set; }
     }
 }

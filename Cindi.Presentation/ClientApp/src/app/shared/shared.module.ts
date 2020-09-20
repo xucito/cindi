@@ -15,7 +15,9 @@ import {
   NbButtonModule,
   NbSelectModule,
   NbInputModule,
-  NbAccordionModule
+  NbAccordionModule,
+  NbBadgeModule,
+  NbAlertModule
 } from "@nebular/theme";
 import { CodemirrorModule } from "@ctrl/ngx-codemirror";
 import { TemplateViewComponent } from "./components/template-view/template-view.component";
@@ -30,6 +32,7 @@ import { WorkflowInputsComponent } from './components/workflow-inputs/workflow-i
 import { MappingSelectorComponent } from './components/mapping-selector/mapping-selector.component';
 import { SelectStepTemplateComponent } from './components/select-step-template/select-step-template.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { DataTableComponent } from './components/data-table/data-table.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +48,8 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     StepMappingsVisualizerComponent,
     WorkflowInputsComponent,
     MappingSelectorComponent,
-    SelectStepTemplateComponent
+    SelectStepTemplateComponent,
+    DataTableComponent
   ],
   exports: [
     NgxDatatableModule,
@@ -64,7 +68,12 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     NgxGraphModule,
     ConditionsGroupVisualizerComponent,
     LogicBlockVisualizerComponent,
-    NgxChartsModule
+    NgxChartsModule,
+    DataTableComponent,
+    CodemirrorModule,
+    FormsModule,
+    NbBadgeModule,
+    NbAlertModule
   ],
   imports: [
     NgxDatatableModule,
@@ -85,6 +94,8 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     NbButtonModule,
     NbStepperModule,
     NgxChartsModule,
+    NbBadgeModule,
+    NbAlertModule
   ]
 })
 export class SharedModule {}

@@ -10,6 +10,7 @@ import { State } from "./reducers";
 import { loadStepTemplates } from "./entities/step-templates/step-template.actions";
 import { Router } from "@angular/router";
 import { AuthenticationService } from "./auth/services/authentication.service";
+import '../code-mirror/editor';
 
 @Component({
   selector: "ngx-app",

@@ -14,11 +14,11 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
 {
     public class GetClusterStatsQueryHandler : IRequestHandler<GetClusterStatsQuery, QueryResult<ClusterStats>>
     {
-        IStepsRepository _stepsRepository;
+        IEntitiesRepository _entitiesRepository;
 
-        public GetClusterStatsQueryHandler(IStepsRepository stepsRepository)
+        public GetClusterStatsQueryHandler(IEntitiesRepository entitiesRepository)
         {
-            _stepsRepository = stepsRepository;
+            _entitiesRepository = entitiesRepository;
         }
         public async Task<QueryResult<ClusterStats>> Handle(GetClusterStatsQuery request, CancellationToken cancellationToken)
         {
@@ -28,12 +28,12 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
             {
                 Steps = new StepStats()
                 {
-                    Suspended = _stepsRepository.CountSteps(StepStatuses.Suspended),
-                    Unassigned = _stepsRepository.CountSteps(StepStatuses.Unassigned),
-                    Assigned = _stepsRepository.CountSteps(StepStatuses.Assigned),
-                    Successful = _stepsRepository.CountSteps(StepStatuses.Successful),
-                    Warning = _stepsRepository.CountSteps(StepStatuses.Warning),
-                    Error = _stepsRepository.CountSteps(StepStatuses.Error),
+                    Suspended = _entitiesRepository.Count<Step>(s => s.Status == StepStatuses.Suspended),
+                    Unassigned = _entitiesRepository.Count<Step>(s => s.Status == StepStatuses.Unassigned),
+                    Assigned = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Assigned),
+                    Successful = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Successful),
+                    Warning = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Warning),
+                    Error = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Error),
                 }
 
             };

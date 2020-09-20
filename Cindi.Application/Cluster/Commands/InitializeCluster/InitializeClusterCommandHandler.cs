@@ -18,20 +18,20 @@ namespace Cindi.Application.Cluster.Commands.InitializeCluster
 {
     public class InitializeClusterCommandHandler : IRequestHandler<InitializeClusterCommand, CommandResult<NewClusterResult>>
     {
-        IUsersRepository _usersRepository;
+        IEntitiesRepository _entitiesRepository;
         ILogger<InitializeClusterCommandHandler> _logger;
         private IMediator _mediator;
         private IClusterStateService _clusterState;
 
         public InitializeClusterCommandHandler(
         ILogger<InitializeClusterCommandHandler> logger,
-        IUsersRepository usersRepository,
+        IEntitiesRepository entitiesRepository,
         IMediator mediator,
         IClusterStateService clusterState
         )
         {
             _mediator = mediator;
-            _usersRepository = usersRepository;
+            _entitiesRepository = entitiesRepository;
             _logger = logger;
             _clusterState = clusterState;
         }

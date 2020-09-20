@@ -2,10 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConsensusCore.Domain" Version="1.0.3.6-alpha" />
+    <PackageReference Include="ConsensusCore.Domain" Version="1.0.4.9-alpha" />
     <PackageReference Include="MongoDB.Driver" Version="2.7.3" />
   </ItemGroup>
 

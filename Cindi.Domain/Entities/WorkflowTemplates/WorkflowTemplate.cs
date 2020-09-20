@@ -120,5 +120,24 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
 
             return true;
         }
+
+
+        public bool IsWorkflowInputValid(KeyValuePair<string, object> input)
+        {
+            try
+            {
+                var foundTemplate = InputDefinitions.Where(tp => tp.Key == input.Key).First();
+
+                if (!InputDefinitions.ContainsKey(input.Key))
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
     }
 }

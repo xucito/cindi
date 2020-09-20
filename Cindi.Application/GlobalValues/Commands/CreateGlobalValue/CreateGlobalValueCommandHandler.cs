@@ -25,12 +25,12 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
 {
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        IGlobalValuesRepository _globalValuesRepository { get; set; }
+        IEntitiesRepository _entitiesRepository { get; set; }
         IClusterRequestHandler _node;
 
-        public CreateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IClusterRequestHandler node)
+        public CreateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
         {
-            _globalValuesRepository = globalValuesRepository;
+            _entitiesRepository = entitiesRepository;
             _node = node;
         }
         public async Task<CommandResult<GlobalValue>> Handle(CreateGlobalValueCommand request, CancellationToken cancellationToken)
@@ -43,7 +43,8 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 throw new InvalidInputTypeException("Input " + request.Type + " is not valid.");
             }
 
-            if (await _globalValuesRepository.GetGlobalValueAsync(request.Name) != null)
+            if (await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(
+                gv => gv.Name == request.Name) != null)
             {
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " is already in-use.");
             }

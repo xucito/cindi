@@ -14,6 +14,27 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
         public string Operator { get; set; } = OperatorStatements.AND;
         public Dictionary<string, Condition> Conditions { get; set; } = new Dictionary<string, Condition>();
         public Dictionary<string, ConditionGroup> ConditionGroups { get; set; } = new Dictionary<string, ConditionGroup>();
+
+        public bool ContainsStep(string stepName)
+        {
+            foreach(var condition in Conditions)
+            {
+                if(condition.Value.ContainsStep(stepName))
+                {
+                    return true;
+                }
+            }
+
+            foreach (var conditionGroup in ConditionGroups)
+            {
+                if (conditionGroup.Value.ContainsStep(stepName))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /// <summary>
         /// A workflow's logic should always be based on historic steps
         /// </summary>

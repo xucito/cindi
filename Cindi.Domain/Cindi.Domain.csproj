@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <Version>1.0.6</Version>
     <AssemblyVersion>1.0.5.0</AssemblyVersion>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,7 +31,7 @@
 
   <ItemGroup>
     <PackageReference Include="BouncyCastle" Version="1.8.5" />
-    <PackageReference Include="ConsensusCore.Domain" Version="1.0.3.6-alpha" />
+    <PackageReference Include="ConsensusCore.Domain" Version="1.0.4.9-alpha" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="2.2.0" />
   </ItemGroup>
 

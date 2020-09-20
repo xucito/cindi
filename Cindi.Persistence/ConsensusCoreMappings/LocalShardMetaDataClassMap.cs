@@ -17,6 +17,7 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         {
             cm.AutoMap();
             cm.MapIdMember(lsm => lsm.ShardId);
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

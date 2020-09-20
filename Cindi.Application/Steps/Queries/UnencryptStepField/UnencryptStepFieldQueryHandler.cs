@@ -2,6 +2,7 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Utility;
@@ -20,13 +21,11 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
 {
     public class UnencryptStepFieldQueryHandler : IRequestHandler<UnencryptStepFieldQuery, QueryResult<string>>
     {
-        private readonly IStepsRepository _stepsRepository;
-        private readonly IStepTemplatesRepository _stepTemplatesRepository;
+        private readonly IEntitiesRepository _entitiesRepository;
 
-        public UnencryptStepFieldQueryHandler(IStepsRepository stepsRepository, IStepTemplatesRepository stepTemplatesRepository)
+        public UnencryptStepFieldQueryHandler(IEntitiesRepository entitiesRepository)
         {
-            _stepsRepository = stepsRepository;
-            _stepTemplatesRepository = stepTemplatesRepository;
+            _entitiesRepository = entitiesRepository;
         }
 
         public async Task<QueryResult<string>> Handle(UnencryptStepFieldQuery request, CancellationToken cancellationToken)
@@ -38,25 +37,25 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 throw new InvalidUnencryptionRequestException("No such encryption type " + request.Type);
             }
-            var step = await _stepsRepository.GetStepAsync(request.StepId);
+            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
 
 
-            if(step.CreatedBy != request.UserId)
+            if (step.CreatedBy != request.UserId)
             {
                 throw new InvalidStepPermissionException("Only the creating user can decrypt the step secret.");
             }
 
-            var stepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(step.StepTemplateId);
+            var stepTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
 
             //Compare the to lower of inputs, TODO - this is inefficient
-            if(!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))
+            if (!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))
             {
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " does not exist on step template " + stepTemplate.Id);
             }
-            
+
             DynamicDataDescription kv = request.Type == StepEncryptionTypes.Inputs ? stepTemplate.InputDefinitions[request.FieldName.ToLower()] : stepTemplate.OutputDefinitions[request.FieldName.ToLower()];
-            
-            if(kv.Type != InputDataTypes.Secret)
+
+            if (kv.Type != InputDataTypes.Secret)
             {
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " is not a secret type.");
             }

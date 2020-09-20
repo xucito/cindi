@@ -8,7 +8,9 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
 {
     public class UpdateClusterStateCommand: IRequest<CommandResult>
     {
-        public bool? AssignmentEnabled { get; set; } = true;
-        public bool? AutoRegistrationEnabled { get; set; }
+        public bool DefaultIfNull { get; set; } = false;
+        public bool? AssignmentEnabled { get; set; } = null;
+        public bool? AllowAutoRegistration { get; set; } = null;
+        public string MetricRetentionPeriod { get; set; } = null;
     }
 }

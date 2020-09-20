@@ -16,7 +16,7 @@ export class StepEffects {
     this.actions$.pipe(
       ofType(fromStepsAction.loadSteps),
       switchMap(payload =>
-        this.cindiData.GetSteps(payload.status).pipe(
+        this.cindiData.GetEntity("steps", payload.status).pipe(
           map(result => {
             let steps = result.result;
             return fromStepsAction.loadStepsSuccess({ steps });

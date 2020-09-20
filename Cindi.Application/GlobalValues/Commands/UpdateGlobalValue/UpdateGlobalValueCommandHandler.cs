@@ -23,20 +23,20 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
 {
     public class UpdateGlobalValueCommandHandler : IRequestHandler<UpdateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        IGlobalValuesRepository _globalValuesRepository { get; set; }
         IClusterRequestHandler _node;
+        IEntitiesRepository _entitiesRepository;
 
-        public UpdateGlobalValueCommandHandler(IGlobalValuesRepository globalValuesRepository, IClusterRequestHandler node)
+        public UpdateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
         {
-            _globalValuesRepository = globalValuesRepository;
             _node = node;
+            _entitiesRepository = entitiesRepository;
         }
         public async Task<CommandResult<GlobalValue>> Handle(UpdateGlobalValueCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             GlobalValue existingValue;
-            if ((existingValue = await _globalValuesRepository.GetGlobalValueAsync(request.Name)) == null)
+            if ((existingValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name)) == null)
             {
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " does not exist.");
             }
@@ -47,7 +47,7 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
                 CreateLock = true
             });
 
-            if (globalValueLock.IsSuccessful)
+            if (globalValueLock.IsSuccessful && globalValueLock.AppliedLocked)
             {
                 existingValue = (GlobalValue)globalValueLock.Data;
                 existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()

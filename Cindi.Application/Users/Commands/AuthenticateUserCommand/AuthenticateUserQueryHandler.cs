@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Utilities;
 using MediatR;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
@@ -15,26 +16,26 @@ namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
 {
     public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, CommandResult>
     {
-        IUsersRepository _usersRepository;
+        IEntitiesRepository _entitiesRepository;
 
-        public AuthenticateUserCommandHandler(IUsersRepository usersRepository,
+        public AuthenticateUserCommandHandler(IEntitiesRepository entitiesRepository,
                 ILogger<AuthenticateUserCommandHandler> logger
             )
         {
-            _usersRepository = usersRepository;
+            _entitiesRepository = entitiesRepository;
 
         }
         public async Task<CommandResult> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var user = await _usersRepository.GetUserAsync(request.Username.ToLower());
+            var user = await _entitiesRepository.GetFirstOrDefaultAsync<User>(u => u.Username == request.Username.ToLower());
 
-            if(user != null)
+            if (user != null)
             {
-                if(!user.IsDisabled)
+                if (!user.IsDisabled)
                 {
-                    if(SecurityUtility.IsMatchingHash(request.Password, user.HashedPassword, user.Salt))
+                    if (SecurityUtility.IsMatchingHash(request.Password, user.HashedPassword, user.Salt))
                     {
                         return new CommandResult()
                         {

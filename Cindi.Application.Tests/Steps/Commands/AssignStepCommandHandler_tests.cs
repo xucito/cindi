@@ -4,13 +4,16 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.AssignStep;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.GlobalValues;
+using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
 using ConsensusCore.Domain.BaseClasses;
 using ConsensusCore.Domain.RPCs;
+using ConsensusCore.Domain.RPCs.Shard;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -29,6 +32,8 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
 
+        Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {
             DefaultSuspensionTimeMs = 0
@@ -40,6 +45,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             {
                 return "GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY";
             };
+
+            clusterMoq.Setup(cm => cm.GetSettings).Returns(new ClusterSettings()
+            {
+            });
+
+            clusterMoq.Setup(cm => cm.GetState()).Returns(new CindiClusterState()
+            {
+            });
         }
 
         [Fact]
@@ -71,36 +84,37 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void AssignStepWithSecret()
         {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
             var testPhrase = "This is a test";
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
 
-            var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
+            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            var newStep = SecretSampleData.StepTemplate.GenerateStep(SecretSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
             }, null, null, ClusterStateService.GetEncryptionKey());
 
-            clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
 
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            entitiesRepository.Setup(st => st.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.FromResult((IEnumerable<Step>)new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
-            Mock<IBotKeysRepository> keysRepository = new Mock<IBotKeysRepository>();
-            keysRepository.Setup(kr => kr.GetBotKeyAsync(It.IsAny<Guid>())).Returns(Task.FromResult(new BotKey()
+            entitiesRepository.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
+
+
             var mockLogger = new Mock<ILogger<AssignStepCommandHandler>>();
 
-            Mock<IGlobalValuesRepository> globalValueRepository = new Mock<IGlobalValuesRepository>();
-
             var node = Utility.GetMockConsensusCoreNode();
-            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
-            var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse()
+            {
+                AppliedLocked = true,
+                IsSuccessful = true
+            }));
+
+            var handler = new AssignStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockLogger.Object, node.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -121,39 +135,35 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void EvaluateSecretValueByValueReference()
         {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
             var testPhrase = "This is a test phrase";
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
-            var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
+
+            var newStep = SecretSampleData.StepTemplate.GenerateStep(SecretSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "$secret"}
             }, null, null, ClusterStateService.GetEncryptionKey());
 
-            clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
-
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
+            entitiesRepository.Setup(st => st.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.FromResult((IEnumerable<Step>)new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
-            Mock<IBotKeysRepository> keysRepository = new Mock<IBotKeysRepository>();
-            keysRepository.Setup(kr => kr.GetBotKeyAsync(It.IsAny<Guid>())).Returns(Task.FromResult(new BotKey()
+
+            entitiesRepository.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
             var mockLogger = new Mock<ILogger<AssignStepCommandHandler>>();
 
-            Mock<IGlobalValuesRepository> globalValueRepository = new Mock<IGlobalValuesRepository>();
-            globalValueRepository.Setup(s => s.GetGlobalValueAsync("secret")).Returns(
+
+            entitiesRepository.Setup(s => s.GetFirstOrDefaultAsync<GlobalValue>(It.IsAny<Expression<Func<GlobalValue, bool>>>())).Returns(
                 Task.FromResult(new GlobalValue("secret", InputDataTypes.Secret, "", SecurityUtility.SymmetricallyEncrypt(testPhrase, ClusterStateService.GetEncryptionKey()), GlobalValueStatuses.Enabled, Guid.NewGuid(), "admin", DateTime.UtcNow))
                 );
 
 
             var node = Utility.GetMockConsensusCoreNode();
-            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
 
-            var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
+            var handler = new AssignStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockLogger.Object, node.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -169,38 +179,38 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void EvaluateSecretValueByReference()
         {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
+
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
             var testPhrase = "This is a test phrase";
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
+            var stepTemplate = await entitiesRepository.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "$$secret"}
             }, null, null, ClusterStateService.GetEncryptionKey());
 
-            clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
+
+
+            entitiesRepository.Setup(st => st.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.FromResult((IEnumerable<Step>)new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
-            Mock<IBotKeysRepository> keysRepository = new Mock<IBotKeysRepository>();
-            keysRepository.Setup(kr => kr.GetBotKeyAsync(It.IsAny<Guid>())).Returns(Task.FromResult(new BotKey()
+
+            entitiesRepository.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
             var mockLogger = new Mock<ILogger<AssignStepCommandHandler>>();
 
-            Mock<IGlobalValuesRepository> globalValueRepository = new Mock<IGlobalValuesRepository>();
-            globalValueRepository.Setup(s => s.GetGlobalValueAsync("secret")).Returns(
+
+            entitiesRepository.Setup(s => s.GetFirstOrDefaultAsync<GlobalValue>(It.IsAny<Expression<Func<GlobalValue, bool>>>())).Returns(
                 Task.FromResult(new GlobalValue("secret", InputDataTypes.Secret, "", SecurityUtility.SymmetricallyEncrypt(testPhrase, ClusterStateService.GetEncryptionKey()), GlobalValueStatuses.Enabled, Guid.NewGuid(), "admin", DateTime.UtcNow))
                 );
 
             var node = Utility.GetMockConsensusCoreNode();
-            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
 
-            var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
+            var handler = new AssignStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockLogger.Object, node.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -215,38 +225,38 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void IgnoreEscapedReferenceSymbol()
         {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(SecretSampleData.StepTemplate));
+
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
             var testPhrase = "$secret";
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(SecretSampleData.StepTemplate.ReferenceId);
+            var stepTemplate = await entitiesRepository.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "\\$secret"}
             }, null, null, ClusterStateService.GetEncryptionKey());
 
-            clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
+
+
+            entitiesRepository.Setup(st => st.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.FromResult((IEnumerable<Step>)new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
-            Mock<IBotKeysRepository> keysRepository = new Mock<IBotKeysRepository>();
-            keysRepository.Setup(kr => kr.GetBotKeyAsync(It.IsAny<Guid>())).Returns(Task.FromResult(new BotKey()
+
+            entitiesRepository.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
             var mockLogger = new Mock<ILogger<AssignStepCommandHandler>>();
 
-            Mock<IGlobalValuesRepository> globalValueRepository = new Mock<IGlobalValuesRepository>();
-            globalValueRepository.Setup(s => s.GetGlobalValueAsync("secret")).Returns(
+
+            entitiesRepository.Setup(s => s.GetFirstOrDefaultAsync<GlobalValue>(It.IsAny<Expression<Func<GlobalValue, bool>>>())).Returns(
                 Task.FromResult(new GlobalValue("secret", InputDataTypes.Secret, "", SecurityUtility.SymmetricallyEncrypt(testPhrase, ClusterStateService.GetEncryptionKey()), GlobalValueStatuses.Enabled, Guid.NewGuid(), "admin", DateTime.UtcNow))
                 );
 
             var node = Utility.GetMockConsensusCoreNode();
-            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
 
-            var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
+            var handler = new AssignStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockLogger.Object, node.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -261,39 +271,42 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void EvaluateIntValueByValueReference()
         {
-            Mock<IStepTemplatesRepository> stepTemplatesRepository = new Mock<IStepTemplatesRepository>();
-            stepTemplatesRepository.Setup(st => st.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId)).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
 
-            var stepTemplate = await stepTemplatesRepository.Object.GetStepTemplateAsync(FibonacciSampleData.StepTemplate.ReferenceId);
-            var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
+            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            var newStep = FibonacciSampleData.StepTemplate.GenerateStep(FibonacciSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"n-1", "$1"},
                 {"n-2", 2 }
             }, null, null, ClusterStateService.GetEncryptionKey());
 
-            clusterMoq.Setup(cm => cm.IsAssignmentEnabled()).Returns(true);
 
-            Mock<IStepsRepository> stepsRepository = new Mock<IStepsRepository>();
-            stepsRepository.Setup(st => st.GetStepsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string[]>(), It.IsAny<List<Expression<Func<Step, object>>>>(), It.IsAny<SortOrder>(), It.IsAny<string>())).Returns(Task.FromResult(new List<Step> { newStep }));
+
+
+            entitiesRepository.Setup(st => st.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.FromResult((IEnumerable<Step>)new List<Step> { newStep }));
 
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
-            Mock<IBotKeysRepository> keysRepository = new Mock<IBotKeysRepository>();
-            keysRepository.Setup(kr => kr.GetBotKeyAsync(It.IsAny<Guid>())).Returns(Task.FromResult(new BotKey()
+
+            entitiesRepository.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
             var mockLogger = new Mock<ILogger<AssignStepCommandHandler>>();
 
-            Mock<IGlobalValuesRepository> globalValueRepository = new Mock<IGlobalValuesRepository>();
-            globalValueRepository.Setup(s => s.GetGlobalValueAsync("1")).Returns(
+
+            entitiesRepository.Setup(s => s.GetFirstOrDefaultAsync<GlobalValue>(It.IsAny<Expression<Func<GlobalValue, bool>>>())).Returns(
                 Task.FromResult(new GlobalValue("1", InputDataTypes.Int, "", 1, GlobalValueStatuses.Enabled, Guid.NewGuid(), "admin", DateTime.UtcNow))
                 );
 
             var node = Utility.GetMockConsensusCoreNode();
-            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true }));
 
-            var handler = new AssignStepCommandHandler(stepsRepository.Object, clusterMoq.Object, stepTemplatesRepository.Object, keysRepository.Object, mockLogger.Object, globalValueRepository.Object, node.Object);
+            node.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse()
+            {
+                AppliedLocked = true,
+                IsSuccessful = true
+            }));
+
+            var handler = new AssignStepCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockLogger.Object, node.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {

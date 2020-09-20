@@ -10,47 +10,28 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MediatR;
-using System.Reflection;
 using Swashbuckle.AspNetCore.Swagger;
-using Cindi.Application.StepTemplates.Commands;
 using MongoDB.Driver;
-using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
-using Cindi.Application.StepTemplates.Queries.GetStepTemplates;
-using MongoDB.Bson.Serialization;
-using Cindi.Domain.Entities.StepTemplates;
-using Cindi.Persistence.StepTemplates;
-using Cindi.Persistence.Steps;
-using Cindi.Domain.Entities.Steps;
 using Cindi.Application.Interfaces;
 using Cindi.Persistence;
-using Cindi.Application.Steps.Commands;
-using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Services.ClusterState;
-using Cindi.Presentation.Transformers;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Cindi.Application.Options;
 using Cindi.Application.Services.ClusterMonitor;
 using Microsoft.AspNetCore.Authentication;
 using Cindi.Presentation.Authentication;
-using Cindi.Persistence.Users;
-using Swashbuckle.AspNetCore.Filters;
 using Cindi.Application.Cluster.Commands.InitializeCluster;
-using Cindi.Persistence.BotKeys;
 using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
 using AutoMapper;
-using Cindi.Persistence.GlobalValues;
 using Cindi.Persistence.State;
 using ConsensusCore.Node.Utility;
 using SlugifyParameterTransformer = Cindi.Presentation.Transformers.SlugifyParameterTransformer;
-using ConsensusCore.Node;
 using ConsensusCore.Domain.Interfaces;
 using Cindi.Application.Services;
 using ConsensusCore.Node.Services;
 using System.Threading;
-using ConsensusCore.Node.Controllers;
-using ConsensusCore.Domain.Services;
 using Cindi.Domain.Entities.States;
 using System.IO;
 using Cindi.Application.Pipelines;
@@ -61,6 +42,21 @@ using Cindi.Persistence.MetricTicks;
 using ConsensusCore.Node.Services.Raft;
 using ConsensusCore.Node.Services.Data;
 using ConsensusCore.Node.Services.Tasks;
+using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Domain.Entities.Workflows;
+using Cindi.Application.Entities.Queries.GetEntities;
+using Cindi.Application.Entities.Queries;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Cindi.Presentation.Utility;
+using Cindi.Application.InternalBots;
+using Cindi.DotNetCore.BotExtensions;
+using Cindi.Application.InternalBots.InternalSteps;
+using Cindi.Domain.Entities.StepTemplates;
+using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
+using Cindi.Domain.Enums;
+using Cindi.Application.Cluster.Commands.UpdateClusterState;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace Cindi.Presentation
 {
@@ -80,20 +76,27 @@ namespace Cindi.Presentation
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
+        public IServiceProvider ConfigureServices(IServiceCollection services)
+        {    // Add services to the collection
+            services.AddOptions();
+            // Create a container-builder and register dependencies
+            var builder = new ContainerBuilder();
+
+            services.AddResponseCompression(options =>
+            {
+                options.Providers.Add<GzipCompressionProvider>();
+            });
+
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
                 s => new NodeStorageRepository(MongoClient),
                 s => new NodeStorageRepository(MongoClient),
                 s => new NodeStorageRepository(MongoClient),
-                Configuration.GetSection("Node")
-                , Configuration.GetSection("Cluster"));
+                Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-            services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
-            // services.AddMediatR(typeof(CreateStepCommandHandler).GetTypeInfo().Assembly);
+            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            // services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
             services.AddAutoMapper();
 
             services.AddMvc(options =>
@@ -109,6 +112,7 @@ namespace Cindi.Presentation
                 DbConnectionString = Configuration.GetValue<string>("DBConnectionString")
             });
 
+
             if (EnableUI)
             {
                 services.AddSpaStaticFiles(configuration =>
@@ -117,17 +121,8 @@ namespace Cindi.Presentation
                 });
             }
 
-            //Add step template
-            services.AddTransient<IStepTemplatesRepository, StepTemplatesRepository>(s => new StepTemplatesRepository(MongoClient));
-            services.AddTransient<EntityRepository<Step>>(s => new EntityRepository<Step>(MongoClient));
-            services.AddTransient<IWorkflowsRepository, WorkflowsRepository>(s => new WorkflowsRepository(MongoClient));
-            services.AddTransient<IWorkflowTemplatesRepository, WorkflowTemplatesRepository>(s => new WorkflowTemplatesRepository(MongoClient));
-            // services.AddTransient<IClusterRepository, ClusterRepository>(s => new ClusterRepository(MongoClient));
-            services.AddTransient<IUsersRepository, UsersRepository>(s => new UsersRepository(MongoClient));
-            services.AddTransient<IBotKeysRepository, BotKeysRepository>(s => new BotKeysRepository(MongoClient));
+            services.AddTransient<IEntitiesRepository, EntitiesRepository>(s => new EntitiesRepository(MongoClient));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
-            services.AddSingleton<IGlobalValuesRepository, GlobalValuesRepository>(s => new GlobalValuesRepository(MongoClient));
-            services.AddSingleton<IMetricsRepository, MetricsRepository>(s => new MetricsRepository(MongoClient));
             services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(MongoClient));
             // services.AddSingleton<ClusterStateService>();
 
@@ -135,8 +130,7 @@ namespace Cindi.Presentation
             services.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
-
-
+            services.AddSingleton<InternalBotManager>();
 
 
             //Authentication
@@ -185,9 +179,32 @@ namespace Cindi.Presentation
             services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
                                                                         .AllowAnyMethod()
                                                                          .AllowAnyHeader()));
+            services.AddHttpClient();
+            builder.RegisterMediatr();
+            builder.Register<ServiceFactory>(ctx =>
+            {
+                var c = ctx.Resolve<IComponentContext>();
+                return t => c.Resolve(t);
+            });
 
+            builder.Populate(services);
 
             BaseRepository.RegisterClassMaps();
+
+
+
+            var AutofacContainer = builder.Build();
+
+            System.Net.ServicePointManager.ServerCertificateValidationCallback +=
+            delegate (object sender, System.Security.Cryptography.X509Certificates.X509Certificate certificate,
+                                    System.Security.Cryptography.X509Certificates.X509Chain chain,
+                                    System.Net.Security.SslPolicyErrors sslPolicyErrors)
+            {
+                return true; // **** Always accept
+            };
+
+            // this will be used as the service-provider for the application!
+            return new AutofacServiceProvider(AutofacContainer);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -204,7 +221,8 @@ namespace Cindi.Presentation
             ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider,
-            MetricManagementService metricManagementService
+            MetricManagementService metricManagementService,
+            InternalBotManager internalBotManager
             )
         {
             BootstrapThread = new Task(() =>
@@ -216,6 +234,10 @@ namespace Cindi.Presentation
                     logger.LogInformation("Waiting for cluster to establish a quorum");
                     Thread.Sleep(1000);
                 }
+
+
+                var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+
                 ClusterStateService.Initialized = stateMachine.CurrentState.Initialized;
                 var key = Configuration.GetValue<string>("EncryptionKey");
                 if (key != null)
@@ -255,7 +277,6 @@ namespace Cindi.Presentation
                     if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                     {
                         // Thread.Sleep(5000);
-                        var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
                         med.Send(new InitializeClusterCommand()
                         {
                             DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
@@ -267,7 +288,29 @@ namespace Cindi.Presentation
                 if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     metricManagementService.InitializeMetricStore();
+                    if (service.GetSettings == null)
+                    {
+                        logger.LogWarning("No setting detected, resetting settings to default.");
+                        med.Send(new UpdateClusterStateCommand()
+                        {
+                            DefaultIfNull = true
+                        }).GetAwaiter().GetResult(); ;
+                    }
                 }
+
+                foreach (var template in InternalStepLibrary.All)
+                {
+                    med.Send(new CreateStepTemplateCommand()
+                    {
+                        Name = template.Name,
+                        InputDefinitions = template.InputDefinitions,
+                        OutputDefinitions = template.OutputDefinitions,
+                        CreatedBy = SystemUsers.SYSTEM_TEMPLATES_MANAGER,
+                        Version = template.Version,
+                        Description = template.Description
+                    }).GetAwaiter().GetResult();
+                }
+                //internalBotManager.AddAdditionalBot();
             });
             BootstrapThread.Start();
 
@@ -275,6 +318,8 @@ namespace Cindi.Presentation
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseHttpsRedirection();
 
             app.UseSwagger();
 

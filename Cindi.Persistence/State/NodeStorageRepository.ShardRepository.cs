@@ -2,6 +2,7 @@
 using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.BaseClasses;
+using ConsensusCore.Domain.Enums;
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.Models;
 using ConsensusCore.Domain.Services;
@@ -10,6 +11,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,7 +33,15 @@ namespace Cindi.Persistence.State
 
         public async Task<bool> AddShardWriteOperationAsync(ShardWriteOperation operation)
         {
-            await _shardWriteOperations.InsertOneAsync(operation);
+            try
+            {
+                await _shardWriteOperations.InsertOneAsync(operation);
+            }
+            //Return true if the operation already exists
+            catch(MongoDuplicateKeyException e)
+            {
+                return true;
+            }
             return true;
         }
 
@@ -92,9 +102,18 @@ namespace Cindi.Persistence.State
             return result;
         }
 
-        public int GetTotalShardWriteOperationsCount(Guid shardId)
+        public async Task<List<ShardWriteOperation>> GetShardWriteOperationsAsync(Guid shardId, ShardOperationOptions option, int limit)
         {
-            return (int)_shardWriteOperations.CountDocuments(c => c.Data.ShardId == shardId);
+            return await _shardWriteOperations.Find(lsm => lsm.Operation == option && lsm.Data.ShardId == shardId).SortBy(l => l.TransactionDate).Limit(limit).ToListAsync();
+        }
+
+        public int GetLastShardWriteOperationPos(Guid shardId)
+        {
+            var lastOperation = _shardWriteOperations.Find(c => c.Data.ShardId == shardId).SortByDescending(s => s.Pos).FirstOrDefault();
+            if (lastOperation != null)
+                return (int)lastOperation.Pos;
+            else
+                return 0;
         }
 
         public bool IsObjectMarkedForDeletion(Guid shardId, Guid objectId)
@@ -118,6 +137,14 @@ namespace Cindi.Persistence.State
         {
             var result = await _shardWriteOperations.DeleteOneAsync(d => d.Pos == pos && d.Data.ShardId == shardId);
             return result.IsAcknowledged;
+        }
+
+        public async Task<bool> DeleteShardWriteOperationsAsync(List<ShardWriteOperation> shardWriteOperations)
+        {
+            // throw new NotImplementedException();
+            var ids = shardWriteOperations.Select(swo => swo.Id);
+            await _shardWriteOperations.DeleteManyAsync(d => ids.Contains(d.Id));
+            return true;
         }
     }
 }

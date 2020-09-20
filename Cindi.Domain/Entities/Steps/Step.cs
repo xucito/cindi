@@ -39,7 +39,9 @@ namespace Cindi.Domain.Entities.Steps
             string createdBy = "", 
             Dictionary<string, object> inputs = null, 
             string encryptionString = "",
-            Guid? workflowId = null) : base(
+            Guid? workflowId = null,
+            Guid? executionTemplateId = null,
+            Guid? executionScheduleId = null) : base(
             new Journal(new JournalEntry()
             {
                 Updates = new List<Update>()
@@ -96,6 +98,24 @@ namespace Cindi.Domain.Entities.Steps
                     {
                         FieldName = "inputs",
                         Value = inputs,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "assignedto",
+                        Value = null,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "executiontemplateid",
+                        Value = executionTemplateId,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "executionscheduleid",
+                        Value = executionScheduleId,
                         Type = UpdateType.Create
                     }
                 }
@@ -159,54 +179,15 @@ namespace Cindi.Domain.Entities.Steps
             return false;
         }
 
+        /// <summary>
+        /// The bot that has the step assigned to
+        /// </summary>
+        public Guid? AssignedTo { get; set; }
+
         public DateTime? SuspendedUntil { get; set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="protocol"></param>
-        /// <param name="stepTemplate"></param>
-        /// <param name="key"></param>
-        /// <param name="usePublicKey">Only used for AES Encryption, false is private</param>
-        /*public void EncryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
-        {
-            List<string> keysToEncrypt = new List<string>();
-            foreach (var input in Inputs)
-            {
-                if (stepTemplate.GetInputType(input.Key) == InputDataTypes.Secret)
-                {
-                    keysToEncrypt.Add(input.Key);
-                }
-            }
-
-            switch (protocol)
-            {
-                case EncryptionProtocol.AES256:
-                    foreach (var key in keysToEncrypt)
-                    {
-                        Inputs[key] = SecurityUtility.SymmetricallyEncrypt((string)Inputs[key], encryptionKey);
-                    }
-                    break;
-                case EncryptionProtocol.RSA:
-                    if (usePublicKey)
-                    {
-                        foreach (var key in keysToEncrypt)
-                        {
-                            Inputs[key] = SecurityUtility.RsaEncryptWithPublic((string)Inputs[key], encryptionKey);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var key in keysToEncrypt)
-                        {
-                            Inputs[key] = SecurityUtility.RsaEncryptWithPrivate((string)Inputs[key], encryptionKey);
-                        }
-                    }
-                    break;
-                default:
-                    throw new InvalidEncryptionProtocolException();
-            }
-        }*/
+        public Guid? ExecutionTemplateId { get; set; }
+        public Guid? ExecutionScheduleId { get; set; }
 
         public void RemoveDelimiters()
         {
@@ -245,11 +226,5 @@ namespace Cindi.Domain.Entities.Steps
                 }
             });
         }
-
-        /*public void DecryptStepSecrets(EncryptionProtocol protocol, StepTemplate stepTemplate, string encryptionKey, bool usePublicKey = true)
-        {
-            Inputs = InputDataUtility.DecryptDynamicData(stepTemplate.InputDefinitions, Inputs, protocol, encryptionKey, usePublicKey);
-            Outputs = InputDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, Inputs, protocol, encryptionKey, usePublicKey);
-        }*/
     }
 }

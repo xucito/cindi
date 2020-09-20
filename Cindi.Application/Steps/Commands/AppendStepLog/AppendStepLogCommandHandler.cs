@@ -21,18 +21,18 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Steps.Commands.AppendStepLog
 {
-   public class AppendStepLogCommandHandler: IRequestHandler<AppendStepLogCommand, CommandResult>
+    public class AppendStepLogCommandHandler : IRequestHandler<AppendStepLogCommand, CommandResult>
     {
-        public IStepsRepository _stepsRepository;
+        public IEntitiesRepository _entitiesRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
 
-        public AppendStepLogCommandHandler(IStepsRepository stepsRepository,
+        public AppendStepLogCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<AppendStepLogCommandHandler> logger,
             IClusterRequestHandler node
             )
         {
-            _stepsRepository = stepsRepository;
+            _entitiesRepository = entitiesRepository;
             Logger = logger;
             _node = node;
         }
@@ -41,9 +41,9 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var step = await _stepsRepository.GetStepAsync(request.StepId);
+            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
-            if(StepStatuses.IsCompleteStatus(step.Status))
+            if (StepStatuses.IsCompleteStatus(step.Status))
             {
                 throw new InvalidStepStatusException("Cannot append log to step, step status is complete with " + step.Status);
             }
@@ -66,7 +66,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                         }
             });
 
-            //await _stepsRepository.UpdateStep(step);
+            //await _entitiesRepository.UpdateStep(step);
 
             var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
             {

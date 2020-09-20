@@ -1,12 +1,14 @@
 #!/bin/bash
 
 # Start the first process
-/usr/bin/mongod --fork --logpath /var/log/mongodb/output
+/usr/bin/mongod --bind_ip_all --fork --logpath /var/log/mongodb/output
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start my_first_process: $status"
   exit $status
 fi
+
+dotnet dev-certs https -ep /app/cindi_cert.pfx -p "P@ssw0rd123!"
 
 # Start the second process
 /usr/bin/dotnet /app/Cindi.Presentation.dll -D
@@ -21,6 +23,7 @@ fi
 # more than one service in a container. The container exits with an error
 # if it detects that either of the processes has exited.
 # Otherwise it loops forever, waking up every 60 seconds
+
 
 while sleep 60; do
   ps aux |grep my_first_process |grep -q -v grep

@@ -11,6 +11,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
             Dependencies = new ConditionGroup();
             SubsequentSteps = new Dictionary<string, SubsequentStep>();
         }
+
         public new ConditionGroup Dependencies { get; set; }
         public new Dictionary<string, SubsequentStep> SubsequentSteps { get; set; }
     }

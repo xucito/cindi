@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <SpaRoot>ClientApp\</SpaRoot>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,16 +27,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="test\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="AutoMapper" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.1.0" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.3.6-alpha" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.4.9-alpha" />
+    <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="3.0.3" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Core" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="2.2.0" />
@@ -49,7 +54,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Cindi.Application\Cindi.Application.csproj" />
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
-    <ProjectReference Include="..\Cindi.Infrastructure\Cindi.Infrastructure.csproj" />
     <ProjectReference Include="..\Cindi.Persistence\Cindi.Persistence.csproj" />
   </ItemGroup>
 

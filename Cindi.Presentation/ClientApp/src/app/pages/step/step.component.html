@@ -1,3 +1,21 @@
-<p>
-  step works!
-</p>
+<nb-card *ngIf="step != undefined" [status]="pageStatus(step.status)">
+  <nb-card-header>
+    <div  class="headerText">
+      Step: {{step.id}}
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    <h4 *ngIf="inputs != undefined && inputs.length > 0">Inputs</h4>
+    <dynamic-form [readOnly]="true" [inputs]="inputs"></dynamic-form>
+    <h4 *ngIf="outputs != undefined && outputs.length > 0">Outputs</h4>
+    <dynamic-form [readOnly]="true" [inputs]="outputs"></dynamic-form>
+    <h4>Logs</h4>
+    <div *ngIf="stepTemplate != null">
+      <ngx-codemirror [(ngModel)]="content" [options]="{
+  lineNumbers: true,
+  theme: 'material',
+  mode: ''
+}" [preserveScrollPosition]="true"></ngx-codemirror>
+    </div>
+  </nb-card-body>
+</nb-card>

@@ -204,7 +204,7 @@ namespace Cindi.Domain.Entities.StepTemplates
             return true;
         }
 
-        public Step GenerateStep(string stepTemplateId, string createdBy, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, Guid? workflowId = null, string encryptionKey = "")
+        public Step GenerateStep(string stepTemplateId, string createdBy, string name = "", string description = "", Dictionary<string, object> inputs = null, List<string> stepTestTemplateIds = null, Guid? workflowId = null, string encryptionKey = "", Guid? executionTemplateId = null, Guid? executionScheduleId = null)
         {
             var verifiedInputs = new Dictionary<string, object>();
 
@@ -222,10 +222,11 @@ namespace Cindi.Domain.Entities.StepTemplates
                     {
                         if (!inputs.Select(i => i.Key).Contains(id.Key))
                         {
-                            missingInputs += id.Key + " ";
+                            inputs.Add(id.Key, null);
+                            //missingInputs += id.Key + " ";
                         }
                     }
-                    throw new InvalidStepInputException("Missing step inputs for step template " + Id + ", expected " + InputDefinitions.Count() + " got " + inputs.Count() + " missing ");
+                    //throw new InvalidStepInputException("Missing step inputs for step template " + Id + ", expected " + InputDefinitions.Count() + " got " + inputs.Count() + " missing ");
                 }
 
                 foreach (var input in inputs)
@@ -255,7 +256,7 @@ namespace Cindi.Domain.Entities.StepTemplates
                 throw new InvalidStepInputException("No inputs were specified however step template " + Id + " has " + InputDefinitions.Count() + " inputs.");
             }
 
-            var newStep = new Step(Guid.NewGuid(), name, description, stepTemplateId, createdBy, verifiedInputs, encryptionKey, workflowId);
+            var newStep = new Step(Guid.NewGuid(), name, description, stepTemplateId, createdBy, verifiedInputs, encryptionKey, workflowId, executionTemplateId, executionScheduleId);
             return newStep;
         }
 
@@ -271,7 +272,7 @@ namespace Cindi.Domain.Entities.StepTemplates
             throw new InputDefinitionNotFoundException("Input " + input + " does not exist in step template " + Id);
         }
 
-        private bool IsStepInputValid(KeyValuePair<string, object> input)
+        public bool IsStepInputValid(KeyValuePair<string, object> input)
         {
             try
             {

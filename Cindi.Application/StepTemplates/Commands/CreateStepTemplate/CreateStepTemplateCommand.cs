@@ -11,9 +11,8 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommand: IRequest<CommandResult>
     {
-        [Required]
+        public string ReferenceId { get; set; }
         public string Name { get; set; }
-        [Required]
         public string Version { get; set; }
         public bool AllowDynamicInputs = false;
         public Dictionary<string, DynamicDataDescription> InputDefinitions { get; set; }

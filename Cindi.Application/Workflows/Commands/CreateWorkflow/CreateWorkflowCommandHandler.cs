@@ -26,31 +26,29 @@ using Cindi.Domain.Exceptions.Workflows;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Shard;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Entities.StepTemplates;
+using Cindi.Domain.Exceptions.StepTemplates;
+using Microsoft.Extensions.Logging;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private IWorkflowsRepository _workflowsRepository;
-        private IWorkflowTemplatesRepository _workflowTemplatesRepository;
-        private IStepsRepository _stepsRepository;
-        private IStepTemplatesRepository _stepTemplatesRepository;
+        private IEntitiesRepository _entitiesRepository;
         private IMediator _mediator;
         private readonly IClusterRequestHandler _node;
+        private ILogger<CreateWorkflowCommandHandler> _logger;
 
-        public CreateWorkflowCommandHandler(IWorkflowsRepository workflowsRepository,
-            IWorkflowTemplatesRepository workflowTemplatesRepository,
-            IStepsRepository stepsRepository,
-            IStepTemplatesRepository stepTemplatesRepository,
+        public CreateWorkflowCommandHandler(
+            IEntitiesRepository entitiesRepository,
             IMediator mediator,
-            IClusterRequestHandler node)
+            IClusterRequestHandler node,
+            ILogger<CreateWorkflowCommandHandler> logger)
         {
-            _workflowsRepository = workflowsRepository;
-            _workflowTemplatesRepository = workflowTemplatesRepository;
-            _stepsRepository = stepsRepository;
-            _stepTemplatesRepository = stepTemplatesRepository;
+            _entitiesRepository = entitiesRepository;
             _mediator = mediator;
             _node = node;
+            _logger = logger;
         }
 
         public async Task<CommandResult<Workflow>> Handle(CreateWorkflowCommand request, CancellationToken cancellationToken)
@@ -58,14 +56,14 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WorkflowTemplate template = await _workflowTemplatesRepository.GetWorkflowTemplateAsync(request.WorkflowTemplateId);
+            WorkflowTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
 
-            if(template == null)
+            if (template == null)
             {
                 throw new WorkflowTemplateNotFoundException("Workflow Template " + request.WorkflowTemplateId + " not found.");
             }
 
-            if(template.InputDefinitions.Count() < request.Inputs.Count())
+            if (template.InputDefinitions.Count() < request.Inputs.Count())
             {
                 throw new InvalidInputsException("Invalid number of inputs, number passed was " + request.Inputs.Count() + " which is less then defined " + template.InputDefinitions.Count());
             }
@@ -82,7 +80,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     }
                 }
 
-                foreach(var input in request.Inputs)
+                foreach (var input in request.Inputs)
                 {
                     if (template.InputDefinitions.ContainsKey(input.Key) && template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
                     {
@@ -106,13 +104,15 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 verifiedWorkflowInputs, //Encrypted inputs
                 request.Name,
                 request.CreatedBy,
-                DateTime.UtcNow
+                DateTime.UtcNow,
+                request.ExecutionTemplateId,
+                request.ExecutionScheduleId
             ),
                 WaitForSafeWrite = true,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
             });
 
-            var workflow = await _workflowsRepository.GetWorkflowAsync(createdWorkflowId);
+            var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
 
             //When there are no conditions to be met
 
@@ -120,83 +120,72 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             DateTimeOffset WorkflowStartTime = DateTime.Now;
             foreach (var block in startingLogicBlock)
             {
-                foreach (var subBlock in block.Value.SubsequentSteps)
+                try
                 {
-                    var newStepTemplate = await _stepTemplatesRepository.GetStepTemplateAsync(subBlock.Value.StepTemplateId);
-
-                    var verifiedInputs = new Dictionary<string, object>();
-                    
-                    foreach (var mapping in subBlock.Value.Mappings)
+                    foreach (var subBlock in block.Value.SubsequentSteps)
                     {
-                        string mappedValue = "";
-                        if ((mapping.Value.DefaultValue != null && (mapping.Value.OutputReferences == null || mapping.Value.OutputReferences.Count() == 0)) || (mapping.Value.DefaultValue != null && mapping.Value.OutputReferences.First() != null && mapping.Value.DefaultValue.Priority > mapping.Value.OutputReferences.First().Priority))
+                        var newStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
+
+                        if (newStepTemplate == null)
                         {
-                            // Change the ID to match the output
-                            verifiedInputs.Add(mapping.Key, mapping.Value.DefaultValue.Value);
+                            throw new StepTemplateNotFoundException("Template " + subBlock.Value.StepTemplateId + " not found.");
                         }
-                        else if (mapping.Value.OutputReferences != null)
+
+                        var verifiedInputs = new Dictionary<string, object>();
+
+                        foreach (var mapping in subBlock.Value.Mappings)
                         {
-                            verifiedInputs.Add(mapping.Key, DynamicDataUtility.GetData(request.Inputs, mapping.Value.OutputReferences.First().OutputId).Value);
-                        }
-                    }
-
-                    await _mediator.Send(new CreateStepCommand()
-                    {
-                        StepTemplateId = subBlock.Value.StepTemplateId,
-                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                        Description = null,
-                        Inputs = verifiedInputs,
-                        WorkflowId = createdWorkflowId,
-                        Name = subBlock.Key
-                    });
-
-                  /*  newStep = await _stepsRepository.InsertStepAsync(newStep);
-
-                    await _stepsRepository.InsertJournalEntryAsync(new JournalEntry()
-                    {
-                        SubjectId = newStep.Id,
-                        ChainId = 0,
-                        Entity = JournalEntityTypes.Step,
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                        Updates = new List<Update>()
-                        {
-                            new Update()
+                            string mappedValue = "";
+                            if ((mapping.Value.DefaultValue != null && (mapping.Value.OutputReferences == null || mapping.Value.OutputReferences.Count() == 0)) || (mapping.Value.DefaultValue != null && mapping.Value.OutputReferences.First() != null && mapping.Value.DefaultValue.Priority > mapping.Value.OutputReferences.First().Priority))
                             {
-                                FieldName = "status",
-                                Value = StepStatuses.Unassigned,
-                                Type = UpdateType.Override
+                                // Change the ID to match the output
+                                verifiedInputs.Add(mapping.Key, mapping.Value.DefaultValue.Value);
+                            }
+                            else if (mapping.Value.OutputReferences != null)
+                            {
+                                verifiedInputs.Add(mapping.Key, DynamicDataUtility.GetData(request.Inputs, mapping.Value.OutputReferences.First().OutputId).Value);
                             }
                         }
+
+                        await _mediator.Send(new CreateStepCommand()
+                        {
+                            StepTemplateId = subBlock.Value.StepTemplateId,
+                            CreatedBy = SystemUsers.QUEUE_MANAGER,
+                            Description = null,
+                            Inputs = verifiedInputs,
+                            WorkflowId = createdWorkflowId,
+                            Name = subBlock.Key
+                        });
+                    }
+
+
+                    workflow.UpdateJournal(
+                    new JournalEntry()
+                    {
+                        CreatedBy = request.CreatedBy,
+                        CreatedOn = DateTime.UtcNow,
+                        Updates = new List<Update>()
+                        {
+                        new Update()
+                        {
+                            FieldName = "completedlogicblocks",
+                            Type = UpdateType.Append,
+                            Value = block.Key //Add the logic block
+                        }
+                        }
                     });
 
-                    await _stepsRepository.UpsertStepMetadataAsync(newStep.Id); */
+                    await _node.Handle(new AddShardWriteOperation()
+                    {
+                        Data = workflow,
+                        WaitForSafeWrite = true,
+                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                    });
                 }
-
-
-                workflow.UpdateJournal(
-                new JournalEntry()
+                catch(Exception e)
                 {
-                    CreatedBy = request.CreatedBy,
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = new List<Update>()
-                    {
-                    new Update()
-                    {
-                        FieldName = "completedlogicblocks",
-                        Type = UpdateType.Append,
-                        Value = block.Key //Add the logic block
-                    }
-                    }
-                });
-
-                //await _workflowsRepository.UpdateWorkflow(workflow);
-                await _node.Handle(new AddShardWriteOperation()
-                {
-                    Data = workflow,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
-                });
+                    _logger.LogCritical("Failed to action logic block " + block.Key + " with error " + e.Message + Environment.NewLine + e.StackTrace);
+                }
             }
 
             stopwatch.Stop();

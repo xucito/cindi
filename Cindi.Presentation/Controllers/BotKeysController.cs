@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Cindi.Application.BotKeys.Commands.CreateBotKeyCommand;
 using Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand;
 using Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand;
-using Cindi.Application.BotKeys.Queries.GetBotKey;
-using Cindi.Application.BotKeys.Queries.GetBotKeys;
+using Cindi.Application.Entities.Queries;
+using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.BotKeys;
@@ -35,7 +36,7 @@ namespace Cindi.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(CreateBotKeyCommand command)
         {
-            if (!_clusterState.AutoRegistrationEnabled)
+            if (!_clusterState.GetSettings.AllowAutoRegistration)
             {
                 if (ClaimsUtility.GetId(User) == null)
                 {
@@ -45,9 +46,9 @@ namespace Cindi.Presentation.Controllers
 
             var keyCreationResult = await Mediator.Send(command);
 
-            var key = await Mediator.Send(new GetBotKeyQuery()
+            var key = await Mediator.Send(new GetEntityQuery<BotKey>()
             {
-                Id = new Guid(keyCreationResult.ObjectRefId)
+                Expression = bk => bk.Id == new Guid(keyCreationResult.ObjectRefId)
             });
 
             return Ok(new HttpCommandResult<NewBotKeyVM>("", keyCreationResult, new NewBotKeyVM()
@@ -60,11 +61,16 @@ namespace Cindi.Presentation.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetBotkeys(int page = 0, int size = 20)
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string isDisabled = null, string sort = "RegisteredOn:1")
         {
-            var keys = await Mediator.Send(new GetBotKeysQuery() {
+            var keys = await Mediator.Send(new GetEntitiesQuery<BotKey>()
+            {
                 Page = page,
-                Size = size
+                Size = size,
+                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<BotKey, bool>>> {
+                   isDisabled == null ? null : ExpressionBuilder.BuildPredicate<BotKey>("IsDisabled", OperatorComparer.Equals, isDisabled)
+                }),
+                Sort = sort
             });
 
             return Ok(new HttpQueryResult<List<BotKey>, List<GetBotKeyVM>>(keys, Mapper.Map<List<GetBotKeyVM>>(keys.Result)));

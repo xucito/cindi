@@ -19,10 +19,11 @@ namespace Cindi.Persistence.ConsensusCoreMappings
         {
             cm.AutoMap();
             cm.SetIsRootClass(true);
-            cm.UnmapMember(c => c._saveThread);
             cm.MapMember(s => s.Logs).SetSerializer(new DictionaryInterfaceImplementerSerializer<SortedList<int, LogEntry>>(DictionaryRepresentation.ArrayOfArrays));
             /*AppDomain.CurrentDomain.GetAssemblies().SelectMany(assem => assem.GetTypes()).Where(type => type.IsSubclassOf(typeof(NodeStorage))).ToList()
                 .ForEach(type => cm.AddKnownType(type));*/
+            cm.UnmapMember(c => c.CommandsQueue);
+            cm.SetIgnoreExtraElements(true);
         }
     }
 }

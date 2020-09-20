@@ -1,4 +1,5 @@
 ﻿using Cindi.Application.Services.ClusterState;
+using Cindi.Domain.Exceptions.State;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -37,7 +38,15 @@ namespace Cindi.Presentation.Middleware
                 }
                 else
                 {
-                    await _next(context);
+                    try
+                    {
+                        await _next(context);
+                    }
+                    catch(FailedClusterOperationException e)
+                    {
+                        context.Response.StatusCode = 409;
+                        await context.Response.WriteAsync(e.Message);
+                    }
                 }
             }
             else

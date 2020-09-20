@@ -1,12 +1,13 @@
 version: '3'
 services:
-  cindi:
+  cindi
     image: xucito/cindi:1.2.0-alpha-17c8140
     environment:
       - "Cluster:NodeUrls=https://localhost:5021"
       - "Cluster:MinimumNodes=1"
-      - "Client:apiUrl=https://localhost:81"
-      - "Logging:Default:Debug"
+      - "Client:apiUrl=https://localhost:81
+      - "Logging:LogLevel:Default=Information"
+      - "Logging:Default=Debug"
       - "Logging:File:Enabled=true"
       - "Logging:File:LogDirectory=/var/log/cindi"
     ports:

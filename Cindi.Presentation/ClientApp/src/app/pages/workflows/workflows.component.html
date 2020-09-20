@@ -1,3 +1,14 @@
-<p>
-  workflows works!
-</p>
+<nb-card size="giant">
+
+  <nb-card-header>
+    <span>Workflow</span>
+  </nb-card-header>
+
+  <nb-card-body class="body">
+    <div class="row">
+      <div class="col-sm-12">
+        <data-table [columns]="columns" [page]="page" [rows]="rows" (onSortChange)="onSort($event)" (onPageChange)="setPage($event)"></data-table>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

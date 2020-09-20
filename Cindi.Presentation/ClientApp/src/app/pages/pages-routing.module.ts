@@ -1,3 +1,4 @@
+import { StepComponent } from './step/step.component';
 import { WorkflowsComponent } from './workflows/workflows.component';
 import { MonitoringComponent } from './monitoring/monitoring.component';
 import { BotsComponent } from './bots/bots.component';
@@ -14,6 +15,9 @@ import { WorkflowTemplatesComponent } from "./workflow-templates/workflow-templa
 import { WorkflowTemplateComponent } from './workflow-template/workflow-template.component';
 import {WorkflowDesignerComponent} from './workflow-designer/workflow-designer.component';
 import { StepsComponent } from './steps/steps.component';
+import { ExecutionTemplatesComponent } from './execution-templates/execution-templates.component';
+import { ExecutionSchedulesComponent } from './execution-schedules/execution-schedules.component';
+import { ConsoleComponent } from './console/console.component';
 
 const routes: Routes = [
   {
@@ -22,11 +26,25 @@ const routes: Routes = [
     children: [
       {
         path: "steps",
-        component: StepsComponent
+        children: [
+          {
+          path: "",
+          component: StepsComponent
+          }
+          ,
+          {
+            path: ":stepId",
+            component: StepComponent
+          }
+        ]
       },
       {
         path: "workflows",
         component: WorkflowsComponent
+      },
+      {
+        path: "console",
+        component: ConsoleComponent
       },
       {
         path: "dashboard",
@@ -101,6 +119,26 @@ const routes: Routes = [
           {
             path: "",
             component: MonitoringComponent,
+            pathMatch: "full"
+          }
+        ]
+      },
+      {
+        path: "execution-templates",
+        children: [
+          {
+            path: "",
+            component: ExecutionTemplatesComponent,
+            pathMatch: "full"
+          }
+        ]
+      },
+      {
+        path: "execution-schedules",
+        children: [
+          {
+            path: "",
+            component: ExecutionSchedulesComponent,
             pathMatch: "full"
           }
         ]

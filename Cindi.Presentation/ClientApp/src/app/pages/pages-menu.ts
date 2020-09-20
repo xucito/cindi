@@ -2,80 +2,76 @@ import { NbMenuItem } from "@nebular/theme";
 
 export const MENU_ITEMS: NbMenuItem[] = [
   {
-    title: "Dashboard",
+    title: "Home",
     icon: "home-outline",
     link: "/pages/dashboard",
     home: true
   },
   {
-    title: "ADMIN",
-    group: true
-  },
-  {
     title: "Steps",
-    icon: "file-text-outline",
+    icon: "arrow-circle-right-outline",
     link: "/pages/steps"
   },
   {
     title: "Workflows",
-    icon: "file-text-outline",
+    icon: "shuffle-2-outline",
     link: "/pages/workflows"
   },
   {
-    title: "Step-Templates",
-    icon: "file-text-outline",
-    link: "/pages/step-templates"
-  },
-  {
-    title: "Workflow-Templates",
-    icon: "share-outline",
-    link: "/pages/workflow-templates"
-  },
-  {
-    title: "Global-Values",
-    icon: "bookmark-outline",
-    link: "/pages/global-values"
-  },
-  {
-    title: "Bots",
-    icon: "people-outline",
-    link: "/pages/bots"
-  },
-  {
-    title: "Workflow-Designer",
-    icon: "edit-2-outline",
-    link: "/pages/workflow-designer"
+    title: "Execution-Schedules",
+    icon: "clock-outline",
+    link: "/pages/execution-schedules"
   },
   {
     title: "Monitoring",
     icon: "heart-outline",
     link: "/pages/monitoring"
-  }/*,
+  },
   {
-    title: "FEATURES",
-    group: true
-  }
-  ,
+    title: "Console",
+    icon: "browser-outline",
+    link: "/pages/console"
+  },
   {
-    title: "Auth",
-    icon: "lock-outline",
+    title: "Templates",
+    expanded: false,
     children: [
       {
-        title: "Login",
-        link: "/auth/login"
+        title: "Step-Templates",
+        icon: "file-text-outline",
+        link: "/pages/step-templates"
       },
       {
-        title: "Register",
-        link: "/auth/register"
+        title: "Workflow-Templates",
+        icon: "share-outline",
+        link: "/pages/workflow-templates"
       },
       {
-        title: "Request Password",
-        link: "/auth/request-password"
+        title: "Execution-Templates",
+        icon: "book-outline",
+        link: "/pages/execution-templates"
       },
       {
-        title: "Reset Password",
-        link: "/auth/reset-password"
+        title: "Workflow-Designer",
+        icon: "edit-2-outline",
+        link: "/pages/workflow-designer"
       }
     ]
-  }*/
+  },
+  {
+    title: "Admin",
+    expanded: false,
+    children: [
+      {
+        title: "Global-Values",
+        icon: "bookmark-outline",
+        link: "/pages/global-values"
+      },
+      {
+        title: "Bots",
+        icon: "people-outline",
+        link: "/pages/bots"
+      }
+    ]
+  }
 ];

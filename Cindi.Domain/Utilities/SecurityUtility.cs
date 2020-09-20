@@ -31,7 +31,6 @@ namespace Cindi.Domain.Utilities
 
         public static string SymmetricallyEncrypt(string plainText, string key)
         {
-
             if (encoding.GetBytes(key).Length != 32)
             {
                 throw new InvalidPrivateKeyException("Private key must be 32 bytes.");

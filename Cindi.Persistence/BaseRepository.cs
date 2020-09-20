@@ -31,6 +31,11 @@ using Cindi.Domain.Entities.States;
 using ConsensusCore.Domain.Models;
 using Cindi.Persistence.Metrics;
 using Cindi.Domain.Entities.Metrics;
+using Cindi.Domain.Entities.BotKeys;
+using Cindi.Domain.Entities.ExecutionTemplates;
+using Cindi.Domain.Entities.ExecutionSchedule;
+using Cindi.Domain.Entities.WorkflowsTemplates;
+using Cindi.Persistence.WorkflowTemplates;
 
 namespace Cindi.Persistence
 {
@@ -49,6 +54,7 @@ namespace Cindi.Persistence
         {
             BsonClassMap.RegisterClassMap<WorkflowMetadata>(cm => WorkflowsClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<Workflow>(seq => WorkflowsClassMap.Register(seq));
+            BsonClassMap.RegisterClassMap<WorkflowTemplate>(seq => WorkflowTemplatesClassMap.Register(seq));
             BsonClassMap.RegisterClassMap<StepTemplate>(cm => StepTemplatesClassMap.Register(cm));
             BsonClassMap.RegisterClassMap<Journal>(je => JournalsClassMap.Register(je));
             BsonClassMap.RegisterClassMap<Step>(cm => StepsClassMap.Register(cm));
@@ -61,7 +67,7 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<NodeInformation>();
             BsonClassMap.RegisterClassMap<Index>();
             BsonClassMap.RegisterClassMap<BaseTask>(); 
-            BsonClassMap.RegisterClassMap<ObjectLock>();
+            BsonClassMap.RegisterClassMap<Lock>();
             BsonClassMap.RegisterClassMap<LogicBlockLock>();
             BsonClassMap.RegisterClassMap<BaseCommand>(gv => BaseCommandsClassMap.Register(gv));
             BsonClassMap.RegisterClassMap<NodeStorage<CindiClusterState>>(gv => NodeStorageClassMap.Register(gv));
@@ -72,6 +78,10 @@ namespace Cindi.Persistence
             BsonClassMap.RegisterClassMap<BaseState>(cs => BaseStateClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<JournalEntry>(cs => JournalEntriesClassMap.Register(cs));
             BsonClassMap.RegisterClassMap<Domain.Entities.Metrics.Metric>(cs => MetricsClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<MetricTick>(cs => MetricTickClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<BotKey>(cs => BotKeyClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<ExecutionTemplate>(cs => ExecutionTemplateClassMap.Register(cs));
+            BsonClassMap.RegisterClassMap<ExecutionSchedule>(cs => ExecutionScheduleClassMap.Register(cs));
             //BsonSerializer.RegisterSerializer(typeof(Update), new UpdateSerializer());
             /*BsonSerializer.RegisterSerializer(typeof(BaseCommand), new BaseCommandSerializer());
             BsonSerializer.RegisterSerializer(typeof(NodeStorage), new NodeStorageSerializer());

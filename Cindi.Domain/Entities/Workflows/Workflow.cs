@@ -25,7 +25,9 @@ namespace Cindi.Domain.Entities.Workflows
             Dictionary<string, object> inputs,
             string name,
             string createdBy,
-            DateTime createdOn
+            DateTime createdOn,
+            Guid? executionTemplateId = null,
+            Guid? executionScheduleId = null
             ) : base(
             new Journal(new JournalEntry()
             {
@@ -72,6 +74,24 @@ namespace Cindi.Domain.Entities.Workflows
                         FieldName = "status",
                         Value = WorkflowStatuses.Started,
                         Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "executiontemplateid",
+                        Value = executionTemplateId,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "executionscheduleid",
+                        Value = executionScheduleId,
+                        Type = UpdateType.Create
+                    },
+                    new Update()
+                    {
+                        FieldName = "completedlogicblocks",
+                        Value = new List<string>(),
+                        Type = UpdateType.Create
                     }
                 }
             })
@@ -109,5 +129,7 @@ namespace Cindi.Domain.Entities.Workflows
         /// Logic blocks that no longer need to be evaluated
         /// </summary>
         public List<string> CompletedLogicBlocks { get; set; }
+        public Guid? ExecutionTemplateId { get; set; }
+        public Guid? ExecutionScheduleId { get; set; }
     }
 }

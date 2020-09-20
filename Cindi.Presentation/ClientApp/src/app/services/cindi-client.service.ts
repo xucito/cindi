@@ -26,10 +26,12 @@ export class CindiClientService {
     }
   }
 
-  GetSteps(
+  GetEntity(
+    controllerName: string,
     status: string = "",
     page: number = 0,
-    size: number = 0
+    size: number = 0,
+    sort?: string
   ): Observable<any> {
     var queryString = "";
     var hasQueries = false;
@@ -53,8 +55,18 @@ export class CindiClientService {
       queryString += "size=" + size;
       hasQueries = true;
     }
+
+    if(sort)
+    {
+      if (hasQueries) {
+        queryString += "&";
+      }
+      queryString += "sort=" + sort;
+      hasQueries = true;
+    }
+
     return this.http.get(
-      this.baseUrl + this.api + "steps" + (hasQueries ? "?" : "") + queryString
+      this.baseUrl + this.api + controllerName + (hasQueries ? "?" : "") + queryString
     );
   }
 
@@ -166,6 +178,16 @@ export class CindiClientService {
       botName: name,
       isDisabled: isDisabled
     });
+  }
+
+  UpdateExecutionSchedule(
+    name: string,
+    update: any,
+    runImmediately: boolean
+  ): Observable<any> {
+    return this.http.put(this.baseUrl + this.api + "execution-schedules/" + name + "?runImmediately=" + runImmediately,
+      update
+    );
   }
 
   DeleteBotKey(botKeyId: string): Observable<any> {

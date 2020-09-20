@@ -1,17 +1,24 @@
 <nb-card size="giant">
 
   <nb-card-header>
-    <span>Step Feed</span>
+    <span>Steps</span>
+    <nb-checkbox (valueChange)="toggleRefresh()" [value]="enableReload">Auto Refresh</nb-checkbox>
   </nb-card-header>
 
   <nb-card-body class="body">
     <div class="row">
       <div class="col-sm-12">
-        <ngx-datatable [rows]="rows" [columns]="columns" [columnMode]="ColumnMode.force" class="bootstrap"
-          [headerHeight]="50" [footerHeight]="50" rowHeight="auto" [externalPaging]="true" [count]="page.totalElements"
-          [offset]="page.pageNumber" [limit]="page.size" (page)="setPage($event)">
-        </ngx-datatable>
+        <data-table [columns]="columns" [page]="page" [rows]="rows" (onSortChange)="onSort($event)" (onPageChange)="setPage($event)" (onAction)="onAction($event)"></data-table>
       </div>
     </div>
   </nb-card-body>
 </nb-card>
+
+<ng-template #newStepForm let-data>
+  <dynamic-form [readOnly]="false" [additionalProps]="data.stepTemplate"
+    (onSubmit)="submitNewStep($event)" [inputs]="data.inputs"></dynamic-form>
+</ng-template>
+
+<ng-template #stepView let-data>
+  <step-view [step]="data.step" [stepTemplate]="data.stepTemplate"></step-view>
+</ng-template>

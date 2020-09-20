@@ -34,7 +34,27 @@ namespace Cindi.Persistence
             _db = client.GetDatabase("CindiDb");
         }
 
-        public async Task<List<MetricTick>> GetMetricsAsync(Guid nodeId)
+        public async Task<List<MetricTick>> GetStorageMetrics(Guid nodeId)
+        {
+            var result = await _db.RunCommandAsync(new BsonDocumentCommand<BsonDocument>(new BsonDocument { { "dbStats", 1 } }));
+
+            var jsonWriterSettings = new JsonWriterSettings { OutputMode = JsonOutputMode.Strict };
+            var jObjectConverted = JObject.Parse(result.ToJson(jsonWriterSettings));
+
+            List<MetricTick> metrics = new List<MetricTick>();
+
+            metrics.Add(new MetricTick()
+            {
+                MetricId = MetricLibrary.DatabaseTotalSizeBytes.MetricId,
+                Date = DateTime.Now,
+                ObjectId = nodeId,
+                Value = result["dataSize"].AsDouble
+            });
+
+            return metrics;
+        }
+
+        public async Task<List<MetricTick>> GetDetailedMetrics(Guid nodeId)
         {
             var result = await _db.RunCommandAsync(new BsonDocumentCommand<BsonDocument>(new BsonDocument { { "serverStatus", 1 } }));
 
@@ -46,10 +66,7 @@ namespace Cindi.Persistence
             var pollTime = result["localTime"].ToUniversalTime();
             var latencies = jObjectConverted["opLatencies"].ToObject<JObject>();
 
-            if (lastPolled != null)
-            {
-                var timeDifference = (pollTime - lastPolled.Value).TotalMilliseconds;
-            }
+            double timeDifference = lastPolled == null ? 0 : (pollTime - lastPolled.Value).TotalMilliseconds;
 
             foreach (JProperty x in (JToken)latencies)
             { // if 'obj' is a JObject
@@ -70,25 +87,48 @@ namespace Cindi.Persistence
                         MetricId = MetricLibrary.DatabaseOperationLatencyMs.MetricId,
                         Date = pollTime,
                         ObjectId = nodeId,
-                        Value = changeInOps  != 0 ?((x.Value["latency"].ToObject<double>() - lastLatencies[x.Name]) / (x.Value["ops"].ToObject<double>() - lastOps[x.Name])) / 1000 : 0,
+                        Value = changeInOps != 0 ? ((x.Value["latency"].ToObject<double>() - lastLatencies[x.Name]) / (x.Value["ops"].ToObject<double>() - lastOps[x.Name])) / 1000 : 0,
                         SubCategory = name
                     });
 
                     metrics.Add(new MetricTick()
                     {
-                        MetricId = MetricLibrary.DatabaseOperationCount.MetricId,
+                        MetricId = MetricLibrary.DatabaseOperationsPerSecond.MetricId,
                         Date = pollTime,
                         ObjectId = nodeId,
-                        Value = (x.Value["ops"].ToObject<double>() - lastOps[x.Name]),
+                        Value = (x.Value["ops"].ToObject<double>() - lastOps[x.Name]) / (timeDifference / 1000),
                         SubCategory = name
                     });
                 }
+
+                metrics.Add(new MetricTick()
+                {
+                    MetricId = MetricLibrary.DatabaseOperationCount.MetricId,
+                    Date = pollTime,
+                    ObjectId = nodeId,
+                    Value = (x.Value["ops"].ToObject<double>()),
+                    SubCategory = name
+                });
 
                 lastLatencies[x.Name] = x.Value["latency"].ToObject<double>();
                 lastOps[x.Name] = x.Value["ops"].ToObject<double>();
             }
 
             lastPolled = pollTime;
+
+            return metrics;
+        }
+
+        public async Task<List<MetricTick>> GetMetricsAsync(Guid nodeId)
+        {
+            List<MetricTick> metrics = new List<MetricTick>();
+
+            var result = await Task.WhenAll(GetDetailedMetrics(nodeId), GetStorageMetrics(nodeId));
+
+            foreach(var metricSet in result)
+            {
+                metrics.AddRange(metricSet);
+            }
 
             return metrics;
         }

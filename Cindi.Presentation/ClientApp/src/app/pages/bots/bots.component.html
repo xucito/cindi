@@ -5,21 +5,11 @@
   </nb-card-header>
 
   <nb-card-body class="body">
-    <nb-list class="user-activity-list">
-      <nb-list-item *ngFor="let botKey of botKeys">
-        <div class="step-template-name">
-          <div class="date-text">{{botKey.registeredOn | date: 'medium'}}
-          </div>
-          <div class="caption">{{botKey.id}}</div>
-          <div class="value">{{ botKey.botName }} </div>
-        </div>
-
-        <nb-actions size="small">
-          <nb-action icon="play-circle" *ngIf="botKey.isDisabled" (click)="toggleDisable(botKey.id, false)"></nb-action>
-          <nb-action icon="pause-circle" *ngIf="!botKey.isDisabled" (click)="toggleDisable(botKey.id, true)"></nb-action>
-          <nb-action icon="close-circle" (click)="deleteBotKey(botKey.id)"></nb-action>
-        </nb-actions>
-      </nb-list-item>
-    </nb-list>
+    <div class="row">
+      <div class="col-sm-12">
+          <data-table [columns]="columns" [page]="page" [rows]="rows" (onAction)="onAction($event)" (onSortChange)="onSort($event)" (onPageChange)="setPage($event)"></data-table>
+      </div>
+    </div>
   </nb-card-body>
 </nb-card>
+
