@@ -117,9 +117,9 @@ namespace Cindi.Application.Services
                     {
                         return await UpdateDataAsync(data);
                     }
-                    catch(Exception updateError)
+                    catch (Exception updateError)
                     {
-                        if(updateError.Message.Contains("has no supported update operations"))
+                        if (updateError.Message.Contains("has no supported update operations"))
                         {
                             return data;
                         }
@@ -142,17 +142,17 @@ namespace Cindi.Application.Services
                     throw new Exception();
                 //return await _users.Upda(t1);
                 case BotKey t1:
-                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(t1);
                 case GlobalValue t1:
-                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(t1);
                 case Workflow t1:
-                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(t1);
                 case Step t1:
-                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(t1);
                 case ExecutionTemplate t1:
-                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(t1);
                 case ExecutionSchedule t1:
-                    return await _entitiesRepository.Update(e => e.Id == data.Id, t1);
+                    return await _entitiesRepository.Update(t1);
             }
             throw new Exception("Object type " + data.ShardType + " has no supported update operations");
         }

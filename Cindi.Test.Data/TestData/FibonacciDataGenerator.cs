@@ -138,25 +138,11 @@ namespace Cindi.Test.Global.TestData
                         });
             }
 
-            var workflowTemplate = new WorkflowTemplate(
-                new Journal(new JournalEntry
-                {
-                    Updates = new List<Update> {
-                                    new Update()
-                                    {
-                                        Value = Guid.NewGuid(),
-                                        Type = UpdateType.Create,
-                                        FieldName = "id"
-                                    },
-                                    new Update()
-                                    {
-                                        Value = "SimpleSequence:1",
-                                        Type = UpdateType.Create,
-                                        FieldName = "referenceid"
-                                    },
-                                    new Update()
-                                    {
-                                        Value = new Dictionary<string, DynamicDataDescription>()
+            var workflowTemplate = new WorkflowTemplate()
+            {
+                Id = Guid.NewGuid(),
+                ReferenceId = "SimpleSequence:1",
+                InputDefinitions = new Dictionary<string, DynamicDataDescription>()
                                         {
                                             {"n-1", new DynamicDataDescription()
                                             {
@@ -166,18 +152,7 @@ namespace Cindi.Test.Global.TestData
                                                 Type = InputDataTypes.Int
                                             } },
                                         },
-                                        Type = UpdateType.Create,
-                                        FieldName = "inputdefinitions"
-                                    },
-                                    new Update()
-                                    {
-                                        Value = logicBlocks,
-                                        Type = UpdateType.Create,
-                                        FieldName = "logicblocks"
-                                    }
-                    }
-                }))
-            {
+                LogicBlocks = logicBlocks
             };
 
             return workflowTemplate;
@@ -195,7 +170,7 @@ namespace Cindi.Test.Global.TestData
                 {
                 },
                 SubsequentSteps = new Dictionary<string, SubsequentStep> {
-                    { "0", 
+                    { "0",
              new SubsequentStep(){
                  StepTemplateId =stepTemplate.ReferenceId,
                           Mappings = new Dictionary<string, Mapping>(){
@@ -291,19 +266,10 @@ namespace Cindi.Test.Global.TestData
                         });
             }
 
-            var workflowTemplate = new WorkflowTemplate(
-                new Journal(new JournalEntry
-                {
-                    Updates = new List<Update> {
-                                    new Update()
-                                    {
-                                        Value = "SimpleSequence:1",
-                                        Type = UpdateType.Create,
-                                        FieldName = "referenceid"
-                                    },
-                                    new Update()
-                                    {
-                                        Value = new Dictionary<string, DynamicDataDescription>()
+            var workflowTemplate = new WorkflowTemplate()
+            {
+                ReferenceId = "SimpleSequence:1",
+                InputDefinitions = new Dictionary<string, DynamicDataDescription>()
                                         {
                                             {"n-1", new DynamicDataDescription()
                                             {
@@ -313,18 +279,7 @@ namespace Cindi.Test.Global.TestData
                                                 Type = InputDataTypes.Int
                                             } },
                                         },
-                                        Type = UpdateType.Create,
-                                        FieldName = "inputdefinitions"
-                                    },
-                                    new Update()
-                                    {
-                                        Value = logicBlocks,
-                                        Type = UpdateType.Create,
-                                        FieldName = "logicblocks"
-                                    }
-                    }
-                }))
-            {
+                LogicBlocks = logicBlocks,
             };
 
             return workflowTemplate;

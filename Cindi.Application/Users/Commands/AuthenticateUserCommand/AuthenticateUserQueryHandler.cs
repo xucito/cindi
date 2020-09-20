@@ -39,7 +39,7 @@ namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
                     {
                         return new CommandResult()
                         {
-                            ObjectRefId = user.Username,
+                            ObjectRefId = user.Id.ToString(),
                             ElapsedMs = stopwatch.ElapsedMilliseconds,
                             Type = CommandResultTypes.None
                         };

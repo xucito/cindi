@@ -51,9 +51,10 @@ namespace Cindi.Presentation.Authentication
                     Username = username,
                     Password = password,
                 });
+                var convertedId = new Guid(userId.ObjectRefId);
                 user = (await _mediator.Send(new GetEntitiesQuery<User>()
                 {
-                    Expression = u =>u.Username == userId.ObjectRefId
+                    Expression = u => u.Id == convertedId
                 })).Result.FirstOrDefault();
             }
             catch(Exception e)

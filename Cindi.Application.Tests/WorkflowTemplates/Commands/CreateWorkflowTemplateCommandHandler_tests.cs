@@ -35,7 +35,6 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
             
            // entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
             
-
             var node = Utility.GetMockConsensusCoreNode();
 
             var mockStateLogger = new Mock<ILogger<CreateWorkflowTemplateCommandHandler>>();

@@ -15,40 +15,36 @@ namespace Cindi.Test.Global.TestData
 {
     public static class FibonacciSampleData
     {
-        public static readonly StepTemplate StepTemplate = new StepTemplate(Guid.NewGuid(),
-            "Fibonacci_stepTemplate:0",
-            "",
-            false,
-            new Dictionary<string, DynamicDataDescription>(){
-                        {"n-2", new DynamicDataDescription(){
-                            Type = InputDataTypes.Int,
-                            Description = ""
-                        }
-                    },
-                        {"n-1", new DynamicDataDescription(){
-                            Type = InputDataTypes.Int,
-                            Description = ""
-                        }}
-                    },
-            new Dictionary<string, DynamicDataDescription>()
-                    {
-                         {"n", new DynamicDataDescription(){
-                            Type = InputDataTypes.Int,
-                            Description = ""
-                        }},
-                    },
-            "admin",
-            DateTime.UtcNow
-
-            )
+        public static readonly StepTemplate StepTemplate = new StepTemplate()
         {
+            Id = Guid.NewGuid(),
+            ReferenceId = "Fibonacci_stepTemplate:0",
+            InputDefinitions = new Dictionary<string, DynamicDataDescription>() {
+                { "n-2", new DynamicDataDescription() {
+                    Type = InputDataTypes.Int,
+                    Description = ""
+                }
+                },
+                { "n-1", new DynamicDataDescription() {
+                    Type = InputDataTypes.Int,
+                    Description = ""
+                } }
+            },
+            OutputDefinitions = new Dictionary<string, DynamicDataDescription>()
+            {
+                { "n", new DynamicDataDescription() {
+                    Type = InputDataTypes.Int,
+                    Description = ""
+                } },
+            }
         };
 
-        public static readonly WorkflowTemplate ConcurrentWorkflowTemplate = new WorkflowTemplate(Guid.NewGuid(),
-            "ConcurrentFibonacci:0",
-            "",
-            new Dictionary<string, DynamicDataDescription>(),
-            new Dictionary<string, LogicBlock>()
+        public static readonly WorkflowTemplate ConcurrentWorkflowTemplate = new WorkflowTemplate()
+        {
+            Id = Guid.NewGuid(),
+            ReferenceId = "ConcurrentFibonacci:0",
+            InputDefinitions = new Dictionary<string, DynamicDataDescription>(),
+            LogicBlocks = new Dictionary<string, LogicBlock>()
             {
                 {  "0",
                 new LogicBlock()
@@ -116,16 +112,15 @@ namespace Cindi.Test.Global.TestData
                 }
                 }
                 }
-            },
-            "admin",
-            DateTime.Now
-            );
+            }
+        };
 
-        public static readonly WorkflowTemplate WorkflowTemplate = new WorkflowTemplate(Guid.NewGuid(),
-            "Fibonacci:0",
-            "",
-            new Dictionary<string, DynamicDataDescription>(),
-            new Dictionary<string, LogicBlock>()
+        public static readonly WorkflowTemplate WorkflowTemplate = new WorkflowTemplate()
+        {
+            Id = Guid.NewGuid(),
+            ReferenceId = "Fibonacci:0",
+            InputDefinitions = new Dictionary<string, DynamicDataDescription>(),
+            LogicBlocks = new Dictionary<string, LogicBlock>()
             {
                 {  "0",
                 new LogicBlock()
@@ -218,72 +213,33 @@ namespace Cindi.Test.Global.TestData
                     }
                 }
                 }
-            },
-            "admin",
-            DateTime.UtcNow
-            )
-        {
+            }
         };
 
         public static Step Step
         {
             get
             {
-                return new Step(new Domain.Entities.JournalEntries.Journal(
-new Domain.Entities.JournalEntries.JournalEntry()
-{
-    Updates = new List<Update>()
-{
-                    new Update()
-                    {
-                        FieldName = "id",
-                        Value = Guid.NewGuid(),
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "steptemplateid",
-                        Value = StepTemplate.ReferenceId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "inputs",
-                        Value = new Dictionary<string, object>()
+                return new Step()
+                {
+                    Id = Guid.NewGuid(),
+                    StepTemplateId = StepTemplate.ReferenceId,
+                    Inputs = new Dictionary<string, object>()
                         {
                             {"n-2","1" },
                             {"n-1","2" }
-                        },
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdby",
-                        Value = "testUser@email.com",
-                        Type = UpdateType.Create
-                    },
-                                        new Update()
-                    {
-                        FieldName = "status",
-                        Value = StepStatuses.Unassigned,
-                        Type = UpdateType.Create
-                    }
-}
-}
-))
-                {
+                        }
+                    ,
+                    Status = StepStatuses.Unassigned
                 };
             }
         }
 
-        public static readonly Workflow Workflow = new Workflow(
-            Guid.NewGuid(),
-            WorkflowTemplate.ReferenceId,
-            new Dictionary<string, object>(),
-            "",
-            "admin",
-            DateTime.UtcNow)
+        public static readonly Workflow Workflow = new Workflow()
         {
+            Id = Guid.NewGuid(),
+            WorkflowTemplateId = WorkflowTemplate.ReferenceId,
+            Inputs = new Dictionary<string, object>()
         };
 
         public class FibonacciWorkflowData

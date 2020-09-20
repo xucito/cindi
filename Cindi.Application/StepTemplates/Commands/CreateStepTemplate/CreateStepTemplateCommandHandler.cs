@@ -13,7 +13,6 @@ using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

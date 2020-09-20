@@ -6,8 +6,6 @@ using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.Models;
 using ConsensusCore.Domain.Services;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson.Serialization;
-using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,7 +17,7 @@ namespace Cindi.Persistence.State
     {
         public async Task<NodeStorage<CindiClusterState>> LoadNodeDataAsync()
         {
-            var result = await _clusterState.Find(_ => true).FirstOrDefaultAsync();
+            var result = await entitiesRepository.GetFirstOrDefaultAsync<NodeStorage<CindiClusterState>>(_ => true);
             return result;
         }
 
@@ -34,13 +32,14 @@ namespace Cindi.Persistence.State
 
                 if (!DoesStateExist)
                 {
-                    await _clusterState.InsertOneAsync(storage);
+                    await entitiesRepository.Insert<NodeStorage<CindiClusterState>>(storage);
                     return true;
                 }
                 else
                 {
                     //var filter = Builders<NodeStorage>.Filter.Eq("Id", storage.Id.ToString());
-                    return (await _clusterState.ReplaceOneAsync(f => true, storage)).IsAcknowledged;
+                    await entitiesRepository.Update(storage);
+                    return true;
                 }
             }
             catch (Exception e)

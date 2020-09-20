@@ -36,7 +36,8 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
         private IMediator _mediator;
 
         public CreateWorkflowTemplateCommandHandler(IEntitiesRepository entitiesRepository,
-            IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger,
+            IClusterRequestHandler node, 
+            ILogger<CreateWorkflowTemplateCommandHandler> logger,
             IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
@@ -215,62 +216,6 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                     }
                 }
             }
-
-            // This is done inefficiently
-            /*foreach (var block in request.LogicBlocks)
-            {
-                foreach (var substep in block.SubsequentSteps)
-                {
-                    foreach (var mapping in substep.Mappings)
-                    {
-                        if (mapping.OutputReferences != null)
-                        {
-                            foreach (var reference in mapping.OutputReferences)
-                            {
-                                if (!ValidatedSubsequentSteps.ContainsKey(reference.WorkflowStepId))
-                                {
-                                    throw new MissingStepException("Defined mapping for substep " + substep.WorkflowStepId + " for mapping " + mapping.StepInputId + " is missing  " + reference.WorkflowStepId);
-                                }
-                                else
-                                {
-                                    if (reference.WorkflowStepId != -1)
-                                    {
-                                        var foundBlock = request.LogicBlocks.Where(st => st.SubsequentSteps.Where(ss => ss.WorkflowStepId == reference.WorkflowStepId).Count() > 0).First();
-
-                                        var resolvedSubstep = foundBlock.SubsequentSteps.Where(ss => ss.WorkflowStepId == reference.WorkflowStepId).First();
-
-                                        var foundTemplates = (allStepTemplates.Where(template => template.ReferenceId == resolvedSubstep.StepTemplateId));
-
-                                        if (foundTemplates.Count() != 0)
-                                        {
-                                            var foundTemplate = foundTemplates.First();
-                                            if (foundTemplate.InputDefinitions.Where(id => id.Key.ToLower() != reference.OutputId.ToLower()).Count() == 0)
-                                            {
-                                                throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.WorkflowStepId + " from step template " + foundTemplate.Id);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        var foundDefinition = request.InputDefinitions.Where(id => id.Key.ToLower() == reference.OutputId.ToLower());
-                                        if (foundDefinition.Count() == 0)
-                                        {
-                                            throw new MissingInputException("Missing input " + reference.OutputId + " for step " + substep.WorkflowStepId + " from workflow input.");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (mapping.DefaultValue == null)
-                            {
-                                throw new MissingOutputException("Neither Value or Output References exist. If neither is required, this is a redundant output reference");
-                            }
-                        }
-                    }
-                }
-            }*/
 
             var newId = Guid.NewGuid();
             var newWorkflowTemplate = new WorkflowTemplate()

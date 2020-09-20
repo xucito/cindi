@@ -50,7 +50,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         int leaderMonitoringInterval = Timeout.Infinite;
         int nodeMonitoringInterval = Timeout.Infinite;
         int lastSecond = 0;
-        private IDatabaseMetricsCollector _databaseMetricsCollector;
+       // private IDatabaseMetricsCollector _databaseMetricsCollector;
         private NodeStateService _nodeStateService;
         private IOptions<ClusterOptions> _clusterOptions;
         private IClusterStateService _state;
@@ -66,7 +66,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             IEntitiesRepository entitiesRepository,
             MetricManagementService metricManagementService,
             IMetricTicksRepository metricTicksRepository,
-            IDatabaseMetricsCollector databaseMetricsCollector,
+           // IDatabaseMetricsCollector databaseMetricsCollector,
             NodeStateService nodeStateService,
             IOptions<ClusterOptions> clusterOptions)
         {
@@ -80,7 +80,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             node = _node;
             _entitiesRepository = entitiesRepository;
             _metricTicksRepository = metricTicksRepository;
-            _databaseMetricsCollector = databaseMetricsCollector;
+          //  _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
             node.MetricGenerated += metricGenerated;
             _nodeStateService = nodeStateService;
@@ -125,7 +125,8 @@ namespace Cindi.Application.Services.ClusterMonitor
                     {
                         if (_state.GetSettings != null)
                         {
-                            var entities = await _entitiesRepository.GetAsync<MetricTick>((s) => s.Date < DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod)));
+                            DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod));
+                            var entities = await _entitiesRepository.GetAsync<MetricTick>((s) => s.Date < compare);
                             try
                             {
                                 foreach (var tick in entities)
@@ -396,14 +397,14 @@ namespace Cindi.Application.Services.ClusterMonitor
                     });
                 }
 
-                if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
+               /* if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
                 {
                     foreach (var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
                     {
                         _metricManagementService.EnqueueTick(metric);
                     }
                     Interlocked.Decrement(ref _fetchingDbMetrics);
-                }
+                }*/
                 _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o"));
             }
         }

@@ -11,6 +11,11 @@ namespace Cindi.Test.Global.TestClasses
     {
         public override string Name => "AlwaysTrueCondition";
 
+        public override bool ContainsStep(string stepName)
+        {
+            throw new NotImplementedException();
+        }
+
         public override bool Evaluate(List<Step> completedSteps)
         {
             return true;

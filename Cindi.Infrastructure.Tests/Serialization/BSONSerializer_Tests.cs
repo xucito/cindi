@@ -1,9 +1,7 @@
-﻿using Cindi.Domain.Entities.JournalEntries;
+﻿/*using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.ValueObjects;
 using Cindi.Persistence;
-using Cindi.Persistence.ConsensusCoreMappings;
-using Cindi.Persistence.Serializers;
 using Cindi.Test.Global.TestData;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -63,3 +61,4 @@ namespace Cindi.Infrastructure.Tests.Serialization
         }
     }
 }
+*/

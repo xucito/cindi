@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MediatR;
 using Swashbuckle.AspNetCore.Swagger;
-using MongoDB.Driver;
 using Cindi.Application.Interfaces;
 using Cindi.Persistence;
 using Cindi.Application.Services.ClusterState;
@@ -35,9 +34,6 @@ using System.Threading;
 using Cindi.Domain.Entities.States;
 using System.IO;
 using Cindi.Application.Pipelines;
-using Cindi.Persistence.Workflows;
-using Cindi.Persistence.WorkflowTemplates;
-using Cindi.Persistence.Metrics;
 using Cindi.Persistence.MetricTicks;
 using ConsensusCore.Node.Services.Raft;
 using ConsensusCore.Node.Services.Data;
@@ -65,13 +61,11 @@ namespace Cindi.Presentation
 
         public Task BootstrapThread;
         public IConfiguration Configuration { get; }
-        public IMongoClient MongoClient { get; set; }
         public bool EnableUI { get; }
 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            MongoClient = new MongoClient(Configuration.GetValue<string>("DBConnectionString"));
             EnableUI = Configuration.GetValue<bool>("EnableUI");
         }
 
@@ -87,12 +81,16 @@ namespace Cindi.Presentation
                 options.Providers.Add<GzipCompressionProvider>();
             });
 
+            var databaseLocation = Configuration.GetValue<string>("databaseLocation");
+
+            var entitiesRepository = new EntitiesRepository(databaseLocation);
+
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
-                s => new NodeStorageRepository(MongoClient),
-                s => new NodeStorageRepository(MongoClient),
-                s => new NodeStorageRepository(MongoClient),
-                Configuration.GetSection("Node"), Configuration.GetSection("Cluster"));
+                s => new NodeStorageRepository(entitiesRepository),
+                s => new NodeStorageRepository(entitiesRepository),
+                Configuration.GetSection("Node"),
+                Configuration.GetSection("Cluster"));
 
             //services.AddScoped<IMediator, Mediator>();
             //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
@@ -121,13 +119,13 @@ namespace Cindi.Presentation
                 });
             }
 
-            services.AddTransient<IEntitiesRepository, EntitiesRepository>(s => new EntitiesRepository(MongoClient));
+            services.AddSingleton<IEntitiesRepository, EntitiesRepository>(e => entitiesRepository);
             services.AddSingleton<IClusterStateService, ClusterStateService>();
-            services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(MongoClient));
+            services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(databaseLocation));
             // services.AddSingleton<ClusterStateService>();
 
 
-            services.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
+            //.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
             services.AddSingleton<InternalBotManager>();
@@ -189,7 +187,7 @@ namespace Cindi.Presentation
 
             builder.Populate(services);
 
-            BaseRepository.RegisterClassMaps();
+            //.RegisterClassMaps();
 
 
 
@@ -217,7 +215,6 @@ namespace Cindi.Presentation
             ITaskService taskService,
             IStateMachine<CindiClusterState> stateMachine,
             NodeStateService node,
-            IDatabaseMetricsCollector collector,
             ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider,
