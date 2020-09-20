@@ -49,16 +49,15 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " is already in-use.");
             }
 
-            var createdGV = new GlobalValue(
-                request.Name,
-                request.Type,
-                request.Description,
-                request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, ClusterStateService.GetEncryptionKey()) : request.Value,
-                GlobalValueStatuses.Enabled,
-                Guid.NewGuid(),
-                request.CreatedBy,
-                DateTime.UtcNow
-                );
+            var createdGV = new GlobalValue()
+            {
+                Name = request.Name,
+                Type = request.Type,
+                Description = request.Description,
+                Value = request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, ClusterStateService.GetEncryptionKey()) : request.Value,
+                Status = GlobalValueStatuses.Enabled,
+                Id = Guid.NewGuid()
+            };
 
             var result = _node.Handle(new AddShardWriteOperation()
             {

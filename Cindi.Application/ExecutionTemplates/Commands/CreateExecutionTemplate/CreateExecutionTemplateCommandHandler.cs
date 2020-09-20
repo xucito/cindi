@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Entities.StepTemplates;
@@ -90,22 +91,22 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
                 throw new InvalidExecutionTemplateException("Execution Template Type is Invalid.");
             }
 
+            var executionTemplate = new ExecutionTemplate()
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                ReferenceId = request.ReferenceId,
+                ExecutionTemplateType = request.ExecutionTemplateType,
+                Description = request.Description,
+                Inputs = request.Inputs,
+                Version = 0
+            };
 
-
-            var executionTemplate = new ExecutionTemplate(
-                    Guid.NewGuid(),
-                    request.Name,
-                    request.ReferenceId,
-                    request.ExecutionTemplateType,
-                    request.Description,
-                    request.CreatedBy,
-                    request.Inputs);
-
-            var executionTemplateResponse = await _node.Handle(new AddShardWriteOperation()
+            var result = await _mediator.Send(new WriteEntityCommand<ExecutionTemplate>()
             {
                 Data = executionTemplate,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                User = request.CreatedBy
             });
 
 

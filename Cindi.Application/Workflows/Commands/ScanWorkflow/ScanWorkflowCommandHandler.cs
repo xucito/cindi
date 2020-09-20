@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
@@ -211,28 +212,15 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                         }
 
                         //Mark it as evaluated
-                        workflow.UpdateJournal(
-                        new JournalEntry()
-                        {
-                            CreatedBy = request.CreatedBy,
-                            CreatedOn = DateTime.UtcNow,
-                            Updates = new List<Update>()
-                            {
-                                new Update()
-                                {
-                                    FieldName = "completedlogicblocks",
-                                    Type = UpdateType.Append,
-                                    Value = logicBlock.Key
-                                }
-                            }
-                        });
-
+                        workflow.CompletedLogicBlocks.Add(logicBlock.Key);
+                        workflow.Version++;
                         //await _workflowsRepository.UpdateWorkflow(workflow);
-                        await _node.Handle(new AddShardWriteOperation()
+                        await _mediator.Send(new WriteEntityCommand<Workflow>()
                         {
                             Data = workflow,
                             WaitForSafeWrite = true,
-                            Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                            Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                            User = request.CreatedBy
                         });
                     }
                     await _clusterStateService.UnlockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
@@ -247,28 +235,15 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 
                 if (newWorkflowStatus != workflow.Status)
                 {
-                    workflow.UpdateJournal(
-                    new JournalEntry()
-                    {
-                        CreatedBy = request.CreatedBy,
-                        CreatedOn = DateTime.UtcNow,
-                        Updates = new List<Update>()
-                        {
-                                new Update()
-                                {
-                                    FieldName = "status",
-                                    Type = UpdateType.Override,
-                                    Value = newWorkflowStatus
-                                }
-                        }
-                    });
+                    workflow.Status = newWorkflowStatus;
 
                     //await _workflowsRepository.UpdateWorkflow(workflow);
-                    await _node.Handle(new AddShardWriteOperation()
+                    await _mediator.Send(new WriteEntityCommand<Workflow>()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                        User = request.CreatedBy
                     });
 
 

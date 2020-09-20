@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Exceptions;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
@@ -39,13 +40,15 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         public ILogger<AssignStepCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
         private IMemoryCache _cache;
+        private IMediator _mediator;
 
         public AssignStepCommandHandler(
             IEntitiesRepository entitiesRepository,
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
             IClusterRequestHandler node,
-            IMemoryCache cache
+            IMemoryCache cache,
+            IMediator mediator
             )
         {
             _entitiesRepository = entitiesRepository;
@@ -53,6 +56,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             Logger = logger;
             _node = node;
             _cache = cache;
+            _mediator = mediator;
         }
         public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
@@ -66,7 +70,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var dateChecked = DateTime.UtcNow;
                 BotKey botkey;
 
-                if(!_cache.TryGetValue(request.BotId, out botkey))
+                if (!_cache.TryGetValue(request.BotId, out botkey))
                 {
                     // Set cache options.
                     var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -149,7 +153,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                                 else
                                                 {
                                                     realAssignedValues.Add(input.Key, foundGlobalValue.Value);
-                                                    convertedInputs.Add(input.Key, input.Value + ":" + foundGlobalValue.Journal.GetCurrentChainId());
+                                                    convertedInputs.Add(input.Key, input.Value + ":" + foundGlobalValue.Version);
                                                 }
                                             }
                                             //copy by value
@@ -201,77 +205,32 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                 //If a update was detected then add it to the journal updates
                                 if (inputsUpdated)
                                 {
-                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                                    {
-                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                        CreatedOn = DateTime.UtcNow,
-                                        Updates = new List<Update>()
-                                    {
-                                       new Update()
-                                        {
-                                            Type = UpdateType.Override,
-                                            FieldName = "status",
-                                            Value = StepStatuses.Assigned
-                                       },
-                                        new Update()
-                                        {
-                                            FieldName = "inputs",
-                                            Type = UpdateType.Override,
-                                            Value = convertedInputs
-                                        },
-                                        new Update()
-                                        {
-                                            FieldName = "assignedto",
-                                            Type = UpdateType.Override,
-                                            Value = request.BotId
-                                        }
-                                        }
-                                    });
+                                    unassignedStep.Status = StepStatuses.Assigned;
+
+                                    unassignedStep.Inputs = convertedInputs;
+
+                                    unassignedStep.AssignedTo = request.BotId;
                                 }
                                 else
                                 {
-                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                                    {
-                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                        CreatedOn = DateTime.UtcNow,
-                                        Updates = new List<Update>()
-                                    {
-                                       new Update()
-                                        {
-                                            Type = UpdateType.Override,
-                                            FieldName = "status",
-                                            Value = StepStatuses.Assigned
-                                       }
-                                    }
-                                    });
+                                    unassignedStep.Status = StepStatuses.Assigned;
                                 }
 
-                                await _node.Handle(new AddShardWriteOperation()
+                                await _mediator.Send(new WriteEntityCommand<Step>()
                                 {
                                     Data = unassignedStep,
                                     WaitForSafeWrite = true,
                                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
                                     RemoveLock = true,
-                                    LockId = assigned.LockId.Value
+                                    LockId = assigned.LockId.Value,
+                                    User = SystemUsers.QUEUE_MANAGER
                                 });
 
                                 //await _entitiesRepository.UpdateStep(unassignedStep);
                                 if (inputsUpdated)
                                 {
                                     //Update the record with real values, this is not commited to DB
-                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                                    {
-                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                        CreatedOn = DateTime.UtcNow,
-                                        Updates = new List<Update>()
-                                    {
-                                        new Update()
-                                            {
-                                                FieldName = "inputs",
-                                                Type = UpdateType.Override,
-                                                Value = realAssignedValues
-                                            }}
-                                    });
+                                    unassignedStep.Inputs = realAssignedValues;
                                 }
                             }
                             catch (Exception e)

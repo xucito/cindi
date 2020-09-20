@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
@@ -29,14 +30,17 @@ namespace Cindi.Application.Steps.Commands.CreateStep
         private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
         private readonly IClusterRequestHandler _node;
+        private readonly IMediator _mediator;
         public CreateStepCommandHandler(
             IEntitiesRepository entitiesRepository,
             IClusterStateService service, 
-            IClusterRequestHandler node)
+            IClusterRequestHandler node,
+            IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
             _node = node;
+            _mediator = mediator;
         }
 
         public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)
@@ -60,15 +64,17 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 request.ExecutionTemplateId,
                 request.ExecutionScheduleId);
 
-           /* var createdStepId = await _entitiesRepository.InsertStepAsync(
-                newStep
-                );*/
+            /* var createdStepId = await _entitiesRepository.InsertStepAsync(
+                 newStep
+                 );*/
 
-            await _node.Handle(new AddShardWriteOperation()
+
+            await _mediator.Send(new WriteEntityCommand<Step>()
             {
                 Data = newStep,
                 WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                User = request.CreatedBy
             });
 
 

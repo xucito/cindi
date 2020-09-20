@@ -63,9 +63,6 @@ namespace Cindi.Presentation.Controllers
                 Page = page,
                 Size = size,
                 Expression = null,
-                Exclusions = new List<Expression<Func<StepTemplate, object>>>{
-                    (s) => s.Journal
-                },
                 Sort = sort
             }));
         }

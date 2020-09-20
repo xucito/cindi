@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
@@ -26,15 +27,18 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
         public IEntitiesRepository _entitiesRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
         private readonly IClusterRequestHandler _node;
+        private readonly IMediator _mediator;
 
         public AppendStepLogCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<AppendStepLogCommandHandler> logger,
-            IClusterRequestHandler node
+            IClusterRequestHandler node,
+            IMediator mediator
             )
         {
             _entitiesRepository = entitiesRepository;
             Logger = logger;
             _node = node;
+            _mediator = mediator;
         }
 
         public async Task<CommandResult> Handle(AppendStepLogCommand request, CancellationToken cancellationToken)
@@ -48,30 +52,15 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                 throw new InvalidStepStatusException("Cannot append log to step, step status is complete with " + step.Status);
             }
 
-            step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+            step.Logs.Add(new StepLog()
             {
-                CreatedBy = request.CreatedBy,
                 CreatedOn = DateTime.UtcNow,
-                Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Append,
-                                FieldName = "logs",
-                                Value = new StepLog(){
-                                    CreatedOn = DateTime.UtcNow,
-                                    Message = request.Log
-                                },
-                            }
-                        }
+                Message = request.Log
             });
 
-            //await _entitiesRepository.UpdateStep(step);
-
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
-            {
+            await _mediator.Send(new WriteEntityCommand<Step>() {
                 Data = step,
-                WaitForSafeWrite = true,
+                User = request.CreatedBy,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
             });
 

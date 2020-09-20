@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.States;
@@ -25,11 +26,14 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
     {
         IClusterRequestHandler _node;
         IEntitiesRepository _entitiesRepository;
+        IMediator _mediator;
 
-        public UpdateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
+        public UpdateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node,
+ IMediator mediator)
         {
             _node = node;
             _entitiesRepository = entitiesRepository;
+            _mediator = mediator;
         }
         public async Task<CommandResult<GlobalValue>> Handle(UpdateGlobalValueCommand request, CancellationToken cancellationToken)
         {
@@ -50,32 +54,14 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
             if (globalValueLock.IsSuccessful && globalValueLock.AppliedLocked)
             {
                 existingValue = (GlobalValue)globalValueLock.Data;
-                existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedBy = request.CreatedBy,
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "value",
-                                Value = request.Value,
-                            },
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "description",
-                                Value = request.Description,
-                            }
-                        }
-                });
+                existingValue.Value = request.Value;
+                existingValue.Description = request.Description;
 
-                var result = await _node.Handle(new AddShardWriteOperation()
+                await _mediator.Send(new WriteEntityCommand<GlobalValue>()
                 {
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    WaitForSafeWrite = true,
                     Data = existingValue,
+                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                    User = request.CreatedBy,
                     RemoveLock = true
                 });
 

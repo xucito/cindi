@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Cindi.Application.Entities.Command.CreateTrackedEntity;
 using Cindi.Application.Entities.Command.DeleteEntity;
 using Cindi.Application.Entities.Queries.GetEntities;
 using Cindi.Application.Entities.Queries.GetEntity;
@@ -18,6 +19,7 @@ namespace Cindi.Presentation.Utility
             builder.RegisterGeneric(typeof(GetEntitiesQueryHandler<>)).As(typeof(IRequestHandler<,>));
             builder.RegisterGeneric(typeof(GetEntityQueryHandler<>)).As(typeof(IRequestHandler<,>));
             builder.RegisterGeneric(typeof(DeleteEntityCommandHandler<>)).As(typeof(IRequestHandler<,>));
+            builder.RegisterGeneric(typeof(WriteEntityCommandHandler<>)).As(typeof(IRequestHandler<,>));
             builder.RegisterAssemblyTypes(typeof(IMediator).GetTypeInfo().Assembly).AsImplementedInterfaces();
 
             var mediatrOpenTypes = new[]

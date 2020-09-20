@@ -22,67 +22,6 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
             ShardType = typeof(WorkflowTemplate).Name;
         }
 
-        public WorkflowTemplate(Journal journal) : base(journal)
-        {
-            ShardType = typeof(WorkflowTemplate).Name;
-        }
-
-        public WorkflowTemplate(
-            Guid id,
-            string referenceId,
-            string description,
-            Dictionary<string, DynamicDataDescription> inputDefinitions,
-            Dictionary<string, LogicBlock> logicBlocks,
-            string createdBy,
-            DateTime createdOn
-            ) : base(
-            new Journal(new JournalEntry()
-            {
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "referenceid",
-                        Value = referenceId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "description",
-                        Value = description,
-                        Type = UpdateType.Create
-                    },
-                   new Update()
-                    {
-                        FieldName = "inputdefinitions",
-                        Value = inputDefinitions,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "logicblocks",
-                        Value = logicBlocks,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdon",
-                        Value = createdOn,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdby",
-                        Value = createdBy,
-                        Type = UpdateType.Create
-                    }
-                }
-            }))
-        {
-            Id = id;
-            ShardType = typeof(WorkflowTemplate).Name;
-        }
-
         public string ReferenceId { get; set; }
         public string Name { get { return ReferenceId.Split(':')[0]; } }
         public string Version { get { return ReferenceId.Split(':')[1]; } }

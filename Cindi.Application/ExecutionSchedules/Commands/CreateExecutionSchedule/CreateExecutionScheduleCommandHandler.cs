@@ -59,21 +59,21 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
             foreach (var scheduleString in request.Schedule)
             {
                 var isValid = SchedulerUtility.IsValidScheduleString(scheduleString);
-                if(!isValid)
+                if (!isValid)
                 {
                     throw new InvalidExecutionScheduleException("Schedule " + scheduleString + " is invalid.");
                 }
             }
 
-            var executionSchedule = new ExecutionSchedule(
-                    Guid.NewGuid(),
-                    request.Name,
-                    request.ExecutionTemplateName,
-                    request.Description,
-                    request.CreatedBy,
-                    request.Schedule,
-                    SchedulerUtility.NextOccurence(request.Schedule)
-                    );
+            var executionSchedule = new ExecutionSchedule()
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                ExecutionTemplateName = request.ExecutionTemplateName,
+                Description = request.Description,
+                Schedule = request.Schedule,
+                NextRun = SchedulerUtility.NextOccurence(request.Schedule)
+            };
 
             var executionScheduleResponse = await _node.Handle(new AddShardWriteOperation()
             {
@@ -82,7 +82,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
             });
 
-            if(request.RunImmediately)
+            if (request.RunImmediately)
             {
                 await _mediator.Send(new ExecuteExecutionTemplateCommand()
                 {

@@ -178,10 +178,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                             {
                                 Page = 0,
                                 Size = 1000,
-                                Expression = (s) => s.Status == StepStatuses.Suspended,
-                                Exclusions = new List<Expression<Func<Step, object>>>{
-                                        (s) => s.Journal
-                                    },
+                                Expression = (s) => s.Status == StepStatuses.Suspended
                             });
 
                             totalSteps = steps.Count.Value;

@@ -50,18 +50,19 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 
 
             var newId = Guid.NewGuid();
-            var newStepTemplate = new StepTemplate(
-                newId,
-                request.ReferenceId == null ? request.Name + ":" + request.Version : request.ReferenceId,
-                request.Description,
-                request.AllowDynamicInputs,
-                request.InputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
+            var newStepTemplate = new StepTemplate()
+            {
+                Id = newId,
+                ReferenceId = request.ReferenceId == null ? request.Name + ":" + request.Version : request.ReferenceId,
+                Description = request.Description,
+                AllowDynamicInputs = request.AllowDynamicInputs,
+                InputDefinitions = request.InputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
                 entry => entry.Value),
-                request.OutputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
+                OutputDefinitions = request.OutputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
                 entry => entry.Value),
-                request.CreatedBy,
-                DateTime.UtcNow
-             );
+                CreatedBy = request.CreatedBy,
+                CreatedOn = DateTime.UtcNow
+            };
 
             var existingStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
 

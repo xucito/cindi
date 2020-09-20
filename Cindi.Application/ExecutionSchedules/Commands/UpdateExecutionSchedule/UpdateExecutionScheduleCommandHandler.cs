@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Exceptions;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Utilities;
@@ -68,56 +69,33 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
 
             ExecutionSchedule existingValue;
 
-            List<Update> updates = new List<Update>();
-
-            if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
-            {
-                updates.Add(new Update()
-                {
-                    Type = UpdateType.Override,
-                    FieldName = "isdisabled",
-                    Value = request.IsDisabled
-                });
-            }
-
-            if (request.Schedule != null && schedule.Schedule != request.Schedule)
-            {
-                updates.Add(new Update()
-                {
-                    Type = UpdateType.Override,
-                    FieldName = "nextrun",
-                    Value = SchedulerUtility.NextOccurence(request.Schedule, DateTime.UtcNow)
-                });
-
-                updates.Add(new Update()
-                {
-                    Type = UpdateType.Override,
-                    FieldName = "schedule",
-                    Value = request.Schedule
-                });
-            }
-
-            if (request.Description != null && schedule.Description != request.Description)
-            {
-                updates.Add(new Update()
-                {
-                    Type = UpdateType.Override,
-                    FieldName = "description",
-                    Value = request.Description
-                });
-            }
             
 
-            if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked && updates.Count > 0)
+            if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked)
             {
                 existingValue = (ExecutionSchedule)executionScheduleLock.Data;
-                existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = updates
-                });
 
-                var result = await _node.Handle(new AddShardWriteOperation()
+                List<Update> updates = new List<Update>();
+
+                if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
+                {
+                    existingValue.IsDisabled = request.IsDisabled.Value;
+                }
+
+                if (request.Schedule != null && schedule.Schedule != request.Schedule)
+                {
+                    existingValue.NextRun = SchedulerUtility.NextOccurence(request.Schedule, DateTime.UtcNow);
+
+                    existingValue.Schedule = request.Schedule;
+                }
+
+                if (request.Description != null && schedule.Description != request.Description)
+                {
+                    existingValue.Description = request.Description;
+                }
+
+
+                var result = await _mediator.Send(new WriteEntityCommand<ExecutionSchedule>()
                 {
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
                     WaitForSafeWrite = true,

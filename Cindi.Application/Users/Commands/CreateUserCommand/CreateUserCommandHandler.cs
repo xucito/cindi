@@ -45,15 +45,16 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
 
             var salt = SecurityUtility.GenerateSalt(128);
             Guid id = Guid.NewGuid();
-            var createdUser = await _entitiesRepository.Insert(new Domain.Entities.Users.User(
-                request.Username.ToLower(),
-                SecurityUtility.OneWayHash(request.Password, salt),
-                request.Username.ToLower(),
-                salt,
-                request.CreatedBy,
-                DateTime.UtcNow,
-                id
-            ));
+            var createdUser = await _entitiesRepository.Insert(new Domain.Entities.Users.User()
+            {
+                Username = request.Username.ToLower(),
+                HashedPassword = SecurityUtility.OneWayHash(request.Password, salt),
+                Email = request.Username.ToLower(),
+                Salt = salt,
+                CreatedBy = request.CreatedBy,
+                CreatedOn = DateTime.UtcNow,
+                Id = id
+            });
 
             return new CommandResult()
             {

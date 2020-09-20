@@ -1,9 +1,11 @@
-﻿using Cindi.Application.Exceptions;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Exceptions;
 using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
+using Cindi.Domain.Enums;
 using Cindi.Domain.ValueObjects;
 using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node.Communication.Controllers;
@@ -61,25 +63,13 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
             if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked)
             {
                 existingValue = (ExecutionSchedule)executionScheduleLock.Data;
-                existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "nextrun",
-                                Value = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow)
-                            }
-                        }
-                });
+                existingValue.NextRun = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow);
 
-                var result = await _node.Handle(new AddShardWriteOperation()
+                await _mediator.Send(new WriteEntityCommand<ExecutionSchedule>()
                 {
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    WaitForSafeWrite = true,
                     Data = existingValue,
+                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                    User = SystemUsers.SCHEDULE_MANAGER,
                     RemoveLock = true
                 });
             }

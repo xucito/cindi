@@ -22,74 +22,6 @@ namespace Cindi.Domain.Entities.StepTemplates
             ShardType = typeof(StepTemplate).Name;
         }
 
-        public StepTemplate(Journal journal): base (journal)
-        {
-            ShardType = typeof(StepTemplate).Name;
-        }
-
-        public StepTemplate(
-            Guid id,
-            string referenceId,
-            string description,
-            bool allowDynamicInputs,
-            Dictionary<string, DynamicDataDescription> inputDefinitions,
-            Dictionary<string, DynamicDataDescription> outputDefinitions,
-            string CreatedBy,
-            DateTime CreatedOn) : base(
-            new Journal(new JournalEntry()
-            {
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "referenceid",
-                        Value = referenceId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "description",
-                        Value = description,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "allowdynamicinputs",
-                        Value = allowDynamicInputs,
-                        Type = UpdateType.Create
-                    },
-                   new Update()
-                    {
-                        FieldName = "inputdefinitions",
-                        Value = inputDefinitions,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "outputdefinitions",
-                        Value = outputDefinitions,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdon",
-                        Value = CreatedOn,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdby",
-                        Value = CreatedBy,
-                        Type = UpdateType.Create
-                    }
-                }
-            })
-            )
-        {
-            Id = id;
-            ShardType = typeof(StepTemplate).Name;
-        }
-
         public string ReferenceId { get; set; }
 
         public string Name { get { return ReferenceId.Split(':')[0]; } }
@@ -256,7 +188,20 @@ namespace Cindi.Domain.Entities.StepTemplates
                 throw new InvalidStepInputException("No inputs were specified however step template " + Id + " has " + InputDefinitions.Count() + " inputs.");
             }
 
-            var newStep = new Step(Guid.NewGuid(), name, description, stepTemplateId, createdBy, verifiedInputs, encryptionKey, workflowId, executionTemplateId, executionScheduleId);
+            var newStep = new Step()
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Description = description,
+                StepTemplateId = stepTemplateId,
+                CreatedBy = createdBy,
+                Inputs = verifiedInputs,
+                WorkflowId = workflowId,
+                ExecutionTemplateId = executionTemplateId,
+                ExecutionScheduleId = executionScheduleId,
+                Status = StepStatuses.Unassigned
+            };
+
             return newStep;
         }
 

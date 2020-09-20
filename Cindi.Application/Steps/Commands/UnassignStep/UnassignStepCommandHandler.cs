@@ -85,27 +85,8 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                     };
                 }
 
-                step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = request.CreatedBy,
-                    Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = StepStatuses.Unassigned,
-                            },
-                            new Update()
-                            {
-                                FieldName = "assignedto",
-                                Type = UpdateType.Override,
-                                Value = null
-                            }
-
-                        }
-                });
+                step.Status = StepStatuses.Unassigned;
+                step.AssignedTo =  null;
 
                 var result = await _node.Handle(new AddShardWriteOperation()
                 {

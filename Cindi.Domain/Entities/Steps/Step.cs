@@ -28,103 +28,6 @@ namespace Cindi.Domain.Entities.Steps
             ShardType = nameof(Step);
         }
 
-        public Step(Journal journal) : base(journal)
-        {
-            ShardType = nameof(Step);
-        }
-
-        public Step(Guid id, string name = "",
-            string description = "", 
-            string stepTemplateId = "", 
-            string createdBy = "", 
-            Dictionary<string, object> inputs = null, 
-            string encryptionString = "",
-            Guid? workflowId = null,
-            Guid? executionTemplateId = null,
-            Guid? executionScheduleId = null) : base(
-            new Journal(new JournalEntry()
-            {
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = StepStatuses.Unassigned,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "name",
-                        Value = name,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "description",
-                        Value = description,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "steptemplateid",
-                        Value = stepTemplateId,
-                        Type = UpdateType.Create
-                    },
-                   new Update()
-                    {
-                        FieldName = "createdby",
-                        Value = createdBy,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "id",
-                        Value = id,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdon",
-                        Value = DateTime.UtcNow,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "workflowid",
-                        Value = workflowId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "inputs",
-                        Value = inputs,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "assignedto",
-                        Value = null,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "executiontemplateid",
-                        Value = executionTemplateId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "executionscheduleid",
-                        Value = executionScheduleId,
-                        Type = UpdateType.Create
-                    }
-                }
-            })
-            )
-        {
-            ShardType = nameof(Step);
-        }
-
 
         public string Name { get; set; }
         public string Description { get; set; }
@@ -168,7 +71,7 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public int StatusCode { get; set; }
 
-        public List<StepLog> Logs { get; set; }
+        public List<StepLog> Logs { get; set; } = new List<StepLog>();
 
         public bool IsComplete()
         {
@@ -213,18 +116,7 @@ namespace Cindi.Domain.Entities.Steps
                 }
             }
 
-            UpdateJournal(new JournalEntry()
-            {
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "inputs",
-                        Value = convertedInput,
-                        Type = UpdateType.Create
-                    }
-                }
-            });
+            Inputs = convertedInput;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.States;
@@ -29,11 +30,13 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
+        IMediator _mediator;
 
         public SuspendStepCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node)
+             IClusterRequestHandler node,
+ IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
             _node = node;
@@ -42,6 +45,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             {
                 _option = change;
             });
+            _mediator = mediator;
         }
 
 
@@ -85,39 +89,15 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                     step.Status == StepStatuses.Assigned // You should only be suspending a assigned step if it is being suspended by the bot assigned, check to be done in presentation
                     )
                 {
-                    step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                    {
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = request.CreatedBy,
-                        Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = StepStatuses.Suspended
-                            },
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "suspendeduntil",
-                                Value = request.SuspendedUntil
-                            },
-                            new Update()
-                            {
-                                FieldName = "assignedto",
-                                Type = UpdateType.Override,
-                                Value = null
-                            }
+                    step.Status = StepStatuses.Suspended;
+                    step.SuspendedUntil = request.SuspendedUntil;
+                    step.AssignedTo = null;
 
-                        }
-                    });
-
-                    var result = await _node.Handle(new AddShardWriteOperation()
+                    var result = await _mediator.Send(new WriteEntityCommand<Step>()
                     {
                         Data = step,
-                        WaitForSafeWrite = true,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                        User = request.CreatedBy,
                         RemoveLock = true,
                         LockId = stepLockResult.LockId.Value
                     });

@@ -61,8 +61,7 @@ namespace Cindi.Presentation.Controllers
 
                 Step step = (await Mediator.Send(new GetEntityQuery<Step>()
                 {
-                    Expression = s => s.Id == new Guid(result.ObjectRefId),
-                    Exclude = (s) => s.Journal
+                    Expression = s => s.Id == new Guid(result.ObjectRefId)
                 })).Result;
 
 
@@ -259,9 +258,6 @@ namespace Cindi.Presentation.Controllers
                 Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<Step, bool>>> {
                    status == null ? null : ExpressionBuilder.BuildPredicate<Step>("Status", OperatorComparer.Equals, status)
                 }),
-                Exclusions = new List<Expression<Func<Step, object>>>{
-                    (s) => s.Journal
-                },
                 Sort = sort
             }));
         }

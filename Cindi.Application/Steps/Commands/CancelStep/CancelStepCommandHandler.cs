@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Interfaces;
+﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.States;
@@ -29,11 +30,13 @@ namespace Cindi.Application.Steps.Commands.CancelStep
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private readonly IClusterRequestHandler _node;
+        IMediator _mediator;
 
         public CancelStepCommandHandler(IEntitiesRepository entitiesRepository,
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node)
+             IClusterRequestHandler node,
+ IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
             _node = node;
@@ -42,6 +45,7 @@ namespace Cindi.Application.Steps.Commands.CancelStep
             {
                 _option = change;
             });
+            _mediator = mediator;
         }
 
 
@@ -67,27 +71,13 @@ namespace Cindi.Application.Steps.Commands.CancelStep
                     step.Status == StepStatuses.Suspended || 
                     step.Status == StepStatuses.Assigned)
                 {
-                    step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                    {
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = request.CreatedBy,
-                        Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = StepStatuses.Cancelled,
-                            }
+                    step.Status = StepStatuses.Cancelled;
 
-                        }
-                    });
-
-                    var result = await _node.Handle(new AddShardWriteOperation()
+                    var result = await _mediator.Send(new WriteEntityCommand<Step>()
                     {
                         Data = step,
-                        WaitForSafeWrite = true,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                        User = request.CreatedBy,
                         RemoveLock = true
                     });
 

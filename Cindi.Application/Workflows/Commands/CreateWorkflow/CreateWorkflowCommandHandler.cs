@@ -29,6 +29,7 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Microsoft.Extensions.Logging;
+using Cindi.Application.Entities.Command.CreateTrackedEntity;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
@@ -96,20 +97,20 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var createdWorkflowId = Guid.NewGuid();
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
+            var createdWorkflowTemplateId = await _mediator.Send(new WriteEntityCommand<Workflow>()
             {
-                Data = new Domain.Entities.Workflows.Workflow(
-                createdWorkflowId,
-                request.WorkflowTemplateId,
-                verifiedWorkflowInputs, //Encrypted inputs
-                request.Name,
-                request.CreatedBy,
-                DateTime.UtcNow,
-                request.ExecutionTemplateId,
-                request.ExecutionScheduleId
-            ),
+                Data = new Domain.Entities.Workflows.Workflow()
+                {
+                    Id = createdWorkflowId,
+                    WorkflowTemplateId = request.WorkflowTemplateId,
+                    Inputs = verifiedWorkflowInputs, //Encrypted inputs
+                    Name = request.Name,
+                    ExecutionTemplateId = request.ExecutionTemplateId,
+                    ExecutionScheduleId = request.ExecutionScheduleId
+                },
                 WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                User = request.CreatedBy
             });
 
             var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
@@ -159,30 +160,17 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                     }
 
 
-                    workflow.UpdateJournal(
-                    new JournalEntry()
-                    {
-                        CreatedBy = request.CreatedBy,
-                        CreatedOn = DateTime.UtcNow,
-                        Updates = new List<Update>()
-                        {
-                        new Update()
-                        {
-                            FieldName = "completedlogicblocks",
-                            Type = UpdateType.Append,
-                            Value = block.Key //Add the logic block
-                        }
-                        }
-                    });
+                    workflow.CompletedLogicBlocks.Add(block.Key);
 
-                    await _node.Handle(new AddShardWriteOperation()
+                    await _mediator.Send(new WriteEntityCommand<Workflow>()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
+                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
+                        User = SystemUsers.QUEUE_MANAGER
                     });
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     _logger.LogCritical("Failed to action logic block " + block.Key + " with error " + e.Message + Environment.NewLine + e.StackTrace);
                 }

@@ -24,6 +24,7 @@ using Cindi.Domain.Enums;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Domain.RPCs.Shard;
 using Cindi.Domain.Entities.Workflows;
+using Cindi.Application.Entities.Command.CreateTrackedEntity;
 
 namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
@@ -32,12 +33,16 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
         private readonly IClusterRequestHandler _node;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
         private IEntitiesRepository _entitiesRepository;
+        private IMediator _mediator;
 
-        public CreateWorkflowTemplateCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(IEntitiesRepository entitiesRepository,
+            IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger,
+            IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
             _node = node;
             Logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<CommandResult> Handle(CreateWorkflowTemplateCommand request, CancellationToken cancellationToken)
@@ -268,20 +273,21 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             }*/
 
             var newId = Guid.NewGuid();
-            var newWorkflowTemplate = new WorkflowTemplate(newId,
-                request.Name + ":" + request.Version,
-                request.Description,
-                request.InputDefinitions,
-                request.LogicBlocks,
-                request.CreatedBy,
-                DateTime.UtcNow
-            );
+            var newWorkflowTemplate = new WorkflowTemplate()
+            {
+                Id = newId,
+                ReferenceId = request.Name + ":" + request.Version,
+                Description = request.Description,
+                InputDefinitions = request.InputDefinitions,
+                LogicBlocks = request.LogicBlocks
+            };
 
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
+            var createdWorkflowTemplateId = await _mediator.Send(new WriteEntityCommand<WorkflowTemplate>()
             {
                 Data = newWorkflowTemplate,
                 WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
+                User = request.CreatedBy
             });
 
             stopwatch.Stop();
