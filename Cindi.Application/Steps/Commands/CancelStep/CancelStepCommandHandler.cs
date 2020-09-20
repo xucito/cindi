@@ -1,7 +1,8 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
@@ -26,26 +27,21 @@ namespace Cindi.Application.Steps.Commands.CancelStep
 {
     public class CancelStepCommandHandler : IRequestHandler<CancelStepCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IClusterRequestHandler _node;
-        IMediator _mediator;
+        private readonly ClusterService _clusterService;
 
-        public CancelStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public CancelStepCommandHandler(
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node,
- IMediator mediator)
+            ClusterService clusterService)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            _clusterService = clusterService;
             Logger = logger;
             options.OnChange((change) =>
             {
                 _option = change;
             });
-            _mediator = mediator;
         }
 
 
@@ -54,7 +50,7 @@ namespace Cindi.Application.Steps.Commands.CancelStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var stepLockResult = await _node.Handle(new RequestDataShard()
+            var stepLockResult = await _clusterService.Handle(new RequestDataShard()
             {
                 Type = "Step",
                 ObjectId = request.StepId,
@@ -68,12 +64,12 @@ namespace Cindi.Application.Steps.Commands.CancelStep
                 var step = (Step)stepLockResult.Data;
                 // You can only cancel steps that are unassigned, suspended or assigned
                 if (step.Status == StepStatuses.Unassigned ||
-                    step.Status == StepStatuses.Suspended || 
+                    step.Status == StepStatuses.Suspended ||
                     step.Status == StepStatuses.Assigned)
                 {
                     step.Status = StepStatuses.Cancelled;
 
-                    var result = await _mediator.Send(new WriteEntityCommand<Step>()
+                    var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
                     {
                         Data = step,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,

@@ -1,6 +1,7 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
@@ -27,20 +28,14 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
-        private readonly IMediator _mediator;
+        private readonly ClusterService _clusterService;
         public CreateStepCommandHandler(
-            IEntitiesRepository entitiesRepository,
-            IClusterStateService service, 
-            IClusterRequestHandler node,
-            IMediator mediator)
+            IClusterStateService service,
+            ClusterService clusterService)
         {
-            _entitiesRepository = entitiesRepository;
+            _clusterService = clusterService;
             _clusterStateService = service;
-            _node = node;
-            _mediator = mediator;
         }
 
         public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)
@@ -48,7 +43,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var resolvedTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
+            var resolvedTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
 
             if (resolvedTemplate == null)
             {
@@ -64,12 +59,8 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 request.ExecutionTemplateId,
                 request.ExecutionScheduleId);
 
-            /* var createdStepId = await _entitiesRepository.InsertStepAsync(
-                 newStep
-                 );*/
 
-
-            await _mediator.Send(new WriteEntityCommand<Step>()
+            await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
             {
                 Data = newStep,
                 WaitForSafeWrite = true,

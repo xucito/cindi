@@ -1,6 +1,7 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
@@ -20,20 +21,15 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 {
     public class CreateExecutionTemplateCommandHandler : IRequestHandler<CreateExecutionTemplateCommand, CommandResult<ExecutionTemplate>>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
-        private IMediator _mediator;
+        private readonly ClusterService _clusterService;
 
-        public CreateExecutionTemplateCommandHandler(IEntitiesRepository entitiesRepository,
+        public CreateExecutionTemplateCommandHandler(
             IClusterStateService service,
-            IClusterRequestHandler node,
-            IMediator mediator)
+            ClusterService clusterService)
         {
-            _entitiesRepository = entitiesRepository;
+            _clusterService = clusterService;
             _clusterStateService = service;
-            _node = node;
-            _mediator = mediator;
         }
 
         public async Task<CommandResult<ExecutionTemplate>> Handle(CreateExecutionTemplateCommand request, CancellationToken cancellationToken)
@@ -41,7 +37,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(st => st.Name == request.Name);
+            ExecutionTemplate template = await _clusterService.GetFirstOrDefaultAsync<ExecutionTemplate>(st => st.Name == request.Name);
 
             if (template != null)
             {
@@ -50,7 +46,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 
             if (request.ExecutionTemplateType == ExecutionTemplateTypes.Step)
             {
-                var stepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.ReferenceId);
+                var stepTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.ReferenceId);
 
                 if (stepTemplate == null)
                 {
@@ -69,7 +65,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             }
             else if (request.ExecutionTemplateType == ExecutionTemplateTypes.Workflow)
             {
-                var workflowTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(st => st.ReferenceId == request.ReferenceId);
+                var workflowTemplate = await _clusterService.GetFirstOrDefaultAsync<WorkflowTemplate>(st => st.ReferenceId == request.ReferenceId);
 
                 if (workflowTemplate == null)
                 {
@@ -102,7 +98,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
                 Version = 0
             };
 
-            var result = await _mediator.Send(new WriteEntityCommand<ExecutionTemplate>()
+            var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<ExecutionTemplate>()
             {
                 Data = executionTemplate,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,

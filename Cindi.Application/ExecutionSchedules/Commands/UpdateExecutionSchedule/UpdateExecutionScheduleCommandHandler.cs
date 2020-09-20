@@ -1,7 +1,8 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.ValueObjects;
@@ -19,21 +20,16 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
 {
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<UpdateExecutionScheduleCommand, CommandResult>
     {
-
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
-        private IMediator _mediator;
+        private readonly ClusterService _clusterService;
 
-        public UpdateExecutionScheduleCommandHandler(IEntitiesRepository entitiesRepository,
+        public UpdateExecutionScheduleCommandHandler(
             IClusterStateService service,
-            IClusterRequestHandler node,
-            IMediator mediator)
+            ClusterService clusterService
+            )
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
-            _mediator = mediator;
+            _clusterService = clusterService;
         }
 
         public async Task<CommandResult> Handle(UpdateExecutionScheduleCommand request, CancellationToken cancellationToken)
@@ -41,7 +37,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
+            ExecutionSchedule schedule = await _clusterService.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
 
             if (schedule == null)
             {
@@ -59,7 +55,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                     }
                 }
 
-            var executionScheduleLock = await _node.Handle(new RequestDataShard()
+            var executionScheduleLock = await _clusterService.Handle(new RequestDataShard()
             {
                 Type = schedule.ShardType,
                 ObjectId = schedule.Id,
@@ -95,7 +91,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                 }
 
 
-                var result = await _mediator.Send(new WriteEntityCommand<ExecutionSchedule>()
+                var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<ExecutionSchedule>()
                 {
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
                     WaitForSafeWrite = true,

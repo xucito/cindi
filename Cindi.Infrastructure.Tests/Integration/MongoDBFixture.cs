@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Cindi.Infrastructure.Tests.Integration
 {
-    public class MongoDBFixture : IDisposable
+    /*public class MongoDBFixture : IDisposable
     {
         public MongoDBFixture()
         {
@@ -16,5 +16,5 @@ namespace Cindi.Infrastructure.Tests.Integration
         {
             ///throw new NotImplementedException();
         }
-    }
+    }*/
 }

@@ -1,6 +1,7 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Enums;
@@ -24,27 +25,24 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
 {
     public class UpdateGlobalValueCommandHandler : IRequestHandler<UpdateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        IClusterRequestHandler _node;
-        IEntitiesRepository _entitiesRepository;
-        IMediator _mediator;
+        ClusterService _clusterService;
 
-        public UpdateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node,
- IMediator mediator)
+        public UpdateGlobalValueCommandHandler(ClusterService clusterService)
         {
-            _node = node;
-            _entitiesRepository = entitiesRepository;
-            _mediator = mediator;
+            _clusterService = clusterService;
         }
         public async Task<CommandResult<GlobalValue>> Handle(UpdateGlobalValueCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             GlobalValue existingValue;
-            if ((existingValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name)) == null)
+
+            if ((existingValue = await _clusterService.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name)) == null)
             {
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " does not exist.");
             }
-            var globalValueLock = await _node.Handle(new RequestDataShard()
+
+            var globalValueLock = await _clusterService.Handle(new RequestDataShard()
             {
                 Type = existingValue.ShardType,
                 ObjectId = existingValue.Id,
@@ -57,7 +55,7 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
                 existingValue.Value = request.Value;
                 existingValue.Description = request.Description;
 
-                await _mediator.Send(new WriteEntityCommand<GlobalValue>()
+                await _clusterService.AddWriteOperation(new EntityWriteOperation<GlobalValue>()
                 {
                     Data = existingValue,
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,

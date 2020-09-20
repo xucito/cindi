@@ -53,6 +53,7 @@ using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Enums;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Microsoft.AspNetCore.ResponseCompression;
+using Cindi.Application.Services.ClusterOperation;
 
 namespace Cindi.Presentation
 {
@@ -129,6 +130,8 @@ namespace Cindi.Presentation
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
             services.AddSingleton<InternalBotManager>();
+
+            services.AddTransient<ClusterService>();
 
 
             //Authentication

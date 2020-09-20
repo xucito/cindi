@@ -1,6 +1,7 @@
 ﻿using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
@@ -25,13 +26,13 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly ClusterService _clusterService;
         private readonly IClusterRequestHandler _node;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler(ClusterService clusterService, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
         {
-            _entitiesRepository = entitiesRepository;
+            _clusterService = clusterService;
             _node = node;
             Logger = logger;
         }
@@ -63,7 +64,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 CreatedOn = DateTime.UtcNow
             };
 
-            var existingStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
+            var existingStepTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
 
             if (existingStepTemplate == null)
             {

@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Exceptions.State;
 using ConsensusCore.Domain.BaseClasses;
 using ConsensusCore.Domain.RPCs.Shard;
@@ -17,12 +18,10 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
     public class DeleteEntityCommandHandler<T> : IRequestHandler<DeleteEntityCommand<T>, CommandResult>
         where T : ShardData
     {
-        IClusterRequestHandler _node;
-        private readonly IEntitiesRepository _entitiesRepository;
-        public DeleteEntityCommandHandler(IClusterRequestHandler node, IEntitiesRepository entitiesRepository)
+        ClusterService _clusterService;
+        public DeleteEntityCommandHandler(ClusterService clusterService)
         {
-            _node = node;
-            _entitiesRepository = entitiesRepository;
+            _clusterService = clusterService;
         }
 
         public async Task<CommandResult> Handle(DeleteEntityCommand<T> request, CancellationToken cancellationToken)
@@ -30,9 +29,9 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var result = await _node.Handle(new AddShardWriteOperation()
+            var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<T>()
             {
-                Data = request.Entity,
+                Data = (T) request.Entity,
                 WaitForSafeWrite = true,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
                 RemoveLock = false

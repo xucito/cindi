@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Workflows.Commands.ScanWorkflow;
 using Cindi.Domain.Entities.Steps;
@@ -55,24 +56,29 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void DontActionRunningWorkflow()
         {
-            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            Mock<ClusterService> clusterService = new Mock<ClusterService>();
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
 
-            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(new Workflow(Guid.NewGuid(), data.workflowTemplateWithInputs.ReferenceId, new Dictionary<string, object>()
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(new Workflow()
             {
-            }, "", "", DateTime.Now)));
+                Id = Guid.NewGuid(),
+                WorkflowTemplateId = data.workflowTemplateWithInputs.ReferenceId,
+                Inputs = new Dictionary<string, object>()
+                {
+                }
+            }));
 
-            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(data.stepTemplate));
-            entitiesRepository.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(data.stepTemplate));
+            clusterService.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
                 new Step() {
                 Status = StepStatuses.Assigned
             } }));
             var mockStateLogger = new Mock<ILogger<ScanWorkflowCommandHandler>>();
 
 
-            var handler = new ScanWorkflowCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, _node.Object);
+            var handler = new ScanWorkflowCommandHandler(clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, clusterService.Object);
 
             var result = await handler.Handle(new ScanWorkflowCommand()
             {
@@ -91,22 +97,22 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void RerunFailedWorkflowStepCreation()
         {
-            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            Mock<ClusterService> clusterService = new Mock<ClusterService>();
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
 
-            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
-                new Workflow(Guid.NewGuid(),
-                FibonacciSampleData.ConcurrentWorkflowTemplate.ReferenceId,
-                new Dictionary<string, object>(),
-                "",
-                "admin",
-                DateTime.Now
-            )));
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
+                new Workflow()
+                {
+                    Id = Guid.NewGuid(),
+                    WorkflowTemplateId = FibonacciSampleData.ConcurrentWorkflowTemplate.ReferenceId,
+                    Inputs = new Dictionary<string, object>()
+                }
+            ));
 
-            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
-            entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            entitiesRepository.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            clusterService.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
                     new Step()
                         {
                             Status = StepStatuses.Error,
@@ -117,7 +123,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
 
             clusterMoq.Setup(cm => cm.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(true);
 
-            var handler = new ScanWorkflowCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, _node.Object);
+            var handler = new ScanWorkflowCommandHandler(clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, clusterService.Object);
 
             var result = await handler.Handle(new ScanWorkflowCommand()
             {
@@ -131,34 +137,37 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void UpdateWorkflowStatusWhenComplete()
         {
-            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
+            Mock<ClusterService> clusterService = new Mock<ClusterService>();
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
 
-                entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(new Workflow(Guid.NewGuid(), data.workflowTemplateWithInputs.ReferenceId, new Dictionary<string, object>()
-                    {
-                    }, "", "", DateTime.Now)));
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(new Workflow()
+            {
+                Id = Guid.NewGuid(),
+                WorkflowTemplateId = data.workflowTemplateWithInputs.ReferenceId,
+                Inputs = new Dictionary<string, object>()
+            }));
 
-                    entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-                    entitiesRepository.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(data.stepTemplate));
-                    entitiesRepository.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(data.stepTemplate));
+            clusterService.Setup(sr => sr.GetAsync(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() {
                     new Step()
                         {
                             Status = StepStatuses.Error,
                             Name  = "0"
                         }
                     }));
-                    var mockStateLogger = new Mock<ILogger<ScanWorkflowCommandHandler>>();
+            var mockStateLogger = new Mock<ILogger<ScanWorkflowCommandHandler>>();
 
             clusterMoq.Setup(cm => cm.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(true);
 
-        var handler = new ScanWorkflowCommandHandler(entitiesRepository.Object, clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, _node.Object);
+            var handler = new ScanWorkflowCommandHandler(clusterMoq.Object, mockStateLogger.Object, _optionsMonitor.Object, _mediator.Object, clusterService.Object);
 
-        var result = await handler.Handle(new ScanWorkflowCommand()
-        {
-            WorkflowId = Guid.NewGuid()
-        }, new System.Threading.CancellationToken());
-        Assert.Single(result.Messages);
+            var result = await handler.Handle(new ScanWorkflowCommand()
+            {
+                WorkflowId = Guid.NewGuid()
+            }, new System.Threading.CancellationToken());
+            Assert.Single(result.Messages);
             Assert.Contains("Updated workflow status", result.Messages[0]);
         }
     }

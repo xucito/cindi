@@ -101,6 +101,7 @@ namespace Cindi.Presentation.Controllers
             {
                 Expression = de => de.Name == name
             });
+
             return Ok(await Mediator.Send(new DeleteEntityCommand<ExecutionSchedule>()
             {
                 Entity = result.Result

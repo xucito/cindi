@@ -1,9 +1,9 @@
-﻿using Cindi.Application.Entities.Command.DeleteEntity;
-using Cindi.Application.Entities.Queries;
+﻿using Cindi.Application.Entities.Queries;
 using Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSchedule;
 using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Application.Workflows.Commands.ScanWorkflow;
@@ -15,6 +15,7 @@ using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
 using ConsensusCore.Domain.Interfaces;
+using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
 using ConsensusCore.Node.Communication.Controllers;
@@ -50,7 +51,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         int leaderMonitoringInterval = Timeout.Infinite;
         int nodeMonitoringInterval = Timeout.Infinite;
         int lastSecond = 0;
-       // private IDatabaseMetricsCollector _databaseMetricsCollector;
+        // private IDatabaseMetricsCollector _databaseMetricsCollector;
         private NodeStateService _nodeStateService;
         private IOptions<ClusterOptions> _clusterOptions;
         private IClusterStateService _state;
@@ -59,6 +60,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         private Timer monitoringTimer;
         private int secondsOfMetrics = 5;
+        ClusterService _clusterService;
 
         public ClusterMonitorService(
             IServiceProvider sp,
@@ -66,10 +68,12 @@ namespace Cindi.Application.Services.ClusterMonitor
             IEntitiesRepository entitiesRepository,
             MetricManagementService metricManagementService,
             IMetricTicksRepository metricTicksRepository,
-           // IDatabaseMetricsCollector databaseMetricsCollector,
+            // IDatabaseMetricsCollector databaseMetricsCollector,
             NodeStateService nodeStateService,
-            IOptions<ClusterOptions> clusterOptions)
+            IOptions<ClusterOptions> clusterOptions,
+            ClusterService clusterService)
         {
+            _clusterService = clusterService;
             _metricManagementService = metricManagementService;
             // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
@@ -80,7 +84,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             node = _node;
             _entitiesRepository = entitiesRepository;
             _metricTicksRepository = metricTicksRepository;
-          //  _databaseMetricsCollector = databaseMetricsCollector;
+            //  _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
             node.MetricGenerated += metricGenerated;
             _nodeStateService = nodeStateService;
@@ -120,7 +124,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     long tickPosition = 0;
                     long totalMetricTicks = 0;
                     int cleanedCount = 0;
-                    CommandResult result = null;
+                    AddShardWriteOperationResponse result = null;
                     do
                     {
                         if (_state.GetSettings != null)
@@ -132,19 +136,24 @@ namespace Cindi.Application.Services.ClusterMonitor
                                 foreach (var tick in entities)
                                 {
                                     var startTime = DateTime.Now;
-                                    result = await _mediator.Send(new DeleteEntityCommand<MetricTick>
+                                    result = await _clusterService.AddWriteOperation(
+                                    new EntityWriteOperation<MetricTick>()
                                     {
-                                        Entity = tick
+                                        Data = tick,
+                                        WaitForSafeWrite = true,
+                                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
+                                        RemoveLock = false
                                     });
-                                    _logger.LogDebug("Cleanup of record " + result.ObjectRefId + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
-                                   // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
+
+                                    _logger.LogDebug("Cleanup of record " + tick.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
+                                    // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
                                 }
                             }
                             catch (Exception e)
                             {
                                 _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
                             }
-                            
+
                         }
                         // }
                     }
@@ -397,14 +406,14 @@ namespace Cindi.Application.Services.ClusterMonitor
                     });
                 }
 
-               /* if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
-                {
-                    foreach (var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
-                    {
-                        _metricManagementService.EnqueueTick(metric);
-                    }
-                    Interlocked.Decrement(ref _fetchingDbMetrics);
-                }*/
+                /* if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
+                 {
+                     foreach (var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
+                     {
+                         _metricManagementService.EnqueueTick(metric);
+                     }
+                     Interlocked.Decrement(ref _fetchingDbMetrics);
+                 }*/
                 _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o"));
             }
         }

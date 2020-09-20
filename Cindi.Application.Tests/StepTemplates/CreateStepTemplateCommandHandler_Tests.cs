@@ -1,4 +1,5 @@
 ﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Entities.States;
@@ -43,10 +44,10 @@ namespace Cindi.Application.Tests.StepTemplates
         public async void DetectDuplicateStepTemplates()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IEntitiesRepository> entitiesRepository = new Mock<IEntitiesRepository>();
-            entitiesRepository.Setup(st => st.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            clusterService.Setup(st => st.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             var mockStateLogger = new Mock<ILogger<CreateStepTemplateCommandHandler>>();
-            var handler = new CreateStepTemplateCommandHandler(entitiesRepository.Object, _node.Object, mockStateLogger.Object);
+            var handler = new CreateStepTemplateCommandHandler(clusterService.Object, _node.Object, mockStateLogger.Object);
 
             var result = await handler.Handle(new CreateStepTemplateCommand()
             {

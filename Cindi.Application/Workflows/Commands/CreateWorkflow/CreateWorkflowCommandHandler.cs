@@ -29,27 +29,24 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Microsoft.Extensions.Logging;
-using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Services.ClusterOperation;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private IEntitiesRepository _entitiesRepository;
-        private IMediator _mediator;
-        private readonly IClusterRequestHandler _node;
+        private ClusterService _clusterService;
         private ILogger<CreateWorkflowCommandHandler> _logger;
+        private IMediator _mediator;
 
         public CreateWorkflowCommandHandler(
-            IEntitiesRepository entitiesRepository,
-            IMediator mediator,
-            IClusterRequestHandler node,
-            ILogger<CreateWorkflowCommandHandler> logger)
+            ILogger<CreateWorkflowCommandHandler> logger,
+            ClusterService clusterService,
+            IMediator mediator)
         {
-            _entitiesRepository = entitiesRepository;
-            _mediator = mediator;
-            _node = node;
+            _clusterService = clusterService;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<CommandResult<Workflow>> Handle(CreateWorkflowCommand request, CancellationToken cancellationToken)
@@ -57,7 +54,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WorkflowTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
+            WorkflowTemplate template = await _clusterService.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
 
             if (template == null)
             {
@@ -97,7 +94,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var createdWorkflowId = Guid.NewGuid();
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
-            var createdWorkflowTemplateId = await _mediator.Send(new WriteEntityCommand<Workflow>()
+            var createdWorkflowTemplateId = await _clusterService.AddWriteOperation(new EntityWriteOperation<Workflow>()
             {
                 Data = new Domain.Entities.Workflows.Workflow()
                 {
@@ -113,7 +110,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 User = request.CreatedBy
             });
 
-            var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
+            var workflow = await _clusterService.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
 
             //When there are no conditions to be met
 
@@ -125,7 +122,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 {
                     foreach (var subBlock in block.Value.SubsequentSteps)
                     {
-                        var newStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
+                        var newStepTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
 
                         if (newStepTemplate == null)
                         {
@@ -162,7 +159,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 
                     workflow.CompletedLogicBlocks.Add(block.Key);
 
-                    await _mediator.Send(new WriteEntityCommand<Workflow>()
+                    await _clusterService.AddWriteOperation(new EntityWriteOperation<Workflow>()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,

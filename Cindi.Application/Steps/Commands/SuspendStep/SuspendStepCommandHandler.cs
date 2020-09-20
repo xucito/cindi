@@ -1,7 +1,8 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
@@ -26,26 +27,21 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
 {
     public class SuspendStepCommandHandler : IRequestHandler<SuspendStepCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IClusterRequestHandler _node;
-        IMediator _mediator;
+        private ClusterService _clusterService;
 
-        public SuspendStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public SuspendStepCommandHandler(
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node,
- IMediator mediator)
+            ClusterService clusterService)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            _clusterService = clusterService;
             Logger = logger;
             options.OnChange((change) =>
             {
                 _option = change;
             });
-            _mediator = mediator;
         }
 
 
@@ -54,11 +50,11 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Step step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            Step step = await _clusterService.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
-            if(step == null)
+            if (step == null)
             {
-                throw new Exception("Failed to find step " + step.Id); 
+                throw new Exception("Failed to find step " + step.Id);
             }
 
             if (step.Status == StepStatuses.Suspended)
@@ -71,7 +67,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                 };
             }
 
-            var stepLockResult = await _node.Handle(new RequestDataShard()
+            var stepLockResult = await _clusterService.Handle(new RequestDataShard()
             {
                 Type = "Step",
                 ObjectId = request.StepId,
@@ -93,7 +89,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                     step.SuspendedUntil = request.SuspendedUntil;
                     step.AssignedTo = null;
 
-                    var result = await _mediator.Send(new WriteEntityCommand<Step>()
+                    var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
                     {
                         Data = step,
                         Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,

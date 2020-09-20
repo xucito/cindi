@@ -1,6 +1,7 @@
-﻿using Cindi.Application.Entities.Command.CreateTrackedEntity;
+﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
@@ -24,28 +25,23 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 {
     public class AppendStepLogCommandHandler : IRequestHandler<AppendStepLogCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
+        public ClusterService _clusterService;
         public ILogger<AppendStepLogCommandHandler> Logger;
-        private readonly IClusterRequestHandler _node;
-        private readonly IMediator _mediator;
 
-        public AppendStepLogCommandHandler(IEntitiesRepository entitiesRepository,
+        public AppendStepLogCommandHandler(
             ILogger<AppendStepLogCommandHandler> logger,
-            IClusterRequestHandler node,
-            IMediator mediator
+            ClusterService clusterService
             )
         {
-            _entitiesRepository = entitiesRepository;
             Logger = logger;
-            _node = node;
-            _mediator = mediator;
+            _clusterService = clusterService;
         }
 
         public async Task<CommandResult> Handle(AppendStepLogCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            var step = await _clusterService.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
             if (StepStatuses.IsCompleteStatus(step.Status))
             {
@@ -58,7 +54,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                 Message = request.Log
             });
 
-            await _mediator.Send(new WriteEntityCommand<Step>() {
+            await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>() {
                 Data = step,
                 User = request.CreatedBy,
                 Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update

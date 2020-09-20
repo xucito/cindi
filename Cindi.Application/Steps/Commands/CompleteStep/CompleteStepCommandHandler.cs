@@ -33,28 +33,27 @@ using ConsensusCore.Node.Services.Raft;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
-using Cindi.Application.Entities.Command.CreateTrackedEntity;
+using Cindi.Application.Services.ClusterOperation;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
     public class CompleteStepCommandHandler : IRequestHandler<CompleteStepCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
         public IClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
+        private ClusterService _clusterService;
         private IMediator _mediator;
-        private readonly IClusterRequestHandler _node;
 
-        public CompleteStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public CompleteStepCommandHandler(
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            IMediator mediator,
-            IClusterRequestHandler node
+            ClusterService clusterService,
+            IMediator mediator
             )
         {
-            _entitiesRepository = entitiesRepository;
+            _clusterService = clusterService;
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options.CurrentValue;
@@ -62,24 +61,22 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             {
                 _option = change;
             });
+            _clusterService = clusterService;
             _mediator = mediator;
-            _node = node;
         }
 
-        public CompleteStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public CompleteStepCommandHandler(
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
-            IMediator mediator,
-             IClusterRequestHandler node,
-             NodeStateService nodeStateService
+            ClusterService clusterService,
+            IMediator mediator
     )
         {
-            _entitiesRepository = entitiesRepository;
+            _clusterService = clusterService;
             _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options;
-            _node = node;
             _mediator = mediator;
         }
 
@@ -88,7 +85,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var stepToComplete = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.Id);
+            var stepToComplete = await _clusterService.GetFirstOrDefaultAsync<Step>(s => s.Id == request.Id);
 
             if (stepToComplete.IsComplete())
             {
@@ -105,14 +102,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");
             }
 
-            var stepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == stepToComplete.StepTemplateId);
+            var stepTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == stepToComplete.StepTemplateId);
 
             if (request.Outputs == null)
             {
                 request.Outputs = new Dictionary<string, object>();
             }
 
-            var botkey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+            var botkey = await _clusterService.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
 
             var unencryptedOuputs = DynamicDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
             stepToComplete.Status = request.Status;
@@ -127,9 +124,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     Message = request.Log
                 });
             }
-            
 
-            await _mediator.Send(new WriteEntityCommand<Step>()
+
+            await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
             {
                 Data = stepToComplete,
                 WaitForSafeWrite = true,
@@ -139,11 +136,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             Logger.LogInformation("Updated step " + stepToComplete.Id + " with status " + stepToComplete.Status);
 
-            var updatedStep = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == stepToComplete.Id);
+            var updatedStep = await _clusterService.GetFirstOrDefaultAsync<Step>(s => s.Id == stepToComplete.Id);
 
             if (updatedStep.WorkflowId != null)
             {
-                var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
+                var workflow = await _clusterService.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
 
                 if (workflow == null)
                 {
@@ -151,7 +148,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 }
 
                 //Get the workflow template
-                var workflowTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wt => wt.ReferenceId == workflow.WorkflowTemplateId);
+                var workflowTemplate = await _clusterService.GetFirstOrDefaultAsync<WorkflowTemplate>(wt => wt.ReferenceId == workflow.WorkflowTemplateId);
 
                 if (workflowTemplate == null)
                 {
@@ -159,11 +156,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 }
 
                 //Get all the steps related to this task
-                var workflowSteps = (await _entitiesRepository.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
+                var workflowSteps = (await _clusterService.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
 
                 foreach (var workflowStep in workflowSteps)
                 {
-                    workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
+                    workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
                 }
                 //Keep track of whether a step has been added
                 bool stepCreated = false;
@@ -191,7 +188,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
-                    workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
+                    workflow = await _clusterService.GetFirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
                     workflow.Inputs = DynamicDataUtility.DecryptDynamicData(workflowTemplate.InputDefinitions, workflow.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                     //If the logic block is ready to be processed, submit the steps
@@ -277,7 +274,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         workflow.CompletedLogicBlocks.Add(logicBlock.Key);
 
                         //await _workflowsRepository.UpdateWorkflow(workflow);
-                        await _mediator.Send(new WriteEntityCommand<Workflow>()
+                        await _clusterService.AddWriteOperation(new EntityWriteOperation<Workflow>()
                         {
                             Data = workflow,
                             WaitForSafeWrite = true,
@@ -291,7 +288,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Check if there are no longer any steps that are unassigned or assigned
 
                 var workflowStatus = workflow.Status;
-                workflowSteps = (await _entitiesRepository.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
+                workflowSteps = (await _clusterService.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
                 var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
                 var newWorkflowStatus = stepCreated ? WorkflowStatuses.ConvertStepStatusToWorkflowStatus(StepStatuses.Unassigned) : WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
 
@@ -300,7 +297,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     workflow.Status = newWorkflowStatus;
 
                     //await _workflowsRepository.UpdateWorkflow(workflow);
-                    await _mediator.Send(new WriteEntityCommand<Workflow>()
+                    await _clusterService.AddWriteOperation(new EntityWriteOperation<Workflow>()
                     {
                         Data = workflow,
                         WaitForSafeWrite = true,
