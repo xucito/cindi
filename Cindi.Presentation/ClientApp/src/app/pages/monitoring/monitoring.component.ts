@@ -10,40 +10,36 @@ import { map } from 'rxjs/operators';
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
 
+  interval = 'M';
   generatedGraphs = [
-    {
+    /*{
       metricName: "databaseoperationlatencyms",
-      aggs: [ "max" ],
-      interval: 'S'
-    },
+      aggs: ["max"]
+    },*/
     {
       metricName: "clusteroperationelapsedms",
-      aggs: [ "max" ],
-      interval: 'S'
+      aggs: ["max"]
     },
     {
       metricName: "schedulerlatency",
-      aggs: [ "max" ],
-      interval: 'S'
+      aggs: ["max"]
     },
-    {
+  /* {
       metricName: "databasetotalsizebytes",
-      aggs: [ "max" ],
-      interval: 'S'
+      aggs: ["max"]
     },
     {
       metricName: "databaseoperationcount",
-      aggs: [ "max" ],
-      interval: 'S'
-    }
+      aggs: ["max"]
+    }*/
   ]
 
   ngOnDestroy(): void {
     this.metricReload$.unsubscribe();
   }
-  ngOnInit() {}
+  ngOnInit() { }
   multi: any[];
-  view: any[] = [((window.innerWidth-500)/2), 300];
+  view: any[] = [((window.innerWidth - 500) / 2), 300];
 
   // options
   legend: boolean = true;
@@ -79,20 +75,13 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleTimeframe($event)
-  {
+  toggleTimeframe($event) {
     this.offsetMinutes = $event;
-    if($event > 15)
-    {
-      this.generatedGraphs.forEach(element => {
-        element.interval = "M"
-      });
+    if ($event > 15) {
+      this.interval = "M"
     }
-    else
-    {
-      this.generatedGraphs.forEach(element => {
-        element.interval = "S"
-      });
+    else {
+      this.interval = "M"
     }
     this.LoadPage();
   }
@@ -103,7 +92,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     this.pastTime.setMinutes(this.pastTime.getMinutes() - this.offsetMinutes);
 
     let tasks = [];
-    this.generatedGraphs.forEach(element => {
+    /*this.generatedGraphs.forEach(element => {
       tasks.push(this.GetMetrics(element.metricName, element.aggs, element.interval));
     });
 
@@ -115,25 +104,57 @@ export class MonitoringComponent implements OnInit, OnDestroy {
         });
         this.results = reload;
       }
-    );
+    );*/
+
+    var metrics = {};
+
+    this.generatedGraphs.forEach(element => {
+      metrics[element.metricName] = element.aggs
+    });
+
+    this.GetMetrics(metrics, this.interval).subscribe(result => {
+      this.results = result;
+    });
     /*this.GetClusterMetrics();
     this.GetDatabaseMetrics();
     this.GetSchedulerMetrics();*/
   }
 
-  GetMetrics(metricName: string, aggs: any[], interval: string): Observable<any> {
+  GetMetrics(metrics: any, interval: string): Observable<any> {
     return this.cindiClient
       .GetMetrics(
         this.pastTime,
         this.currentTime,
-        metricName,
-        aggs,
+        metrics,
         interval,
         true
       ).pipe(map(result => {
         var metrics = result.result;
         let allMetrics = {};
-        metrics.forEach(metric => {
+        Object.keys(metrics).forEach(key => {
+          var metric = key;
+          if (Object.keys(metrics[key]).length > 0) {
+            allMetrics[metric] = {};
+            allMetrics[metric]['max'] = [];
+            allMetrics[metric]['min'] = [];
+            allMetrics[metric]['avg'] = [];
+            Object.keys(metrics[key]).forEach(date => {
+              allMetrics[metric]['max'].push({
+                name: new Date(date),
+                value: metrics[key][date].max
+              });
+              allMetrics[metric]['min'].push({
+                name: new Date(date),
+                value: metrics[key][date].min
+              });
+              allMetrics[metric]['avg'].push({
+                name: new Date(date),
+                value: metrics[key][date].avg
+              });
+            });
+          }
+        });
+        /*metrics.forEach(metric => {
           if (!allMetrics.hasOwnProperty(metric._id.subcategory)) {
             allMetrics[metric._id.subcategory] = [];
           }
@@ -141,86 +162,88 @@ export class MonitoringComponent implements OnInit, OnDestroy {
             name: new Date(metric._id.date),
             value: metric.max
           });
-        });
-
-        let metricsCache = [];
+        });*/
+        let metricsCache = {};
 
         Object.keys(allMetrics).forEach(key => {
-          metricsCache.push({
-            name: key,
-            series: allMetrics[key]
-          });
+          metricsCache[key] = [];
+          Object.keys(allMetrics[key]).forEach(aggs => {
+            metricsCache[key].push({
+              name: aggs,
+              series: allMetrics[key][aggs]
+            });
+          })
         });
 
         return metricsCache;
       }));
   }
-/*
-  GetClusterMetrics() {
-    this.cindiClient
-      .GetMetrics(
-        this.pastTime,
-        this.currentTime,
-        "clusteroperationelapsedms",
-        ["max"],
-        "S",
-        true
-      )
-      .subscribe(result => {
-        var metrics = result.result;
-        let allMetrics = {};
-        metrics.forEach(metric => {
-          if (!allMetrics.hasOwnProperty(metric._id.subcategory)) {
-            allMetrics[metric._id.subcategory] = [];
-          }
-          allMetrics[metric._id.subcategory].push({
-            name: new Date(metric._id.date),
-            value: metric.max
+  /*
+    GetClusterMetrics() {
+      this.cindiClient
+        .GetMetrics(
+          this.pastTime,
+          this.currentTime,
+          "clusteroperationelapsedms",
+          ["max"],
+          "S",
+          true
+        )
+        .subscribe(result => {
+          var metrics = result.result;
+          let allMetrics = {};
+          metrics.forEach(metric => {
+            if (!allMetrics.hasOwnProperty(metric._id.subcategory)) {
+              allMetrics[metric._id.subcategory] = [];
+            }
+            allMetrics[metric._id.subcategory].push({
+              name: new Date(metric._id.date),
+              value: metric.max
+            });
+          });
+  
+          this.clusterMetrics = [];
+  
+          Object.keys(allMetrics).forEach(key => {
+            this.clusterMetrics.push({
+              name: key,
+              series: allMetrics[key]
+            });
           });
         });
-
-        this.clusterMetrics = [];
-
-        Object.keys(allMetrics).forEach(key => {
-          this.clusterMetrics.push({
-            name: key,
-            series: allMetrics[key]
+    }
+  
+    GetSchedulerMetrics() {
+      this.cindiClient
+        .GetMetrics(
+          this.pastTime,
+          this.currentTime,
+          "schedulerlatency",
+          ["max"],
+          "S",
+          true
+        )
+        .subscribe(result => {
+          var metrics = result.result;
+          let allMetrics = {};
+          metrics.forEach(metric => {
+            if (!allMetrics.hasOwnProperty(metric._id.subcategory)) {
+              allMetrics[metric._id.subcategory] = [];
+            }
+            allMetrics[metric._id.subcategory].push({
+              name: new Date(metric._id.date),
+              value: metric.max
+            });
+          });
+  
+          this.schedulerMetrics = [];
+  
+          Object.keys(allMetrics).forEach(key => {
+            this.schedulerMetrics.push({
+              name: key,
+              series: allMetrics[key]
+            });
           });
         });
-      });
-  }
-
-  GetSchedulerMetrics() {
-    this.cindiClient
-      .GetMetrics(
-        this.pastTime,
-        this.currentTime,
-        "schedulerlatency",
-        ["max"],
-        "S",
-        true
-      )
-      .subscribe(result => {
-        var metrics = result.result;
-        let allMetrics = {};
-        metrics.forEach(metric => {
-          if (!allMetrics.hasOwnProperty(metric._id.subcategory)) {
-            allMetrics[metric._id.subcategory] = [];
-          }
-          allMetrics[metric._id.subcategory].push({
-            name: new Date(metric._id.date),
-            value: metric.max
-          });
-        });
-
-        this.schedulerMetrics = [];
-
-        Object.keys(allMetrics).forEach(key => {
-          this.schedulerMetrics.push({
-            name: key,
-            series: allMetrics[key]
-          });
-        });
-      });
-  }*/
+    }*/
 }

@@ -17,9 +17,9 @@
         <span>{{metric.metricName}}</span>
       </nb-card-header>
       <nb-card-body class="body">
-        <div *ngIf="results[i]">
+        <div *ngIf="results[metric.metricName]">
           <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [legend]="false" [showXAxisLabel]="showXAxisLabel"
-            [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="''" [results]="results[i]"
+            [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="true" [yAxisLabel]="''" [results]="results[metric.metricName]"
             [animations]="false">
           </ngx-charts-line-chart>
         </div>

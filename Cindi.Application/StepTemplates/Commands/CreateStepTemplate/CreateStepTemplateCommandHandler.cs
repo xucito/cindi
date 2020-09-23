@@ -26,11 +26,11 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
-        private readonly ClusterService _clusterService;
+        private readonly IClusterService _clusterService;
         private readonly IClusterRequestHandler _node;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler(ClusterService clusterService, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler(IClusterService clusterService, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
         {
             _clusterService = clusterService;
             _node = node;

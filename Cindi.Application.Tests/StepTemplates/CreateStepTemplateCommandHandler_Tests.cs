@@ -44,7 +44,7 @@ namespace Cindi.Application.Tests.StepTemplates
         public async void DetectDuplicateStepTemplates()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(st => st.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             var mockStateLogger = new Mock<ILogger<CreateStepTemplateCommandHandler>>();
             var handler = new CreateStepTemplateCommandHandler(clusterService.Object, _node.Object, mockStateLogger.Object);

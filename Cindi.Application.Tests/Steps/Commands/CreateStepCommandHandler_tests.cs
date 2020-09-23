@@ -67,7 +67,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void DetectMissingTemplate()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             var handler = new CreateStepCommandHandler(clusterMoq.Object, clusterService.Object);
 
@@ -85,7 +85,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectCorrectTemplate()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
@@ -111,7 +111,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectNoInputs()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
@@ -128,7 +128,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectTooManyInputs()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
@@ -151,7 +151,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void DetectMissingInputs()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
@@ -171,7 +171,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void CreateStepWithSecret()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
             var stepTemplate = await clusterService.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {

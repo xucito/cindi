@@ -35,13 +35,13 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private ClusterService _clusterService;
+        private IClusterService _clusterService;
         private ILogger<CreateWorkflowCommandHandler> _logger;
         private IMediator _mediator;
 
         public CreateWorkflowCommandHandler(
             ILogger<CreateWorkflowCommandHandler> logger,
-            ClusterService clusterService,
+            IClusterService clusterService,
             IMediator mediator)
         {
             _clusterService = clusterService;

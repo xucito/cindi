@@ -74,7 +74,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             TestStep.WorkflowId = TestWorkflow.Id;
 
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.WorkflowTemplate));
@@ -150,7 +150,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void CompleteStepWithNoWorkflow()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
@@ -212,7 +212,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = SecretSampleData.StepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
             }, null, null, ClusterStateService.GetEncryptionKey());
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(stepTemplate));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));

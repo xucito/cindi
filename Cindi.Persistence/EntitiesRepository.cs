@@ -13,26 +13,55 @@ using System.Threading.Tasks;
 using System.Linq.Dynamic.Core;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
+using Cindi.Domain.Entities.States;
+using ConsensusCore.Domain.Services;
+using Newtonsoft.Json;
+using System.Diagnostics;
+using Cindi.Domain.Entities.Users;
+using LiteDB.Async;
 
 namespace Cindi.Persistence
 {
     public class EntitiesRepository : IEntitiesRepository
     {
         private string _databaseLocation;
-        LiteDatabase db;
+        LiteDatabaseAsync db;
         ConcurrentDictionary<string, string> keyDict = new ConcurrentDictionary<string, string>();
 
         public EntitiesRepository(string databaseLocation)
         {
-            var mapper = BsonMapper.Global;
 
             _databaseLocation = databaseLocation;
-            db = new LiteDatabase(_databaseLocation);
+            db = new LiteDatabaseAsync(_databaseLocation);
+        }
+
+        public void Setup()
+        {
+            var mapper = BsonMapper.Global;
+            /*mapper.Entity<NodeStorage<CindiClusterState>>()
+                .Ignore(x => x.CommandsQueue);*/
+            BsonMapper.Global.RegisterType<CindiClusterState>(a =>
+            {
+                return JsonConvert.SerializeObject(a);
+            }, b =>
+            {
+                return JsonConvert.DeserializeObject<CindiClusterState>(b.AsString);
+            });
+
+            var swo = db.GetCollection<ShardWriteOperation>(NormalizeCollectionString(typeof(ShardWriteOperation)));
+            swo.EnsureIndexAsync(o => o.Data.ShardId).GetAwaiter().GetResult();
+            swo.EnsureIndexAsync(o => o.Pos).GetAwaiter().GetResult();
+            swo.EnsureIndexAsync(o => o.Id).GetAwaiter().GetResult();
+            swo.EnsureIndexAsync(o => o.Operation);
+            var user = db.GetCollection<User>(NormalizeCollectionString(typeof(User)));
+            user.EnsureIndexAsync(u => u.Username).GetAwaiter().GetResult();
+            var step = db.GetCollection<Step>(NormalizeCollectionString(typeof(Step)));
+            step.EnsureIndexAsync(u => u.Status).GetAwaiter().GetResult();
         }
 
         public string NormalizeCollectionString(Type type)
         {
-            if(!keyDict.ContainsKey(type.Name))
+            if (!keyDict.ContainsKey(type.Name))
             {
                 keyDict.TryAdd(type.Name, Regex.Replace(type.Name, @"[^0-9a-zA-Z:,]+", "_"));
             }
@@ -42,12 +71,21 @@ namespace Cindi.Persistence
 
         public long Count<T>(Expression<Func<T, bool>> expression = null)
         {
-            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            return collection.Count(expression);
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+
+            //Console.WriteLine("Count took " + stopwatch.ElapsedMilliseconds);
+
+            return collection.CountAsync(expression).GetAwaiter().GetResult();
         }
 
         public async Task<IEnumerable<T>> GetAsync<T>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, string sort = null, int size = 10000, int page = 0)
         {
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+
             Query sortQuery;
             var transformedSortString = "";
             if (sort != null)
@@ -62,47 +100,69 @@ namespace Cindi.Persistence
 
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
 
+            IEnumerable<T> result;
             if (expression != null)
             {
-                return collection.Find(expression).Skip(page * size).Take(size);
+                result = await collection.FindAsync(expression, page * size, size);
             }
             else
             {
-                return collection.Find(Query.All()).Skip(page * size).Take(size);
+                result = await collection.FindAsync(Query.All(), page * size, size);
             }
+
+
+            //Console.WriteLine("GetAsync took " + stopwatch.ElapsedMilliseconds);
+            return result;
         }
 
         public async Task<bool> Delete<T>(Expression<Func<T, bool>> expression)
         {
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            collection.DeleteMany(expression);
+            await collection.DeleteManyAsync(expression);
+            //Console.WriteLine("Delete took " + stopwatch.ElapsedMilliseconds);
             return true;
         }
 
         public async Task<T> Insert<T>(T entity)
         {
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            collection.Insert(entity);
+            await collection.InsertAsync(entity);
+            //Console.WriteLine("Insert took " + stopwatch.ElapsedMilliseconds);
             return await Task.FromResult(entity);
         }
 
         public async Task<T> Update<T>(T entity)
         {
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            collection.Update(entity);
+            await collection.UpdateAsync(entity);
+            //Console.WriteLine("Update took " + stopwatch.ElapsedMilliseconds);
             return await Task.FromResult(entity);
         }
 
-        public void Update<T>(Expression<Func<T, T>> predicate, Expression<Func<T, bool>> expression)
+        public async Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression = null)
         {
-            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            collection.UpdateMany(predicate, expression);
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+            //Console.WriteLine("GetFirst took " + stopwatch.ElapsedMilliseconds);
+            if(expression == null)
+            {
+                return await collection.FindOneAsync(Query.All());
+            }
+            return await collection.FindOneAsync(expression);
         }
 
-        public async Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression)
+        public LiteCollectionAsync<T> GetCollection<T>()
         {
-            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            return collection.FindOne(expression);
+            return db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
         }
     }
 }

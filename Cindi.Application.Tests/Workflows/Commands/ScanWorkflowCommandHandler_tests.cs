@@ -56,7 +56,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void DontActionRunningWorkflow()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
 
@@ -97,7 +97,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void RerunFailedWorkflowStepCreation()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
 
@@ -137,7 +137,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void UpdateWorkflowStatusWhenComplete()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
 

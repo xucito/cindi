@@ -39,13 +39,13 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IClusterStateService _clusterStateService;
         public ILogger<AssignStepCommandHandler> Logger;
         private IMemoryCache _cache;
-        ClusterService _clusterService;
+        IClusterService _clusterService;
 
         public AssignStepCommandHandler(
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
             IMemoryCache cache,
-            ClusterService clusterService
+            IClusterService clusterService
             )
         {
             _clusterService = clusterService;

@@ -27,7 +27,7 @@ namespace Cindi.Application.Tests.WorkflowTemplates.Commands
 {
     public class CreateWorkflowTemplateCommandHandler_tests
     {
-        Mock<ClusterService> clusterService = new Mock<ClusterService>();
+        Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
         [Fact]
         public async void DetectMissingStepTemplates()

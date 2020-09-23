@@ -24,10 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Metrics\Commands\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="ConsensusCore.Node">
       <HintPath>..\..\consensus-core\ConsensusCore.Node\bin\Debug\netcoreapp2.2\ConsensusCore.Node.dll</HintPath>
     </Reference>

@@ -63,14 +63,14 @@ namespace Cindi.Application.Services.ClusterOperation
             return _entitiesRepository.Count(expression);
         }
 
-        public Task<IEnumerable<T>> GetAsync<T>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, string sort = null, int size = 10, int page = 0)
+        public async Task<IEnumerable<T>> GetAsync<T>(Expression<Func<T, bool>> expression = null, List<Expression<Func<T, object>>> exclusions = null, string sort = null, int size = 10, int page = 0)
         {
-            return _entitiesRepository.GetAsync(expression, exclusions, sort, size, page);
+            return await _entitiesRepository.GetAsync(expression, exclusions, sort, size, page);
         }
 
-        public Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression)
+        public async Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression)
         {
-            return _entitiesRepository.GetFirstOrDefaultAsync(expression);
+            return await _entitiesRepository.GetFirstOrDefaultAsync(expression);
         }
 
         public async Task<TResponse> Handle<TResponse>(IClusterRequest<TResponse> request) where TResponse : BaseResponse, new()

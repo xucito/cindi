@@ -34,7 +34,6 @@ using System.Threading;
 using Cindi.Domain.Entities.States;
 using System.IO;
 using Cindi.Application.Pipelines;
-using Cindi.Persistence.MetricTicks;
 using ConsensusCore.Node.Services.Raft;
 using ConsensusCore.Node.Services.Data;
 using ConsensusCore.Node.Services.Tasks;
@@ -86,6 +85,8 @@ namespace Cindi.Presentation
 
             var entitiesRepository = new EntitiesRepository(databaseLocation);
 
+            entitiesRepository.Setup();
+
             services.AddTransient<IDataRouter, CindiDataRouter>();
             services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
                 s => new NodeStorageRepository(entitiesRepository),
@@ -122,8 +123,6 @@ namespace Cindi.Presentation
 
             services.AddSingleton<IEntitiesRepository, EntitiesRepository>(e => entitiesRepository);
             services.AddSingleton<IClusterStateService, ClusterStateService>();
-            services.AddSingleton<IMetricTicksRepository, MetricTicksRepository>(s => new MetricTicksRepository(databaseLocation));
-            // services.AddSingleton<ClusterStateService>();
 
 
             //.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
@@ -131,7 +130,7 @@ namespace Cindi.Presentation
             services.AddSingleton<MetricManagementService>();
             services.AddSingleton<InternalBotManager>();
 
-            services.AddTransient<ClusterService>();
+            services.AddTransient<IClusterService, ClusterService>();
 
 
             //Authentication

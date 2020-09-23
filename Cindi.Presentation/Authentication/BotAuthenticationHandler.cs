@@ -57,7 +57,7 @@ namespace Cindi.Presentation.Authentication
             {
                 return AuthenticateResult.Fail("No nonce detected");
             }
-            var id = authHeader;
+            var id = authHeader.ToString();
 
             BotKey botkey;
 

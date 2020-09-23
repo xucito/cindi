@@ -34,7 +34,10 @@ namespace Cindi.Application.Results
         public bool IsSuccessful { get; set; } = true;
         public string ErrorMessage { get; set; }
         public string[] Messages { get; set; }
-
+        /// <summary>
+        /// Result object that is not always populated
+        /// </summary>
+        public object Result { get; set; }
 
         public static string ConvertShardOperationOption(ShardOperationOptions option)
         {
@@ -53,7 +56,7 @@ namespace Cindi.Application.Results
 
     public class CommandResult<T> : CommandResult
     {
-        public CommandResult(Exception e): base(e) {}
+        public CommandResult(Exception e) : base(e) { }
         public CommandResult() { }
 
         public T Result { get; set; }

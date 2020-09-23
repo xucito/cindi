@@ -18,8 +18,8 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
     public class DeleteEntityCommandHandler<T> : IRequestHandler<DeleteEntityCommand<T>, CommandResult>
         where T : ShardData
     {
-        ClusterService _clusterService;
-        public DeleteEntityCommandHandler(ClusterService clusterService)
+        IClusterService _clusterService;
+        public DeleteEntityCommandHandler(IClusterService clusterService)
         {
             _clusterService = clusterService;
         }

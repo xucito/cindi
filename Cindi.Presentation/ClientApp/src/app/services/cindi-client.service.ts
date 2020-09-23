@@ -197,16 +197,14 @@ export class CindiClientService {
   GetMetrics(
     from: Date,
     to: Date,
-    metricName: string,
-    aggs: string[],
+    metrics: any,
     interval: string,
     includeSubcategories: boolean = false
   ): Observable<any> {
     return this.http.post(this.baseUrl + this.api + "metrics/request", {
       from: from,
       to: to,
-      metricName: metricName,
-      aggs: aggs,
+      metrics: metrics,
       interval: interval,
       includeSubcategories: includeSubcategories
     });

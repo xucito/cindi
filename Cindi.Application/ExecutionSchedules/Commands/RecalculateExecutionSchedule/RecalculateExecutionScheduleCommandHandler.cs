@@ -22,12 +22,12 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
 {
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<RecalculateExecutionScheduleCommand, CommandResult>
     {
-        private readonly ClusterService _clusterService;
+        private readonly IClusterService _clusterService;
         private readonly IClusterStateService _clusterStateService;
 
         public UpdateExecutionScheduleCommandHandler(IEntitiesRepository entitiesRepository,
             IClusterStateService service,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             _clusterService = clusterService;
             _clusterStateService = service;

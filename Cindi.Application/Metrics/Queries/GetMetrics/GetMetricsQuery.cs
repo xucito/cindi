@@ -11,13 +11,8 @@ namespace Cindi.Application.Metrics.Queries.GetMetrics
     {
         public DateTime From { get; set; }
         public DateTime To { get; set; }
-        /// <summary>
-        /// Use metricname.subcategory to use subcategories
-        /// </summary>
-        public string MetricName { get; set; }
-        public string SubCategory { get; set; } = null;
-        public Guid ObjectId { get; set; }
-        public string[] Aggs { get; set; }
+        //Name of the metric and the aggregations used, max, avg, min, max
+        public Dictionary<string, string[]> Metrics { get; set; }
         /// <summary>
         /// Y = year
         /// m = month

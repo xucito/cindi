@@ -31,11 +31,11 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
     public class CreateWorkflowTemplateCommandHandler : IRequestHandler<CreateWorkflowTemplateCommand, CommandResult>
     {
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
-        private ClusterService _clusterService;
+        private IClusterService _clusterService;
 
         public CreateWorkflowTemplateCommandHandler(
             ILogger<CreateWorkflowTemplateCommandHandler> logger,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             Logger = logger;
             _clusterService = clusterService;

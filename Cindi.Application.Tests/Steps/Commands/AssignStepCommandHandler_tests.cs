@@ -25,6 +25,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.Extensions.Options;
 
 namespace Cindi.Application.Tests.Steps.Commands
 {
@@ -34,9 +35,10 @@ namespace Cindi.Application.Tests.Steps.Commands
 
         Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
 
-        Mock<IMemoryCache> cacheMoq = new Mock<IMemoryCache>();
+        MemoryCache memCache = new MemoryCache(Microsoft.Extensions.Options.Options.Create(new MemoryCacheOptions()
+            ));
 
-        Mock<ClusterService> clusterService = new Mock<ClusterService>();
+        Mock<IClusterService> clusterService = new Mock<IClusterService>();
 
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {
@@ -57,8 +59,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterMoq.Setup(cm => cm.GetState()).Returns(new CindiClusterState()
             {
             });
-
-            cacheMoq.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out It.Ref<object>.IsAny)).Returns(false);
+           /* cacheMoq.Setup(cache => cache.TryGetValue(It.IsAny<object>(), out It.Ref<object>.IsAny)).Returns(false);
+            cacheMoq.Setup(cache => cache.Set(It.IsAny<object>(), It.IsAny<object>())).Returns(new object { });*/
         }
 
         [Fact]
@@ -92,7 +94,7 @@ namespace Cindi.Application.Tests.Steps.Commands
         {
             var testPhrase = "This is a test";
 
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             var newStep = SecretSampleData.StepTemplate.GenerateStep(SecretSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
             }, null, null, ClusterStateService.GetEncryptionKey());
@@ -110,15 +112,13 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var mockLogger = new Mock<ILogger<AssignStepCommandHandler>>();
 
-
-
             clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse()
             {
                 AppliedLocked = true,
                 IsSuccessful = true
             }));
 
-            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, cacheMoq.Object, clusterService.Object);
+            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -173,7 +173,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
 
-            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, cacheMoq.Object, clusterService.Object);
+            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -227,7 +227,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
 
-            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, cacheMoq.Object, clusterService.Object);
+            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -280,7 +280,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
 
-            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, cacheMoq.Object, clusterService.Object);
+            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {
@@ -335,7 +335,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 IsSuccessful = true
             }));
 
-            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, cacheMoq.Object, clusterService.Object);
+            var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
 
             var result = await handler.Handle(new AssignStepCommand()
             {

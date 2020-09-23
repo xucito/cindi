@@ -29,12 +29,12 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
     {
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private ClusterService _clusterService;
+        private IClusterService _clusterService;
 
         public SuspendStepCommandHandler(
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             _clusterService = clusterService;
             Logger = logger;

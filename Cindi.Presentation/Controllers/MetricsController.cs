@@ -32,7 +32,6 @@ namespace Cindi.Presentation.Controllers
         public async Task<IActionResult> Get(GetMetricsQuery query)
         {
             var result = await Mediator.Send(query);
-
             return Ok(new HttpQueryResult<object, object>(result, result.Result));
         }
     }

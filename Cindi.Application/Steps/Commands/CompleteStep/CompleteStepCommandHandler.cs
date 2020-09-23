@@ -42,14 +42,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public IClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private ClusterService _clusterService;
+        private IClusterService _clusterService;
         private IMediator _mediator;
 
         public CompleteStepCommandHandler(
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            ClusterService clusterService,
+            IClusterService clusterService,
             IMediator mediator
             )
         {
@@ -69,7 +69,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
-            ClusterService clusterService,
+            IClusterService clusterService,
             IMediator mediator
     )
         {

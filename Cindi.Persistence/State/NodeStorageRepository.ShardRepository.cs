@@ -49,7 +49,7 @@ namespace Cindi.Persistence.State
 
         public async Task<List<ShardMetadata>> GetAllShardMetadataAsync()
         {
-            return (await entitiesRepository.GetAsync<ShardMetadata>(_ => true)).ToList();
+            return (await entitiesRepository.GetAsync<ShardMetadata>()).ToList();
         }
 
         public async Task<IEnumerable<ShardWriteOperation>> GetAllShardWriteOperationsAsync(Guid shardId)
@@ -101,7 +101,7 @@ namespace Cindi.Persistence.State
 
         public int GetLastShardWriteOperationPos(Guid shardId)
         {
-            var lastOperation = entitiesRepository.GetAsync<ShardWriteOperation>(c => c.Data.ShardId == shardId, null, "Pos:-1", 1).GetAwaiter().GetResult();
+            var lastOperation = entitiesRepository.GetAsync<ShardWriteOperation>(c => c.Data.ShardId.Value == shardId, null, null, 1, 0).GetAwaiter().GetResult();
             if (lastOperation != null && lastOperation.Count() > 0)
                 return (int)lastOperation.First().Pos;
             else

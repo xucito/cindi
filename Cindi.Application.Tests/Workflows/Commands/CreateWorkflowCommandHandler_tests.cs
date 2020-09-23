@@ -64,7 +64,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void ReturnsSuccessfulOnStepCreationFailure()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
@@ -91,7 +91,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void ConcurrentStartSteps()
         {
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
@@ -120,7 +120,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         public async void DetectExtraInput()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
 
             var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, clusterService.Object, _mediator.Object);
@@ -140,7 +140,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
         public async void DetectMissingInput()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<ClusterService> clusterService = new Mock<ClusterService>();
+            Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
             var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, clusterService.Object, _mediator.Object);
 

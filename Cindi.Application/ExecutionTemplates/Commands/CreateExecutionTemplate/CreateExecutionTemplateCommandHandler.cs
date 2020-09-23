@@ -22,11 +22,11 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
     public class CreateExecutionTemplateCommandHandler : IRequestHandler<CreateExecutionTemplateCommand, CommandResult<ExecutionTemplate>>
     {
         private readonly IClusterStateService _clusterStateService;
-        private readonly ClusterService _clusterService;
+        private readonly IClusterService _clusterService;
 
         public CreateExecutionTemplateCommandHandler(
             IClusterStateService service,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             _clusterService = clusterService;
             _clusterStateService = service;

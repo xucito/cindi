@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Entities\Commands\" />
     <Folder Include="Steps\Queries\" />
   </ItemGroup>
 

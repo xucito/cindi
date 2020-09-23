@@ -25,9 +25,9 @@ namespace Cindi.Application.GlobalValues.Commands.UpdateGlobalValue
 {
     public class UpdateGlobalValueCommandHandler : IRequestHandler<UpdateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        ClusterService _clusterService;
+        IClusterService _clusterService;
 
-        public UpdateGlobalValueCommandHandler(ClusterService clusterService)
+        public UpdateGlobalValueCommandHandler(IClusterService clusterService)
         {
             _clusterService = clusterService;
         }

@@ -21,11 +21,11 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<UpdateExecutionScheduleCommand, CommandResult>
     {
         private readonly IClusterStateService _clusterStateService;
-        private readonly ClusterService _clusterService;
+        private readonly IClusterService _clusterService;
 
         public UpdateExecutionScheduleCommandHandler(
             IClusterStateService service,
-            ClusterService clusterService
+            IClusterService clusterService
             )
         {
             _clusterStateService = service;

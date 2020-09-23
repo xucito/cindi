@@ -29,10 +29,10 @@ namespace Cindi.Application.Steps.Commands.CreateStep
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
         private readonly IClusterStateService _clusterStateService;
-        private readonly ClusterService _clusterService;
+        private readonly IClusterService _clusterService;
         public CreateStepCommandHandler(
             IClusterStateService service,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             _clusterService = clusterService;
             _clusterStateService = service;

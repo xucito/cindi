@@ -46,7 +46,6 @@ namespace Cindi.Application.Services.ClusterMonitor
         private ILogger<ClusterMonitorService> _logger;
         private IClusterRequestHandler node;
         private IEntitiesRepository _entitiesRepository;
-        private IMetricTicksRepository _metricTicksRepository;
         private MetricManagementService _metricManagementService;
         int leaderMonitoringInterval = Timeout.Infinite;
         int nodeMonitoringInterval = Timeout.Infinite;
@@ -60,18 +59,17 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         private Timer monitoringTimer;
         private int secondsOfMetrics = 5;
-        ClusterService _clusterService;
+        IClusterService _clusterService;
 
         public ClusterMonitorService(
             IServiceProvider sp,
             IClusterRequestHandler _node,
             IEntitiesRepository entitiesRepository,
             MetricManagementService metricManagementService,
-            IMetricTicksRepository metricTicksRepository,
             // IDatabaseMetricsCollector databaseMetricsCollector,
             NodeStateService nodeStateService,
             IOptions<ClusterOptions> clusterOptions,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             _clusterService = clusterService;
             _metricManagementService = metricManagementService;
@@ -83,7 +81,6 @@ namespace Cindi.Application.Services.ClusterMonitor
             _logger.LogInformation("Starting clean up service...");
             node = _node;
             _entitiesRepository = entitiesRepository;
-            _metricTicksRepository = metricTicksRepository;
             //  _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
             node.MetricGenerated += metricGenerated;
@@ -125,6 +122,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     long totalMetricTicks = 0;
                     int cleanedCount = 0;
                     AddShardWriteOperationResponse result = null;
+                    Console.WriteLine(Process.GetCurrentProcess().Threads.Count);
                     do
                     {
                         if (_state.GetSettings != null)
@@ -158,7 +156,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         // }
                     }
                     while (result != null && result.IsSuccessful);
-                    await Task.Delay(30000);
+                    await Task.Delay(300000);
                 }
             }
         }

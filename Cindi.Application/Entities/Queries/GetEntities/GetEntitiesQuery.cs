@@ -10,9 +10,8 @@ namespace Cindi.Application.Entities.Queries
 {
     public class GetEntitiesQuery<T> : IRequest<QueryResult<List<T>>>
     {
-        public Type Entity { get; set; }
-        public int Page { get; set; }
-        public int Size { get; set; }
+        public int Page { get; set; } = 0;
+        public int Size { get; set; } = 100;
         public Expression<Func<T, bool>> Expression { get; set; }
         [JsonIgnore]
         public List<Expression<Func<T, object>>> Exclusions = null;

@@ -25,12 +25,12 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 {
     public class AppendStepLogCommandHandler : IRequestHandler<AppendStepLogCommand, CommandResult>
     {
-        public ClusterService _clusterService;
+        public IClusterService _clusterService;
         public ILogger<AppendStepLogCommandHandler> Logger;
 
         public AppendStepLogCommandHandler(
             ILogger<AppendStepLogCommandHandler> logger,
-            ClusterService clusterService
+            IClusterService clusterService
             )
         {
             Logger = logger;

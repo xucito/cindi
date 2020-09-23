@@ -29,12 +29,12 @@ namespace Cindi.Application.Steps.Commands.CancelStep
     {
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly ClusterService _clusterService;
+        private readonly IClusterService _clusterService;
 
         public CancelStepCommandHandler(
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            ClusterService clusterService)
+            IClusterService clusterService)
         {
             _clusterService = clusterService;
             Logger = logger;

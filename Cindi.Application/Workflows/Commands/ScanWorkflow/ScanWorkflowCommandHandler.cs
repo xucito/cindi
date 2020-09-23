@@ -39,14 +39,14 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
         public ILogger<ScanWorkflowCommandHandler> Logger;
         private CindiClusterOptions _option;
         private IMediator _mediator;
-        private ClusterService _clusterService;
+        private IClusterService _clusterService;
 
         public ScanWorkflowCommandHandler(
             IClusterStateService clusterStateService,
             ILogger<ScanWorkflowCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            ClusterService clusterService
+            IClusterService clusterService
             )
         {
             _clusterService = clusterService;
