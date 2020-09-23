@@ -101,7 +101,7 @@ namespace Cindi.Persistence.State
 
         public int GetLastShardWriteOperationPos(Guid shardId)
         {
-            var lastOperation = entitiesRepository.GetAsync<ShardWriteOperation>(c => c.Data.ShardId.Value == shardId, null, null, 1, 0).GetAwaiter().GetResult();
+            var lastOperation = entitiesRepository.GetAsync<ShardWriteOperation>(c => c.Data.ShardId == shardId, null, "Pos:-1", 1).GetAwaiter().GetResult();
             if (lastOperation != null && lastOperation.Count() > 0)
                 return (int)lastOperation.First().Pos;
             else

@@ -88,7 +88,6 @@ namespace Cindi.Persistence.Tests
         [Fact]
         public async void GetFirstOrDefaultAsync()
         {
-
             var id = Guid.NewGuid();
             await repository.Insert(new User()
             {
@@ -98,7 +97,7 @@ namespace Cindi.Persistence.Tests
             var user = await repository.GetFirstOrDefaultAsync<User>(u => u.Id == new Guid(id.ToString()));
             Assert.NotNull(user);
 
-            user = await repository.GetFirstOrDefaultAsync<User>();
+            user = await repository.GetFirstOrDefaultAsync<User>(_ => true);
             Assert.NotNull(user);
         }
 

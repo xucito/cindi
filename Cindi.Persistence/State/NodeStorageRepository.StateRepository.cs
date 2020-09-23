@@ -17,7 +17,7 @@ namespace Cindi.Persistence.State
     {
         public async Task<NodeStorage<CindiClusterState>> LoadNodeDataAsync()
         {
-            var result = await entitiesRepository.GetFirstOrDefaultAsync<NodeStorage<CindiClusterState>>();
+            var result = await entitiesRepository.GetFirstOrDefaultAsync<NodeStorage<CindiClusterState>>(_ => true);
             return result;
         }
 
