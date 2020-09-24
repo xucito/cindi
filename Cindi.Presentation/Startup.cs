@@ -237,6 +237,8 @@ namespace Cindi.Presentation
             InternalBotManager internalBotManager
             )
         {
+           // app.UseBlockingDetection();
+
             BootstrapThread = new Task(() =>
             {
                 while (node.Status != ConsensusCore.Domain.Models.NodeStatus.Yellow &&

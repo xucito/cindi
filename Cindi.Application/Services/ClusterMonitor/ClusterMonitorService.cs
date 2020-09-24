@@ -101,13 +101,13 @@ namespace Cindi.Application.Services.ClusterMonitor
             monitoringTimer.Change(0, 100);
             secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
-            //checkSuspendedStepsThread.Start();
+            checkSuspendedStepsThread.Start();
             checkScheduledExecutions = new Thread(async () => await CheckScheduledExecutions());
-            //checkScheduledExecutions.Start();
+            checkScheduledExecutions.Start();
             dataCleanupThread = new Thread(async () => await CleanUpData());
-            //dataCleanupThread.Start();
+            dataCleanupThread.Start();
             cleanupWorkflowsExecutions = new Thread(async () => await CleanupWorkflowsExecutions());
-            //cleanupWorkflowsExecutions.Start();
+            cleanupWorkflowsExecutions.Start();
         }
 
         public async Task CleanUpData()
