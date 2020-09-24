@@ -36,6 +36,7 @@
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="AutoMapper" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.1.0" />
+    <PackageReference Include="Ben.BlockingDetector" Version="0.0.3" />
     <PackageReference Include="ConsensusCore.Node" Version="1.0.4.11-alpha" />
     <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="3.0.3" />
     <PackageReference Include="LiteDB.Async" Version="0.0.2" />

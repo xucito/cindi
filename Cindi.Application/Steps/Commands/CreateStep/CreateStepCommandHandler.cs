@@ -40,8 +40,9 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 
         public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+            var startDate = DateTime.Now;
 
             var resolvedTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
 
@@ -69,11 +70,11 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             });
 
 
-            stopwatch.Stop();
+            //stopwatch.Stop();
             return new CommandResult<Step>()
             {
                 ObjectRefId = newStep.Id.ToString(),
-                ElapsedMs = stopwatch.ElapsedMilliseconds,
+                ElapsedMs = Convert.ToInt64((DateTime.Now - startDate).TotalMilliseconds),//stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create,
                 Result = newStep
             };

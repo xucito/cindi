@@ -53,6 +53,8 @@ using Cindi.Domain.Enums;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Microsoft.AspNetCore.ResponseCompression;
 using Cindi.Application.Services.ClusterOperation;
+using System.Diagnostics;
+using Ben.Diagnostics;
 
 namespace Cindi.Presentation
 {
@@ -63,10 +65,22 @@ namespace Cindi.Presentation
         public IConfiguration Configuration { get; }
         public bool EnableUI { get; }
 
+        public Task monitorThread;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
             EnableUI = Configuration.GetValue<bool>("EnableUI");
+
+            /*monitorThread = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    Console.WriteLine("Thread count: " + Process.GetCurrentProcess().Threads.Count);
+                    await Task.Delay(1000);
+                }
+            });*/
+
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -206,9 +220,8 @@ namespace Cindi.Presentation
             // this will be used as the service-provider for the application!
             return new AutofacServiceProvider(AutofacContainer);
         }
-
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app,
+       public void Configure(IApplicationBuilder app,
             IHostingEnvironment env,
             IClusterStateService service,
             ILogger<Startup> logger,
@@ -284,7 +297,7 @@ namespace Cindi.Presentation
                     }
                 }
 
-                if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                /*if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     metricManagementService.InitializeMetricStore();
                     if (service.GetSettings == null)
@@ -295,7 +308,7 @@ namespace Cindi.Presentation
                             DefaultIfNull = true
                         }).GetAwaiter().GetResult(); ;
                     }
-                }
+                }*/
 
                 foreach (var template in InternalStepLibrary.All)
                 {

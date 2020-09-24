@@ -43,9 +43,6 @@ namespace Cindi.Presentation.Authentication
             if (!Request.Headers.ContainsKey("Authorization"))
                 return AuthenticateResult.Fail("Missing Authorization Header");
 
-            Stopwatch test = new Stopwatch();
-            test.Start();
-
             User user = null;
             try
             {
@@ -85,7 +82,6 @@ namespace Cindi.Presentation.Authentication
             var identity = new ClaimsIdentity(claims, Scheme.Name);
             var principal = new ClaimsPrincipal(identity);
             var ticket = new AuthenticationTicket(principal, Scheme.Name);
-            Console.WriteLine("Authenticatino took " + test.ElapsedMilliseconds);
 
             return AuthenticateResult.Success(ticket);
         }

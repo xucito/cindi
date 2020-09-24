@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Cindi.Application.Entities.Queries;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Exceptions;
+using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
 using Cindi.Application.Steps.Commands;
@@ -39,21 +40,26 @@ namespace Cindi.Presentation.Controllers
     public class StepsController : BaseController
     {
         private CindiClusterOptions _option;
+        private IEntitiesRepository _entitiesRepository;
         public StepsController(ILoggerFactory logger,
-            IOptionsMonitor<CindiClusterOptions> options) : base(logger.CreateLogger<StepsController>())
+            IOptionsMonitor<CindiClusterOptions> options,
+            IEntitiesRepository entitiesRepository) : base(logger.CreateLogger<StepsController>())
         {
             _option = options.CurrentValue;
             options.OnChange((change) =>
             {
                 _option = change;
             });
+            _entitiesRepository = entitiesRepository;
         }
 
         [HttpPost]
         public async Task<IActionResult> Create(CreateStepCommand command, bool? wait_for_completion, string timeout = "30s")
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            //var stopwatch = new Stopwatch();
+            // stopwatch.Start();
+
+            var startDate = DateTime.UtcNow;
             try
             {
                 command.CreatedBy = ClaimsUtility.GetId(User);
@@ -69,7 +75,7 @@ namespace Cindi.Presentation.Controllers
                 {
                     var ms = DateTimeMathsUtility.GetMs(timeout);
 
-                    while (!StepStatuses.IsCompleteStatus(step.Status) && stopwatch.ElapsedMilliseconds < ms)
+                    while (!StepStatuses.IsCompleteStatus(step.Status) && (DateTime.UtcNow - startDate).TotalMilliseconds < ms)
                     {
                         step = (await Mediator.Send(new GetEntityQuery<Step>()
                         {
@@ -85,8 +91,7 @@ namespace Cindi.Presentation.Controllers
             catch (BaseException e)
             {
                 Logger.LogError(e.Message);
-                stopwatch.Stop();
-                return BadRequest(e.ToExceptionResult(stopwatch.ElapsedMilliseconds));
+                return BadRequest(e.ToExceptionResult(Convert.ToInt64((DateTime.UtcNow - startDate).TotalMilliseconds)));
             }
         }
 

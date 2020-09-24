@@ -27,6 +27,7 @@ namespace Cindi.Persistence
         private string _databaseLocation;
         LiteDatabase db;
         ConcurrentDictionary<string, string> keyDict = new ConcurrentDictionary<string, string>();
+        private object _writeLock = new object();
 
         public EntitiesRepository(string databaseLocation)
         {
@@ -128,12 +129,15 @@ namespace Cindi.Persistence
 
         public async Task<T> Insert<T>(T entity)
         {
-            //var stopwatch = new Stopwatch();
-            //stopwatch.Start();
-            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            collection.Insert(entity);
-            //Console.WriteLine("Insert took " + stopwatch.ElapsedMilliseconds);
-            return await Task.FromResult(entity);
+            lock (_writeLock)
+            {
+                //var stopwatch = new Stopwatch();
+                //stopwatch.Start();
+                var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
+                collection.Insert(entity);
+                //Console.WriteLine("Insert took " + stopwatch.ElapsedMilliseconds);
+                return entity;
+            }
         }
 
         public async Task<T> Update<T>(T entity)

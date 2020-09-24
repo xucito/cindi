@@ -28,6 +28,7 @@ namespace Cindi.Presentation.Middleware
             {
                 await _next(context);
             }
+
             else if (ClusterStateService.Initialized || path == "/api/cluster" && context.Request.Method == "POST")
             {
                 if (ClusterStateService.HasValidEncryptionKey == false && path != "/api/cluster/encryption-key")
