@@ -7,6 +7,7 @@ using NuGet.Frameworks;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Xunit;
 
@@ -81,8 +82,35 @@ namespace Cindi.Persistence.Tests
                 Id = id
             });
 
-            var user = await repository.GetAsync<User>(u => u.Id == id);
+            var user = await repository.GetAsync<User>(u => u.Id == id, null, "id:-1");
             Assert.NotNull(user);
+
+            user = await repository.GetAsync<User>(_ => true, null, "id:-1");
+            Assert.NotNull(user);
+        }
+
+        [Fact]
+        public async void GetAsyncSort_Test()
+        {
+            await repository.Insert(new ShardWriteOperation()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Pos = 1
+            });
+
+            await repository.Insert(new ShardWriteOperation()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Pos = 2
+            });
+
+            var swo = await repository.GetAsync<ShardWriteOperation>(_ => true, null, "pos:1");
+            Assert.Equal(1, swo.First().Pos);
+            swo = await repository.GetAsync<ShardWriteOperation>(_ => true, null, "pos:-1");
+            Assert.Equal(2, swo.First().Pos);
+            //Test case insensitivity
+            swo = await repository.GetAsync<ShardWriteOperation>(_ => true, null, "pOs:-1");
+            Assert.Equal(2, swo.First().Pos);
         }
 
         [Fact]

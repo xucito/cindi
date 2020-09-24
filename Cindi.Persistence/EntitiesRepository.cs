@@ -28,12 +28,14 @@ namespace Cindi.Persistence
         LiteDatabase db;
         ConcurrentDictionary<string, string> keyDict = new ConcurrentDictionary<string, string>();
         private object _writeLock = new object();
+        BsonMapper _mapper;
 
         public EntitiesRepository(string databaseLocation)
         {
 
             _databaseLocation = databaseLocation;
             db = new LiteDatabase(_databaseLocation);
+            _mapper = new BsonMapper();
         }
 
         public void Setup()
@@ -87,30 +89,41 @@ namespace Cindi.Persistence
             //var stopwatch = new Stopwatch();
             //stopwatch.Start();
 
-            Query sortQuery;
-            var transformedSortString = "";
+            string sortField = null;
+            string order = null;
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+            string field = null;
             if (sort != null)
             {
                 var split = sort.Split(",")[0];
-                sortQuery = Query.All(split.Split(':')[0], int.Parse(split.Split(':')[1]));
-            }
-            else
-            {
-                sortQuery = Query.All();
+                field = split.Split(":")[0];
+                order = split.Split(":")[1].ToLower();
             }
 
-            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+
+            if (expression == null)
+            {
+                expression = _ => true;
+            }
+
 
             IEnumerable<T> result;
-            if (expression != null)
+            if (field != null)
             {
-                result = collection.Find(expression).Skip(page * size).Take(size);
+                var bsonExpression = _mapper.GetExpression(expression);
+                ILiteQueryableResult<T> queryable = null;
+                if (order == "1")
+                {
+                    queryable = collection.Query().Where(bsonExpression).OrderBy(BsonExpression.Create(field)).Skip(page * size).Limit(size);
+                }
+                else
+                {
+                    queryable = collection.Query().Where(bsonExpression).OrderByDescending(BsonExpression.Create(field)).Skip(page * size).Limit(size);
+                }
+                result = queryable.ToEnumerable();
             }
             else
-            {
-                result = collection.Find(Query.All()).Skip(page * size).Take(size);
-            }
-
+                result = collection.Find(expression).Skip(page * size).Take(size);
 
             //Console.WriteLine("GetAsync took " + stopwatch.ElapsedMilliseconds);
             return result;

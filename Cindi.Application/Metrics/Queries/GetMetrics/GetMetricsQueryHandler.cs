@@ -90,13 +90,16 @@ namespace Cindi.Application.Metrics.Queries.GetMetrics
 
             foreach (var kv in recordCache)
             {
-                //This can be made more efficient
-                result[kv.Key].Add(currentDate, new
+                if (kv.Value.Count > 0)
                 {
-                    Max = kv.Value.Max(v => v.Value),
-                    Min = kv.Value.Min(v => v.Value),
-                    Avg = kv.Value.Average(v => v.Value)
-                });
+                    //This can be made more efficient
+                    result[kv.Key].Add(currentDate, new
+                    {
+                        Max = kv.Value.Max(v => v.Value),
+                        Min = kv.Value.Min(v => v.Value),
+                        Avg = kv.Value.Average(v => v.Value)
+                    });
+                }
             }
 
             Dictionary<string, Dictionary<DateTime, object>> convertedResult = new Dictionary<string, Dictionary<DateTime, object>>();

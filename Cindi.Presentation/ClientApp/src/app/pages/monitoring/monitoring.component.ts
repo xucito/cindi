@@ -10,7 +10,7 @@ import { map } from 'rxjs/operators';
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
 
-  interval = 'M';
+  interval = 'S';
   generatedGraphs = [
     /*{
       metricName: "databaseoperationlatencyms",
@@ -78,7 +78,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   toggleTimeframe($event) {
     this.offsetMinutes = $event;
     if ($event > 15) {
-      this.interval = "M"
+      this.interval = "S"
     }
     else {
       this.interval = "M"
