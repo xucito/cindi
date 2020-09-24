@@ -35,7 +35,7 @@ steps:
   displayName: "Use .NET Core sdk 2.2"
   inputs:
     packageType: sdk
-    version: 2.2.0
+    version: 2.2.207
     
 - task: VSTest@2
   inputs:
