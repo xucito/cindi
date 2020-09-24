@@ -31,6 +31,12 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+- task: UseDotNet@2
+  displayName: "Use .NET Core sdk 2.2"
+  inputs:
+    packageType: sdk
+    version: 2.2.0
+    
 - task: VSTest@2
   inputs:
     testSelector: 'testAssemblies'
