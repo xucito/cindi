@@ -299,7 +299,7 @@ namespace Cindi.Presentation
                     }
                 }
 
-                /*if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
                     metricManagementService.InitializeMetricStore();
                     if (service.GetSettings == null)
@@ -310,7 +310,7 @@ namespace Cindi.Presentation
                             DefaultIfNull = true
                         }).GetAwaiter().GetResult(); ;
                     }
-                }*/
+                }
 
                 foreach (var template in InternalStepLibrary.All)
                 {

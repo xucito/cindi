@@ -24,6 +24,11 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       metricName: "schedulerlatency",
       aggs: ["max"]
     },
+    {
+      metricName: "cpuusagepercent",
+      aggs: ["max"],
+      yScaleMax: 100
+    }
   /* {
       metricName: "databasetotalsizebytes",
       aggs: ["max"]

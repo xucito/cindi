@@ -42,7 +42,22 @@ namespace Cindi.Application.Services.ClusterMonitor
         Thread checkSuspendedStepsThread;
         Thread checkScheduledExecutions;
         Thread cleanupWorkflowsExecutions;
+        Thread getSystemMetrics;
         Thread dataCleanupThread;
+        private async Task<double> GetCpuUsageForProcess()
+        {
+            var startTime = DateTime.UtcNow;
+            var startCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
+            await Task.Delay(500);
+
+            var endTime = DateTime.UtcNow;
+            var endCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
+            var cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
+            var totalMsPassed = (endTime - startTime).TotalMilliseconds;
+            var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
+            return cpuUsageTotal * 100;
+        }
+
         private ILogger<ClusterMonitorService> _logger;
         private IClusterRequestHandler node;
         private IEntitiesRepository _entitiesRepository;
@@ -108,6 +123,22 @@ namespace Cindi.Application.Services.ClusterMonitor
             dataCleanupThread.Start();
             cleanupWorkflowsExecutions = new Thread(async () => await CleanupWorkflowsExecutions());
             cleanupWorkflowsExecutions.Start();
+            getSystemMetrics = new Thread(async () => await GetSystemMetrics());
+            getSystemMetrics.Start();
+        }
+
+        public async Task GetSystemMetrics()
+        {
+            while (true)
+            {
+                var cpuUsage = await GetCpuUsageForProcess();
+                _metricManagementService.EnqueueTick(new MetricTick()
+                {
+                    MetricId = (int)MetricIds.CPUUsagePercent,
+                    Date = DateTime.Now,
+                    Value = cpuUsage
+                });
+            }
         }
 
         public async Task CleanUpData()
@@ -155,6 +186,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         // }
                     }
                     while (result != null && result.IsSuccessful);
+                    _entitiesRepository.Rebuild();
                     await Task.Delay(300000);
                 }
             }

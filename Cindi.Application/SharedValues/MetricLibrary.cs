@@ -19,6 +19,7 @@ namespace Cindi.Application.SharedValues
             AddMetric(SchedulerLatencyMs);
             AddMetric(DatabaseOperationsPerSecond);
             AddMetric(DatabaseTotalSizeBytes);
+            AddMetric(CPUUsagePercent);
         }
 
         public void AddMetric(Metric metric)
@@ -45,5 +46,6 @@ namespace Cindi.Application.SharedValues
         public static Metric SchedulerLatencyMs { get { return GetMetric(MetricIds.SchedulerLatencyMs, "Delay in the scheduler intervals", "schedulerlatency", MetricType.Cluster, "Total Elapsed ms"); } }
         public static Metric DatabaseOperationsPerSecond { get { return GetMetric(MetricIds.DatabaseOperationsPerSecond, "Database Operations per Second", "databaseoperationspersecond", MetricType.Node, "Number per second"); } }
         public static Metric DatabaseTotalSizeBytes { get { return GetMetric(MetricIds.DatabaseTotalSizeBytes, "Database Total Size in Bytes", "databasetotalsizebytes", MetricType.Node, "Total in Bytes"); } }
+        public static Metric CPUUsagePercent { get { return GetMetric(MetricIds.CPUUsagePercent, "CPU Usage in Percent", "cpuusagepercent", MetricType.Node, "Total in %"); } }
     }
 }

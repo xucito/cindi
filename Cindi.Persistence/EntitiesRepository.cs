@@ -136,7 +136,6 @@ namespace Cindi.Persistence
 
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
             collection.DeleteMany(expression);
-            //Console.WriteLine("Delete took " + stopwatch.ElapsedMilliseconds);
             return true;
         }
 
@@ -186,6 +185,11 @@ namespace Cindi.Persistence
         public ILiteCollection<T> GetCollection<T>()
         {
             return db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+        }
+
+        public void Rebuild()
+        {
+            db.Rebuild();
         }
     }
 }

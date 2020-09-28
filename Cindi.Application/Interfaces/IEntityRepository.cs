@@ -14,5 +14,9 @@ namespace Cindi.Application.Interfaces
         Task<T> Update<T>(T entity);
         long Count<T>(Expression<Func<T, bool>> expression = null);
         Task<bool> Delete<T>(Expression<Func<T, bool>> expression);
+        /// <summary>
+        /// Used to rebuild the database and size.
+        /// </summary>
+        void Rebuild();
     }
 }

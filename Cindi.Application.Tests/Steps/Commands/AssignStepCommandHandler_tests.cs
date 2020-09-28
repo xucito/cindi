@@ -171,7 +171,11 @@ namespace Cindi.Application.Tests.Steps.Commands
 
 
 
-            clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { AppliedLocked = true, IsSuccessful = true }));
+            clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse() { 
+                AppliedLocked = true, 
+                IsSuccessful = true,
+                LockId = Guid.NewGuid()
+            }));
 
             var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
 
@@ -332,7 +336,8 @@ namespace Cindi.Application.Tests.Steps.Commands
             clusterService.Setup(s => s.Handle(It.IsAny<RequestDataShard>())).Returns(Task.FromResult(new RequestDataShardResponse()
             {
                 AppliedLocked = true,
-                IsSuccessful = true
+                IsSuccessful = true,
+                LockId = Guid.NewGuid()
             }));
 
             var handler = new AssignStepCommandHandler(clusterMoq.Object, mockLogger.Object, memCache, clusterService.Object);
