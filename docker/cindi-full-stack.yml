@@ -1,7 +1,7 @@
 version: '3'
 services:
   cindi
-    image: xucito/cindi:1.2.0-alpha-17c8140
+    image: xucito/cindi:2.0.0-alpha
     environment:
       - "Cluster:NodeUrls=https://localhost:5021"
       - "Cluster:MinimumNodes=1"
@@ -12,4 +12,3 @@ services:
       - "Logging:File:LogDirectory=/var/log/cindi"
     ports:
       - 81:5021
-      - 27017:27017
