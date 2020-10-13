@@ -61,5 +61,18 @@ namespace Cindi.Domain.Tests.Utilities
 
             Assert.Equal(SecurityUtility.SymmetricallyDecrypt(encryptedString, testKey), testString);
         }
+
+        [Fact]
+        public void SymmetricallyAES256EncryptionWithKeyGeneration()
+        {
+            var testString = "THIS IS A TEST STRING";
+            string testKey;
+
+            var encryptedString = SecurityUtility.SymmetricallyEncrypt(testString, out testKey);
+
+            Assert.NotEqual(encryptedString, testString);
+
+            Assert.Equal(SecurityUtility.SymmetricallyDecrypt(encryptedString, testKey), testString);
+        }
     }
 }

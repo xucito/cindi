@@ -34,7 +34,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Steps.Commands.AssignStep
 {
-    public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, CommandResult<Step>>
+    public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, EncryptedCommandResult<Step>>
     {
         private readonly IClusterStateService _clusterStateService;
         public ILogger<AssignStepCommandHandler> Logger;
@@ -53,11 +53,12 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             Logger = logger;
             _cache = cache;
         }
-        public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
+        public async Task<EncryptedCommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             List<Guid> ignoreUnassignedSteps = new List<Guid>();
+            string encryptedEncryptionKey = null;
             if (_clusterStateService.GetSettings.AssignmentEnabled)
             {
                 var assignedStepSuccessfully = false;
@@ -78,7 +79,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 if (botkey.IsDisabled)
                 {
-                    return new CommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))
+                    return new EncryptedCommandResult<Step>(new BotKeyAssignmentException("Bot " + botkey.Id + " is disabled."))
                     {
                         Type = CommandResultTypes.Update,
                         ElapsedMs = stopwatch.ElapsedMilliseconds
@@ -259,22 +260,28 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                     unassignedStep.RemoveDelimiters();
 
+                    //Generate a random encryption key
+                    var encryptionKey = SecurityUtility.RandomString(32);
+
                     //Encrypt the step
-                    unassignedStep.Inputs = DynamicDataUtility.EncryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
+                    unassignedStep.Inputs = DynamicDataUtility.EncryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, encryptionKey, true);
+
+                    encryptedEncryptionKey = SecurityUtility.RsaEncryptWithPublic(encryptionKey, botkey.PublicEncryptionKey);
                 }
 
                 stopwatch.Stop();
-                return new CommandResult<Step>()
+                return new EncryptedCommandResult<Step>()
                 {
                     ObjectRefId = unassignedStep != null ? unassignedStep.Id.ToString() : "",
                     ElapsedMs = stopwatch.ElapsedMilliseconds,
                     Type = CommandResultTypes.Update,
-                    Result = unassignedStep != null ? unassignedStep : null
+                    Result = unassignedStep != null ? unassignedStep : null,
+                    EncryptionKey = encryptedEncryptionKey
                 };
             }
             else
             {
-                return new CommandResult<Step>()
+                return new EncryptedCommandResult<Step>()
                 {
                     ObjectRefId = "",
                     ElapsedMs = stopwatch.ElapsedMilliseconds,

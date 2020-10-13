@@ -25,6 +25,7 @@ namespace Cindi.Presentation.Results
     {
         public string HRef { get; set; }
         public T Result { get; set; }
+        public string EncryptionKey { get; set; }
 
         public HttpCommandResult(string href, CommandResult result, T returnObject)
         {
@@ -43,11 +44,21 @@ namespace Cindi.Presentation.Results
             ObjectRefId = result.ObjectRefId;
             Result = returnObject;
         }
+
+        public HttpCommandResult(string href, EncryptedCommandResult<T> result, T returnObject)
+        {
+            HRef = href;
+            Type = result.Type;
+            ElapsedMs = result.ElapsedMs;
+            ObjectRefId = result.ObjectRefId;
+            EncryptionKey = result.EncryptionKey;
+            Result = returnObject;
+        }
     }
 
     public class HttpCommandResult<Z, T> : HttpCommandResult<T>
     {
-        public HttpCommandResult(string href, CommandResult<Z> queryResult, T mappedResponse): base(href, queryResult, mappedResponse)
+        public HttpCommandResult(string href, CommandResult<Z> queryResult, T mappedResponse) : base(href, queryResult, mappedResponse)
         {
         }
     }

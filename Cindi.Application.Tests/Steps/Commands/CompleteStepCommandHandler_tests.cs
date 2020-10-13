@@ -234,13 +234,16 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var handler = new CompleteStepCommandHandler(service.Object, mockLogger.Object, _optionsMonitor.Object, clusterService.Object, mediator.Object);
 
+            var generatedAESKey = SecurityUtility.RandomString(32);
+
             var completeResult = await handler.Handle(new CompleteStepCommand()
             {
                 Id = TestStep.Id,
                 Outputs = new Dictionary<string, object>()
                 {
-                    { "secret", SecurityUtility.RsaEncryptWithPrivate(testPhrase, testKey.PrivateKey) }
+                    { "secret", SecurityUtility.SymmetricallyEncrypt(testPhrase, generatedAESKey) }
                 },
+                EncryptionKey = SecurityUtility.RsaEncryptWithPrivate(generatedAESKey, testKey.PrivateKey),
                 Status = StepStatuses.Successful,
                 StatusCode = 0,
                 Log = "TEST"

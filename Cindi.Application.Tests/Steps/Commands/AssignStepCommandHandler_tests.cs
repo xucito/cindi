@@ -26,6 +26,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Microsoft.Extensions.Options;
+using Cindi.Application.Results;
 
 namespace Cindi.Application.Tests.Steps.Commands
 {
@@ -124,15 +125,18 @@ namespace Cindi.Application.Tests.Steps.Commands
             {
             }, new System.Threading.CancellationToken());
 
+            var convertedResult = result;
+
             var assignedStep = result.Result;
 
             Assert.NotEqual(testPhrase, (string)result.Result.Inputs["secret"]);
 
-            var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
+            //var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
             //Randomized padding is used
-            Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
+            Assert.NotEqual(testPhrase, (string)result.Result.Inputs["secret"]);
             //Decryption using private key should work
-            Assert.Equal(SecurityUtility.RsaDecryptWithPrivate(encryptionTestResult, testKey.PrivateKey), SecurityUtility.RsaDecryptWithPrivate((string)result.Result.Inputs["secret"], testKey.PrivateKey));
+            //Assert.Equal(SecurityUtility.SymmetricallyDecrypt(encryptionTestResult, testKey.PrivateKey), 
+             Assert.Equal(testPhrase,SecurityUtility.SymmetricallyDecrypt((string)result.Result.Inputs["secret"], SecurityUtility.RsaDecryptWithPrivate(convertedResult.EncryptionKey, testKey.PrivateKey)));
         }
 
 
@@ -184,9 +188,9 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, new System.Threading.CancellationToken());
 
             Assert.NotEqual(testPhrase, (string)result.Result.Inputs["secret"]);
-            var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
-            Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
-            Assert.Equal(SecurityUtility.RsaDecryptWithPrivate(encryptionTestResult, testKey.PrivateKey), SecurityUtility.RsaDecryptWithPrivate((string)result.Result.Inputs["secret"], testKey.PrivateKey));
+            //var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
+            //Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
+            Assert.Equal(testPhrase, SecurityUtility.SymmetricallyDecrypt((string)result.Result.Inputs["secret"], SecurityUtility.RsaDecryptWithPrivate(result.EncryptionKey, testKey.PrivateKey)));
         }
 
 
@@ -238,9 +242,9 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, new System.Threading.CancellationToken());
 
             Assert.NotEqual(testPhrase, (string)result.Result.Inputs["secret"]);
-            var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
-            Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
-            Assert.Equal(SecurityUtility.RsaDecryptWithPrivate(encryptionTestResult, testKey.PrivateKey), SecurityUtility.RsaDecryptWithPrivate((string)result.Result.Inputs["secret"], testKey.PrivateKey));
+            //var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
+            //Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
+            Assert.Equal(testPhrase, SecurityUtility.SymmetricallyDecrypt((string)result.Result.Inputs["secret"], SecurityUtility.RsaDecryptWithPrivate(result.EncryptionKey, testKey.PrivateKey)));
         }
 
         [Fact]
@@ -291,9 +295,9 @@ namespace Cindi.Application.Tests.Steps.Commands
             }, new System.Threading.CancellationToken());
 
             Assert.NotEqual(testPhrase, (string)result.Result.Inputs["secret"]);
-            var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
-            Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
-            Assert.Equal(SecurityUtility.RsaDecryptWithPrivate(encryptionTestResult, testKey.PrivateKey), SecurityUtility.RsaDecryptWithPrivate((string)result.Result.Inputs["secret"], testKey.PrivateKey));
+            //var encryptionTestResult = SecurityUtility.RsaEncryptWithPublic(testPhrase, testKey.PublicKey);
+            //Assert.NotEqual(encryptionTestResult, (string)result.Result.Inputs["secret"]);
+            Assert.Equal(testPhrase, SecurityUtility.SymmetricallyDecrypt((string)result.Result.Inputs["secret"], SecurityUtility.RsaDecryptWithPrivate(result.EncryptionKey, testKey.PrivateKey)));
         }
 
         [Fact]
