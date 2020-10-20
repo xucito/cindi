@@ -35,6 +35,7 @@ namespace Cindi.Persistence
 
             _databaseLocation = databaseLocation;
             db = new LiteDatabase(_databaseLocation);
+            db.Checkpoint();
             _mapper = new BsonMapper();
         }
 

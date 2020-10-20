@@ -143,6 +143,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public async Task CleanUpData()
         {
+            int rebuildCount = 0;
             while (true)
             {
                 if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
@@ -186,7 +187,14 @@ namespace Cindi.Application.Services.ClusterMonitor
                         // }
                     }
                     while (result != null && result.IsSuccessful);
-                    _entitiesRepository.Rebuild();
+
+                    if(rebuildCount % 10 == 0)
+                    {
+                        _logger.LogInformation("Rebuilding db.");
+                        _entitiesRepository.Rebuild();
+                    }
+
+                    rebuildCount++;
                     await Task.Delay(300000);
                 }
             }
