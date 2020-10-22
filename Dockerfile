@@ -66,7 +66,7 @@ RUN chmod +x /etc/init.d/startup.sh
 WORKDIR /app
 COPY --from=build /app/out .
 
-RUN mkdir -p db
+RUN mkdir /data
 
 #CMD /etc/init.d/startup.sh
 #ENTRYPOINT ["dotnet", "Cindi.Presentation.dll"]

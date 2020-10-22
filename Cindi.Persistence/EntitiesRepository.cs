@@ -191,6 +191,7 @@ namespace Cindi.Persistence
         public void Rebuild()
         {
             db.Rebuild();
+            db.Checkpoint();
         }
     }
 }
