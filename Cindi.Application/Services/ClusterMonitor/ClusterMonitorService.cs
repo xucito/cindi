@@ -374,12 +374,6 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                         var totalTime = stopwatch.ElapsedMilliseconds;
 
-                        _metricManagementService.EnqueueTick(new MetricTick()
-                        {
-                            MetricId = 0,
-                            Date = DateTime.Now,
-                            Value = totalTime
-                        });
 
                         if (TimeSpan.FromMilliseconds(totalTime) > TimeSpan.FromSeconds(5))
                         {
@@ -392,6 +386,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         }
                         if ((DateTime.Now - lastLatencyCheck).TotalMilliseconds > _clusterOptions.Value.MetricsIntervalMs)
                         {
+                            Console.WriteLine("Collecting total secheduler metrics");
                             _metricManagementService.EnqueueTick(new MetricTick()
                             {
                                 MetricId = (int)MetricIds.SchedulerLatencyMs,

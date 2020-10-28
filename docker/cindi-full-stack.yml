@@ -1,7 +1,7 @@
 version: '3'
 services:
   cindi:
-    image: xucito/cindi:2.0.0-alpha-659d402
+    image: xucito/cindi:2.0.0-alpha-7b3f96b
     environment:
       - "Cluster:NodeUrls=https://localhost:5021"
       - "Cluster:MinimumNodes=1"
