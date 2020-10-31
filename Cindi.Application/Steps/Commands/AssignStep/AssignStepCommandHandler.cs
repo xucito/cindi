@@ -90,7 +90,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 do
                 {
-                    unassignedStep = (await _clusterService.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, "CreatedOn:1", 1, 0)).FirstOrDefault();
+                    unassignedStep = (await _clusterService.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, null, 1, 0)).FirstOrDefault();
                     if (unassignedStep != null)
                     {
                         var assigned = await _clusterService.Handle(new RequestDataShard()

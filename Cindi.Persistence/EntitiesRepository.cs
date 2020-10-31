@@ -61,6 +61,7 @@ namespace Cindi.Persistence
             user.EnsureIndex(u => u.Username);
             var step = db.GetCollection<Step>(NormalizeCollectionString(typeof(Step)));
             step.EnsureIndex(u => u.Status);
+            step.EnsureIndex(u => u.CreatedOn);
         }
 
         public string NormalizeCollectionString(Type type)
@@ -134,7 +135,7 @@ namespace Cindi.Persistence
         {
             //var stopwatch = new Stopwatch();
             //stopwatch.Start();
-
+           // Console.WriteLine("Deleting data");
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
             collection.DeleteMany(expression);
             return true;
@@ -142,15 +143,15 @@ namespace Cindi.Persistence
 
         public async Task<T> Insert<T>(T entity)
         {
-            lock (_writeLock)
-            {
-                //var stopwatch = new Stopwatch();
-                //stopwatch.Start();
-                var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-                collection.Insert(entity);
-                //Console.WriteLine("Insert took " + stopwatch.ElapsedMilliseconds);
-                return entity;
-            }
+            //lock (_writeLock)
+            //{
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); 
+            collection.Insert(entity);
+            //Console.WriteLine("Insert took " + stopwatch.ElapsedMilliseconds);
+            return entity;
+            //   }
         }
 
         public async Task<T> Update<T>(T entity)

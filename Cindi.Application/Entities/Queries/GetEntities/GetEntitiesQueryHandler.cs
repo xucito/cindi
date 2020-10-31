@@ -32,6 +32,7 @@ namespace Cindi.Application.Entities.Queries.GetEntities
             else
                 expression = (s) => true;
             var entities = (await _entitiesRepository.GetAsync<T>(expression, request.Exclusions, request.Sort, request.Size, request.Page)).ToList();
+           //Console.WriteLine("Find entity took " + stopwatch.ElapsedMilliseconds);
             stopwatch.Stop();
 
             return new QueryResult<List<T>>()

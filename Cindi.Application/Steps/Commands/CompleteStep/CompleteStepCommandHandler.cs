@@ -157,8 +157,9 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
                 //Get all the steps related to this task
                 var workflowSteps = (await _clusterService.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value)).ToList();
-
-                foreach (var workflowStep in workflowSteps)
+                
+                //Get all the steps related to this task
+                foreach (var workflowStep in await _clusterService.GetAsync<Step>(s => s.WorkflowId == updatedStep.WorkflowId.Value))
                 {
                     workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
                 }
@@ -166,9 +167,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 bool stepCreated = false;
 
                 //Evaluate all logic blocks that have not been completed
-                var logicBlocks = workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key) && lb.Value.Dependencies.ContainsStep(updatedStep.Name)).ToList();
-
-                foreach (var logicBlock in logicBlocks)
+                foreach (var logicBlock in workflowTemplate.LogicBlocks.Where(lb => !workflow.CompletedLogicBlocks.Contains(lb.Key) && lb.Value.Dependencies.ContainsStep(updatedStep.Name)))
                 {
                     Logger.LogInformation("Processing logic block " + logicBlock.Key + " for workflow " + workflow.Id);
                     var lockId = Guid.NewGuid();
@@ -177,7 +176,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     {
                         while (_clusterStateService.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Key))
                         {
-                            Console.WriteLine("Found " + ("workflow:" + updatedStep.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
+                            //Console.WriteLine("Found " + ("workflow:" + updatedStep.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
                             await Task.Delay(1000);
                         }
 

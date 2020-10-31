@@ -9,6 +9,7 @@ using ConsensusCore.Domain.Services;
 using ConsensusCore.Domain.Utility;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
@@ -19,6 +20,7 @@ namespace Cindi.Persistence.State
 {
     public partial class NodeStorageRepository : IShardRepository
     {
+        ConcurrentDictionary<Guid, int> _lastShardOperation = new ConcurrentDictionary<Guid, int>();
         public async Task<bool> AddDataReversionRecordAsync(DataReversionRecord record)
         {
             await entitiesRepository.Insert(record);
@@ -33,6 +35,14 @@ namespace Cindi.Persistence.State
 
         public async Task<bool> AddShardWriteOperationAsync(ShardWriteOperation operation)
         {
+            _lastShardOperation.AddOrUpdate(operation.Data.ShardId.Value, operation.Pos, (key, oldValue) =>
+            {
+                if (oldValue < operation.Pos)
+                {
+                    return operation.Pos;
+                }
+                return oldValue;
+            });
             await entitiesRepository.Insert(operation);
             return true;
         }
@@ -101,6 +111,13 @@ namespace Cindi.Persistence.State
 
         public int GetLastShardWriteOperationPos(Guid shardId)
         {
+            int lastValue;
+            
+            if (_lastShardOperation.TryGetValue(shardId, out lastValue))
+            {
+                return lastValue;
+            }
+
             var lastOperation = entitiesRepository.GetAsync<ShardWriteOperation>(c => c.Data.ShardId == shardId, null, "Pos:-1", 1).GetAwaiter().GetResult();
             if (lastOperation != null && lastOperation.Count() > 0)
                 return (int)lastOperation.First().Pos;
