@@ -63,7 +63,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
             });
 
 
-            ExecutionSchedule existingValue;
+            ExecutionSchedule existingValue = null;
 
             
 
@@ -96,7 +96,9 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                     Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
                     WaitForSafeWrite = true,
                     Data = existingValue,
-                    RemoveLock = true
+                    LockId = executionScheduleLock.LockId.Value,
+                    RemoveLock = true,
+                    User = request.CreatedBy
                 });
             }
 
@@ -106,7 +108,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                 ObjectRefId = schedule.Id.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Update,
-                Result = schedule
+                Result = existingValue
             };
         }
     }

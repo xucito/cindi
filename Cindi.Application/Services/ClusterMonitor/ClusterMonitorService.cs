@@ -386,7 +386,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         }
                         if ((DateTime.Now - lastLatencyCheck).TotalMilliseconds > _clusterOptions.Value.MetricsIntervalMs)
                         {
-                            Console.WriteLine("Collecting total secheduler metrics");
+                            //Console.WriteLine("Collecting total secheduler metrics");
                             _metricManagementService.EnqueueTick(new MetricTick()
                             {
                                 MetricId = (int)MetricIds.SchedulerLatencyMs,

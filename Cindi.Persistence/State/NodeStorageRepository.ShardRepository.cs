@@ -104,9 +104,9 @@ namespace Cindi.Persistence.State
             return result;
         }
 
-        public async Task<List<ShardWriteOperation>> GetShardWriteOperationsAsync(Guid shardId, ShardOperationOptions option, int limit)
+        public async Task<IEnumerable<ShardWriteOperation>> GetShardWriteOperationsAsync(Guid shardId, ShardOperationOptions option, int limit)
         {
-            return (await entitiesRepository.GetAsync<ShardWriteOperation>(lsm => lsm.Operation == option && lsm.Data.ShardId == shardId, null, "TransactionDate:-1", limit)).ToList();
+            return (await entitiesRepository.GetAsync<ShardWriteOperation>(lsm => lsm.Operation == option && lsm.Data.ShardId == shardId, null, "TransactionDate:-1", limit));
         }
 
         public int GetLastShardWriteOperationPos(Guid shardId)

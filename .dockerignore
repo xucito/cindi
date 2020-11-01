@@ -10,4 +10,5 @@ extra_addons/*
 *Tests
 docs/*
 loadtests/*
-**/*/dist/*
+**/dist/
+**/db/

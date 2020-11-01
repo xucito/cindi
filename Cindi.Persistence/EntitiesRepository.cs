@@ -18,7 +18,6 @@ using ConsensusCore.Domain.Services;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using Cindi.Domain.Entities.Users;
-using LiteDB.Async;
 
 namespace Cindi.Persistence
 {
@@ -191,7 +190,7 @@ namespace Cindi.Persistence
 
         public void Rebuild()
         {
-            db.Rebuild();
+           /* db.Rebuild();*/
             db.Checkpoint();
         }
     }

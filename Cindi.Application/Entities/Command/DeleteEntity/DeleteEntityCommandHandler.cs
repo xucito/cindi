@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Entities.Command.DeleteEntity
 {
-    public class DeleteEntityCommandHandler<T> : IRequestHandler<DeleteEntityCommand<T>, CommandResult>
+    /*public class DeleteEntityCommandHandler<T> : IRequestHandler<DeleteEntityCommand<T>, CommandResult>
         where T : ShardData
     {
         IClusterService _clusterService;
@@ -46,5 +46,5 @@ namespace Cindi.Application.Entities.Command.DeleteEntity
             };
 
         }
-    }
+    }*/
 }

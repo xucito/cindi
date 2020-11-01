@@ -15,7 +15,6 @@ using Cindi.Application.Interfaces;
 using Cindi.Persistence;
 using Cindi.Application.Services.ClusterState;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Cindi.Application.Options;
 using Cindi.Application.Services.ClusterMonitor;
 using Microsoft.AspNetCore.Authentication;
@@ -55,6 +54,8 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Cindi.Application.Services.ClusterOperation;
 using System.Diagnostics;
 using Ben.Diagnostics;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Microsoft.OpenApi.Models;
 
 namespace Cindi.Presentation
 {
@@ -102,7 +103,7 @@ namespace Cindi.Presentation
             entitiesRepository.Setup();
 
             services.AddTransient<IDataRouter, CindiDataRouter>();
-            services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository, INodeStorageRepository>(
+            services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository>(
                 s => new NodeStorageRepository(entitiesRepository),
                 s => new NodeStorageRepository(entitiesRepository),
                 Configuration.GetSection("Node"),
@@ -117,8 +118,11 @@ namespace Cindi.Presentation
             {
                 options.Conventions.Add(new RouteTokenTransformerConvention(
                                 new SlugifyParameterTransformer()));
+                options.EnableEndpointRouting = false;
             }
-            ).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            )
+            .AddNewtonsoftJson()
+            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.Configure<CindiClusterOptions>(option => new CindiClusterOptions
             {
@@ -183,11 +187,28 @@ namespace Cindi.Presentation
                 .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("basic", null)
                 .AddScheme<AuthenticationSchemeOptions, BotAuthenticationHandler>("bot", null);
 
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerGen(setupAction =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
-                c.AddSecurityDefinition("Basic", new BasicAuthScheme { Type = "basic" });
-                c.DocumentFilter<BasicAuthenticationFilter>();
+                //c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
+                setupAction.AddSecurityDefinition("basicAuth", new OpenApiSecurityScheme()
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "basic",
+                    Description = "Input your username and password to access this API",
+                    In = ParameterLocation.Header,
+                });
+
+                setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "basicAuth" }
+                        }, new List<string>() }
+                });
+                // c.DocumentFilter<BasicAuthenticationFilter>();
             });
 
             services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()

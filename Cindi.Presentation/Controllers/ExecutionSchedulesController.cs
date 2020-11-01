@@ -4,7 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Cindi.Application.Entities.Command.DeleteEntity;
+using Cindi.Application.Entities.Command.CreateTrackedEntity;
+
 using Cindi.Application.Entities.Queries;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule;
@@ -89,7 +90,8 @@ namespace Cindi.Presentation.Controllers
                 Description = update.Description,
                 IsDisabled = update.IsDisabled,
                 Schedule = update.Schedule,
-                RunImmediately = runImmediately.HasValue ? runImmediately.Value : false
+                RunImmediately = runImmediately.HasValue ? runImmediately.Value : false,
+                CreatedBy = ClaimsUtility.GetId(User)
             }));
         }
 
@@ -102,9 +104,11 @@ namespace Cindi.Presentation.Controllers
                 Expression = de => de.Name == name
             });
 
-            return Ok(await Mediator.Send(new DeleteEntityCommand<ExecutionSchedule>()
+            return Ok(await Mediator.Send(new WriteEntityCommand<ExecutionSchedule>()
             {
-                Entity = result.Result
+                Data = result.Result,
+                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
+                User = ClaimsUtility.GetId(User),
             }));
         }
     }
