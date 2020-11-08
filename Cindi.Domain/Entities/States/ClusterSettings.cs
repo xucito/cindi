@@ -12,5 +12,6 @@ namespace Cindi.Application.Services.ClusterState
         /// Uses date time maths
         /// </summary>
         public string MetricRetentionPeriod { get; set; } = "24h";
+        public string StepRetentionPeriod { get; set; } = "24h";
     }
 }

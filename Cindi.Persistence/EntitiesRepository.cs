@@ -18,6 +18,7 @@ using ConsensusCore.Domain.Services;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using Cindi.Domain.Entities.Users;
+using Cindi.Domain.Entities.StepTemplates;
 
 namespace Cindi.Persistence
 {
@@ -61,6 +62,8 @@ namespace Cindi.Persistence
             var step = db.GetCollection<Step>(NormalizeCollectionString(typeof(Step)));
             step.EnsureIndex(u => u.Status);
             step.EnsureIndex(u => u.CreatedOn);
+            var stepTemplate = db.GetCollection<StepTemplate>(NormalizeCollectionString(typeof(StepTemplate)));
+            stepTemplate.EnsureIndex(st => st.ReferenceId);
         }
 
         public string NormalizeCollectionString(Type type)

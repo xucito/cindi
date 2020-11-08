@@ -41,7 +41,6 @@ namespace Cindi.Application.Services.ClusterMonitor
         private IMediator _mediator;
         Thread checkSuspendedStepsThread;
         Thread checkScheduledExecutions;
-        Thread cleanupWorkflowsExecutions;
         Thread getSystemMetrics;
         Thread dataCleanupThread;
         private async Task<double> GetCpuUsageForProcess()
@@ -119,10 +118,8 @@ namespace Cindi.Application.Services.ClusterMonitor
             checkSuspendedStepsThread.Start();
             checkScheduledExecutions = new Thread(async () => await CheckScheduledExecutions());
             checkScheduledExecutions.Start();
-            dataCleanupThread = new Thread(async () => await CleanUpData());
+            dataCleanupThread = new Thread(async () => await CleanUpCluster());
             dataCleanupThread.Start();
-            cleanupWorkflowsExecutions = new Thread(async () => await CleanupWorkflowsExecutions());
-            cleanupWorkflowsExecutions.Start();
             getSystemMetrics = new Thread(async () => await GetSystemMetrics());
             getSystemMetrics.Start();
         }
@@ -142,60 +139,78 @@ namespace Cindi.Application.Services.ClusterMonitor
             }
         }
 
-        public async Task CleanUpData()
+        public async Task CleanUpCluster()
         {
             int rebuildCount = 0;
             while (true)
             {
                 if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
-
                     var page = 0;
                     long tickPosition = 0;
                     long totalMetricTicks = 0;
                     int cleanedCount = 0;
-                    AddShardWriteOperationResponse result = null;
-                    do
+                    if (_state.GetSettings != null)
                     {
-                        if (_state.GetSettings != null)
+                        DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod));
+                        var entities = await _entitiesRepository.GetAsync<MetricTick>((s) => s.Date < compare, null, null, 10000);
+                        try
                         {
-                            DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod));
-                            var entities = await _entitiesRepository.GetAsync<MetricTick>((s) => s.Date < compare);
-                            try
+                            foreach (var tick in entities)
                             {
-                                foreach (var tick in entities)
+                                var startTime = DateTime.Now;
+                                AddShardWriteOperationResponse result = await _clusterService.AddWriteOperation(
+                                new EntityWriteOperation<MetricTick>()
                                 {
-                                    var startTime = DateTime.Now;
-                                    result = await _clusterService.AddWriteOperation(
-                                    new EntityWriteOperation<MetricTick>()
-                                    {
-                                        Data = tick,
-                                        WaitForSafeWrite = true,
-                                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                                        RemoveLock = false
-                                    });
+                                    Data = tick,
+                                    WaitForSafeWrite = true,
+                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
+                                    RemoveLock = false
+                                });
 
-                                    _logger.LogDebug("Cleanup of record " + tick.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
-                                    // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
-                                }
+                                _logger.LogDebug("Cleanup of record " + tick.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
+                                // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
                             }
-                            catch (Exception e)
-                            {
-                                _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
-                            }
-
                         }
-                        // }
-                    }
-                    while (result != null && result.IsSuccessful);
+                        catch (Exception e)
+                        {
+                            _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
+                        }
 
-                    if(rebuildCount % 10 == 0)
+                        DateTime stepCompare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.StepRetentionPeriod));
+                        var steps = await _entitiesRepository.GetAsync<Step>((s) => s.CreatedOn < stepCompare && s.Status != StepStatuses.Unassigned, null, null, 10000);
+
+                        try
+                        {
+                            foreach (var step in steps)
+                            {
+                                var startTime = DateTime.Now;
+                                AddShardWriteOperationResponse result = await _clusterService.AddWriteOperation(
+                                new EntityWriteOperation<Step>()
+                                {
+                                    Data = step,
+                                    WaitForSafeWrite = true,
+                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
+                                    RemoveLock = false,
+                                    User = SystemUsers.CLEANUP_MANAGER
+                                });
+
+                                _logger.LogDebug("Cleanup of record " + step.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ms.");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
+                        }
+                    }
+
+                    if (rebuildCount % 10 == 0)
                     {
                         _logger.LogInformation("Rebuilding db.");
                         _entitiesRepository.Rebuild();
                     }
-
                     rebuildCount++;
+                    await CleanupWorkflowsExecutions();
                     await Task.Delay(300000);
                 }
             }
@@ -250,7 +265,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         {
                             _logger.LogInformation("Cleaned " + cleanedCount + " steps");
                         }
-                        await Task.Delay(1000);
+                        await Task.Delay(60000);
                     }
                     catch (Exception e)
                     {
@@ -260,38 +275,35 @@ namespace Cindi.Application.Services.ClusterMonitor
                 else
                 {
                     printedMessage = false;
-                    await Task.Delay(3000);
+                    await Task.Delay(60000);
                 }
             }
         }
 
-        public async Task CleanupWorkflowsExecutions()
+        public async Task<bool> CleanupWorkflowsExecutions()
         {
-            while (true)
+            _logger.LogDebug("Started clean up of workflow.");
+            if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
             {
-                _logger.LogDebug("Started clean up of workflow.");
-                if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => w.Status == WorkflowStatuses.Started && w.CreatedOn < DateTime.Now.AddMinutes(-5));
+                foreach (var workflow in runningWorkflows)
                 {
-                    var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => !WorkflowStatuses.CompletedStatus.Contains(w.Status) && w.CreatedOn < DateTime.Now.AddMinutes(-5));
-                    foreach (var workflow in runningWorkflows)
+                    try
                     {
-                        try
+                        await _mediator.Send(new ScanWorkflowCommand()
                         {
-                            await _mediator.Send(new ScanWorkflowCommand()
-                            {
-                                WorkflowId = workflow.Id,
-                                CreatedBy = SystemUsers.CLEANUP_MANAGER
-                            });
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError("Failed to clean up workflow " + workflow.Id + " with error " + e.Message + Environment.NewLine + e.StackTrace);
-                        }
-
+                            WorkflowId = workflow.Id,
+                            CreatedBy = SystemUsers.CLEANUP_MANAGER
+                        });
                     }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("Failed to clean up workflow " + workflow.Id + " with error " + e.Message + Environment.NewLine + e.StackTrace);
+                    }
+
                 }
-                await Task.Delay(60000);
             }
+            return true;
         }
 
         public async Task CheckScheduledExecutions()

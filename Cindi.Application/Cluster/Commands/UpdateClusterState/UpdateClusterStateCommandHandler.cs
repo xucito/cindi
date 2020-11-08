@@ -41,7 +41,8 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
                         AssignmentEnabled =  request.AssignmentEnabled,
                         AllowAutoRegistration = request.AllowAutoRegistration,
                         MetricRetentionPeriod = request.MetricRetentionPeriod,
-                        DefaultIfNull = request.DefaultIfNull
+                        DefaultIfNull = request.DefaultIfNull,
+                        StepRetentionPeriod = request.StepRetentionPeriod
                     }
                 }
             });

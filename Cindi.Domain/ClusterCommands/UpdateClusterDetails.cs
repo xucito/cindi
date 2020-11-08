@@ -16,6 +16,7 @@ namespace Cindi.Domain.ClusterRPC
         public bool? Initialized { get; set; } = null;
         public string MetricRetentionPeriod { get; set; } = null;
         public bool DefaultIfNull { get; set; } = false;
+        public string StepRetentionPeriod { get; set; } = null;
 
         public override string CommandName => "UpdateClusterDetails";
     }

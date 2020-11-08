@@ -42,6 +42,9 @@ namespace Cindi.Application.Services
                 case nameof(MetricTick):
                     await _entitiesRepository.Delete<MetricTick>(bk => bk.Id == data.Id);
                     break;
+                case nameof(Step):
+                    await _entitiesRepository.Delete<Step>(bk => bk.Id == data.Id);
+                    break;
                 default:
                     throw new NotImplementedException();
             }

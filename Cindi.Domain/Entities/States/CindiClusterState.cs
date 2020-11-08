@@ -86,6 +86,18 @@ namespace Cindi.Domain.Entities.States
                             throw e;
                         }
                     }
+                    if (t1.StepRetentionPeriod != null)
+                    {
+                        try
+                        {
+                            DateTimeMathsUtility.GetMs(t1.StepRetentionPeriod);
+                            Settings.StepRetentionPeriod = t1.StepRetentionPeriod;
+                        }
+                        catch (InvalidTimeUnitException e)
+                        {
+                            throw e;
+                        }
+                    }
                     else if (t1.DefaultIfNull)
                     {
                         Settings.MetricRetentionPeriod = "24h";
