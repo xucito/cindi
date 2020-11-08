@@ -70,10 +70,13 @@ namespace Cindi.Application.Services
         {
             foreach (var stepTemplate in stepTemplateIds)
             {
-                var step = assignmentCache[stepTemplate].Dequeue();
-                if (step != null)
+                try
                 {
+                    var step = assignmentCache[stepTemplate].Dequeue();
                     return step;
+                }
+                catch (InvalidOperationException e)
+                { 
                 }
             }
             return null;
