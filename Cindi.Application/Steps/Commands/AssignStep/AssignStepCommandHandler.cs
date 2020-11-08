@@ -2,6 +2,7 @@
 using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Application.Services;
 using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.BotKeys;
@@ -40,25 +41,28 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         public ILogger<AssignStepCommandHandler> Logger;
         private IMemoryCache _cache;
         IClusterService _clusterService;
+        AssignmentCache _assignmentCache;
 
         public AssignStepCommandHandler(
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
             IMemoryCache cache,
-            IClusterService clusterService
+            IClusterService clusterService,
+            AssignmentCache assignmentCache
             )
         {
             _clusterService = clusterService;
             _clusterStateService = stateService;
             Logger = logger;
             _cache = cache;
+            _assignmentCache = assignmentCache;
         }
         public async Task<EncryptedCommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            List<Guid> ignoreUnassignedSteps = new List<Guid>();
             string encryptedEncryptionKey = null;
+            StepTemplate template = null;
             if (_clusterStateService.GetSettings.AssignmentEnabled)
             {
                 var assignedStepSuccessfully = false;
@@ -86,11 +90,9 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     };
                 }
 
-                ignoreUnassignedSteps.AddRange(_clusterStateService.GetState().Locks.Where(l => l.Key.Contains("_object")).Select(ol => new Guid(ol.Key.Split(':').Last())));
-
                 do
                 {
-                    unassignedStep = (await _clusterService.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, null, 1, 0)).FirstOrDefault();
+                    unassignedStep = _assignmentCache.GetNext(request.StepTemplateIds);
                     if (unassignedStep != null)
                     {
                         var assigned = await _clusterService.Handle(new RequestDataShard()
@@ -109,7 +111,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             //Inputs that have been converted to reference expression
                             Dictionary<string, object> convertedInputs = new Dictionary<string, object>();
 
-                            var template = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
+                            template = _assignmentCache.GetStepTemplate(unassignedStep.StepTemplateId);
                             try
                             {
                                 //This should not throw a error externally, the server should loop to the next one and log a error
@@ -238,7 +240,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                         }
                         else
                         {
-                            ignoreUnassignedSteps.Add(unassignedStep.Id);
                             assignedStepSuccessfully = false;
                         }
                     }
@@ -253,8 +254,6 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 if (unassignedStep != null)
                 {
-                    var template = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
-
                     //Decrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 

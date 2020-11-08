@@ -34,16 +34,16 @@ namespace Cindi.Application.Services
             switch (data.ShardType)
             {
                 case nameof(BotKey):
-                    await _entitiesRepository.Delete<BotKey>(bk => bk.Id == data.Id);
+                    await _entitiesRepository.DeleteById<BotKey>(data.Id);
                     break;
                 case nameof(ExecutionSchedule):
-                    await _entitiesRepository.Delete<ExecutionSchedule>(bk => bk.Id == data.Id);
+                    await _entitiesRepository.DeleteById<ExecutionSchedule>(data.Id);
                     break;
                 case nameof(MetricTick):
-                    await _entitiesRepository.Delete<MetricTick>(bk => bk.Id == data.Id);
+                    await _entitiesRepository.DeleteById<MetricTick>(data.Id);
                     break;
                 case nameof(Step):
-                    await _entitiesRepository.Delete<Step>(bk => bk.Id == data.Id);
+                    await _entitiesRepository.DeleteById<Step>(data.Id);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -57,23 +57,23 @@ namespace Cindi.Application.Services
             switch (type)
             {
                 case nameof(User):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<User>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<User>(objectId);
                 case nameof(BotKey):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(w => w.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<BotKey>(objectId);
                 case nameof(GlobalValue):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<GlobalValue>(objectId);
                 case nameof(StepTemplate):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<StepTemplate>(objectId);
                 case nameof(WorkflowTemplate):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<WorkflowTemplate>(objectId);
                 case nameof(Step):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<Step>(objectId);
                 case nameof(Workflow):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<Workflow>(objectId);
                 case nameof(ExecutionTemplate):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(w => w.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<ExecutionTemplate>(objectId);
                 case nameof(ExecutionSchedule):
-                    return await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(w => w.Id == objectId);
+                    return await _entitiesRepository.GetByIdAsync<ExecutionSchedule>(objectId);
                 default:
                     return null;
             }

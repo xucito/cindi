@@ -143,6 +143,14 @@ namespace Cindi.Persistence
             return true;
         }
 
+
+        public async Task<bool> DeleteById<T>(Guid id)
+        {
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
+            collection.Delete(id);
+            return true;
+        }
+
         public async Task<T> Insert<T>(T entity)
         {
             //lock (_writeLock)
@@ -184,6 +192,16 @@ namespace Cindi.Persistence
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
             //Console.WriteLine("GetFirst took " + stopwatch.ElapsedMilliseconds);
             return collection.FindOne(expression);
+        }
+
+
+        public async Task<T> GetByIdAsync<T>(Guid id)
+        {
+            //var stopwatch = new Stopwatch();
+            //stopwatch.Start();
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+            //Console.WriteLine("GetFirst took " + stopwatch.ElapsedMilliseconds);
+            return collection.FindById(id);
         }
 
         public ILiteCollection<T> GetCollection<T>()

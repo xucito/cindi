@@ -20,6 +20,7 @@ namespace Cindi.Application.SharedValues
             AddMetric(DatabaseOperationsPerSecond);
             AddMetric(DatabaseTotalSizeBytes);
             AddMetric(CPUUsagePercent);
+            AddMetric(StepCacheRefreshTimeMs);
         }
 
         public void AddMetric(Metric metric)
@@ -47,5 +48,7 @@ namespace Cindi.Application.SharedValues
         public static Metric DatabaseOperationsPerSecond { get { return GetMetric(MetricIds.DatabaseOperationsPerSecond, "Database Operations per Second", "databaseoperationspersecond", MetricType.Node, "Number per second"); } }
         public static Metric DatabaseTotalSizeBytes { get { return GetMetric(MetricIds.DatabaseTotalSizeBytes, "Database Total Size in Bytes", "databasetotalsizebytes", MetricType.Node, "Total in Bytes"); } }
         public static Metric CPUUsagePercent { get { return GetMetric(MetricIds.CPUUsagePercent, "CPU Usage in Percent", "cpuusagepercent", MetricType.Node, "Total in %"); } }
+        public static Metric StepCacheRefreshTimeMs { get { return GetMetric(MetricIds.StepCacheRefreshTimeMs, "Step Cache Refresh Time Ms", "stepcacherefreshms", MetricType.Node, "Total in ms"); } }
+
     }
 }

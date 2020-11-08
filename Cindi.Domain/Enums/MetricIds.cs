@@ -13,6 +13,7 @@ namespace Cindi.Domain.Enums
         SchedulerLatencyMs,
         DatabaseOperationsPerSecond,
         DatabaseTotalSizeBytes,
-        CPUUsagePercent
+        CPUUsagePercent,
+        StepCacheRefreshTimeMs
     }
 }

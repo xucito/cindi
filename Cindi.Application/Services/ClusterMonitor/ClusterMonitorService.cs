@@ -74,6 +74,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         private Timer monitoringTimer;
         private int secondsOfMetrics = 5;
         IClusterService _clusterService;
+        AssignmentCache _assigmentCache;
 
         public ClusterMonitorService(
             IServiceProvider sp,
@@ -83,9 +84,11 @@ namespace Cindi.Application.Services.ClusterMonitor
             // IDatabaseMetricsCollector databaseMetricsCollector,
             NodeStateService nodeStateService,
             IOptions<ClusterOptions> clusterOptions,
-            IClusterService clusterService)
+            IClusterService clusterService,
+            AssignmentCache assigmentCache)
         {
             _clusterService = clusterService;
+            _assigmentCache = assigmentCache;
             _metricManagementService = metricManagementService;
             // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
@@ -442,12 +445,18 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                 if (_nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
                 {
-                    var stepsCount = (await _entitiesRepository.GetAsync<Step>(s => s.CreatedOn > fromDate && s.CreatedOn <= toDate)).ToList().Count();
+                    var stepsCount = _assigmentCache.UnassignedCount;
                     _metricManagementService.EnqueueTick(new MetricTick()
                     {
                         MetricId = (int)MetricIds.QueuedStepsPerSecond,
                         Date = truncatedTime,
                         Value = stepsCount
+                    });
+                    _metricManagementService.EnqueueTick(new MetricTick()
+                    {
+                        MetricId = (int)MetricIds.StepCacheRefreshTimeMs,
+                        Date = truncatedTime,
+                        Value = _assigmentCache.LastRefreshTime
                     });
                 }
 

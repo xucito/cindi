@@ -38,7 +38,7 @@ namespace Cindi.Application.Entities.Queries.GetEntities
             return new QueryResult<List<T>>()
             {
                 Result = entities,
-                Count = _entitiesRepository.Count<T>(expression),
+                Count = entities.Count == request.Size ? _entitiesRepository.Count<T>(expression) : entities.Count,
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };
         }

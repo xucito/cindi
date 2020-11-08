@@ -147,6 +147,7 @@ namespace Cindi.Presentation
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
             services.AddSingleton<InternalBotManager>();
+            services.AddSingleton<AssignmentCache>();
 
             services.AddTransient<IClusterService, ClusterService>();
 
@@ -255,7 +256,8 @@ namespace Cindi.Presentation
             IMediator mediator,
             IServiceProvider serviceProvider,
             MetricManagementService metricManagementService,
-            InternalBotManager internalBotManager
+            InternalBotManager internalBotManager,
+            AssignmentCache assignmentCache
             )
         {
            // app.UseBlockingDetection();
@@ -331,6 +333,7 @@ namespace Cindi.Presentation
                             DefaultIfNull = true
                         }).GetAwaiter().GetResult(); ;
                     }
+                    assignmentCache.Start();
                 }
 
                 foreach (var template in InternalStepLibrary.All)
