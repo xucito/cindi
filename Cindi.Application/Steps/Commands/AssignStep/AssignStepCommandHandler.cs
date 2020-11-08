@@ -92,7 +92,14 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 do
                 {
-                    unassignedStep = _assignmentCache.GetNext(request.StepTemplateIds);
+                    try
+                    {
+                        unassignedStep = _assignmentCache.GetNext(request.StepTemplateIds);
+                    }
+                    catch(InvalidOperationException e)
+                    {
+                        unassignedStep = null;
+                    }
                     if (unassignedStep != null)
                     {
                         var assigned = await _clusterService.Handle(new RequestDataShard()
