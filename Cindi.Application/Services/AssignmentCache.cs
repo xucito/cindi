@@ -21,7 +21,8 @@ namespace Cindi.Application.Services
         public ConcurrentDictionary<string, StepTemplate> stepTemplatesCache = new ConcurrentDictionary<string, StepTemplate>();
         public ILogger _logger;
         public Stopwatch stopwatch = new Stopwatch();
-        
+        Random rnd = new Random();
+
         public int UnassignedCount
         {
             get
@@ -68,7 +69,7 @@ namespace Cindi.Application.Services
 
         public Step GetNext(string[] stepTemplateIds)
         {
-            foreach (var stepTemplate in stepTemplateIds)
+            foreach (var stepTemplate in stepTemplateIds.OrderBy(x => rnd.Next()).ToArray())
             {
                 try
                 {
