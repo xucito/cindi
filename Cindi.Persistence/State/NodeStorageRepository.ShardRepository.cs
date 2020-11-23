@@ -112,7 +112,7 @@ namespace Cindi.Persistence.State
         public int GetLastShardWriteOperationPos(Guid shardId)
         {
             int lastValue;
-            
+
             if (_lastShardOperation.TryGetValue(shardId, out lastValue))
             {
                 return lastValue;
@@ -125,16 +125,6 @@ namespace Cindi.Persistence.State
                 return 0;
         }
 
-        public bool IsObjectMarkedForDeletion(Guid shardId, Guid objectId)
-        {
-            return entitiesRepository.Count<ObjectDeletionMarker>(odm => odm.ObjectId == objectId && odm.ShardId == shardId) > 0;
-        }
-
-        public async Task<bool> MarkObjectForDeletionAsync(ObjectDeletionMarker marker)
-        {
-            await entitiesRepository.Insert(marker);
-            return true;
-        }
 
         public async Task<bool> MarkShardWriteOperationAppliedAsync(string operationId)
         {
@@ -150,11 +140,27 @@ namespace Cindi.Persistence.State
             return true;
         }
 
-        public async Task<bool> DeleteShardWriteOperationsAsync(List<ShardWriteOperation> shardWriteOperations)
+        public async Task<bool> DeleteShardWriteOperationsAsync(List<string> shardWriteOperations)
         {
             // throw new NotImplementedException();
-            var ids = shardWriteOperations.Select(swo => swo.Id);
-            await entitiesRepository.Delete<ShardWriteOperation>(d => ids.Contains(d.Id));
+            await entitiesRepository.Delete<ShardWriteOperation>(d => shardWriteOperations.Contains(d.Id));
+            return true;
+        }
+
+        public async Task<IEnumerable<ObjectDeletionMarker>> GetQueuedDeletions(Guid shardId, int toPos)
+        {
+            return await entitiesRepository.GetAsync<ObjectDeletionMarker>(odm => odm.ShardId == shardId && odm.Pos <= toPos);
+        }
+
+        public async Task<bool> RemoveQueuedDeletions(Guid shardId, List<Guid> objectIds)
+        {
+            await entitiesRepository.Delete<ObjectDeletionMarker>(odm => objectIds.Contains(odm.Id));
+            return true;
+        }
+
+        public async Task<bool> MarkObjectForDeletionAsync(ObjectDeletionMarker marker)
+        {
+            await entitiesRepository.Insert(marker);
             return true;
         }
     }
