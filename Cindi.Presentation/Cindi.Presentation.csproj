@@ -37,7 +37,7 @@
     <PackageReference Include="AutoMapper" Version="8.1.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.1.0" />
     <PackageReference Include="Ben.BlockingDetector" Version="0.0.3" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.4.13-alpha" />
+    <PackageReference Include="ConsensusCore.Node" Version="1.0.4.14-alpha" />
     <PackageReference Include="DryIoc.Microsoft.DependencyInjection" Version="3.0.3" />
     <PackageReference Include="LiteDB.Async" Version="0.0.2" />
     <PackageReference Include="MediatR" Version="6.0.0" />

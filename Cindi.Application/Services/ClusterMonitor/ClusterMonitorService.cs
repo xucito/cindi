@@ -214,7 +214,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     }
                     rebuildCount++;
                     await CleanupWorkflowsExecutions();
-                    await Task.Delay(300000);
+                    await Task.Delay(_state.GetSettings.CleanupInterval);
                 }
             }
         }
