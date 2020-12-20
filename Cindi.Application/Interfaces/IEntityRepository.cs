@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Enums;
 
 namespace Cindi.Application.Interfaces
@@ -20,5 +21,6 @@ namespace Cindi.Application.Interfaces
         /// Used to rebuild the database and size.
         /// </summary>
         void Rebuild();
+        Task<List<MetricTick>> GetDatabaseMetrics();
     }
 }

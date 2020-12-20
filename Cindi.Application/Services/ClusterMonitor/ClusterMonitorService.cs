@@ -181,30 +181,49 @@ namespace Cindi.Application.Services.ClusterMonitor
                         }
 
                         DateTime stepCompare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.StepRetentionPeriod));
-                        var steps = await _entitiesRepository.GetAsync<Step>((s) => s.CreatedOn < stepCompare && s.Status != StepStatuses.Unassigned, null, null, 10000);
-
-                        try
+                        var pageSize = 100;
+                        var continueStepDeletion = true;
+                        do
                         {
-                            foreach (var step in steps)
-                            {
-                                var startTime = DateTime.Now;
-                                AddShardWriteOperationResponse result = await _clusterService.AddWriteOperation(
-                                new EntityWriteOperation<Step>()
-                                {
-                                    Data = step,
-                                    WaitForSafeWrite = true,
-                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                                    RemoveLock = false,
-                                    User = SystemUsers.CLEANUP_MANAGER
-                                });
+                            var steps = await _entitiesRepository.GetAsync<Step>((s) => s.CreatedOn < stepCompare &&
+                          s.Status != StepStatuses.Unassigned &&
+                          s.Status != StepStatuses.Assigned &&
+                          s.Status != StepStatuses.Suspended
+                          , null, null, pageSize);
 
-                                _logger.LogDebug("Cleanup of record " + step.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ms.");
+                            try
+                            {
+                                foreach (var step in steps)
+                                {
+                                    var startTime = DateTime.Now;
+                                    AddShardWriteOperationResponse result = await _clusterService.AddWriteOperation(
+                                    new EntityWriteOperation<Step>()
+                                    {
+                                        Data = step,
+                                        WaitForSafeWrite = true,
+                                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
+                                        RemoveLock = false,
+                                        User = SystemUsers.CLEANUP_MANAGER
+                                    });
+
+                                    _logger.LogDebug("Cleanup of record " + step.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ms.");
+                                }
+
+                                if (steps.Count() < pageSize)
+                                {
+                                    continueStepDeletion = false;
+                                }
+                                else
+                                {
+                                    await Task.Delay(10);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
                             }
                         }
-                        catch (Exception e)
-                        {
-                            _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
-                        }
+                        while (continueStepDeletion);
                     }
 
                     if (rebuildCount % 10 == 0)
@@ -434,7 +453,11 @@ namespace Cindi.Application.Services.ClusterMonitor
         public async void CollectMetricsEventHandler(object args)
         {
             var currentDateTime = DateTime.Now;
-            if (lastSecond != currentDateTime.Second && currentDateTime.Second % secondsOfMetrics == 0)
+            (await _entitiesRepository.GetDatabaseMetrics()).ForEach(e =>
+            {
+                _metricManagementService.EnqueueTick(e);
+            });
+            /*if (lastSecond != currentDateTime.Second && currentDateTime.Second % secondsOfMetrics == 0)
             {
                 lastSecond = currentDateTime.Second;
                 var truncatedTime = currentDateTime;
@@ -458,6 +481,11 @@ namespace Cindi.Application.Services.ClusterMonitor
                         Date = truncatedTime,
                         Value = _assigmentCache.LastRefreshTime
                     });
+
+                    (await _entitiesRepository.GetDatabaseMetrics()).ForEach(e =>
+                    {
+                        _metricManagementService.EnqueueTick(e);
+                    });
                 }
 
                 /* if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
@@ -467,9 +495,10 @@ namespace Cindi.Application.Services.ClusterMonitor
                          _metricManagementService.EnqueueTick(metric);
                      }
                      Interlocked.Decrement(ref _fetchingDbMetrics);
-                 }*/
+                 }
+            
                 _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o"));
-            }
+            }*/
         }
 
         void metricGenerated(object sender, ConsensusCore.Domain.Models.Metric e)

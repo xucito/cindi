@@ -19,6 +19,8 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Entities.StepTemplates;
+using Cindi.Domain.Entities.Metrics;
+using Cindi.Application.SharedValues;
 
 namespace Cindi.Persistence
 {
@@ -211,8 +213,21 @@ namespace Cindi.Persistence
 
         public void Rebuild()
         {
-           /* db.Rebuild();*/
+           /*db.Rebuild();*/
             db.Checkpoint();
+        }
+
+        public Task<List<MetricTick>> GetDatabaseMetrics()
+        {
+            //select @key, SUM(*.usedBytes) as total from $dump where pageType = 'Data' Group By collection
+            var metrics = db.Execute("select SUM(*.usedBytes) as total from $dump where pageType = 'Data'").FirstOrDefault();
+            var totalMetrics = new List<MetricTick>();
+            totalMetrics.Add(new MetricTick() { 
+                MetricId = (int)MetricIds.DatabaseTotalSizeBytes,
+                Value = metrics.AsDocument["total"].AsInt64,
+                Date = DateTime.UtcNow
+            });
+            return Task.FromResult(totalMetrics);
         }
     }
 }

@@ -28,11 +28,11 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       metricName: "cpuusagepercent",
       aggs: ["max"],
       yScaleMax: 100
-    }
-  /* {
+    },
+   {
       metricName: "databasetotalsizebytes",
       aggs: ["max"]
-    },
+    }/*,
     {
       metricName: "databaseoperationcount",
       aggs: ["max"]
