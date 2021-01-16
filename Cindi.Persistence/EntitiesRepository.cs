@@ -1,7 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
-using ConsensusCore.Domain.BaseClasses;
 using LiteDB;
 using System;
 using System.Collections.Generic;
@@ -14,7 +13,6 @@ using System.Linq.Dynamic.Core;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
 using Cindi.Domain.Entities.States;
-using ConsensusCore.Domain.Services;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using Cindi.Domain.Entities.Users;
@@ -54,11 +52,6 @@ namespace Cindi.Persistence
                 return JsonConvert.DeserializeObject<CindiClusterState>(b.AsString);
             });
 
-            var swo = db.GetCollection<ShardWriteOperation>(NormalizeCollectionString(typeof(ShardWriteOperation)));
-            swo.EnsureIndex(o => o.Data.ShardId);
-            swo.EnsureIndex(o => o.Pos);
-            swo.EnsureIndex(o => o.Id);
-            swo.EnsureIndex(o => o.Operation);
             var user = db.GetCollection<User>(NormalizeCollectionString(typeof(User)));
             user.EnsureIndex(u => u.Username);
             var step = db.GetCollection<Step>(NormalizeCollectionString(typeof(Step)));
@@ -155,15 +148,9 @@ namespace Cindi.Persistence
 
         public async Task<T> Insert<T>(T entity)
         {
-            //lock (_writeLock)
-            //{
-            //var stopwatch = new Stopwatch();
-            //stopwatch.Start();
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); 
             collection.Insert(entity);
-            //Console.WriteLine("Insert took " + stopwatch.ElapsedMilliseconds);
             return entity;
-            //   }
         }
 
         public async Task<T> Update<T>(T entity)
@@ -179,30 +166,20 @@ namespace Cindi.Persistence
 
         public void Update<T>(Expression<Func<T, T>> predicate, Expression<Func<T, bool>> expression)
         {
-            //var stopwatch = new Stopwatch();
-            //stopwatch.Start();
-
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
-            //Console.WriteLine("Update took " + stopwatch.ElapsedMilliseconds);
             collection.UpdateMany(predicate, expression);
         }
 
         public async Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression)
         {
-            //var stopwatch = new Stopwatch();
-            //stopwatch.Start();
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
-            //Console.WriteLine("GetFirst took " + stopwatch.ElapsedMilliseconds);
             return collection.FindOne(expression);
         }
 
 
         public async Task<T> GetByIdAsync<T>(Guid id)
         {
-            //var stopwatch = new Stopwatch();
-            //stopwatch.Start();
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
-            //Console.WriteLine("GetFirst took " + stopwatch.ElapsedMilliseconds);
             return collection.FindById(id);
         }
 

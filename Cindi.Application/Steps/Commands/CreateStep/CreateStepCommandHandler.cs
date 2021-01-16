@@ -1,7 +1,6 @@
 ﻿
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
@@ -11,9 +10,6 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node;
 using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
@@ -28,14 +24,14 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
-        private readonly IClusterStateService _clusterStateService;
+        private readonly IStateMachine _stateMachine;
         private readonly IClusterService _clusterService;
         public CreateStepCommandHandler(
             IClusterStateService service,
             IClusterService clusterService)
         {
             _clusterService = clusterService;
-            _clusterStateService = service;
+            _stateMachine = service;
         }
 
         public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)

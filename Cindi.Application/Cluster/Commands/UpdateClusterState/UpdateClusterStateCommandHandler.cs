@@ -2,14 +2,8 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.ClusterRPC;
-using ConsensusCore.Domain.BaseClasses;
-using ConsensusCore.Domain.RPCs.Raft;
-using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,35 +11,39 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
 {
     public class UpdateClusterStateCommandHandler : IRequestHandler<UpdateClusterStateCommand, CommandResult>
     {
-        private IClusterStateService _state;
-        private IClusterRequestHandler _node;
-
-        public UpdateClusterStateCommandHandler(IClusterRequestHandler node, IClusterStateService state)
+        private readonly IStateMachine _stateMachine;
+        public UpdateClusterStateCommandHandler(
+            IStateMachine stateMachine
+            )
         {
-            _state = state;
-            _node = node;
+            _stateMachine = stateMachine;
         }
 
         public async Task<CommandResult> Handle(UpdateClusterStateCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-
-            await _node.Handle(new ExecuteCommands()
+            var defaultSettings = new ClusterSettings();
+            if (request.ResetToDefault)
             {
-                WaitForCommits = true,
-                Commands = new List<BaseCommand>()
+                _stateMachine.UpdateClusterSettings(new UpdateClusterDetails()
                 {
-                    new UpdateClusterDetails()
-                    {
-                        AssignmentEnabled =  request.AssignmentEnabled,
-                        AllowAutoRegistration = request.AllowAutoRegistration,
-                        MetricRetentionPeriod = request.MetricRetentionPeriod,
-                        DefaultIfNull = request.DefaultIfNull,
-                        StepRetentionPeriod = request.StepRetentionPeriod
-                    }
-                }
-            });
+                    AssignmentEnabled = defaultSettings.AssignmentEnabled,
+                    AllowAutoRegistration = defaultSettings.AllowAutoRegistration,
+                    MetricRetentionPeriod = defaultSettings.MetricRetentionPeriod,
+                    StepRetentionPeriod = defaultSettings.StepRetentionPeriod
+                });
+            }
+            else
+            {
+                _stateMachine.UpdateClusterSettings(new UpdateClusterDetails()
+                {
+                    AssignmentEnabled = request.AssignmentEnabled,
+                    AllowAutoRegistration = request.AllowAutoRegistration,
+                    MetricRetentionPeriod = request.MetricRetentionPeriod,
+                    StepRetentionPeriod = request.StepRetentionPeriod
+                });
+            }
 
             return new CommandResult()
             {

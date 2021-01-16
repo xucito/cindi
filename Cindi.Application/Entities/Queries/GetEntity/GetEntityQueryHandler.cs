@@ -1,6 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using ConsensusCore.Domain.BaseClasses;
+
 using MediatR;
 using System;
 using System.Collections.Generic;

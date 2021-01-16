@@ -14,22 +14,22 @@ namespace Cindi.Application.Cluster.Commands.SetEncryptionKey
 {
     public class SetEncryptionKeyCommandHandler : IRequestHandler<SetEncryptionKeyCommand, CommandResult>
     {
-        IClusterStateService _clusterStateService;
+        IStateMachine _stateMachine;
 
-        public SetEncryptionKeyCommandHandler(IClusterStateService clusterStateService)
+        public SetEncryptionKeyCommandHandler(IStateMachine stateMachine)
         {
-            _clusterStateService = clusterStateService;
+            _stateMachine = stateMachine;
         }
 
         public async Task<CommandResult> Handle(SetEncryptionKeyCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
 
-            _clusterStateService.SetEncryptionKey(request.EncryptionKey);
+            _stateMachine.SetEncryptionKey(request.EncryptionKey);
 
             return new CommandResult()
             {
-                ObjectRefId = _clusterStateService.GetState().Id,
+                ObjectRefId = _stateMachine.GetState().Id,
                 Type = CommandResultTypes.Update,
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };

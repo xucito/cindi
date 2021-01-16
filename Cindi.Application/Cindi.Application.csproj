@@ -6,8 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cindi.DotNetCore.BotExtensions" Version="1.2.0" />
-    <PackageReference Include="ConsensusCore.Node" Version="1.0.4.14-alpha" />
     <PackageReference Include="Cronos" Version="0.7.0" />
     <PackageReference Include="MediatR" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="2.2.0" />
@@ -17,16 +15,11 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="ConsensusCore.Node">
-      <HintPath>..\..\consensus-core\ConsensusCore.Node\bin\Debug\netcoreapp2.2\ConsensusCore.Node.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

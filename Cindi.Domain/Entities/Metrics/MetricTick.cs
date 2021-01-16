@@ -1,11 +1,10 @@
-﻿using ConsensusCore.Domain.BaseClasses;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Cindi.Domain.Entities.Metrics
 {
-    public class MetricTick : ShardData
+    public class MetricTick : BaseEntity
     {
         public MetricTick()
         {

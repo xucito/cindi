@@ -1,6 +1,6 @@
 ﻿using Cindi.Application.Results;
 using Cindi.Domain.Entities;
-using ConsensusCore.Domain.BaseClasses;
+
 using ConsensusCore.Domain.RPCs.Shard;
 using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Entities.Command.CreateTrackedEntity
 {
-    public class WriteEntityCommandHandler<T> : IRequestHandler<WriteEntityCommand<T>, CommandResult> where T : ShardData
+    public class WriteEntityCommandHandler<T> : IRequestHandler<WriteEntityCommand<T>, CommandResult> where T : BaseEntity
     {
         IClusterRequestHandler _node;
         ILogger _logger;

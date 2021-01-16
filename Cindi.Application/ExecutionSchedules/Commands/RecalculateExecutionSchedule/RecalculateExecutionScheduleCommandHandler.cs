@@ -23,14 +23,14 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<RecalculateExecutionScheduleCommand, CommandResult>
     {
         private readonly IClusterService _clusterService;
-        private readonly IClusterStateService _clusterStateService;
+        private readonly IStateMachine _stateMachine;
 
         public UpdateExecutionScheduleCommandHandler(IEntitiesRepository entitiesRepository,
             IClusterStateService service,
             IClusterService clusterService)
         {
             _clusterService = clusterService;
-            _clusterStateService = service;
+            _stateMachine = service;
         }
 
         public async Task<CommandResult> Handle(RecalculateExecutionScheduleCommand request, CancellationToken cancellationToken)

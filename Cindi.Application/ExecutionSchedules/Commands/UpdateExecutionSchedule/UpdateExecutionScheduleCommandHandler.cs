@@ -2,12 +2,9 @@
 using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -20,16 +17,16 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
 {
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<UpdateExecutionScheduleCommand, CommandResult>
     {
-        private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterService _clusterService;
+        private readonly IStateMachine _stateMachine;
+        private readonly IEntitiesRepository _entitiesRepository;
 
         public UpdateExecutionScheduleCommandHandler(
-            IClusterStateService service,
-            IClusterService clusterService
+            IStateMachine stateMachine,
+            IEntitiesRepository entitiesRepository
             )
         {
-            _clusterStateService = service;
-            _clusterService = clusterService;
+            _stateMachine = stateMachine;
+            _entitiesRepository = entitiesRepository;
         }
 
         public async Task<CommandResult> Handle(UpdateExecutionScheduleCommand request, CancellationToken cancellationToken)
@@ -37,7 +34,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _clusterService.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
+            ExecutionSchedule schedule = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
 
             if (schedule == null)
             {
@@ -55,53 +52,26 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                     }
                 }
 
-            var executionScheduleLock = await _clusterService.Handle(new RequestDataShard()
+            List<Update> updates = new List<Update>();
+
+            if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
             {
-                Type = schedule.ShardType,
-                ObjectId = schedule.Id,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
-
-
-            ExecutionSchedule existingValue = null;
-
-            
-
-            if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked)
-            {
-                existingValue = (ExecutionSchedule)executionScheduleLock.Data;
-
-                List<Update> updates = new List<Update>();
-
-                if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
-                {
-                    existingValue.IsDisabled = request.IsDisabled.Value;
-                }
-
-                if (request.Schedule != null && schedule.Schedule != request.Schedule)
-                {
-                    existingValue.NextRun = SchedulerUtility.NextOccurence(request.Schedule, DateTime.UtcNow);
-
-                    existingValue.Schedule = request.Schedule;
-                }
-
-                if (request.Description != null && schedule.Description != request.Description)
-                {
-                    existingValue.Description = request.Description;
-                }
-
-
-                var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<ExecutionSchedule>()
-                {
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    WaitForSafeWrite = true,
-                    Data = existingValue,
-                    LockId = executionScheduleLock.LockId.Value,
-                    RemoveLock = true,
-                    User = request.CreatedBy
-                });
+                schedule.IsDisabled = request.IsDisabled.Value;
             }
+
+            if (request.Schedule != null && schedule.Schedule != request.Schedule)
+            {
+                schedule.NextRun = SchedulerUtility.NextOccurence(request.Schedule, DateTime.UtcNow);
+
+                schedule.Schedule = request.Schedule;
+            }
+
+            if (request.Description != null && schedule.Description != request.Description)
+            {
+                schedule.Description = request.Description;
+            }
+
+            await _entitiesRepository.Update(schedule);
 
             stopwatch.Stop();
             return new CommandResult<ExecutionSchedule>()
@@ -109,7 +79,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                 ObjectRefId = schedule.Id.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Update,
-                Result = existingValue
+                Result = schedule
             };
         }
     }

@@ -8,9 +8,6 @@ namespace Cindi.Application.Services.ClusterState
     {
         public bool AllowAutoRegistration { get; set; } = true;
         public bool AssignmentEnabled { get; set; } = true;
-        /// <summary>
-        /// Uses date time maths
-        /// </summary>
         public string MetricRetentionPeriod { get; set; } = "24h";
         public string StepRetentionPeriod { get; set; } = "24h";
         public int CleanupInterval { get; set; } = 1000;

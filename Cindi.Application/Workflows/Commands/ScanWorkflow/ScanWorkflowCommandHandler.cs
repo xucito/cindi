@@ -35,14 +35,14 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 {
     public class ScanWorkflowCommandHandler : IRequestHandler<ScanWorkflowCommand, CommandResult>
     {
-        public IClusterStateService _clusterStateService;
+        public IStateMachine _stateMachine;
         public ILogger<ScanWorkflowCommandHandler> Logger;
         private CindiClusterOptions _option;
         private IMediator _mediator;
         private IClusterService _clusterService;
 
         public ScanWorkflowCommandHandler(
-            IClusterStateService clusterStateService,
+            IStateMachine _stateMachine,
             ILogger<ScanWorkflowCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
@@ -50,7 +50,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
             )
         {
             _clusterService = clusterService;
-            _clusterStateService = clusterStateService;
+            _stateMachine = stateMachine;
             Logger = logger;
             _option = options.CurrentValue;
             options.OnChange((change) =>
@@ -113,15 +113,15 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                     bool lockObtained = false;
                     while (!lockObtained)
                     {
-                        while (_clusterStateService.IsLogicBlockLocked(request.WorkflowId, logicBlock.Key))
+                        while (_stateMachine.IsLogicBlockLocked(request.WorkflowId, logicBlock.Key))
                         {
                             Console.WriteLine("Found " + ("workflow:" + request.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
                             await Task.Delay(1000);
                         }
 
-                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
+                        int entryNumber = await _stateMachine.LockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
                         //Check whether you got the lock
-                        lockObtained = _clusterStateService.WasLockObtained(lockId, request.WorkflowId, logicBlock.Key);
+                        lockObtained = _stateMachine.WasLockObtained(lockId, request.WorkflowId, logicBlock.Key);
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
@@ -222,7 +222,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                             User = request.CreatedBy
                         });
                     }
-                    await _clusterStateService.UnlockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
+                    await _stateMachine.UnlockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned

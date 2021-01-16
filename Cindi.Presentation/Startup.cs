@@ -23,19 +23,12 @@ using Cindi.Application.Cluster.Commands.InitializeCluster;
 using Cindi.Presentation.Middleware;
 using Cindi.Domain.Exceptions.Utility;
 using AutoMapper;
-using Cindi.Persistence.State;
-using ConsensusCore.Node.Utility;
 using SlugifyParameterTransformer = Cindi.Presentation.Transformers.SlugifyParameterTransformer;
-using ConsensusCore.Domain.Interfaces;
 using Cindi.Application.Services;
-using ConsensusCore.Node.Services;
 using System.Threading;
 using Cindi.Domain.Entities.States;
 using System.IO;
 using Cindi.Application.Pipelines;
-using ConsensusCore.Node.Services.Raft;
-using ConsensusCore.Node.Services.Data;
-using ConsensusCore.Node.Services.Tasks;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Application.Entities.Queries.GetEntities;
@@ -51,7 +44,6 @@ using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Enums;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Microsoft.AspNetCore.ResponseCompression;
-using Cindi.Application.Services.ClusterOperation;
 using System.Diagnostics;
 using Ben.Diagnostics;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
@@ -102,13 +94,6 @@ namespace Cindi.Presentation
 
             entitiesRepository.Setup();
 
-            services.AddTransient<IDataRouter, CindiDataRouter>();
-            services.AddConsensusCore<CindiClusterState, INodeStorageRepository, INodeStorageRepository>(
-                s => new NodeStorageRepository(entitiesRepository),
-                s => new NodeStorageRepository(entitiesRepository),
-                Configuration.GetSection("Node"),
-                Configuration.GetSection("Cluster"));
-
             //services.AddScoped<IMediator, Mediator>();
             //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
             // services.AddMediatR(typeof(CreateStepTemplateCommandHandler).GetTypeInfo().Assembly);
@@ -140,16 +125,10 @@ namespace Cindi.Presentation
             }
 
             services.AddSingleton<IEntitiesRepository, EntitiesRepository>(e => entitiesRepository);
-            services.AddSingleton<IClusterStateService, ClusterStateService>();
-
-
-            //.AddTransient<IDatabaseMetricsCollector, MongoDBMetricsCollector>(s => new MongoDBMetricsCollector(MongoClient));
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
             services.AddSingleton<InternalBotManager>();
             services.AddSingleton<AssignmentCache>();
-
-            services.AddTransient<IClusterService, ClusterService>();
 
 
             //Authentication
@@ -243,48 +222,30 @@ namespace Cindi.Presentation
             return new AutofacServiceProvider(AutofacContainer);
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-       public void Configure(IApplicationBuilder app,
-            IHostingEnvironment env,
-            IClusterStateService service,
-            ILogger<Startup> logger,
-            IRaftService raftService,
-            IDataService dataService,
-            ITaskService taskService,
-            IStateMachine<CindiClusterState> stateMachine,
-            NodeStateService node,
-            ClusterMonitorService monitor,
-            IMediator mediator,
-            IServiceProvider serviceProvider,
-            MetricManagementService metricManagementService,
-            InternalBotManager internalBotManager,
-            AssignmentCache assignmentCache
-            )
+        public void Configure(IApplicationBuilder app,
+             IHostingEnvironment env,
+             ILogger<Startup> logger,
+             IStateMachine stateMachine,
+             ClusterMonitorService monitor,
+             IMediator mediator,
+             IServiceProvider serviceProvider,
+             MetricManagementService metricManagementService,
+             InternalBotManager internalBotManager,
+             AssignmentCache assignmentCache
+             )
         {
-           // app.UseBlockingDetection();
-
             BootstrapThread = new Task(() =>
             {
-                while (node.Status != ConsensusCore.Domain.Models.NodeStatus.Yellow &&
-                node.Status != ConsensusCore.Domain.Models.NodeStatus.Green
-                )
-                {
-                    logger.LogInformation("Waiting for cluster to establish a quorum");
-                    Thread.Sleep(1000);
-                }
-
-
                 var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
-
-                ClusterStateService.Initialized = stateMachine.CurrentState.Initialized;
                 var key = Configuration.GetValue<string>("EncryptionKey");
                 if (key != null)
                 {
-                    if (ClusterStateService.Initialized)
+                    if (stateMachine.GetState().Initialized)
                     {
                         logger.LogWarning("Loading key in configuration file, this is not recommended for production.");
                         try
                         {
-                            service.SetEncryptionKey(key);
+                            stateMachine.SetEncryptionKey(key);
                             logger.LogInformation("Successfully applied encryption key.");
                         }
                         catch (InvalidPrivateKeyException e)
@@ -295,13 +256,13 @@ namespace Cindi.Presentation
                 }
 
 
-                if (!ClusterStateService.Initialized)
+                if (!stateMachine.GetState().Initialized)
                 {
 
                     if (key != null)
                     {
                         logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
-                        service.SetEncryptionKey(key);
+                        stateMachine.SetEncryptionKey(key);
                     }
                     else
                     {
@@ -310,31 +271,25 @@ namespace Cindi.Presentation
 
                     var setPassword = Configuration.GetValue<string>("DefaultPassword");
 
-
-                    if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                    // Thread.Sleep(5000);
+                    med.Send(new InitializeClusterCommand()
                     {
-                        // Thread.Sleep(5000);
-                        med.Send(new InitializeClusterCommand()
-                        {
-                            DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
-                            Name = Configuration.GetValue<string>("ClusterName")
-                        }).GetAwaiter().GetResult();
-                    }
+                        DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                        Name = Configuration.GetValue<string>("ClusterName")
+                    }).GetAwaiter().GetResult();
                 }
 
-                if (node.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                metricManagementService.InitializeMetricStore();
+                if (stateMachine.GetState().Settings == null)
                 {
-                    metricManagementService.InitializeMetricStore();
-                    if (service.GetSettings == null)
+                    logger.LogWarning("No setting detected, resetting settings to default.");
+                    med.Send(new UpdateClusterStateCommand()
                     {
-                        logger.LogWarning("No setting detected, resetting settings to default.");
-                        med.Send(new UpdateClusterStateCommand()
-                        {
-                            DefaultIfNull = true
-                        }).GetAwaiter().GetResult(); ;
-                    }
-                    assignmentCache.Start();
+                        ResetToDefault = true
+                    }).GetAwaiter().GetResult(); ;
                 }
+
+                assignmentCache.Start();
 
                 foreach (var template in InternalStepLibrary.All)
                 {
@@ -348,7 +303,6 @@ namespace Cindi.Presentation
                         Description = template.Description
                     }).GetAwaiter().GetResult();
                 }
-                //internalBotManager.AddAdditionalBot();
             });
             BootstrapThread.Start();
 

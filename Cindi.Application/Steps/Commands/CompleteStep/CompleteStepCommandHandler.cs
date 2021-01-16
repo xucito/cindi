@@ -13,9 +13,6 @@ using Cindi.Domain.Exceptions.WorkflowTemplates;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -26,55 +23,39 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Services.Raft;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
-using Cindi.Application.Services.ClusterOperation;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
     public class CompleteStepCommandHandler : IRequestHandler<CompleteStepCommand, CommandResult>
     {
-        public IClusterStateService _clusterStateService;
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private IClusterService _clusterService;
         private IMediator _mediator;
 
         public CompleteStepCommandHandler(
-            IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            IClusterService clusterService,
             IMediator mediator
             )
         {
-            _clusterService = clusterService;
-            _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options.CurrentValue;
             options.OnChange((change) =>
             {
                 _option = change;
             });
-            _clusterService = clusterService;
             _mediator = mediator;
         }
 
         public CompleteStepCommandHandler(
-            IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
-            IClusterService clusterService,
             IMediator mediator
     )
         {
-            _clusterService = clusterService;
-            _clusterStateService = clusterStateService;
             Logger = logger;
             _option = options;
             _mediator = mediator;
@@ -174,16 +155,16 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     bool lockObtained = false;
                     while (!lockObtained)
                     {
-                        while (_clusterStateService.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Key))
+                        while (_stateMachine.IsLogicBlockLocked(updatedStep.WorkflowId.Value, logicBlock.Key))
                         {
                             //Console.WriteLine("Found " + ("workflow:" + updatedStep.WorkflowId + ">logicBlock:" + logicBlock) + " Lock");
                             await Task.Delay(1000);
                         }
 
-                        int entryNumber = await _clusterStateService.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
+                        int entryNumber = await _stateMachine.LockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
 
                         //Check whether you got the lock
-                        lockObtained = _clusterStateService.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
+                        lockObtained = _stateMachine.WasLockObtained(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
@@ -281,7 +262,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                             User = request.CreatedBy
                         });
                     }
-                    await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
+                    await _stateMachine.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
                 }
 
                 //Check if there are no longer any steps that are unassigned or assigned

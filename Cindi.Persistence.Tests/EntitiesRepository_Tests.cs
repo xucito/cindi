@@ -1,6 +1,6 @@
 ﻿using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Users;
-using ConsensusCore.Domain.BaseClasses;
+
 using ConsensusCore.Domain.Models;
 using ConsensusCore.Domain.Services;
 using NuGet.Frameworks;

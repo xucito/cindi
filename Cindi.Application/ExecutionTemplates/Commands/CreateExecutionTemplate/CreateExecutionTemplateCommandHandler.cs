@@ -21,7 +21,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 {
     public class CreateExecutionTemplateCommandHandler : IRequestHandler<CreateExecutionTemplateCommand, CommandResult<ExecutionTemplate>>
     {
-        private readonly IClusterStateService _clusterStateService;
+        private readonly IStateMachine _stateMachine;
         private readonly IClusterService _clusterService;
 
         public CreateExecutionTemplateCommandHandler(
@@ -29,7 +29,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             IClusterService clusterService)
         {
             _clusterService = clusterService;
-            _clusterStateService = service;
+            _stateMachine = service;
         }
 
         public async Task<CommandResult<ExecutionTemplate>> Handle(CreateExecutionTemplateCommand request, CancellationToken cancellationToken)

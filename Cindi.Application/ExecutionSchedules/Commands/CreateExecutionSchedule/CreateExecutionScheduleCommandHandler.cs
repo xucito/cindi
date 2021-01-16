@@ -21,7 +21,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
     public class CreateExecutionScheduleCommandHandler : IRequestHandler<CreateExecutionScheduleCommand, CommandResult>
     {
         private readonly IEntitiesRepository _entitiesRepository;
-        private readonly IClusterStateService _clusterStateService;
+        private readonly IStateMachine _stateMachine;
         private readonly IClusterRequestHandler _node;
         private IMediator _mediator;
 
@@ -32,7 +32,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
             IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
-            _clusterStateService = service;
+            _stateMachine = service;
             _node = node;
             _mediator = mediator;
         }

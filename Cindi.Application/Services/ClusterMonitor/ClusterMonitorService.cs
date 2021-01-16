@@ -2,21 +2,14 @@
 using Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSchedule;
 using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
 using Cindi.Application.Interfaces;
-using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
-using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Application.Workflows.Commands.ScanWorkflow;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Entities.Metrics;
-using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Domain.SystemCommands;
 using ConsensusCore.Node;
 using ConsensusCore.Node.Communication.Controllers;
 using ConsensusCore.Node.Services.Raft;
@@ -39,6 +32,8 @@ namespace Cindi.Application.Services.ClusterMonitor
     public class ClusterMonitorService
     {
         private IMediator _mediator;
+        private IStateMachine _stateMachine;
+
         Thread checkSuspendedStepsThread;
         Thread checkScheduledExecutions;
         Thread getSystemMetrics;
@@ -67,13 +62,11 @@ namespace Cindi.Application.Services.ClusterMonitor
         // private IDatabaseMetricsCollector _databaseMetricsCollector;
         private NodeStateService _nodeStateService;
         private IOptions<ClusterOptions> _clusterOptions;
-        private IClusterStateService _state;
 
         private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
         private Timer monitoringTimer;
         private int secondsOfMetrics = 5;
-        IClusterService _clusterService;
         AssignmentCache _assigmentCache;
 
         public ClusterMonitorService(
@@ -81,37 +74,26 @@ namespace Cindi.Application.Services.ClusterMonitor
             IClusterRequestHandler _node,
             IEntitiesRepository entitiesRepository,
             MetricManagementService metricManagementService,
-            // IDatabaseMetricsCollector databaseMetricsCollector,
             NodeStateService nodeStateService,
             IOptions<ClusterOptions> clusterOptions,
-            IClusterService clusterService,
+            IStateMachine stateMachine,
             AssignmentCache assigmentCache)
         {
-            _clusterService = clusterService;
+            _stateMachine = stateMachine;
             _assigmentCache = assigmentCache;
             _metricManagementService = metricManagementService;
             // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
-            _state = sp.GetService<IClusterStateService>();
-
             _logger.LogInformation("Starting clean up service...");
             node = _node;
             _entitiesRepository = entitiesRepository;
             //  _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
-            node.MetricGenerated += metricGenerated;
             _nodeStateService = nodeStateService;
             _clusterOptions = clusterOptions;
             Start();
         }
-
-        /*public ClusterMonitorService(IMediator mediatr, ILogger<ClusterMonitorService> logger)
-        {
-            _mediator = mediatr;
-            _logger = logger;
-            Start();
-        }*/
 
         public void Start()
         {
@@ -147,94 +129,30 @@ namespace Cindi.Application.Services.ClusterMonitor
             int rebuildCount = 0;
             while (true)
             {
-                if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                var page = 0;
+                long tickPosition = 0;
+                long totalMetricTicks = 0;
+                int cleanedCount = 0;
+                if (_stateMachine.GetSettings != null)
                 {
-                    var page = 0;
-                    long tickPosition = 0;
-                    long totalMetricTicks = 0;
-                    int cleanedCount = 0;
-                    if (_state.GetSettings != null)
-                    {
-                        DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod));
-                        var entities = await _entitiesRepository.GetAsync<MetricTick>((s) => s.Date < compare, null, null, 10000);
-                        try
-                        {
-                            foreach (var tick in entities)
-                            {
-                                var startTime = DateTime.Now;
-                                AddShardWriteOperationResponse result = await _clusterService.AddWriteOperation(
-                                new EntityWriteOperation<MetricTick>()
-                                {
-                                    Data = tick,
-                                    WaitForSafeWrite = true,
-                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                                    RemoveLock = false
-                                });
+                    DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_stateMachine.GetSettings.MetricRetentionPeriod));
+                    await _entitiesRepository.Delete<MetricTick>((s) => s.Date < compare);
 
-                                _logger.LogDebug("Cleanup of record " + tick.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
-                                // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
-                        }
-
-                        DateTime stepCompare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.StepRetentionPeriod));
-                        var pageSize = 100;
-                        var continueStepDeletion = true;
-                        do
-                        {
-                            var steps = await _entitiesRepository.GetAsync<Step>((s) => s.CreatedOn < stepCompare &&
-                          s.Status != StepStatuses.Unassigned &&
-                          s.Status != StepStatuses.Assigned &&
-                          s.Status != StepStatuses.Suspended
-                          , null, null, pageSize);
-
-                            try
-                            {
-                                foreach (var step in steps)
-                                {
-                                    var startTime = DateTime.Now;
-                                    AddShardWriteOperationResponse result = await _clusterService.AddWriteOperation(
-                                    new EntityWriteOperation<Step>()
-                                    {
-                                        Data = step,
-                                        WaitForSafeWrite = true,
-                                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                                        RemoveLock = false,
-                                        User = SystemUsers.CLEANUP_MANAGER
-                                    });
-
-                                    _logger.LogDebug("Cleanup of record " + step.Id + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ms.");
-                                }
-
-                                if (steps.Count() < pageSize)
-                                {
-                                    continueStepDeletion = false;
-                                }
-                                else
-                                {
-                                    await Task.Delay(10);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
-                            }
-                        }
-                        while (continueStepDeletion);
-                    }
-
-                    if (rebuildCount % 10 == 0)
-                    {
-                        _logger.LogInformation("Rebuilding db.");
-                        _entitiesRepository.Rebuild();
-                    }
-                    rebuildCount++;
-                    await CleanupWorkflowsExecutions();
-                    await Task.Delay(_state.GetSettings.CleanupInterval);
+                    DateTime stepCompare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_stateMachine.GetSettings.StepRetentionPeriod));
+                    await _entitiesRepository.Delete<Step>((s) => s.CreatedOn < stepCompare &&
+                      s.Status != StepStatuses.Unassigned &&
+                      s.Status != StepStatuses.Assigned &&
+                      s.Status != StepStatuses.Suspended);
                 }
+
+                if (rebuildCount % 10 == 0)
+                {
+                    _logger.LogInformation("Rebuilding db.");
+                    _entitiesRepository.Rebuild();
+                }
+                rebuildCount++;
+                await CleanupWorkflowsExecutions();
+                await Task.Delay(_stateMachine.GetSettings.CleanupInterval);
             }
         }
 
@@ -244,7 +162,7 @@ namespace Cindi.Application.Services.ClusterMonitor
             while (true)
             {
                 //Do not run if it is uninitialized
-                if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                if (_stateMachine.GetState().Initialized)
                 {
                     if (!printedMessage)
                     {
@@ -305,25 +223,22 @@ namespace Cindi.Application.Services.ClusterMonitor
         public async Task<bool> CleanupWorkflowsExecutions()
         {
             _logger.LogDebug("Started clean up of workflow.");
-            if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+            var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => w.Status == WorkflowStatuses.Started && w.CreatedOn < DateTime.Now.AddMinutes(-5));
+            foreach (var workflow in runningWorkflows)
             {
-                var runningWorkflows = await _entitiesRepository.GetAsync<Workflow>(w => w.Status == WorkflowStatuses.Started && w.CreatedOn < DateTime.Now.AddMinutes(-5));
-                foreach (var workflow in runningWorkflows)
+                try
                 {
-                    try
+                    await _mediator.Send(new ScanWorkflowCommand()
                     {
-                        await _mediator.Send(new ScanWorkflowCommand()
-                        {
-                            WorkflowId = workflow.Id,
-                            CreatedBy = SystemUsers.CLEANUP_MANAGER
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogError("Failed to clean up workflow " + workflow.Id + " with error " + e.Message + Environment.NewLine + e.StackTrace);
-                    }
-
+                        WorkflowId = workflow.Id,
+                        CreatedBy = SystemUsers.CLEANUP_MANAGER
+                    });
                 }
+                catch (Exception e)
+                {
+                    _logger.LogError("Failed to clean up workflow " + workflow.Id + " with error " + e.Message + Environment.NewLine + e.StackTrace);
+                }
+
             }
             return true;
         }
@@ -357,7 +272,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     // _logger.LogInformation("Starting scheduler loop.");
 
                     //Do not run if it is uninitialized
-                    if (ClusterStateService.Initialized && _nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
+                    if (_stateMachine.GetState().Initialized)
                     {
                         stopwatch.Restart();
                         var startDate = DateTime.Now;
@@ -456,59 +371,6 @@ namespace Cindi.Application.Services.ClusterMonitor
             (await _entitiesRepository.GetDatabaseMetrics()).ForEach(e =>
             {
                 _metricManagementService.EnqueueTick(e);
-            });
-            /*if (lastSecond != currentDateTime.Second && currentDateTime.Second % secondsOfMetrics == 0)
-            {
-                lastSecond = currentDateTime.Second;
-                var truncatedTime = currentDateTime;
-                truncatedTime = truncatedTime.AddTicks(-(truncatedTime.Ticks % TimeSpan.TicksPerSecond));
-
-                DateTime toDate = truncatedTime;
-                DateTime fromDate = truncatedTime.AddSeconds(-secondsOfMetrics);
-
-                if (_nodeStateService.Role == ConsensusCore.Domain.Enums.NodeState.Leader)
-                {
-                    var stepsCount = _assigmentCache.UnassignedCount;
-                    _metricManagementService.EnqueueTick(new MetricTick()
-                    {
-                        MetricId = (int)MetricIds.QueuedStepsPerSecond,
-                        Date = truncatedTime,
-                        Value = stepsCount
-                    });
-                    _metricManagementService.EnqueueTick(new MetricTick()
-                    {
-                        MetricId = (int)MetricIds.StepCacheRefreshTimeMs,
-                        Date = truncatedTime,
-                        Value = _assigmentCache.LastRefreshTime
-                    });
-
-                    (await _entitiesRepository.GetDatabaseMetrics()).ForEach(e =>
-                    {
-                        _metricManagementService.EnqueueTick(e);
-                    });
-                }
-
-                /* if (Interlocked.CompareExchange(ref _fetchingDbMetrics, 1, 0) == 0)
-                 {
-                     foreach (var metric in await _databaseMetricsCollector.GetMetricsAsync(_nodeStateService.Id))
-                     {
-                         _metricManagementService.EnqueueTick(metric);
-                     }
-                     Interlocked.Decrement(ref _fetchingDbMetrics);
-                 }
-            
-                _logger.LogDebug("Writing metrics from " + fromDate.ToString("o") + " to " + toDate.ToString("o"));
-            }*/
-        }
-
-        void metricGenerated(object sender, ConsensusCore.Domain.Models.Metric e)
-        {
-            _metricManagementService.EnqueueTick(new MetricTick()
-            {
-                MetricId = 1,
-                Date = e.Date,
-                Value = e.Value,
-                SubCategory = e.Type.SubCategory
             });
         }
     }

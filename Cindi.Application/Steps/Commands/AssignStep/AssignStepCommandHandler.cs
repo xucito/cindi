@@ -15,7 +15,7 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.BaseClasses;
+
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
 using ConsensusCore.Domain.RPCs.Shard;
@@ -37,7 +37,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 {
     public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, EncryptedCommandResult<Step>>
     {
-        private readonly IClusterStateService _clusterStateService;
+        private readonly IStateMachine _stateMachine;
         public ILogger<AssignStepCommandHandler> Logger;
         private IMemoryCache _cache;
         IClusterService _clusterService;
@@ -52,7 +52,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             )
         {
             _clusterService = clusterService;
-            _clusterStateService = stateService;
+            _stateMachine = stateService;
             Logger = logger;
             _cache = cache;
             _assignmentCache = assignmentCache;
@@ -63,7 +63,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
             stopwatch.Start();
             string encryptedEncryptionKey = null;
             StepTemplate template = null;
-            if (_clusterStateService.GetSettings.AssignmentEnabled)
+            if (_stateMachine.GetSettings.AssignmentEnabled)
             {
                 var assignedStepSuccessfully = false;
                 Step unassignedStep = null;

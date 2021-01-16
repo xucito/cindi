@@ -1,4 +1,4 @@
-﻿using ConsensusCore.Domain.BaseClasses;
+﻿
 using ConsensusCore.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Cindi.Application.Utilities
 {
-    public class WriteEntityOperation<T> where T : ShardData
+    public class WriteEntityOperation<T> where T : BaseEntity
     {
         public T Data { get; set; }
         public ShardOperationOptions Operation { get; set; }

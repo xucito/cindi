@@ -10,7 +10,7 @@ using Cindi.Domain.Exceptions.GlobalValues;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.BaseClasses;
+
 using ConsensusCore.Domain.Interfaces;
 using ConsensusCore.Domain.RPCs;
 using ConsensusCore.Domain.RPCs.Raft;

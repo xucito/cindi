@@ -21,7 +21,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate
         public string CreatedBy { get; set; }
 
         private readonly IEntitiesRepository _entitiesRepository;
-        private readonly IClusterStateService _clusterStateService;
+        private readonly IStateMachine _stateMachine;
         private readonly IClusterRequestHandler _node;
         private IMediator _mediator;
 
@@ -31,7 +31,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate
             IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
-            _clusterStateService = service;
+            _stateMachine = service;
             _node = node;
             _mediator = mediator;
         }

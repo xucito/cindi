@@ -12,7 +12,7 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
-using ConsensusCore.Domain.BaseClasses;
+
 using ConsensusCore.Domain.RPCs;
 using ConsensusCore.Domain.RPCs.Shard;
 using Microsoft.Extensions.Caching.Memory;

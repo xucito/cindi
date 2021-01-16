@@ -1,5 +1,4 @@
-﻿using ConsensusCore.Domain.Serializers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 

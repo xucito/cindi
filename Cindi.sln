@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Presentation.Tests", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Persistence.Tests", "Cindi.Persistence.Tests\Cindi.Persistence.Tests.csproj", "{6E898956-C5E8-40DA-8DA7-40CD71CDC6B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cindi.Load.Tests", "Cindi.Load.Tests\Cindi.Load.Tests.csproj", "{66DA0F0C-2AE1-4CFD-AC9E-4C8C3D2C71C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cindi.Load.Tests", "Cindi.Load.Tests\Cindi.Load.Tests.csproj", "{66DA0F0C-2AE1-4CFD-AC9E-4C8C3D2C71C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
