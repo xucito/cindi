@@ -59,7 +59,8 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
             {
                 Type = schedule.ShardType,
                 ObjectId = schedule.Id,
-                CreateLock = true
+                CreateLock = true,
+                LockTimeoutMs = 10000
             });
 
 

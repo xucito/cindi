@@ -142,7 +142,6 @@ namespace Cindi.Persistence.State
 
         public async Task<bool> DeleteShardWriteOperationsAsync(List<string> shardWriteOperations)
         {
-            // throw new NotImplementedException();
             await entitiesRepository.Delete<ShardWriteOperation>(d => shardWriteOperations.Contains(d.Id));
             return true;
         }
