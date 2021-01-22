@@ -1,7 +1,7 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
+
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.CompleteStep;
 using Cindi.Application.Steps.Commands.CreateStep;
@@ -17,10 +17,10 @@ using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+
+
+
+
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -211,7 +211,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var testPhrase = "This is a test";
             var TestStep = SecretSampleData.StepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
             Mock<IClusterService> clusterService = new Mock<IClusterService>();
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(stepTemplate));
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));

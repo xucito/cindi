@@ -1,6 +1,5 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Entities.States;
@@ -10,15 +9,6 @@ using Cindi.Domain.Exceptions.GlobalValues;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Raft;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Domain.SystemCommands;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Node.Communication.Exceptions;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -31,12 +21,15 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
 {
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        private readonly IClusterService _clusterService;
+        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly IStateMachine _stateMachine;
 
         public CreateGlobalValueCommandHandler(
-            IClusterService clusterService)
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine)
         {
-            _clusterService = clusterService;
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
         }
         public async Task<CommandResult<GlobalValue>> Handle(CreateGlobalValueCommand request, CancellationToken cancellationToken)
         {
@@ -48,62 +41,33 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 throw new InvalidInputTypeException("Input " + request.Type + " is not valid.");
             }
 
-            Guid lockId = Guid.NewGuid();
-            var command = await _clusterService.Handle(new ExecuteCommands()
+            var existingGV = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name);
+            if (existingGV != null)
             {
-                Commands = new List<BaseCommand>{
-                                    new SetLock()
-                                    {
-                                        Name = "action:create:" + request.Name,
-                                        LockId = lockId,
-                                        TimeoutMs = 60000,
-                                        CreatedOn = DateTime.Now
-                                    }
-                                },
-                WaitForCommits = true
-            });
-
-            if (command.IsSuccessful)
-            {
-                var existingGV = await _clusterService.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == request.Name);
-                if(existingGV != null)
-                {
-                    throw new DuplicateGlobalValueException("Global value with name " + request.Name + " already exists.");
-                }
-
-                var createdGV = new GlobalValue()
-                {
-                    Name = request.Name,
-                    Type = request.Type,
-                    Description = request.Description,
-                    Value = request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, ClusterStateService.GetEncryptionKey()) : request.Value,
-                    Status = GlobalValueStatuses.Enabled,
-                    Id = Guid.NewGuid()
-                };
-
-                var result = _clusterService.Handle(new AddShardWriteOperation()
-                {
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                    WaitForSafeWrite = true,
-                    Data = createdGV,
-                    RemoveLock = true,
-                    LockId = lockId
-                });
-
-                stopwatch.Stop();
-
-                return new CommandResult<GlobalValue>()
-                {
-                    ObjectRefId = createdGV.Id.ToString(),
-                    ElapsedMs = stopwatch.ElapsedMilliseconds,
-                    Type = CommandResultTypes.Create,
-                    Result = createdGV
-                };
+                throw new DuplicateGlobalValueException("Global value with name " + request.Name + " already exists.");
             }
-            else
+
+            var createdGV = new GlobalValue()
             {
-                throw new WriteConcurrencyException("Two global values being written at the same time.");
-            }
+                Name = request.Name,
+                Type = request.Type,
+                Description = request.Description,
+                Value = request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, _stateMachine.EncryptionKey) : request.Value,
+                Status = GlobalValueStatuses.Enabled,
+                Id = Guid.NewGuid()
+            };
+
+            await _entitiesRepository.Insert(createdGV);
+
+            stopwatch.Stop();
+
+            return new CommandResult<GlobalValue>()
+            {
+                ObjectRefId = createdGV.Id.ToString(),
+                ElapsedMs = stopwatch.ElapsedMilliseconds,
+                Type = CommandResultTypes.Create,
+                Result = createdGV
+            };
         }
     }
 }

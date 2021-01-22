@@ -14,11 +14,6 @@ namespace Cindi.Domain.Entities.Workflows
     /// </summary>
     public class Workflow : TrackedEntity
     {
-        public Workflow()
-        {
-            ShardType = nameof(Workflow);
-        }
-
         public string Name { get; set; }
         public string WorkflowTemplateId { get; set; }
 

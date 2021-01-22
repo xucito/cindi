@@ -7,11 +7,11 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+
+
+
+
+
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,15 +29,16 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
         public IEntitiesRepository _entitiesRepository;
         public ILogger<UnassignStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IClusterRequestHandler _node;
+        private readonly IStateMachine _stateMachine;
 
-        public UnassignStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public UnassignStepCommandHandler(
+            IEntitiesRepository entitiesRepository,
             ILogger<UnassignStepCommandHandler> logger,
-            IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node)
+            IStateMachine stateMachine,
+            IOptionsMonitor<CindiClusterOptions> options)
         {
             _entitiesRepository = entitiesRepository;
-            _node = node;
+            _stateMachine = stateMachine;
             Logger = logger;
             options.OnChange((change) =>
             {
@@ -50,7 +51,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            
+
             Step step;
             if ((step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => (e.Status == StepStatuses.Suspended || e.Status == StepStatuses.Assigned) && e.Id == request.StepId)) == null)
             {
@@ -63,17 +64,10 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                 };
             }
 
-            var stepLockResult = await _node.Handle(new RequestDataShard()
-            {
-                Type = "Step",
-                ObjectId = request.StepId,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
+            var stepLockResult = _stateMachine.LockEntity<Step>(step.Id);
 
-            if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
+            if (stepLockResult)
             {
-                step = (Step)stepLockResult.Data;
                 if (step.Status != StepStatuses.Suspended && step.Status != StepStatuses.Assigned)
                 {
                     Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
@@ -86,30 +80,15 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                 }
 
                 step.Status = StepStatuses.Unassigned;
-                step.AssignedTo =  null;
+                step.AssignedTo = null;
 
-                var result = await _node.Handle(new AddShardWriteOperation()
+                await _entitiesRepository.Update(step);
+                return new CommandResult()
                 {
-                    Data = step,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    RemoveLock = true
-                });
-
-
-                if (result.IsSuccessful)
-                {
-                    return new CommandResult()
-                    {
-                        ElapsedMs = stopwatch.ElapsedMilliseconds,
-                        ObjectRefId = step.Id.ToString(),
-                        Type = CommandResultTypes.Update
-                    };
-                }
-                else
-                {
-                    throw new FailedClusterOperationException("Failed to apply cluster operation with for step " + step.Id);
-                }
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    ObjectRefId = step.Id.ToString(),
+                    Type = CommandResultTypes.Update
+                };
             }
             else
             {

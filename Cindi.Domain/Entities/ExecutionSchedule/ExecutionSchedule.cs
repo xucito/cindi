@@ -18,10 +18,5 @@ namespace Cindi.Domain.Entities.ExecutionSchedule
         /// If multiple schedules are given, the next valid time is used
         /// </summary>
         public string[] Schedule { get; set; }
-
-        public ExecutionSchedule()
-        {
-            ShardType = nameof(ExecutionSchedule);
-        }
     }
 }

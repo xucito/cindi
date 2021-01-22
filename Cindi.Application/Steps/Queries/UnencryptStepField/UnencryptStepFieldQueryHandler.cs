@@ -22,8 +22,11 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
     public class UnencryptStepFieldQueryHandler : IRequestHandler<UnencryptStepFieldQuery, QueryResult<string>>
     {
         private readonly IEntitiesRepository _entitiesRepository;
+        private readonly IStateMachine _stateMachine;
 
-        public UnencryptStepFieldQueryHandler(IEntitiesRepository entitiesRepository)
+        public UnencryptStepFieldQueryHandler(
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine)
         {
             _entitiesRepository = entitiesRepository;
         }
@@ -45,7 +48,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
                 throw new InvalidStepPermissionException("Only the creating user can decrypt the step secret.");
             }
 
-            var stepTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
+            var stepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
 
             //Compare the to lower of inputs, TODO - this is inefficient
             if (!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))
@@ -60,7 +63,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
                 throw new InvalidUnencryptionRequestException("Field " + request.FieldName + " is not a secret type.");
             }
 
-            var decryptedInput = DynamicDataUtility.DecryptDynamicData(stepTemplate.InputDefinitions, request.Type == StepEncryptionTypes.Inputs ? step.Inputs : step.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey(), false);
+            var decryptedInput = DynamicDataUtility.DecryptDynamicData(stepTemplate.InputDefinitions, request.Type == StepEncryptionTypes.Inputs ? step.Inputs : step.Outputs, EncryptionProtocol.AES256, _stateMachine.EncryptionKey, false);
 
             stopwatch.Stop();
 

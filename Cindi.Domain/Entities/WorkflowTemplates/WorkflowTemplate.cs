@@ -19,7 +19,6 @@ namespace Cindi.Domain.Entities.WorkflowsTemplates
         public WorkflowTemplate()
         {
             this.LogicBlocks = new Dictionary<string, LogicBlock>();
-            ShardType = typeof(WorkflowTemplate).Name;
         }
 
         public string ReferenceId { get; set; }

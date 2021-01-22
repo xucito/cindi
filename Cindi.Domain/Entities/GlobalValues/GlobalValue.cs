@@ -8,10 +8,6 @@ namespace Cindi.Domain.Entities.GlobalValues
 {
     public class GlobalValue: TrackedEntity
     {
-        public GlobalValue() {
-            ShardType = typeof(GlobalValue).Name;
-        }
-
         public string Name { get; set; }
 
         public string Type { get; set; }

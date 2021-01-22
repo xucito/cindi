@@ -1,11 +1,12 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+
+
+
+
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -18,10 +19,10 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
 {
     public class DeleteBotKeyCommandHandler : IRequestHandler<DeleteBotKeyCommand, CommandResult>
     {
-        IClusterRequestHandler _node;
-        public DeleteBotKeyCommandHandler(IClusterRequestHandler node)
+        IEntitiesRepository _entitesRepository;
+        public DeleteBotKeyCommandHandler(IEntitiesRepository entitesRepository)
         {
-            _node = node;
+            _entitesRepository = entitesRepository;
         }
 
         public async Task<CommandResult> Handle(DeleteBotKeyCommand request, CancellationToken cancellationToken)
@@ -29,34 +30,14 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var botLockResult = await _node.Handle(new RequestDataShard()
-            {
-                Type = "BotKey",
-                ObjectId = request.Id,
-                CreateLock = true
-            });
+            await _entitesRepository.DeleteById<BotKey>(request.Id);
 
-            if (botLockResult.IsSuccessful)
+            return new CommandResult()
             {
-                await _node.Handle(new AddShardWriteOperation()
-                {
-                    Data = botLockResult.Data,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                    RemoveLock = true
-                });
-
-                return new CommandResult()
-                {
-                    ObjectRefId = request.Id.ToString(),
-                    Type = CommandResultTypes.Delete,
-                    ElapsedMs = stopwatch.ElapsedMilliseconds
-                };
-            }
-            else
-            {
-                throw new FailedClusterOperationException("Failed to apply cluster operation with for botkey " + request.Id);
-            }
+                ObjectRefId = request.Id.ToString(),
+                Type = CommandResultTypes.Delete,
+                ElapsedMs = stopwatch.ElapsedMilliseconds
+            };
         }
     }
 }

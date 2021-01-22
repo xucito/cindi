@@ -17,11 +17,6 @@ namespace Cindi.Domain.Entities.StepTemplates
 {
     public class StepTemplate : TrackedEntity
     {
-        public StepTemplate()
-        {
-            ShardType = typeof(StepTemplate).Name;
-        }
-
         public string ReferenceId { get; set; }
 
         public string Name { get { return ReferenceId.Split(':')[0]; } }

@@ -26,17 +26,18 @@ namespace Cindi.Presentation.Controllers
     [AllowAnonymous]
     public class BotKeysController : BaseController
     {
-        IClusterStateService _clusterState;
-        public BotKeysController(ILoggerFactory logger, IClusterStateService clusterState) : base(logger.CreateLogger<BotKeysController>())
+        IStateMachine _stateMachine;
+        public BotKeysController(ILoggerFactory logger,
+            IStateMachine stateMachine) : base(logger.CreateLogger<BotKeysController>())
         {
-            _clusterState = clusterState;
+            _stateMachine = stateMachine;
         }
 
         [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Register(CreateBotKeyCommand command)
         {
-            if (!_clusterState.GetSettings.AllowAutoRegistration)
+            if (!_stateMachine.GetSettings.AllowAutoRegistration)
             {
                 if (ClaimsUtility.GetId(User) == null)
                 {
@@ -81,7 +82,8 @@ namespace Cindi.Presentation.Controllers
         [Route("{id}")]
         public async Task<IActionResult> UpdateBotkeys(Guid id, PutBotKeyVM update)
         {
-            var keys = await Mediator.Send(new UpdateBotKeyCommand() {
+            var keys = await Mediator.Send(new UpdateBotKeyCommand()
+            {
                 Id = id,
                 BotName = update.BotName,
                 IsDisabled = update.IsDisabled

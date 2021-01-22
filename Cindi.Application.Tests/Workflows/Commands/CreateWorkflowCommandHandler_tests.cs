@@ -5,8 +5,8 @@ using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.Global;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Node;
+
+
 using MediatR;
 using Moq;
 using System;
@@ -17,7 +17,7 @@ using Xunit;
 using static Cindi.Test.Global.TestData.FibonacciSampleData;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
 using Cindi.Domain.Exceptions.Workflows;
-using ConsensusCore.Node.Communication.Controllers;
+
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using System.Linq.Expressions;
 using Cindi.Domain.Entities.StepTemplates;
@@ -26,7 +26,7 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.Steps;
 using System.Threading;
 using Microsoft.Extensions.Logging;
-using Cindi.Application.Services.ClusterOperation;
+
 
 namespace Cindi.Application.Tests.Workflows.Commands
 {

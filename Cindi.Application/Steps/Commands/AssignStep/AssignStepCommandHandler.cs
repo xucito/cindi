@@ -3,7 +3,7 @@ using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services;
-using Cindi.Application.Services.ClusterOperation;
+
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.GlobalValues;
@@ -15,13 +15,6 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Domain.SystemCommands;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -40,19 +33,19 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IStateMachine _stateMachine;
         public ILogger<AssignStepCommandHandler> Logger;
         private IMemoryCache _cache;
-        IClusterService _clusterService;
         AssignmentCache _assignmentCache;
+        private IEntitiesRepository _entitiesRepository;
 
         public AssignStepCommandHandler(
-            IClusterStateService stateService,
+            IStateMachine stateMachine,
             ILogger<AssignStepCommandHandler> logger,
             IMemoryCache cache,
-            IClusterService clusterService,
-            AssignmentCache assignmentCache
+            AssignmentCache assignmentCache,
+            IEntitiesRepository entitiesRepository
             )
         {
-            _clusterService = clusterService;
-            _stateMachine = stateService;
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
             Logger = logger;
             _cache = cache;
             _assignmentCache = assignmentCache;
@@ -76,7 +69,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     var cacheEntryOptions = new MemoryCacheEntryOptions()
                         // Keep in cache for this time, reset time if accessed.
                         .SetSlidingExpiration(TimeSpan.FromSeconds(10));
-                    botkey = await _clusterService.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+                    botkey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
                     // Save data in cache.
                     _cache.Set(request.BotId, botkey, cacheEntryOptions);
                 }
@@ -96,21 +89,15 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     {
                         unassignedStep = _assignmentCache.GetNext(request.StepTemplateIds);
                     }
-                    catch(InvalidOperationException e)
+                    catch (InvalidOperationException e)
                     {
                         unassignedStep = null;
                     }
                     if (unassignedStep != null)
                     {
-                        var assigned = await _clusterService.Handle(new RequestDataShard()
-                        {
-                            Type = unassignedStep.ShardType,
-                            ObjectId = unassignedStep.Id,
-                            CreateLock = true,
-                            LockTimeoutMs = 10000
-                        });
+                        bool assigned = _stateMachine.LockEntity<Step>(unassignedStep.Id);
                         //Apply a lock on the item
-                        if (assigned != null && assigned.IsSuccessful && assigned.AppliedLocked)
+                        if (assigned)
                         {
 
                             //Real values to pass to the Microservice
@@ -142,7 +129,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //Copy by reference
                                             if (isReferenceByValue)
                                             {
-                                                var foundGlobalValue = await _clusterService.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -164,7 +151,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //copy by value
                                             else
                                             {
-                                                var foundGlobalValue = await _clusterService.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -221,17 +208,9 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                     unassignedStep.Status = StepStatuses.Assigned;
                                 }
 
-                                await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
-                                {
-                                    Data = unassignedStep,
-                                    WaitForSafeWrite = true,
-                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                                    RemoveLock = true,
-                                    LockId = assigned.LockId.Value,
-                                    User = SystemUsers.QUEUE_MANAGER
-                                });
+                                await _entitiesRepository.Update(unassignedStep);
 
-                                //await _clusterService.UpdateStep(unassignedStep);
+                                //await _entitiesRepository.UpdateStep(unassignedStep);
                                 if (inputsUpdated)
                                 {
                                     //Update the record with real values, this is not commited to DB
@@ -262,7 +241,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 if (unassignedStep != null)
                 {
                     //Decrypt the step
-                    unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
+                    unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, _stateMachine.EncryptionKey);
 
                     unassignedStep.RemoveDelimiters();
 

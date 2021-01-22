@@ -1,5 +1,4 @@
 ﻿using Cindi.Application.Exceptions;
-using ConsensusCore.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -38,20 +37,6 @@ namespace Cindi.Application.Results
         /// Result object that is not always populated
         /// </summary>
         public object Result { get; set; }
-
-        public static string ConvertShardOperationOption(ShardOperationOptions option)
-        {
-            switch (option)
-            {
-                case ShardOperationOptions.Create:
-                    return CommandResultTypes.Create;
-                case ShardOperationOptions.Delete:
-                    return CommandResultTypes.Delete;
-                case ShardOperationOptions.Update:
-                    return CommandResultTypes.Update;
-            }
-            return CommandResultTypes.None;
-        }
     }
 
     public class CommandResult<T> : CommandResult

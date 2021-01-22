@@ -1,6 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
-using Cindi.Application.Services.ClusterOperation;
+
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Workflows.Commands.ScanWorkflow;
 using Cindi.Domain.Entities.Steps;
@@ -9,7 +9,7 @@ using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
-using ConsensusCore.Node.Communication.Controllers;
+
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

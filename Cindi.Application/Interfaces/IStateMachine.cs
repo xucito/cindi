@@ -1,6 +1,7 @@
 ﻿using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.ClusterRPC;
 using Cindi.Domain.Entities.States;
+using Cindi.Domain.Events;
 using System;
 using System.Threading.Tasks;
 
@@ -8,6 +9,7 @@ namespace Cindi.Application.Interfaces
 {
     public interface IStateMachine
     {
+        string EncryptionKey { get; }
         bool AutoRegistrationEnabled { get; }
         ClusterSettings GetSettings { get; }
         CindiClusterState GetState();
@@ -16,9 +18,12 @@ namespace Cindi.Application.Interfaces
         Task<bool> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId);
         void SetClusterName(string newName);
         void SetEncryptionKey(string key);
-        void TransitionState();
         void UnlockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId);
-        bool WasLockObtained(Guid lockKey, Guid workflowId, string logicBlockId);
+        bool LockEntity<T>(Guid id, int timeoutMs = 30000);
+        bool IsEntityLocked(Guid id);
         void UpdateClusterSettings(UpdateClusterDetails newSettings);
+        void SetInitialized(bool isInitialized);
+
+        event EventHandler<StateChangedEventArgs> onStateChange;
     }
 }

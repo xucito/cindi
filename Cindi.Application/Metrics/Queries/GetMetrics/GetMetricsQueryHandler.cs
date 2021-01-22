@@ -3,7 +3,7 @@ using Cindi.Application.Results;
 using Cindi.Application.Services;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
-using ConsensusCore.Node;
+
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Crypto.Engines;

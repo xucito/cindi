@@ -12,30 +12,22 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Diagnostics;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.Entities.States;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Node;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Node.Services;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Shard;
+
+
 
 namespace Cindi.Application.Users.Commands.CreateUserCommand
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
         IEntitiesRepository _entitiesRepository;
-        IClusterRequestHandler _node;
 
         public CreateUserCommandHandler(
             IEntitiesRepository entitiesRepository,
             ILogger<CreateUserCommandHandler> logger,
-            IServiceProvider prov,
-            IDataRouter router,
-            IClusterRequestHandler node
+            IServiceProvider prov
     )
         {
             _entitiesRepository = entitiesRepository;
-            _node = (IClusterRequestHandler)prov.GetService(typeof(IClusterRequestHandler));
         }
 
         public async Task<CommandResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)

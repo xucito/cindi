@@ -5,8 +5,8 @@ using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Entities.ExecutionTemplates;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
+
+
 using Cronos;
 using MediatR;
 using System;
@@ -22,18 +22,15 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
     {
         private readonly IEntitiesRepository _entitiesRepository;
         private readonly IStateMachine _stateMachine;
-        private readonly IClusterRequestHandler _node;
         private IMediator _mediator;
 
         public CreateExecutionScheduleCommandHandler(
             IEntitiesRepository entitiesRepository,
-            IClusterStateService service,
-            IClusterRequestHandler node,
+            IStateMachine stateMachine,
             IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
-            _stateMachine = service;
-            _node = node;
+            _stateMachine = stateMachine;
             _mediator = mediator;
         }
 
@@ -75,12 +72,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
                 NextRun = SchedulerUtility.NextOccurence(request.Schedule)
             };
 
-            var executionScheduleResponse = await _node.Handle(new AddShardWriteOperation()
-            {
-                Data = executionSchedule,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-            });
+            await _entitiesRepository.Insert(executionSchedule);
 
             if (request.RunImmediately)
             {

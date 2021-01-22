@@ -1,6 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
-using Cindi.Application.Services.ClusterOperation;
+
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Steps.Commands.AssignStep;
 using Cindi.Domain.Entities.BotKeys;
@@ -13,8 +13,8 @@ using Cindi.Domain.Utilities;
 using Cindi.Test.Global;
 using Cindi.Test.Global.TestData;
 
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
+
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -98,7 +98,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             Mock<IClusterService> clusterService = new Mock<IClusterService>();
             var newStep = SecretSampleData.StepTemplate.GenerateStep(SecretSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
 
             clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(SecretSampleData.StepTemplate));
 
@@ -148,7 +148,7 @@ namespace Cindi.Application.Tests.Steps.Commands
 
             var newStep = SecretSampleData.StepTemplate.GenerateStep(SecretSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "$secret"}
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
 
             clusterService.Setup(st => st.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.FromResult((IEnumerable<Step>)new List<Step> { newStep }));
 
@@ -168,7 +168,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 {
                     Name = "secret",
                     Type = InputDataTypes.Secret,
-                    Value = SecurityUtility.SymmetricallyEncrypt(testPhrase, ClusterStateService.GetEncryptionKey()),
+                    Value = SecurityUtility.SymmetricallyEncrypt(testPhrase, _stateMachine.EncryptionKey),
                     Status = GlobalValueStatuses.Enabled,
                     Id = Guid.NewGuid()
                 }));
@@ -203,7 +203,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await clusterService.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "$$secret"}
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
 
 
 
@@ -226,7 +226,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 {
                     Name = "secret",
                     Type = InputDataTypes.Secret,
-                    Value = SecurityUtility.SymmetricallyEncrypt(testPhrase, ClusterStateService.GetEncryptionKey()),
+                    Value = SecurityUtility.SymmetricallyEncrypt(testPhrase, _stateMachine.EncryptionKey),
                     Status = GlobalValueStatuses.Enabled,
                     Id = Guid.NewGuid()
                 })
@@ -256,7 +256,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await clusterService.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "\\$secret"}
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
 
 
 
@@ -279,7 +279,7 @@ namespace Cindi.Application.Tests.Steps.Commands
                 {
                     Name = "secret",
                     Type = InputDataTypes.Secret,
-                    Value = SecurityUtility.SymmetricallyEncrypt(testPhrase, ClusterStateService.GetEncryptionKey()),
+                    Value = SecurityUtility.SymmetricallyEncrypt(testPhrase, _stateMachine.EncryptionKey),
                     Status = GlobalValueStatuses.Enabled,
                     Id = Guid.NewGuid()
                 })
@@ -308,7 +308,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var newStep = FibonacciSampleData.StepTemplate.GenerateStep(FibonacciSampleData.StepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"n-1", "$1"},
                 {"n-2", 2 }
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
 
 
 

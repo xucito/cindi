@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Cindi.Application.InternalBots.InternalSteps;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Presentation.Results;
@@ -20,7 +19,7 @@ namespace Cindi.Presentation.Controllers
         {
         }
 
-        [HttpGet("step-templates")]
+        /*[HttpGet("step-templates")]
         public async Task<IActionResult> GetSystemStepTemplates()
         {
             var stopwatch = new Stopwatch();
@@ -30,9 +29,9 @@ namespace Cindi.Presentation.Controllers
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 IsSuccessful = true
             });
-        }
+        }*/
 
-        [HttpGet("workflow-templates")]
+        /*[HttpGet("workflow-templates")]
         public async Task<IActionResult> GetSystemWorkflowTemplates()
         {
             var stopwatch = new Stopwatch();
@@ -43,6 +42,6 @@ namespace Cindi.Presentation.Controllers
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 IsSuccessful = true
             });
-        }
+        }*/
     }
 }

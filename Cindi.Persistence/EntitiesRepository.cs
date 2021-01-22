@@ -18,7 +18,7 @@ using System.Diagnostics;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Metrics;
-using Cindi.Application.SharedValues;
+using Cindi.Domain.Events;
 
 namespace Cindi.Persistence
 {
@@ -132,7 +132,7 @@ namespace Cindi.Persistence
         {
             //var stopwatch = new Stopwatch();
             //stopwatch.Start();
-           // Console.WriteLine("Deleting data");
+            // Console.WriteLine("Deleting data");
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
             collection.DeleteMany(expression);
             return true;
@@ -148,7 +148,7 @@ namespace Cindi.Persistence
 
         public async Task<T> Insert<T>(T entity)
         {
-            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); 
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
             collection.Insert(entity);
             return entity;
         }
@@ -190,7 +190,7 @@ namespace Cindi.Persistence
 
         public void Rebuild()
         {
-           /*db.Rebuild();*/
+            /*db.Rebuild();*/
             db.Checkpoint();
         }
 
@@ -199,12 +199,26 @@ namespace Cindi.Persistence
             //select @key, SUM(*.usedBytes) as total from $dump where pageType = 'Data' Group By collection
             var metrics = db.Execute("select SUM(*.usedBytes) as total from $dump where pageType = 'Data'").FirstOrDefault();
             var totalMetrics = new List<MetricTick>();
-            totalMetrics.Add(new MetricTick() { 
+            totalMetrics.Add(new MetricTick()
+            {
                 MetricId = (int)MetricIds.DatabaseTotalSizeBytes,
                 Value = metrics.AsDocument["total"].AsInt64,
                 Date = DateTime.UtcNow
             });
             return Task.FromResult(totalMetrics);
+        }
+
+        public Task<bool> InsertMany<T>(IEnumerable<T> entities)
+        {
+            var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
+            collection.InsertBulk(entities);
+            return Task.FromResult(true);
+        }
+
+        public void StateChanged(object sender, StateChangedEventArgs e)
+        {
+            var collection = db.GetCollection<CindiClusterState>(NormalizeCollectionString(typeof(CindiClusterState)));
+            collection.Upsert(e.NewState);
         }
     }
 }

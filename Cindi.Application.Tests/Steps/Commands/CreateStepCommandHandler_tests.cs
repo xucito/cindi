@@ -18,8 +18,8 @@ using Cindi.Domain.ValueObjects;
 using Cindi.Test.Global;
 using Cindi.Test.Global.MockInterfaces;
 using Cindi.Test.Global.TestData;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Node;
+
+
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,11 +31,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Shard;
+
+
 using Cindi.Domain.Entities.StepTemplates;
 using System.Linq.Expressions;
-using Cindi.Application.Services.ClusterOperation;
+
 
 namespace Cindi.Application.Tests.Steps.Commands
 {
@@ -176,7 +176,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var stepTemplate = await clusterService.Object.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == SecretSampleData.StepTemplate.ReferenceId);
             var newStep = stepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", "This is a test"}
-            }, null, null, ClusterStateService.GetEncryptionKey());
+            }, null, null, _stateMachine.EncryptionKey);
 
             clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
 
@@ -194,7 +194,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             //Test encryption of step worked
             Assert.NotEqual("This is a test", (string)step.Result.Inputs["secret"]);
             //Test decryption of step
-            Assert.Equal("This is a test", SecurityUtility.SymmetricallyDecrypt((string)step.Result.Inputs["secret"], ClusterStateService.GetEncryptionKey()));
+            Assert.Equal("This is a test", SecurityUtility.SymmetricallyDecrypt((string)step.Result.Inputs["secret"], _stateMachine.EncryptionKey));
         }
 
 

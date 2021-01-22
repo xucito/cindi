@@ -36,9 +36,6 @@ using Cindi.Application.Entities.Queries;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Cindi.Presentation.Utility;
-using Cindi.Application.InternalBots;
-using Cindi.DotNetCore.BotExtensions;
-using Cindi.Application.InternalBots.InternalSteps;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Enums;
@@ -127,7 +124,7 @@ namespace Cindi.Presentation
             services.AddSingleton<IEntitiesRepository, EntitiesRepository>(e => entitiesRepository);
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
-            services.AddSingleton<InternalBotManager>();
+            services.AddSingleton<IStateMachine, StateMachine>();
             services.AddSingleton<AssignmentCache>();
 
 
@@ -226,11 +223,8 @@ namespace Cindi.Presentation
              IHostingEnvironment env,
              ILogger<Startup> logger,
              IStateMachine stateMachine,
-             ClusterMonitorService monitor,
-             IMediator mediator,
-             IServiceProvider serviceProvider,
              MetricManagementService metricManagementService,
-             InternalBotManager internalBotManager,
+             IEntitiesRepository entitiesRepository,
              AssignmentCache assignmentCache
              )
         {
@@ -258,7 +252,6 @@ namespace Cindi.Presentation
 
                 if (!stateMachine.GetState().Initialized)
                 {
-
                     if (key != null)
                     {
                         logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
@@ -289,20 +282,9 @@ namespace Cindi.Presentation
                     }).GetAwaiter().GetResult(); ;
                 }
 
-                assignmentCache.Start();
+                stateMachine.onStateChange += entitiesRepository.StateChanged;
 
-                foreach (var template in InternalStepLibrary.All)
-                {
-                    med.Send(new CreateStepTemplateCommand()
-                    {
-                        Name = template.Name,
-                        InputDefinitions = template.InputDefinitions,
-                        OutputDefinitions = template.OutputDefinitions,
-                        CreatedBy = SystemUsers.SYSTEM_TEMPLATES_MANAGER,
-                        Version = template.Version,
-                        Description = template.Description
-                    }).GetAwaiter().GetResult();
-                }
+                assignmentCache.Start();
             });
             BootstrapThread.Start();
 

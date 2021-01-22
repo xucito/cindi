@@ -2,17 +2,11 @@
 using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,15 +23,18 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
     {
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private IClusterService _clusterService;
+        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly IStateMachine _stateMachine;
 
         public SuspendStepCommandHandler(
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-            IClusterService clusterService)
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine)
         {
-            _clusterService = clusterService;
+            _entitiesRepository = entitiesRepository;
             Logger = logger;
+            _stateMachine = stateMachine;
             options.OnChange((change) =>
             {
                 _option = change;
@@ -50,7 +47,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Step step = await _clusterService.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            Step step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
             if (step == null)
             {
@@ -67,19 +64,12 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                 };
             }
 
-            var stepLockResult = await _clusterService.Handle(new RequestDataShard()
-            {
-                Type = "Step",
-                ObjectId = request.StepId,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
+            var stepLockResult = _stateMachine.LockEntity<Step>(request.StepId);
 
             // Applied the lock successfully
-            if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
+            if (stepLockResult)
             {
-                Logger.LogInformation("Applied lock on step " + request.StepId + " with lock id " + stepLockResult.LockId);
-                step = (Step)stepLockResult.Data;
+                Logger.LogInformation("Applied lock on step " + request.StepId); ;
                 if (step.Status == StepStatuses.Unassigned ||
                     step.Status == StepStatuses.Suspended ||
                     step.Status == StepStatuses.Assigned // You should only be suspending a assigned step if it is being suspended by the bot assigned, check to be done in presentation
@@ -89,28 +79,13 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                     step.SuspendedUntil = request.SuspendedUntil;
                     step.AssignedTo = null;
 
-                    var result = await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
+                    await _entitiesRepository.Update(step);
+                    return new CommandResult()
                     {
-                        Data = step,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                        User = request.CreatedBy,
-                        RemoveLock = true,
-                        LockId = stepLockResult.LockId.Value
-                    });
-
-                    if (result.IsSuccessful)
-                    {
-                        return new CommandResult()
-                        {
-                            ElapsedMs = stopwatch.ElapsedMilliseconds,
-                            ObjectRefId = step.Id.ToString(),
-                            Type = CommandResultTypes.Update
-                        };
-                    }
-                    else
-                    {
-                        throw new FailedClusterOperationException("Failed to apply cluster operation with for step " + step.Id);
-                    }
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        ObjectRefId = step.Id.ToString(),
+                        Type = CommandResultTypes.Update
+                    };
                 }
                 else
                 {

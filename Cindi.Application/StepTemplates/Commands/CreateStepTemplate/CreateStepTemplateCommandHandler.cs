@@ -1,16 +1,16 @@
 ﻿using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
+
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+
+
+
+
+
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -26,14 +26,17 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
-        private readonly IClusterService _clusterService;
-        private readonly IClusterRequestHandler _node;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
+        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly IStateMachine _stateMachine;
 
-        public CreateStepTemplateCommandHandler(IClusterService clusterService, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler(
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine,
+            ILogger<CreateStepTemplateCommandHandler> logger)
         {
-            _clusterService = clusterService;
-            _node = node;
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
             Logger = logger;
         }
 
@@ -42,7 +45,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            if(request.ReferenceId != null)
+            if (request.ReferenceId != null)
             {
                 request.Name = request.ReferenceId.Split(':')[0];
                 request.Version = request.ReferenceId.Split(':')[1];
@@ -64,7 +67,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 CreatedOn = DateTime.UtcNow
             };
 
-            var existingStepTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
+            var existingStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
 
             if (existingStepTemplate == null)
             {
@@ -72,13 +75,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 {
                     throw new InvalidStepTemplateException("Only system workflows can start with _");
                 }
-
-                var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
-                {
-                    Data = newStepTemplate,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-                });
+                await _entitiesRepository.Insert(newStepTemplate);
             }
             else
             {

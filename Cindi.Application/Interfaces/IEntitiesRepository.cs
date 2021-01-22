@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Enums;
+using Cindi.Domain.Events;
 
 namespace Cindi.Application.Interfaces
 {
@@ -13,6 +14,7 @@ namespace Cindi.Application.Interfaces
         Task<T> GetFirstOrDefaultAsync<T>(Expression<Func<T, bool>> expression); 
         Task<T> GetByIdAsync<T>(Guid id);
         Task<T> Insert<T>(T entity);
+        Task<bool> InsertMany<T>(IEnumerable<T> entities);
         Task<T> Update<T>(T entity);
         long Count<T>(Expression<Func<T, bool>> expression = null);
         Task<bool> Delete<T>(Expression<Func<T, bool>> expression);
@@ -22,5 +24,6 @@ namespace Cindi.Application.Interfaces
         /// </summary>
         void Rebuild();
         Task<List<MetricTick>> GetDatabaseMetrics();
+        void StateChanged(object sender, StateChangedEventArgs e);
     }
 }

@@ -1,12 +1,40 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 {
-    public class ConditionSerializer : JsonCreationConverter<Condition>
+    public class ConditionSerializer : JsonConverter
     {
-        protected override Condition Create(Type objectType, Newtonsoft.Json.Linq.JObject jObject)
+        public override bool CanConvert(Type objectType)
+        {
+            return typeof(ConditionSerializer).IsAssignableFrom(objectType);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Null)
+                return null;
+            // Load JObject from stream 
+            JObject jObject = JObject.Load(reader);
+
+            // Create target object based on JObject 
+            Condition target = Create(objectType, jObject);
+
+            // Populate the object properties 
+            serializer.Populate(jObject.CreateReader(), target);
+
+            return target;
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected Condition Create(Type objectType, Newtonsoft.Json.Linq.JObject jObject)
         {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {

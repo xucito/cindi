@@ -3,13 +3,10 @@ using Cindi.Application.Exceptions;
 using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using Cindi.Application.Services.ClusterOperation;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Enums;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -22,15 +19,15 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
 {
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<RecalculateExecutionScheduleCommand, CommandResult>
     {
-        private readonly IClusterService _clusterService;
+        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IStateMachine _stateMachine;
 
-        public UpdateExecutionScheduleCommandHandler(IEntitiesRepository entitiesRepository,
-            IClusterStateService service,
-            IClusterService clusterService)
+        public UpdateExecutionScheduleCommandHandler(
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine)
         {
-            _clusterService = clusterService;
-            _stateMachine = service;
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
         }
 
         public async Task<CommandResult> Handle(RecalculateExecutionScheduleCommand request, CancellationToken cancellationToken)
@@ -38,37 +35,16 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _clusterService.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
+            ExecutionSchedule schedule = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
 
             if (schedule == null)
             {
                 throw new InvalidExecutionScheduleException("Execution Schedule with name " + request.Name + " is invalid.");
             }
 
-            var executionScheduleLock = await _clusterService.Handle(new RequestDataShard()
-            {
-                Type = schedule.ShardType,
-                ObjectId = schedule.Id,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
+            schedule.NextRun = SchedulerUtility.NextOccurence(schedule.Schedule, DateTime.UtcNow);
 
-
-            ExecutionSchedule existingValue;
-
-            if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked)
-            {
-                existingValue = (ExecutionSchedule)executionScheduleLock.Data;
-                existingValue.NextRun = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow);
-
-                await _clusterService.AddWriteOperation(new EntityWriteOperation<ExecutionSchedule>()
-                {
-                    Data = existingValue,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    User = SystemUsers.SCHEDULE_MANAGER,
-                    RemoveLock = true
-                });
-            }
+            await _entitiesRepository.Update(schedule);
 
             stopwatch.Stop();
             return new CommandResult<ExecutionSchedule>()

@@ -5,7 +5,7 @@ using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
 using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Enums;
-using ConsensusCore.Node.Communication.Controllers;
+
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -22,17 +22,14 @@ namespace Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate
 
         private readonly IEntitiesRepository _entitiesRepository;
         private readonly IStateMachine _stateMachine;
-        private readonly IClusterRequestHandler _node;
         private IMediator _mediator;
 
         public ExecuteExecutionTemplateCommandHandler(IEntitiesRepository entitiesRepository,
-            IClusterStateService service,
-            IClusterRequestHandler node,
+            IStateMachine stateMachine,
             IMediator mediator)
         {
             _entitiesRepository = entitiesRepository;
-            _stateMachine = service;
-            _node = node;
+            _stateMachine = stateMachine;
             _mediator = mediator;
         }
 

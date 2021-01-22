@@ -2,6 +2,7 @@
 using Cindi.Application.Interfaces;
 using Cindi.Domain.ClusterRPC;
 using Cindi.Domain.Entities.States;
+using Cindi.Domain.Events;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
 using Microsoft.Extensions.Logging;
@@ -18,12 +19,38 @@ namespace Cindi.Application.Services.ClusterState
         private ILogger<StateMachine> _logger;
 
         static readonly object _locker = new object();
-        private static string _encryptionKey { get; set; }
-        public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
+        private string _encryptionKey { get; set; }
+        public bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
         public bool AutoRegistrationEnabled { get { return _state.Settings.AllowAutoRegistration; } }
-        public ClusterSettings GetSettings { get { return _state.Settings; } }
+        public ClusterSettings GetSettings { get { if (_state == null) return null; else return _state.Settings; } }
+        public string EncryptionKey { get { return _encryptionKey; } }
 
         CindiClusterState _state;
+
+        public event EventHandler<StateChangedEventArgs> onStateChange;
+
+        protected virtual void OnStateChange()
+        {
+            var handler = onStateChange;
+            if (handler != null)
+            {
+                handler(this, new StateChangedEventArgs()
+                {
+                    NewState = _state
+                }); ;
+            }
+        }
+
+        public StateMachine()
+        {
+            _state = new CindiClusterState();
+            _state.Settings = new ClusterSettings();
+        }
+
+        public StateMachine(CindiClusterState loadedState)
+        {
+            _state = loadedState;
+        }
 
         private CindiClusterState _clonedState
         {
@@ -34,6 +61,15 @@ namespace Cindi.Application.Services.ClusterState
             }
         }
 
+        public void SetInitialized(bool isInitialized)
+        {
+            UpdateState((newState) =>
+            {
+                newState.Initialized = true;
+                return newState;
+            });
+        }
+
         private void UpdateState(Func<CindiClusterState, CindiClusterState> updateState)
         {
             lock (_locker)
@@ -41,14 +77,10 @@ namespace Cindi.Application.Services.ClusterState
                 var clonedState = JsonConvert.DeserializeObject<CindiClusterState>(JsonConvert.SerializeObject(_state));
                 var updatedState = updateState.Invoke(clonedState);
                 //Save state
+                OnStateChange();
                 _state = updatedState;
             }
         }
-
-        public static Func<string> GetEncryptionKey = () =>
-        {
-            return _encryptionKey;
-        };
 
         public bool IsEncryptionKeyValid(string key)
         {
@@ -59,7 +91,7 @@ namespace Cindi.Application.Services.ClusterState
         {
             UpdateState((newState) =>
             {
-                if(newSettings.AllowAutoRegistration != null)
+                if (newSettings.AllowAutoRegistration != null)
                 {
                     newState.Settings.AllowAutoRegistration = newSettings.AllowAutoRegistration.Value;
                 }
@@ -179,9 +211,27 @@ namespace Cindi.Application.Services.ClusterState
             return false;
         }
 
-        public void TransitionState()
+        public bool LockEntity<T>(Guid id, int timeoutMs = 30000)
         {
+            var addSuccessful = false;
+            UpdateState((newState) =>
+            {
+                addSuccessful = newState.Locks.TryAdd(id.ToString(), new Lock()
+                {
+                    LockTimeoutMs = timeoutMs,
+                    LockId = id,
+                    CreatedOn = DateTime.UtcNow,
+                    Name = "Lock for entity " + typeof(T).GetType().Name
+                });
 
+                return newState;
+            });
+            return addSuccessful;
+        }
+
+        public bool IsEntityLocked(Guid id)
+        {
+            return _state.Locks.ContainsKey(id.ToString());
         }
     }
 }

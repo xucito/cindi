@@ -11,5 +11,6 @@ namespace Cindi.Application.Services.ClusterState
         public string MetricRetentionPeriod { get; set; } = "24h";
         public string StepRetentionPeriod { get; set; } = "24h";
         public int CleanupInterval { get; set; } = 1000;
+        public int MetricsIntervalMs { get; set; } = 30000;
     }
 }

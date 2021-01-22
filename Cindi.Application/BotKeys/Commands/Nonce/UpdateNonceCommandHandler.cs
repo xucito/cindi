@@ -4,12 +4,6 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.BotKeys;
-using ConsensusCore.Domain.Enums;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -23,12 +17,17 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
     public class UpdateNonceCommandHandler : IRequestHandler<UpdateNonceCommand, CommandResult>
     {
         IMediator _mediator;
-        IClusterRequestHandler _node;
+        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly IStateMachine _stateMachine;
 
-        public UpdateNonceCommandHandler(IMediator mediator, IClusterRequestHandler node)
+        public UpdateNonceCommandHandler(
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine,
+            IMediator mediator)
         {
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
             _mediator = mediator;
-            _node = node;
         }
 
         public async Task<CommandResult> Handle(UpdateNonceCommand request, CancellationToken cancellationToken)
@@ -38,7 +37,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             var key = (await _mediator.Send(new GetEntityQuery<BotKey>()
             {
-               Expression = bk => bk.Id == request.Id
+                Expression = bk => bk.Id == request.Id
             })).Result;
 
             if (key.Nonce >= request.Nonce)
@@ -48,14 +47,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             key.Nonce = request.Nonce;
 
-            await _node.Handle(new AddShardWriteOperation()
-            {
-                WaitForSafeWrite = true,
-                Data = key,
-                Operation = ShardOperationOptions.Update,
-            });
-
-           // await _botKeyRepository.UpdateBotKey(key);
+            await _entitiesRepository.Update(key);
 
             return new CommandResult()
             {

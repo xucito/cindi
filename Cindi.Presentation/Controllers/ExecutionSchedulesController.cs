@@ -4,12 +4,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Cindi.Application.Entities.Command.CreateTrackedEntity;
-
 using Cindi.Application.Entities.Queries;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule;
 using Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule;
+using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
@@ -24,8 +23,10 @@ namespace Cindi.Presentation.Controllers
 {
     public class ExecutionSchedulesController : BaseController
     {
-        public ExecutionSchedulesController(ILoggerFactory logger) : base(logger.CreateLogger<ExecutionSchedulesController>())
+        IEntitiesRepository _entitiesRepository;
+        public ExecutionSchedulesController(ILoggerFactory logger, IEntitiesRepository entitiesRepository) : base(logger.CreateLogger<ExecutionSchedulesController>())
         {
+            _entitiesRepository = entitiesRepository;
         }
 
         [HttpPost()]
@@ -104,12 +105,7 @@ namespace Cindi.Presentation.Controllers
                 Expression = de => de.Name == name
             });
 
-            return Ok(await Mediator.Send(new WriteEntityCommand<ExecutionSchedule>()
-            {
-                Data = result.Result,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                User = ClaimsUtility.GetId(User),
-            }));
+            return Ok(_entitiesRepository.Insert(result.Result));
         }
     }
 }

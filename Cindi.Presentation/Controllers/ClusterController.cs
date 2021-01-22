@@ -10,7 +10,6 @@ using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Cindi.Application.Cluster.Queries;
 using Cindi.Application.Cluster.Queries.GetClusterStats;
 using Cindi.Application.Interfaces;
-using Cindi.Application.InternalBots;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.States;
@@ -27,17 +26,18 @@ namespace Cindi.Presentation.Controllers
 {
     public class ClusterController : BaseController
     {
-        IClusterStateService _stateService;
-        public ClusterController(ILoggerFactory logger, IClusterStateService stateService) : base(logger.CreateLogger<ClusterController>())
+        private readonly IStateMachine _stateMachine;
+        public ClusterController(ILoggerFactory logger,
+            IStateMachine stateMachine) : base(logger.CreateLogger<ClusterController>())
         {
-            _stateService = stateService;
+            _stateMachine = stateMachine;
         }
 
         [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> InitializeCluster(InitializeClusterCommand command)
         {
-            if (ClusterStateService.Initialized == false)
+            if (_stateMachine.GetState().Initialized == false)
             {
                 var result = await Mediator.Send(command);
                 return Ok(new HttpCommandResult<NewClusterResult>("", result, result.Result));
@@ -89,7 +89,7 @@ namespace Cindi.Presentation.Controllers
             stopwatch.Start();
             try
             {
-                return Ok(_stateService.GetState());
+                return Ok(_stateMachine.GetState());
                 ///return Ok(await Mediator.Send(new GetClusterStateQuery()));
             }
             catch (BaseException e)

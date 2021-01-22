@@ -10,9 +10,9 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Node.Services.Raft;
+
+
+
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -53,29 +53,22 @@ namespace Cindi.Application.Services.ClusterMonitor
         }
 
         private ILogger<ClusterMonitorService> _logger;
-        private IClusterRequestHandler node;
         private IEntitiesRepository _entitiesRepository;
         private MetricManagementService _metricManagementService;
         int leaderMonitoringInterval = Timeout.Infinite;
         int nodeMonitoringInterval = Timeout.Infinite;
         int lastSecond = 0;
         // private IDatabaseMetricsCollector _databaseMetricsCollector;
-        private NodeStateService _nodeStateService;
-        private IOptions<ClusterOptions> _clusterOptions;
 
         private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
         private Timer monitoringTimer;
-        private int secondsOfMetrics = 5;
         AssignmentCache _assigmentCache;
 
         public ClusterMonitorService(
             IServiceProvider sp,
-            IClusterRequestHandler _node,
             IEntitiesRepository entitiesRepository,
             MetricManagementService metricManagementService,
-            NodeStateService nodeStateService,
-            IOptions<ClusterOptions> clusterOptions,
             IStateMachine stateMachine,
             AssignmentCache assigmentCache)
         {
@@ -86,19 +79,15 @@ namespace Cindi.Application.Services.ClusterMonitor
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
             _logger.LogInformation("Starting clean up service...");
-            node = _node;
             _entitiesRepository = entitiesRepository;
             //  _databaseMetricsCollector = databaseMetricsCollector;
             monitoringTimer = new System.Threading.Timer(CollectMetricsEventHandler);
-            _nodeStateService = nodeStateService;
-            _clusterOptions = clusterOptions;
             Start();
         }
 
         public void Start()
         {
-            monitoringTimer.Change(0, _clusterOptions.Value.MetricsIntervalMs);
-            secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
+            monitoringTimer.Change(0, _stateMachine.GetSettings.MetricsIntervalMs);
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();
             checkScheduledExecutions = new Thread(async () => await CheckScheduledExecutions());
@@ -120,7 +109,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     Date = DateTime.Now,
                     Value = cpuUsage
                 });
-                await Task.Delay(_clusterOptions.Value.MetricsIntervalMs);
+                await Task.Delay(_stateMachine.GetSettings.MetricsIntervalMs);
             }
         }
 
@@ -333,7 +322,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                         {
                             maxLatency = totalTime;
                         }
-                        if ((DateTime.Now - lastLatencyCheck).TotalMilliseconds > _clusterOptions.Value.MetricsIntervalMs)
+                        if ((DateTime.Now - lastLatencyCheck).TotalMilliseconds > _stateMachine.GetSettings.MetricsIntervalMs)
                         {
                             //Console.WriteLine("Collecting total secheduler metrics");
                             _metricManagementService.EnqueueTick(new MetricTick()

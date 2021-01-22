@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Entities.Queries.GetEntity
 {
-    public class GetEntityQueryHandler<T> : IRequestHandler<GetEntityQuery<T>, QueryResult<T>> where T: ShardData
+    public class GetEntityQueryHandler<T> : IRequestHandler<GetEntityQuery<T>, QueryResult<T>>
     {
         private readonly IEntitiesRepository _entitiesRepository;
 

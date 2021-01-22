@@ -1,4 +1,5 @@
-﻿using Cindi.Application.Services.ClusterState;
+﻿using Cindi.Application.Interfaces;
+using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Exceptions.State;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,11 +14,14 @@ namespace Cindi.Presentation.Middleware
     {
         private readonly RequestDelegate _next;
         private ILogger<CindiClusterMiddleware> _logger;
+        private readonly IStateMachine _stateMachine;
 
-        public CindiClusterMiddleware(RequestDelegate next, ILogger<CindiClusterMiddleware> logger)
+        public CindiClusterMiddleware(RequestDelegate next, ILogger<CindiClusterMiddleware> logger,
+            IStateMachine stateMachine)
         {
             _next = next;
             _logger = logger;
+            _stateMachine = stateMachine;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -29,9 +33,9 @@ namespace Cindi.Presentation.Middleware
                 await _next(context);
             }
 
-            else if (ClusterStateService.Initialized || path == "/api/cluster" && context.Request.Method == "POST")
+            else if (_stateMachine.GetState().Initialized || path == "/api/cluster" && context.Request.Method == "POST")
             {
-                if (ClusterStateService.HasValidEncryptionKey == false && path != "/api/cluster/encryption-key")
+                if ((_stateMachine.EncryptionKey == null && _stateMachine.EncryptionKey == "") && path != "/api/cluster/encryption-key")
                 {
                     _logger.LogWarning("Request cancelled as cluster is initialized however required encryption key, please post the key to /cluster/encryption-key ");
                     context.Response.StatusCode = 503;

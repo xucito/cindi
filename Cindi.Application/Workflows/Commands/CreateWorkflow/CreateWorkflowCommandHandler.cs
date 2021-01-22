@@ -11,9 +11,9 @@ using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.WorkflowTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Node;
+
+
+
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -23,28 +23,31 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cindi.Domain.Exceptions.Workflows;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Shard;
+
+
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Microsoft.Extensions.Logging;
-using Cindi.Application.Services.ClusterOperation;
+
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private IClusterService _clusterService;
+        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly IStateMachine _stateMachine;
         private ILogger<CreateWorkflowCommandHandler> _logger;
         private IMediator _mediator;
 
         public CreateWorkflowCommandHandler(
             ILogger<CreateWorkflowCommandHandler> logger,
-            IClusterService clusterService,
+            IEntitiesRepository entitiesRepository,
+            IStateMachine stateMachine,
             IMediator mediator)
         {
-            _clusterService = clusterService;
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
             _logger = logger;
             _mediator = mediator;
         }
@@ -54,7 +57,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WorkflowTemplate template = await _clusterService.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
+            WorkflowTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
 
             if (template == null)
             {
@@ -82,7 +85,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 {
                     if (template.InputDefinitions.ContainsKey(input.Key) && template.InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
                     {
-                        verifiedWorkflowInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, ClusterStateService.GetEncryptionKey()));
+                        verifiedWorkflowInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, _stateMachine.EncryptionKey));
                     }
                     else
                     {
@@ -94,23 +97,17 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var createdWorkflowId = Guid.NewGuid();
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
-            var createdWorkflowTemplateId = await _clusterService.AddWriteOperation(new EntityWriteOperation<Workflow>()
+            var createdWorkflowTemplateId = await _entitiesRepository.Insert(new Domain.Entities.Workflows.Workflow()
             {
-                Data = new Domain.Entities.Workflows.Workflow()
-                {
-                    Id = createdWorkflowId,
-                    WorkflowTemplateId = request.WorkflowTemplateId,
-                    Inputs = verifiedWorkflowInputs, //Encrypted inputs
-                    Name = request.Name,
-                    ExecutionTemplateId = request.ExecutionTemplateId,
-                    ExecutionScheduleId = request.ExecutionScheduleId
-                },
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                User = request.CreatedBy
+                Id = createdWorkflowId,
+                WorkflowTemplateId = request.WorkflowTemplateId,
+                Inputs = verifiedWorkflowInputs, //Encrypted inputs
+                Name = request.Name,
+                ExecutionTemplateId = request.ExecutionTemplateId,
+                ExecutionScheduleId = request.ExecutionScheduleId
             });
 
-            var workflow = await _clusterService.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
+            var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
 
             //When there are no conditions to be met
 
@@ -122,7 +119,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 {
                     foreach (var subBlock in block.Value.SubsequentSteps)
                     {
-                        var newStepTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
+                        var newStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
 
                         if (newStepTemplate == null)
                         {
@@ -158,14 +155,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 
 
                     workflow.CompletedLogicBlocks.Add(block.Key);
-
-                    await _clusterService.AddWriteOperation(new EntityWriteOperation<Workflow>()
-                    {
-                        Data = workflow,
-                        WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                        User = SystemUsers.QUEUE_MANAGER
-                    });
+                    await _entitiesRepository.Update(workflow);
                 }
                 catch (Exception e)
                 {

@@ -14,10 +14,5 @@ namespace Cindi.Domain.Entities.ExecutionTemplates
         public string ExecutionTemplateType { get; set; }
         public bool IsDisabled { get; set; }
         public string Description { get; set; }
-
-        public ExecutionTemplate()
-        {
-            ShardType = nameof(ExecutionTemplate);
-        }
     }
 }

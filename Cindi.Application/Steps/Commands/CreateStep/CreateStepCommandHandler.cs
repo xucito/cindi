@@ -10,8 +10,8 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+
+
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -25,13 +25,13 @@ namespace Cindi.Application.Steps.Commands.CreateStep
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
         private readonly IStateMachine _stateMachine;
-        private readonly IClusterService _clusterService;
+        private readonly IEntitiesRepository _entitiesRepository;
         public CreateStepCommandHandler(
-            IClusterStateService service,
-            IClusterService clusterService)
+            IStateMachine stateMachine,
+            IEntitiesRepository entitiesRepository)
         {
-            _clusterService = clusterService;
-            _stateMachine = service;
+            _entitiesRepository = entitiesRepository;
+            _stateMachine = stateMachine;
         }
 
         public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)
@@ -40,30 +40,23 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             //stopwatch.Start();
             var startDate = DateTime.Now;
 
-            var resolvedTemplate = await _clusterService.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
+            var resolvedTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
 
             if (resolvedTemplate == null)
             {
                 throw new StepTemplateNotFoundException("Step template " + request.StepTemplateId + " not found.");
             }
 
-            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId, 
-                request.CreatedBy, 
-                request.Name, request.Description, 
-                request.Inputs, 
-                request.Tests, request.WorkflowId, 
-                ClusterStateService.GetEncryptionKey(),
+            var newStep = resolvedTemplate.GenerateStep(request.StepTemplateId,
+                request.CreatedBy,
+                request.Name, request.Description,
+                request.Inputs,
+                request.Tests, request.WorkflowId,
+                _stateMachine.EncryptionKey,
                 request.ExecutionTemplateId,
                 request.ExecutionScheduleId);
 
-
-            await _clusterService.AddWriteOperation(new EntityWriteOperation<Step>()
-            {
-                Data = newStep,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                User = request.CreatedBy
-            });
+            await _entitiesRepository.Insert(newStep);
 
 
             //stopwatch.Stop();
