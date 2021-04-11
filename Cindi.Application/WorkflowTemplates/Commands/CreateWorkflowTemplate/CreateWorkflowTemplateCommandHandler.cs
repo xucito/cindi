@@ -30,18 +30,16 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
     public class CreateWorkflowTemplateCommandHandler : IRequestHandler<CreateWorkflowTemplateCommand, CommandResult>
     {
-        private ILogger<CreateWorkflowTemplateCommandHandler> Logger; private readonly IEntitiesRepository _entitiesRepository;
-        private readonly IStateMachine _stateMachine;
+        private ILogger<CreateWorkflowTemplateCommandHandler> Logger; 
+        private readonly IEntitiesRepository _entitiesRepository;
 
         public CreateWorkflowTemplateCommandHandler(
             ILogger<CreateWorkflowTemplateCommandHandler> logger,
-                IEntitiesRepository entitiesRepository,
-            IStateMachine stateMachine
+                IEntitiesRepository entitiesRepository
             )
         {
             Logger = logger;
             _entitiesRepository = entitiesRepository;
-            _stateMachine = stateMachine;
         }
 
         public async Task<CommandResult> Handle(CreateWorkflowTemplateCommand request, CancellationToken cancellationToken)

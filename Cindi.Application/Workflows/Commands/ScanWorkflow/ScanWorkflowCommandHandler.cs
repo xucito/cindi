@@ -39,11 +39,10 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
         private IEntitiesRepository _entitiesRepository;
 
         public ScanWorkflowCommandHandler(
-            IStateMachine _stateMachine,
+            IStateMachine stateMachine,
             ILogger<ScanWorkflowCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            IStateMachine stateMachine,
             IEntitiesRepository entitiesRepository
             )
         {
@@ -51,10 +50,6 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
             _stateMachine = stateMachine;
             Logger = logger;
             _option = options.CurrentValue;
-            options.OnChange((change) =>
-            {
-                _option = change;
-            });
             _mediator = mediator;
         }
 

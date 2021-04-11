@@ -69,7 +69,9 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
                 ExecutionTemplateName = request.ExecutionTemplateName,
                 Description = request.Description,
                 Schedule = request.Schedule,
-                NextRun = SchedulerUtility.NextOccurence(request.Schedule)
+                NextRun = SchedulerUtility.NextOccurence(request.Schedule),
+                EnableConcurrent = request.EnableConcurrent,
+                TimeoutMs = request.TimeoutMs
             };
 
             await _entitiesRepository.Insert(executionSchedule);

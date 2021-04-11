@@ -40,10 +40,6 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
             _entitiesRepository = entitiesRepository;
             _stateMachine = stateMachine;
             Logger = logger;
-            options.OnChange((change) =>
-            {
-                _option = change;
-            });
         }
 
 

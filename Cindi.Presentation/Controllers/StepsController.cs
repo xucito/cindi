@@ -46,10 +46,6 @@ namespace Cindi.Presentation.Controllers
             IEntitiesRepository entitiesRepository) : base(logger.CreateLogger<StepsController>())
         {
             _option = options.CurrentValue;
-            options.OnChange((change) =>
-            {
-                _option = change;
-            });
             _entitiesRepository = entitiesRepository;
         }
 

@@ -71,6 +71,18 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                 schedule.Description = request.Description;
             }
 
+
+            if (request.EnableConcurrent != null && schedule.EnableConcurrent != request.EnableConcurrent)
+            {
+                schedule.EnableConcurrent = request.EnableConcurrent.Value;
+            }
+
+
+            if (request.TimeoutMs != null && schedule.TimeoutMs != request.TimeoutMs)
+            {
+                schedule.TimeoutMs = request.TimeoutMs.Value;
+            }
+
             await _entitiesRepository.Update(schedule);
 
             stopwatch.Stop();

@@ -43,13 +43,15 @@ namespace Cindi.Application.Services
                 {
                     while (true)
                     {
-                        IEnumerable<MetricTick> items;
-                        items = _ticks.DequeueChunk(100).Select(i =>
+                        List<MetricTick> items = _ticks.DequeueChunk(100).Select(i =>
+                       {
+                           i.Id = Guid.NewGuid();
+                           return i;
+                       }).ToList();
+                        if (items.Count() > 0)
                         {
-                            i.Id = Guid.NewGuid();
-                            return i;
-                        });
-                        await _entitiesRepository.InsertMany(items);
+                            await _entitiesRepository.InsertMany(items);
+                        }
                         var startTime = DateTime.Now;
                         _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
                         await Task.Delay(1000);
@@ -73,7 +75,7 @@ namespace Cindi.Application.Services
         public async void InitializeMetricStore()
         {
             var metrics = (await _entitiesRepository.GetAsync<Metric>(null, null, null, 100)).Select(m => m.MetricId);
-            await _entitiesRepository.InsertMany(_metricLibrary.Metrics.Where(m => !metrics.Contains(m.Key)));
+            await _entitiesRepository.InsertMany(_metricLibrary.Metrics.Where(m => !metrics.Contains(m.Key)).Select(_ => _.Value));
         }
 
     }

@@ -43,10 +43,10 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             _stateMachine = stateMachine;
             Logger = logger;
             _option = options.CurrentValue;
-            options.OnChange((change) =>
+            /*options.OnChange((change) =>
             {
                 _option = change;
-            });
+            });*/
             _mediator = mediator;
         }
 

@@ -39,31 +39,34 @@ namespace Cindi.Application.Tests.Steps.Commands
     public class CompleteStepCommandHandler_tests
     {
         Mock<IServiceScopeFactory> serviceScopeFactory = new Mock<IServiceScopeFactory>();
-
-        Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
-
-        Mock<IClusterRequestHandler> _node;
         Mock<IOptionsMonitor<CindiClusterOptions>> _optionsMonitor;
-
-
-        public CompleteStepCommandHandler_tests()
-        {
-
-            ClusterStateService.GetEncryptionKey = () =>
-            {
-                return "GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY";
-            };
-            _node = Utility.GetMockConsensusCoreNode();
-
-
-            _optionsMonitor = new Mock<IOptionsMonitor<CindiClusterOptions>>();
-            _optionsMonitor.Setup(o => o.CurrentValue).Returns(cindiClusterOptions);
-        }
+        Mock<IEntitiesRepository> _entitiesRepositoryMock = new Mock<IEntitiesRepository>();
+        Mock<IAssignmentCache> _assignmentCacheMock = new Mock<IAssignmentCache>();
+        Mock<IStateMachine> _stateMachineMock = new Mock<IStateMachine>();
 
         static CindiClusterOptions cindiClusterOptions = new CindiClusterOptions()
         {
             DefaultSuspensionTimeMs = 0
         };
+
+        public CompleteStepCommandHandler_tests()
+        {
+            _stateMachineMock.Setup(er => er.EncryptionKey).Returns("GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY");
+
+            _stateMachineMock.Setup(cm => cm.GetSettings).Returns(new ClusterSettings()
+            {
+            });
+
+            _stateMachineMock.Setup(cm => cm.GetState()).Returns(new CindiClusterState()
+            {
+            });
+
+            _optionsMonitor = new Mock<IOptionsMonitor<CindiClusterOptions>>();
+            _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CindiClusterOptions()
+            {
+                DefaultSuspensionTimeMs = 0
+            });
+        }
 
         [Fact]
         public async void CompleteStepWithWorkflow()
@@ -74,16 +77,14 @@ namespace Cindi.Application.Tests.Steps.Commands
             var TestStep = FibonacciSampleData.Step;
             TestStep.WorkflowId = TestWorkflow.Id;
 
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.WorkflowTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Workflow>(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(TestWorkflow));
-            clusterService.Setup(sr => sr.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() { TestStep }));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<WorkflowTemplate>(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.WorkflowTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<Workflow>(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(TestWorkflow));
+            _entitiesRepositoryMock.Setup(sr => sr.GetAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>(), null, null, 10, 0)).Returns(Task.FromResult((IEnumerable<Step>)new List<Step>() { TestStep }));
 
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
-            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
 
             Mock<IMediator> mediator = new Mock<IMediator>();
 
@@ -106,17 +107,16 @@ namespace Cindi.Application.Tests.Steps.Commands
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
 
-            clusterService.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
+            _entitiesRepositoryMock.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
-            Mock<IClusterStateService> service = new Mock<IClusterStateService>();
-            service.Setup(m => m.IsLogicBlockLocked(It.IsAny<Guid>(), It.IsAny<string>())).Returns(false);
-            service.Setup(m => m.LockLogicBlock(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(Task.FromResult(1));
-            service.Setup(m => m.WasLockObtained(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(true);
+            _stateMachineMock.Setup(m => m.IsLogicBlockLocked(It.IsAny<Guid>(), It.IsAny<string>())).Returns(false);
+            _stateMachineMock.Setup(m => m.LockLogicBlock(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).Returns(Task.FromResult(true));
+            _stateMachineMock.Setup(m => m.IsEntityLocked(It.IsAny<Guid>())).Returns(true);
 
-            var handler = new CompleteStepCommandHandler(service.Object, mockLogger.Object, _optionsMonitor.Object, clusterService.Object, mediator.Object);
+            var handler = new CompleteStepCommandHandler(mockLogger.Object, _optionsMonitor.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, mediator.Object);
 
             Assert.Equal(TestStep.Id.ToString(), (await handler.Handle(new CompleteStepCommand()
             {
@@ -150,10 +150,8 @@ namespace Cindi.Application.Tests.Steps.Commands
         public async void CompleteStepWithNoWorkflow()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
-            clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
             Mock<IMediator> mediator = new Mock<IMediator>();
@@ -176,18 +174,15 @@ namespace Cindi.Application.Tests.Steps.Commands
                     }
                 }));
 
-            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
 
-            clusterService.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
+            _entitiesRepositoryMock.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
-            Mock<IClusterStateService> service = new Mock<IClusterStateService>();
-
-            var handler = new CompleteStepCommandHandler(service.Object, mockLogger.Object, _optionsMonitor.Object, clusterService.Object, mediator.Object);
+            var handler = new CompleteStepCommandHandler(mockLogger.Object, _optionsMonitor.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, mediator.Object);
 
             var completeResult = await handler.Handle(new CompleteStepCommand()
             {
@@ -207,32 +202,26 @@ namespace Cindi.Application.Tests.Steps.Commands
         [Fact]
         public async void EncryptOutputOnCompletion()
         {
+            var _stateMachine = _stateMachineMock.Object;
             var stepTemplate = SecretSampleData.StepTemplate;
             var testPhrase = "This is a test";
             var TestStep = SecretSampleData.StepTemplate.GenerateStep(stepTemplate.ReferenceId, "", "", "", new Dictionary<string, object>() {
                 {"secret", testPhrase}
             }, null, null, _stateMachine.EncryptionKey);
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(stepTemplate));
-            clusterService.Setup(n => n.Handle(It.IsAny<AddShardWriteOperation>())).Returns(Task.FromResult(new AddShardWriteOperationResponse() { IsSuccessful = true }));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(stepTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step, bool>>>())).Returns(Task.FromResult(TestStep));
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
             Mock<IMediator> mediator = new Mock<IMediator>();
-
-            var mockStateLogger = new Mock<ILogger<ClusterStateService>>();
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
 
-            clusterService.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
+            _entitiesRepositoryMock.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));
 
-            var node = Utility.GetMockConsensusCoreNode();
-            Mock<IClusterStateService> service = new Mock<IClusterStateService>();
-
-            var handler = new CompleteStepCommandHandler(service.Object, mockLogger.Object, _optionsMonitor.Object, clusterService.Object, mediator.Object);
+            var handler = new CompleteStepCommandHandler(mockLogger.Object, _optionsMonitor.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, mediator.Object);
 
             var generatedAESKey = SecurityUtility.RandomString(32);
 
@@ -275,9 +264,9 @@ namespace Cindi.Application.Tests.Steps.Commands
             
             
             
-           clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+           _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             stepsRepository.Setup(s => s.InsertStepAsync(It.IsAny<Step>())).Returns(Task.FromResult(TestStep));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step,bool>>>())).Returns(Task.FromResult(TestStep));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync<Step>(It.IsAny<Expression<Func<Step,bool>>>())).Returns(Task.FromResult(TestStep));
 
             var mockLogger = new Mock<ILogger<CompleteStepCommandHandler>>();
 
@@ -305,7 +294,7 @@ namespace Cindi.Application.Tests.Steps.Commands
             var testKey = SecurityUtility.GenerateRSAKeyPair();
 
             
-            clusterService.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
+            _entitiesRepositoryMock.Setup(kr => kr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<BotKey, bool>>>())).Returns(Task.FromResult(new BotKey()
             {
                 PublicEncryptionKey = testKey.PublicKey
             }));

@@ -35,10 +35,6 @@ namespace Cindi.Application.Steps.Commands.CancelStep
             _entitiesRepository = entitiesRepository;
             Logger = logger;
             _stateMachine = stateMachine;
-            options.OnChange((change) =>
-            {
-                _option = change;
-            });
         }
 
 

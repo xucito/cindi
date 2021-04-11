@@ -21,10 +21,6 @@ namespace Cindi.Presentation.Controllers
             IOptionsMonitor<CindiClusterOptions> options) : base(logger.CreateLogger<StepsController>())
         {
             _option = options.CurrentValue;
-            options.OnChange((change) =>
-            {
-                _option = change;
-            });
         }
 
         // GET: api/<controller>

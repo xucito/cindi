@@ -12,6 +12,14 @@ namespace Cindi.Domain.Entities.ExecutionSchedule
         public string Description { get; set; }
         public string ExecutionTemplateName {get;set;}
         public bool IsDisabled { get; set; }
+        /// <summary>
+        /// Enable steps to be processed in parrallel
+        /// </summary>
+        public bool EnableConcurrent { get; set; }
+        /// <summary>
+        /// When to consider steps timed out for the execution schedule
+        /// </summary>
+        public int TimeoutMs { get; set; }
         public DateTime NextRun { get; set; }
         /// <summary>
         /// Cron based scheduling

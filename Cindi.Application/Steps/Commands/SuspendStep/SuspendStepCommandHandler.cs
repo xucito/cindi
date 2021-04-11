@@ -35,10 +35,6 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             _entitiesRepository = entitiesRepository;
             Logger = logger;
             _stateMachine = stateMachine;
-            options.OnChange((change) =>
-            {
-                _option = change;
-            });
         }
 
 
@@ -80,6 +76,8 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                     step.AssignedTo = null;
 
                     await _entitiesRepository.Update(step);
+
+                    _stateMachine.UnlockEntity<Step>(request.StepId);
                     return new CommandResult()
                     {
                         ElapsedMs = stopwatch.ElapsedMilliseconds,

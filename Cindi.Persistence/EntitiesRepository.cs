@@ -19,6 +19,7 @@ using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Events;
+using Cindi.Domain.Entities;
 
 namespace Cindi.Persistence
 {
@@ -41,17 +42,6 @@ namespace Cindi.Persistence
 
         public void Setup()
         {
-            var mapper = BsonMapper.Global;
-            /*mapper.Entity<NodeStorage<CindiClusterState>>()
-                .Ignore(x => x.CommandsQueue);*/
-            BsonMapper.Global.RegisterType<CindiClusterState>(a =>
-            {
-                return JsonConvert.SerializeObject(a);
-            }, b =>
-            {
-                return JsonConvert.DeserializeObject<CindiClusterState>(b.AsString);
-            });
-
             var user = db.GetCollection<User>(NormalizeCollectionString(typeof(User)));
             user.EnsureIndex(u => u.Username);
             var step = db.GetCollection<Step>(NormalizeCollectionString(typeof(Step)));
@@ -148,6 +138,13 @@ namespace Cindi.Persistence
 
         public async Task<T> Insert<T>(T entity)
         {
+            if (typeof(TrackedEntity).IsAssignableFrom(typeof(T)))
+            {
+                TrackedEntity converted = entity as TrackedEntity;
+                converted.CreatedOn = DateTime.Now;
+                converted.ModifiedOn = DateTime.Now;
+            }
+
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
             collection.Insert(entity);
             return entity;
@@ -155,8 +152,11 @@ namespace Cindi.Persistence
 
         public async Task<T> Update<T>(T entity)
         {
-            //var stopwatch = new Stopwatch();
-            //stopwatch.Start();
+            if (typeof(TrackedEntity).IsAssignableFrom(typeof(T)))
+            {
+                TrackedEntity converted = entity as TrackedEntity;
+                converted.ModifiedOn = DateTime.Now;
+            }
 
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T))); ;
             collection.Update(entity);
@@ -210,6 +210,16 @@ namespace Cindi.Persistence
 
         public Task<bool> InsertMany<T>(IEnumerable<T> entities)
         {
+            if (typeof(TrackedEntity).IsAssignableFrom(typeof(T)))
+            {
+                foreach (var entity in entities)
+                {
+                    TrackedEntity converted = entity as TrackedEntity;
+                    converted.CreatedOn = DateTime.Now;
+                    converted.ModifiedOn = DateTime.Now;
+                }
+            }
+
             var collection = db.GetCollection<T>(NormalizeCollectionString(typeof(T)));
             collection.InsertBulk(entities);
             return Task.FromResult(true);

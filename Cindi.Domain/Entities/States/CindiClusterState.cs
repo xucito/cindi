@@ -9,14 +9,12 @@ namespace Cindi.Domain.Entities.States
 {
     public class CindiClusterState
     {
-        public const string DefaultId = "State";
-        public string Id { get; set; } = DefaultId;
+        public Guid Id { get; set; }
         public string Version { get; set; } = "1.0";
         public string EncryptionKeyHash { get; set; }
         public byte[] EncryptionKeySalt { get; set; }
         public ClusterSettings Settings { get; set; }
         public bool Initialized { get; set; } = false;
-
         public ConcurrentDictionary<string, Lock> Locks = new ConcurrentDictionary<string, Lock>();
     }
 }

@@ -45,7 +45,9 @@ namespace Cindi.Presentation.Controllers
                     Name = command.Name,
                     RunImmediately =  runImmediately.HasValue ? runImmediately.Value : false,
                     ExecutionTemplateName = command.ExecutionTemplateName,
-                    Schedule = command.Schedule
+                    Schedule = command.Schedule,
+                    EnableConcurrent = command.EnableConcurrent,
+                    TimeoutMs = command.TimeoutMs
                 });
 
 
@@ -92,7 +94,9 @@ namespace Cindi.Presentation.Controllers
                 IsDisabled = update.IsDisabled,
                 Schedule = update.Schedule,
                 RunImmediately = runImmediately.HasValue ? runImmediately.Value : false,
-                CreatedBy = ClaimsUtility.GetId(User)
+                CreatedBy = ClaimsUtility.GetId(User),
+                EnableConcurrent = update.EnableConcurrent,
+                TimeoutMs = update.TimeoutMs
             }));
         }
 

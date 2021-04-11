@@ -9,7 +9,9 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cindi.Application.Services.ClusterState
@@ -29,6 +31,8 @@ namespace Cindi.Application.Services.ClusterState
 
         public event EventHandler<StateChangedEventArgs> onStateChange;
 
+        public Thread removeLocks;
+
         protected virtual void OnStateChange()
         {
             var handler = onStateChange;
@@ -41,15 +45,48 @@ namespace Cindi.Application.Services.ClusterState
             }
         }
 
+        public void RemoveExpiredLocks()
+        {
+            if (_state != null && _state.Initialized)
+            {
+                var currentLocks = _state.Locks.ToList();
+                var expiredLocks = currentLocks.Where(cl => DateTime.Now > cl.Value.CreatedOn.AddMilliseconds(cl.Value.LockTimeoutMs));
+                if (expiredLocks.Count() > 0)
+                {
+                    UpdateState((newState) =>
+                    {
+                        foreach (var expiredLock in expiredLocks)
+                        {
+                            newState.Locks.TryRemove(expiredLock.Key, out _);
+                        }
+                        return newState;
+                    });
+                }
+            }
+        }
+
         public StateMachine()
         {
             _state = new CindiClusterState();
             _state.Settings = new ClusterSettings();
         }
 
-        public StateMachine(CindiClusterState loadedState)
+        public void LoadState(CindiClusterState loadedState)
         {
             _state = loadedState;
+        }
+
+        public void Start()
+        {
+            removeLocks = new Thread(async () =>
+            {
+                while (true)
+                {
+                    RemoveExpiredLocks();
+                    await Task.Delay(1000);
+                }
+            });
+            removeLocks.Start();
         }
 
         private CindiClusterState _clonedState
@@ -149,15 +186,6 @@ namespace Cindi.Application.Services.ClusterState
             });
         }
 
-        public void SetClusterName(string newName)
-        {
-            UpdateState((newState) =>
-            {
-                newState.Id = newName;
-                return newState;
-            });
-        }
-
         public async Task<bool> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
             var lockAcquired = false;
@@ -232,6 +260,17 @@ namespace Cindi.Application.Services.ClusterState
         public bool IsEntityLocked(Guid id)
         {
             return _state.Locks.ContainsKey(id.ToString());
+        }
+
+        public bool UnlockEntity<T>(Guid id)
+        {
+            var wasEntityUnlocked = false;
+            UpdateState((newState) =>
+            {
+                wasEntityUnlocked = newState.Locks.TryRemove(id.ToString(), out _);
+                return newState;
+            });
+            return wasEntityUnlocked;
         }
     }
 }

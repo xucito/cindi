@@ -33,14 +33,14 @@ namespace Cindi.Application.Steps.Commands.AssignStep
         private readonly IStateMachine _stateMachine;
         public ILogger<AssignStepCommandHandler> Logger;
         private IMemoryCache _cache;
-        AssignmentCache _assignmentCache;
+        IAssignmentCache _assignmentCache;
         private IEntitiesRepository _entitiesRepository;
 
         public AssignStepCommandHandler(
             IStateMachine stateMachine,
             ILogger<AssignStepCommandHandler> logger,
             IMemoryCache cache,
-            AssignmentCache assignmentCache,
+            IAssignmentCache assignmentCache,
             IEntitiesRepository entitiesRepository
             )
         {

@@ -125,7 +125,7 @@ namespace Cindi.Presentation
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
             services.AddSingleton<IStateMachine, StateMachine>();
-            services.AddSingleton<AssignmentCache>();
+            services.AddSingleton<IAssignmentCache, AssignmentCache>();
 
 
             //Authentication
@@ -225,11 +225,18 @@ namespace Cindi.Presentation
              IStateMachine stateMachine,
              MetricManagementService metricManagementService,
              IEntitiesRepository entitiesRepository,
-             AssignmentCache assignmentCache
+             IAssignmentCache assignmentCache,
+             ClusterMonitorService clusterMonitorService
              )
         {
             BootstrapThread = new Task(() =>
             {
+                var state = entitiesRepository.GetFirstOrDefaultAsync<CindiClusterState>(c => true).GetAwaiter().GetResult();
+                if (state != null)
+                {
+                    stateMachine.LoadState(state);
+                }
+
                 var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
                 var key = Configuration.GetValue<string>("EncryptionKey");
                 if (key != null)
@@ -285,6 +292,7 @@ namespace Cindi.Presentation
                 stateMachine.onStateChange += entitiesRepository.StateChanged;
 
                 assignmentCache.Start();
+                stateMachine.Start();
             });
             BootstrapThread.Start();
 

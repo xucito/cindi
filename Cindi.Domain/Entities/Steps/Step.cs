@@ -23,7 +23,6 @@ namespace Cindi.Domain.Entities.Steps
 {
     public class Step : TrackedEntity
     {
-
         public string Name { get; set; }
         public string Description { get; set; }
 

@@ -11,5 +11,7 @@ namespace Cindi.Presentation.ViewModels
         public string Description { get; set; }
         public string ExecutionTemplateName { get; set; }
         public string[] Schedule { get; set; }
+        public bool EnableConcurrent { get; set; }
+        public int TimeoutMs { get; set; }
     }
 }

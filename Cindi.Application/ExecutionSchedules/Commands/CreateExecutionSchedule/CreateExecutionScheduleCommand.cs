@@ -14,5 +14,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
         public bool RunImmediately { get; set; }
         public string[] Schedule { get; set; }
         public string CreatedBy { get; set; }
+        public bool EnableConcurrent { get; set; }
+        public int TimeoutMs { get; set; }
     }
 }

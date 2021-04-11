@@ -37,6 +37,8 @@ namespace Cindi.Application.Tests.Workflows.Commands
         // Mock<IClusterRequestHandler> _node;
 
         Mock<ILogger<CreateWorkflowCommandHandler>> _mockStateLogger = new Mock<ILogger<CreateWorkflowCommandHandler>>();
+        Mock<IEntitiesRepository> _entitiesRepositoryMock = new Mock<IEntitiesRepository>();
+        Mock<IStateMachine> _stateMachineMock = new Mock<IStateMachine>();
 
         public CreateWorkflowCommandHandler_tests()
         {
@@ -64,10 +66,9 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void ReturnsSuccessfulOnStepCreationFailure()
         {
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
                     new Workflow()
                     {
                         Id = Guid.NewGuid(),
@@ -77,7 +78,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
 
             _mediator.Setup(m => m.Send(It.IsAny<CreateStepCommand>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("FAILED WITH GENERIC ERROR"));
 
-            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, clusterService.Object, _mediator.Object);
+            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, _mediator.Object);
 
             await handler.Handle(new CreateWorkflowCommand()
             {
@@ -91,10 +92,9 @@ namespace Cindi.Application.Tests.Workflows.Commands
         [Fact]
         public async void ConcurrentStartSteps()
         {
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.ConcurrentWorkflowTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<Workflow, bool>>>())).Returns(Task.FromResult(
                 new Workflow()
                 {
                     Id = Guid.NewGuid(),
@@ -102,7 +102,7 @@ namespace Cindi.Application.Tests.Workflows.Commands
                     Inputs = new Dictionary<string, object>()
                 }
             ));
-            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, clusterService.Object, _mediator.Object);
+            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, _mediator.Object);
 
             await handler.Handle(new CreateWorkflowCommand()
             {
@@ -120,10 +120,9 @@ namespace Cindi.Application.Tests.Workflows.Commands
         public async void DetectExtraInput()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
 
-            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, clusterService.Object, _mediator.Object);
+            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, _mediator.Object);
 
             await Assert.ThrowsAsync<InvalidInputsException>(async () => await handler.Handle(new CreateWorkflowCommand()
             {
@@ -140,9 +139,8 @@ namespace Cindi.Application.Tests.Workflows.Commands
         public async void DetectMissingInput()
         {
             FibonacciWorkflowData data = new FibonacciWorkflowData(5);
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
-            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, clusterService.Object, _mediator.Object);
+            _entitiesRepositoryMock.Setup(sr => sr.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<WorkflowTemplate, bool>>>())).Returns(Task.FromResult(data.workflowTemplateWithInputs));
+            var handler = new CreateWorkflowCommandHandler(_mockStateLogger.Object, _entitiesRepositoryMock.Object, _stateMachineMock.Object, _mediator.Object);
 
             await Assert.ThrowsAsync<MissingInputException>(async () => await handler.Handle(new CreateWorkflowCommand()
             {

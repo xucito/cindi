@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Services
 {
-    public class AssignmentCache
+    public class AssignmentCache : IAssignmentCache
     {
         public ConcurrentDictionary<string, Queue<Step>> assignmentCache = new ConcurrentDictionary<string, Queue<Step>>();
         public IEntitiesRepository _entitiesRepository;
@@ -28,7 +28,7 @@ namespace Cindi.Application.Services
             get
             {
                 var totalUnassigned = 0;
-                foreach(var key in assignmentCache)
+                foreach (var key in assignmentCache)
                 {
                     totalUnassigned += key.Value.Count();
                 }
@@ -64,6 +64,10 @@ namespace Cindi.Application.Services
                 }
                 lastRecordTime = steps.Last().CreatedOn;
             }
+            else
+            {
+                await Task.Delay(100);
+            }
             return true;
         }
 
@@ -77,7 +81,7 @@ namespace Cindi.Application.Services
                     return step;
                 }
                 catch (InvalidOperationException e)
-                { 
+                {
                 }
             }
             return null;

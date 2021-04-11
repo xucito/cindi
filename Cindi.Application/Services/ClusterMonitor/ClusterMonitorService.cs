@@ -34,10 +34,10 @@ namespace Cindi.Application.Services.ClusterMonitor
         private IMediator _mediator;
         private IStateMachine _stateMachine;
 
-        Thread checkSuspendedStepsThread;
-        Thread checkScheduledExecutions;
-        Thread getSystemMetrics;
-        Thread dataCleanupThread;
+        Task checkSuspendedStepsThread;
+        Task checkScheduledExecutions;
+        Task getSystemMetrics;
+        Task dataCleanupThread;
         private async Task<double> GetCpuUsageForProcess()
         {
             var startTime = DateTime.UtcNow;
@@ -55,25 +55,17 @@ namespace Cindi.Application.Services.ClusterMonitor
         private ILogger<ClusterMonitorService> _logger;
         private IEntitiesRepository _entitiesRepository;
         private MetricManagementService _metricManagementService;
-        int leaderMonitoringInterval = Timeout.Infinite;
-        int nodeMonitoringInterval = Timeout.Infinite;
-        int lastSecond = 0;
-        // private IDatabaseMetricsCollector _databaseMetricsCollector;
-
-        private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
         private Timer monitoringTimer;
-        AssignmentCache _assigmentCache;
 
         public ClusterMonitorService(
             IServiceProvider sp,
             IEntitiesRepository entitiesRepository,
             MetricManagementService metricManagementService,
             IStateMachine stateMachine,
-            AssignmentCache assigmentCache)
+            IAssignmentCache assigmentCache)
         {
             _stateMachine = stateMachine;
-            _assigmentCache = assigmentCache;
             _metricManagementService = metricManagementService;
             // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
@@ -88,13 +80,13 @@ namespace Cindi.Application.Services.ClusterMonitor
         public void Start()
         {
             monitoringTimer.Change(0, _stateMachine.GetSettings.MetricsIntervalMs);
-            checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
+            checkSuspendedStepsThread = new Task(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();
-            checkScheduledExecutions = new Thread(async () => await CheckScheduledExecutions());
+            checkScheduledExecutions = new Task(async () => await CheckScheduledExecutions());
             checkScheduledExecutions.Start();
-            dataCleanupThread = new Thread(async () => await CleanUpCluster());
+            dataCleanupThread = new Task(async () => await CleanUpCluster());
             dataCleanupThread.Start();
-            getSystemMetrics = new Thread(async () => await GetSystemMetrics());
+            getSystemMetrics = new Task(async () => await GetSystemMetrics());
             getSystemMetrics.Start();
         }
 
@@ -124,14 +116,29 @@ namespace Cindi.Application.Services.ClusterMonitor
                 int cleanedCount = 0;
                 if (_stateMachine.GetSettings != null)
                 {
-                    DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_stateMachine.GetSettings.MetricRetentionPeriod));
-                    await _entitiesRepository.Delete<MetricTick>((s) => s.Date < compare);
+                    try
+                    {
+                        DateTime compare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_stateMachine.GetSettings.MetricRetentionPeriod));
+                        await _entitiesRepository.Delete<MetricTick>((s) => s.Date < compare);
 
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("Failed to clean up metrics with exception " + e.Message + Environment.NewLine + e.StackTrace);
+                    }
                     DateTime stepCompare = DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_stateMachine.GetSettings.StepRetentionPeriod));
-                    await _entitiesRepository.Delete<Step>((s) => s.CreatedOn < stepCompare &&
+
+                    try
+                    {
+                        await _entitiesRepository.Delete<Step>((s) => s.CreatedOn < stepCompare &&
                       s.Status != StepStatuses.Unassigned &&
                       s.Status != StepStatuses.Assigned &&
                       s.Status != StepStatuses.Suspended);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("Failed to clean up steps with exception " + e.Message + Environment.NewLine + e.StackTrace);
+                    }
                 }
 
                 if (rebuildCount % 10 == 0)
@@ -286,18 +293,35 @@ namespace Cindi.Application.Services.ClusterMonitor
                             {
                                 try
                                 {
+                                    var skipRunningStep = false;
+                                    Step step = null;
+                                    if (!es.EnableConcurrent)
+                                    {
+                                        var dateToConsiderFrom = DateTime.UtcNow.AddMilliseconds(-1 * es.TimeoutMs);
+                                        var existingStep = await _entitiesRepository.GetAsync<Step>(s => s.ExecutionScheduleId == es.Id && (s.Status == StepStatuses.Unassigned || (s.Status == StepStatuses.Assigned && s.CreatedOn > dateToConsiderFrom)));
+                                        skipRunningStep = existingStep.Count() > 0;
+                                        step = existingStep.FirstOrDefault();
+                                    }
+
                                     await _mediator.Send(new RecalculateExecutionScheduleCommand()
                                     {
                                         Name = es.Name
                                     });
                                     _logger.LogDebug("Executing schedule " + es.Name + " last run " + es.NextRun.ToString("o") + " current run " + DateTime.Now.ToString("o"));
 
-                                    await _mediator.Send(new ExecuteExecutionTemplateCommand()
+                                    if (!skipRunningStep)
                                     {
-                                        Name = es.ExecutionTemplateName,
-                                        ExecutionScheduleId = es.Id,
-                                        CreatedBy = SystemUsers.SCHEDULE_MANAGER
-                                    });
+                                        await _mediator.Send(new ExecuteExecutionTemplateCommand()
+                                        {
+                                            Name = es.ExecutionTemplateName,
+                                            ExecutionScheduleId = es.Id,
+                                            CreatedBy = SystemUsers.SCHEDULE_MANAGER
+                                        });
+                                    }
+                                    else
+                                    {
+                                        _logger.LogWarning("Should have executed template " + es.ExecutionTemplateName + " for schedule " + es.Name + " however there is an existing step " + step.Id + " running.");
+                                    }
                                 }
                                 catch (Exception e)
                                 {

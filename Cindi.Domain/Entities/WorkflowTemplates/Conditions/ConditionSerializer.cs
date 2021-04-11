@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
@@ -31,7 +32,21 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            JObject jo = new JObject();
+            Type type = value.GetType();
+
+            foreach (PropertyInfo prop in type.GetProperties())
+            {
+                if (prop.CanRead)
+                {
+                    object propVal = prop.GetValue(value, null);
+                    if (propVal != null)
+                    {
+                        jo.Add(prop.Name, JToken.FromObject(propVal, serializer));
+                    }
+                }
+            }
+            jo.WriteTo(writer);
         }
 
         protected Condition Create(Type objectType, Newtonsoft.Json.Linq.JObject jObject)

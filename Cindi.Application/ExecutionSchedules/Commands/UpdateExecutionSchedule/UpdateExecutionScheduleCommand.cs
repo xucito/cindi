@@ -14,5 +14,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
         public string Description { get; set; }
         public string Name { get; set; }
         public string CreatedBy { get; set; }
+        public bool? EnableConcurrent { get; set; }
+        public int? TimeoutMs { get; set; }
     }
 }

@@ -18,5 +18,12 @@ namespace Cindi.Application.Tests.Services
         {
             Assert.True(false);
         }
+
+
+        [Fact]
+        public void SkipExecutionStepIfRunning()
+        {
+            Assert.True(false);
+        }
     }
 }

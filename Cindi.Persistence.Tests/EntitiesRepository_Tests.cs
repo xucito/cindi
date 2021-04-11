@@ -1,8 +1,6 @@
 ﻿using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Users;
-
-using ConsensusCore.Domain.Models;
-using ConsensusCore.Domain.Services;
+using Cindi.Domain.Events;
 using NuGet.Frameworks;
 using System;
 using System.Collections.Generic;
@@ -19,44 +17,21 @@ namespace Cindi.Persistence.Tests
         public EntitiesRepository_Tests()
         {
             Directory.CreateDirectory("db");
-            repository = new EntitiesRepository("db/cindidb_test" + Guid.NewGuid() + ".db");
+            repository = new EntitiesRepository("C:/Users/TNguy/Repositories/xucito/cindi/Cindi.Presentation/db/cindidb_test" + Guid.NewGuid() + ".db");
             repository.Setup();
         }
 
         [Fact]
         public async void SaveAndLoadState()
         {
-            await repository.Insert(new NodeStorage<CindiClusterState>()
+            repository.StateChanged(null, new StateChangedEventArgs()
             {
-                LastSnapshot = new CindiClusterState()
+                NewState = new CindiClusterState()
                 {
-                    Nodes = new System.Collections.Concurrent.ConcurrentDictionary<Guid, ConsensusCore.Domain.Models.NodeInformation>(new Dictionary<Guid, NodeInformation>() {
-                         {
-                            Guid.NewGuid(),
-                            new NodeInformation()
-                        }
-                    })
                 }
             });
 
-            var test = await repository.GetFirstOrDefaultAsync<NodeStorage<CindiClusterState>>(u => u != null);
-            Assert.NotNull(test);
-        }
-
-        [Fact]
-        public async void SaveAndLoadShardWriteOperation()
-        {
-            var id = Guid.NewGuid();
-            await repository.Insert(new ShardWriteOperation()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Data = new User()
-                {
-                    ShardId = id
-                }
-            });;
-
-            var test = await repository.GetAsync<ShardWriteOperation>(swo => swo.Data.ShardId == id);
+            var test = await repository.GetFirstOrDefaultAsync<CindiClusterState>(u => true);
             Assert.NotNull(test);
         }
 
@@ -89,7 +64,7 @@ namespace Cindi.Persistence.Tests
             Assert.NotNull(user);
         }
 
-        [Fact]
+        /*[Fact]
         public async void GetAsyncSort_Test()
         {
             await repository.Insert(new ShardWriteOperation()
@@ -111,7 +86,7 @@ namespace Cindi.Persistence.Tests
             //Test case insensitivity
             swo = await repository.GetAsync<ShardWriteOperation>(_ => true, null, "pOs:-1");
             Assert.Equal(2, swo.First().Pos);
-        }
+        }*/
 
         [Fact]
         public async void GetFirstOrDefaultAsync()
@@ -162,6 +137,30 @@ namespace Cindi.Persistence.Tests
 
             var user = await repository.GetFirstOrDefaultAsync<User>(u => u.Id == id);
             Assert.Null(user);
+        }
+
+
+        [Fact]
+        public async void SaveAndLoadState_Test()
+        {
+            var id = Guid.NewGuid();
+            repository.StateChanged(null, new StateChangedEventArgs()
+            {
+                NewState = new CindiClusterState()
+                {
+                    Id = Guid.NewGuid()
+                }
+            }); 
+
+            Assert.NotNull(await repository.GetFirstOrDefaultAsync<CindiClusterState>(_ => true));
+
+            repository.StateChanged(null, new StateChangedEventArgs()
+            {
+                NewState = new CindiClusterState() { 
+                    Id = Guid.NewGuid()
+                }
+            });
+            Assert.NotNull(await repository.GetFirstOrDefaultAsync<CindiClusterState>(_ => true));
         }
     }
 }

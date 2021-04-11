@@ -29,7 +29,7 @@ namespace Cindi.Application.Cluster.Commands.SetEncryptionKey
 
             return new CommandResult()
             {
-                ObjectRefId = _stateMachine.GetState().Id,
+                ObjectRefId = _stateMachine.GetState().Id.ToString(),
                 Type = CommandResultTypes.Update,
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             };

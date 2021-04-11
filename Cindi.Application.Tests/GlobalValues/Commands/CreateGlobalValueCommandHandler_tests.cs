@@ -4,7 +4,6 @@ using Cindi.Application.Interfaces;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.GlobalValues;
-using ConsensusCore.Domain.RPCs.Raft;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -18,7 +17,8 @@ namespace Cindi.Application.Tests.GlobalValues.Commands
 {
     public class CreateGlobalValueCommandHandler_tests
     {
-        Mock<IClusterService> clusterService = new Mock<IClusterService>();
+        Mock<IEntitiesRepository> _entitiesRepositoryMock = new Mock<IEntitiesRepository>();
+        Mock<IStateMachine> _stateMachineMock = new Mock<IStateMachine>();
 
 
         public CreateGlobalValueCommandHandler_tests()
@@ -28,17 +28,12 @@ namespace Cindi.Application.Tests.GlobalValues.Commands
         [Fact]
         public async void DetectDuplicateGlobalValueBasedOnName()
         {
-            clusterService.Setup(cs => cs.Handle(It.Is<ExecuteCommands>(c => true))).Returns(Task.FromResult(new ExecuteCommandsResponse()
-            {
-                IsSuccessful = true
-            }));
-
-            clusterService.Setup(cs => cs.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<GlobalValue, bool>>>())).Returns(Task.FromResult(new GlobalValue()
+            _entitiesRepositoryMock.Setup(cs => cs.GetFirstOrDefaultAsync(It.IsAny<Expression<Func<GlobalValue, bool>>>())).Returns(Task.FromResult(new GlobalValue()
             {
 
             }));
 
-            var handler = new CreateGlobalValueCommandHandler(clusterService.Object);
+            var handler = new CreateGlobalValueCommandHandler(_entitiesRepositoryMock.Object, _stateMachineMock.Object);
             await Assert.ThrowsAsync<DuplicateGlobalValueException>(async () =>
             {
                 await handler.Handle(new CreateGlobalValueCommand()

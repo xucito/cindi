@@ -26,28 +26,30 @@ namespace Cindi.Application.Tests.StepTemplates
     {
         Mock<IServiceScopeFactory> serviceScopeFactory = new Mock<IServiceScopeFactory>();
 
-        Mock<IClusterStateService> clusterMoq = new Mock<IClusterStateService>();
-
-        Mock<IClusterRequestHandler> _node;
+        Mock<IEntitiesRepository> _entitiesRepositoryMock = new Mock<IEntitiesRepository>();
+        Mock<IAssignmentCache> _assignmentCacheMock = new Mock<IAssignmentCache>();
+        Mock<IStateMachine> _stateMachineMock = new Mock<IStateMachine>();
 
         public CreateStepTemplateCommandHandler_Tests()
         {
+            _stateMachineMock.Setup(er => er.EncryptionKey).Returns("GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY");
 
-            ClusterStateService.GetEncryptionKey = () =>
+            _stateMachineMock.Setup(cm => cm.GetSettings).Returns(new ClusterSettings()
             {
-                return "GCSPHNKWXHPNELFEACOFIWGGUCVWZLUY";
-            };
-            _node = Utility.GetMockConsensusCoreNode();
+            });
+
+            _stateMachineMock.Setup(cm => cm.GetState()).Returns(new CindiClusterState()
+            {
+            });
         }
 
         [Fact]
         public async void DetectDuplicateStepTemplates()
         {
             var TestStep = FibonacciSampleData.Step;
-            Mock<IClusterService> clusterService = new Mock<IClusterService>();
-            clusterService.Setup(st => st.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
+            _entitiesRepositoryMock.Setup(st => st.GetFirstOrDefaultAsync<StepTemplate>(It.IsAny<Expression<Func<StepTemplate, bool>>>())).Returns(Task.FromResult(FibonacciSampleData.StepTemplate));
             var mockStateLogger = new Mock<ILogger<CreateStepTemplateCommandHandler>>();
-            var handler = new CreateStepTemplateCommandHandler(clusterService.Object, _node.Object, mockStateLogger.Object);
+            var handler = new CreateStepTemplateCommandHandler(_entitiesRepositoryMock.Object, _stateMachineMock.Object, mockStateLogger.Object);
 
             var result = await handler.Handle(new CreateStepTemplateCommand()
             {
