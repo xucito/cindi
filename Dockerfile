@@ -1,8 +1,10 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 WORKDIR /app
 
+USER root
+
 # Configure mongodb
-RUN echo nameserver 8.8.8.8 > /etc/resolv.conf
+#RUN echo nameserver 8.8.8.8 > /etc/resolv.conf
 
 RUN apt update && apt install gnupg -y
 
