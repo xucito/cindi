@@ -1,7 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
-using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
@@ -9,12 +8,9 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,17 +22,14 @@ namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         public CreateStepCommandHandler(
-            IEntitiesRepository entitiesRepository,
             IClusterStateService service, 
-            IClusterRequestHandler node)
+            ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult<Step>> Handle(CreateStepCommand request, CancellationToken cancellationToken)
@@ -44,7 +37,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var resolvedTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
+            var resolvedTemplate = await  _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
 
             if (resolvedTemplate == null)
             {
@@ -60,16 +53,12 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                 request.ExecutionTemplateId,
                 request.ExecutionScheduleId);
 
-           /* var createdStepId = await _entitiesRepository.InsertStepAsync(
-                newStep
-                );*/
+            /* var createdStepId = await _entitiesRepository.InsertStepAsync(
+                 newStep
+                 );*/
 
-            await _node.Handle(new AddShardWriteOperation()
-            {
-                Data = newStep,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-            });
+            _context.Add(newStep);
+            await _context.SaveChangesAsync();
 
 
             stopwatch.Stop();

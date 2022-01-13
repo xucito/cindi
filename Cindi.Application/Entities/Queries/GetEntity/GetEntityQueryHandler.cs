@@ -1,7 +1,9 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using ConsensusCore.Domain.BaseClasses;
+using Cindi.Domain.Entities;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,20 +13,21 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Entities.Queries.GetEntity
 {
-    public class GetEntityQueryHandler<T> : IRequestHandler<GetEntityQuery<T>, QueryResult<T>> where T: ShardData
+    public class GetEntityQueryHandler<T> : IRequestHandler<GetEntityQuery<T>, QueryResult<T>> where T: TrackedEntity
     {
-        private readonly IEntitiesRepository _entitiesRepository;
+        private readonly ApplicationDbContext _context;
 
-        public GetEntityQueryHandler(IEntitiesRepository entitiesRepository)
+        public GetEntityQueryHandler(ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
+            _context = context;
 
         }
         public async Task<QueryResult<T>> Handle(GetEntityQuery<T> request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var result = await _entitiesRepository.GetFirstOrDefaultAsync<T>(request.Expression);
+            DbSet<T> set = _context.Set<T>();
+            var result = await set.FirstOrDefaultAsync<T>(request.Expression);
 
             stopwatch.Stop();
             return new QueryResult<T>()

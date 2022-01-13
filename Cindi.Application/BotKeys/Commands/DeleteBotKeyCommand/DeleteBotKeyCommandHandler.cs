@@ -1,11 +1,9 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
+using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -18,10 +16,10 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
 {
     public class DeleteBotKeyCommandHandler : IRequestHandler<DeleteBotKeyCommand, CommandResult>
     {
-        IClusterRequestHandler _node;
-        public DeleteBotKeyCommandHandler(IClusterRequestHandler node)
+        ApplicationDbContext _context;
+        public DeleteBotKeyCommandHandler(ApplicationDbContext context)
         {
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult> Handle(DeleteBotKeyCommand request, CancellationToken cancellationToken)
@@ -29,22 +27,12 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var botLockResult = await _node.Handle(new RequestDataShard()
-            {
-                Type = "BotKey",
-                ObjectId = request.Id,
-                CreateLock = true
-            });
+            var botKey = await _context.LockObject<BotKey>(request.Id);
 
-            if (botLockResult.IsSuccessful)
+            if (botKey != null)
             {
-                await _node.Handle(new AddShardWriteOperation()
-                {
-                    Data = botLockResult.Data,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Delete,
-                    RemoveLock = true
-                });
+                _context.Remove(botKey);
+                await _context.SaveChangesAsync();
 
                 return new CommandResult()
                 {

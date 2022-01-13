@@ -60,9 +60,6 @@ namespace Cindi.Presentation.Controllers
                 Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<Workflow, bool>>> {
                    status == null ? null : ExpressionBuilder.BuildPredicate<Workflow>("Status", OperatorComparer.Equals, status)
                 }),
-                Exclusions = new List<Expression<Func<Workflow, object>>>{
-                    (s) => s.Journal
-                },
                 Sort = sort
             }));
         }
@@ -85,10 +82,7 @@ namespace Cindi.Presentation.Controllers
             {
                 Page = 0,
                 Size = 1000,
-                Expression = (s) => s.WorkflowId == id,
-                Exclusions = new List<Expression<Func<Step, object>>>{
-                    (s) => s.Journal
-                }
+                Expression = (s) => s.WorkflowId == id
             }));
         }
 

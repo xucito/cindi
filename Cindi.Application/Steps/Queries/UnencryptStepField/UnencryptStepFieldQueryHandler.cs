@@ -8,7 +8,9 @@ using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,11 +23,11 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
 {
     public class UnencryptStepFieldQueryHandler : IRequestHandler<UnencryptStepFieldQuery, QueryResult<string>>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
+        private ApplicationDbContext _context;
 
-        public UnencryptStepFieldQueryHandler(IEntitiesRepository entitiesRepository)
+        public UnencryptStepFieldQueryHandler(ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
+            _context = context;
         }
 
         public async Task<QueryResult<string>> Handle(UnencryptStepFieldQuery request, CancellationToken cancellationToken)
@@ -37,7 +39,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 throw new InvalidUnencryptionRequestException("No such encryption type " + request.Type);
             }
-            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
+            var step = await _context.Steps.FirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
 
 
             if (step.CreatedBy != request.UserId)
@@ -45,7 +47,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
                 throw new InvalidStepPermissionException("Only the creating user can decrypt the step secret.");
             }
 
-            var stepTemplate = await  _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
+            var stepTemplate = await  _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
 
             //Compare the to lower of inputs, TODO - this is inefficient
             if (!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))

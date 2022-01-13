@@ -1,18 +1,14 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Options;
 using Cindi.Application.Results;
-using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -26,18 +22,18 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
 {
     public class UnassignStepCommandHandler : IRequestHandler<UnassignStepCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
+       
         public ILogger<UnassignStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
 
-        public UnassignStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public UnassignStepCommandHandler(
             ILogger<UnassignStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node)
+             ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            
+            _context = context;
             Logger = logger;
             options.OnChange((change) =>
             {
@@ -52,7 +48,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
             stopwatch.Start();
             
             Step step;
-            if ((step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => (e.Status == StepStatuses.Suspended || e.Status == StepStatuses.Assigned) && e.Id == request.StepId)) == null)
+            if ((step = await _context.Steps.FirstOrDefaultAsync(e => (e.Status == StepStatuses.Suspended || e.Status == StepStatuses.Assigned) && e.Id == request.StepId)) == null)
             {
                 Logger.LogWarning("Step " + request.StepId + " has a status that cannot be unassigned.");
                 return new CommandResult()
@@ -63,17 +59,10 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                 };
             }
 
-            var stepLockResult = await _node.Handle(new RequestDataShard()
-            {
-                Type = "Step",
-                ObjectId = request.StepId,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
+            step = await _context.LockObject(step);
 
-            if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
+            if (step != null)
             {
-                step = (Step)stepLockResult.Data;
                 if (step.Status != StepStatuses.Suspended && step.Status != StepStatuses.Assigned)
                 {
                     Logger.LogWarning("Step " + request.StepId + " has status " + step.Status + ". Only suspended steps can be unassigned.");
@@ -85,38 +74,14 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                     };
                 }
 
-                step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    CreatedBy = request.CreatedBy,
-                    Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = StepStatuses.Unassigned,
-                            },
-                            new Update()
-                            {
-                                FieldName = "assignedto",
-                                Type = UpdateType.Override,
-                                Value = null
-                            }
+                step.Status = StepStatuses.Unassigned;
 
-                        }
-                });
+                step.AssignedTo = null;
 
-                var result = await _node.Handle(new AddShardWriteOperation()
-                {
-                    Data = step,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    RemoveLock = true
-                });
+                _context.Update(step);
 
 
-                if (result.IsSuccessful)
+                if (await _context.SaveChangesAsync() > 0)
                 {
                     return new CommandResult()
                     {

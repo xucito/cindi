@@ -5,8 +5,9 @@ using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Workflows.Commands.CreateWorkflow;
 using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Enums;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -20,26 +21,24 @@ namespace Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate
         public string Name { get; set; }
         public string CreatedBy { get; set; }
 
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private IMediator _mediator;
 
-        public ExecuteExecutionTemplateCommandHandler(IEntitiesRepository entitiesRepository,
+        public ExecuteExecutionTemplateCommandHandler(
             IClusterStateService service,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             IMediator mediator)
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
+            _context = context;
             _mediator = mediator;
         }
 
 
         public async Task<CommandResult> Handle(ExecuteExecutionTemplateCommand request, CancellationToken cancellationToken)
         {
-            var executionTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(et => et.Name == request.Name);
+            var executionTemplate = await _context.ExecutionTemplates.FirstOrDefaultAsync<ExecutionTemplate>(et => et.Name == request.Name);
 
             if (executionTemplate == null)
             {

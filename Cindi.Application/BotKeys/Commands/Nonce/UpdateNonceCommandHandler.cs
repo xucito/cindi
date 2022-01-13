@@ -4,12 +4,7 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.BotKeys;
-using ConsensusCore.Domain.Enums;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -23,12 +18,12 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
     public class UpdateNonceCommandHandler : IRequestHandler<UpdateNonceCommand, CommandResult>
     {
         IMediator _mediator;
-        IClusterRequestHandler _node;
+        ApplicationDbContext _context;
 
-        public UpdateNonceCommandHandler(IMediator mediator, IClusterRequestHandler node)
+        public UpdateNonceCommandHandler(IMediator mediator, ApplicationDbContext context)
         {
             _mediator = mediator;
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult> Handle(UpdateNonceCommand request, CancellationToken cancellationToken)
@@ -48,12 +43,8 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             key.Nonce = request.Nonce;
 
-            await _node.Handle(new AddShardWriteOperation()
-            {
-                WaitForSafeWrite = true,
-                Data = key,
-                Operation = ShardOperationOptions.Update,
-            });
+            _context.Update(key);
+            await _context.SaveChangesAsync();
 
            // await _botKeyRepository.UpdateBotKey(key);
 

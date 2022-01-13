@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Cindi.Application.Entities.Queries
 {
-    public class GetEntitiesQuery<T> : IRequest<QueryResult<List<T>>>
+    public class GetEntitiesQuery<T> : IRequest<QueryResult<List<T>>> where T : class
     {
         public Type Entity { get; set; }
         public int Page { get; set; }

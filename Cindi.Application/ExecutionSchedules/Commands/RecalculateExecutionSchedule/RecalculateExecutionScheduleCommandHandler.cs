@@ -5,9 +5,9 @@ using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,19 +19,17 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
 {
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<RecalculateExecutionScheduleCommand, CommandResult>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private IMediator _mediator;
 
-        public UpdateExecutionScheduleCommandHandler(IEntitiesRepository entitiesRepository,
+        public UpdateExecutionScheduleCommandHandler(
             IClusterStateService service,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             IMediator mediator)
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
+            _context = context;
             _mediator = mediator;
         }
 
@@ -40,48 +38,25 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
+            ExecutionSchedule schedule = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
 
             if (schedule == null)
             {
                 throw new InvalidExecutionScheduleException("Execution Schedule with name " + request.Name + " is invalid.");
             }
 
-            var executionScheduleLock = await _node.Handle(new RequestDataShard()
-            {
-                Type = schedule.ShardType,
-                ObjectId = schedule.Id,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
+            var appliedLock = await _context.LockObject(schedule);
 
 
             ExecutionSchedule existingValue;
 
-            if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked)
+            if (appliedLock != null)
             {
-                existingValue = (ExecutionSchedule)executionScheduleLock.Data;
-                existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "nextrun",
-                                Value = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow)
-                            }
-                        }
-                });
-
-                var result = await _node.Handle(new AddShardWriteOperation()
-                {
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    WaitForSafeWrite = true,
-                    Data = existingValue,
-                    RemoveLock = true
-                });
+                existingValue = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
+                existingValue.NextRun = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow);
+                existingValue.Unlock();
+                _context.Update(existingValue);
+                await _context.SaveChangesAsync();
             }
 
             stopwatch.Stop();

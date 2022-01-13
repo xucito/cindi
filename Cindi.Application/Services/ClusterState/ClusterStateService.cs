@@ -2,18 +2,12 @@
 using Cindi.Application.Exceptions;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Users.Commands.CreateUserCommand;
-using Cindi.Domain.ClusterCommands;
-using Cindi.Domain.ClusterCommands.Enums;
-using Cindi.Domain.ClusterRPC;
+
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.BaseClasses;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Node;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,9 +17,8 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Raft;
-using ConsensusCore.Domain.SystemCommands;
+using Cindi.Persistence.Data;
+using System.Linq;
 
 namespace Cindi.Application.Services.ClusterState
 {
@@ -37,18 +30,16 @@ namespace Cindi.Application.Services.ClusterState
         private Thread _initThread { get; set; }
         public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
-        public IClusterRequestHandler _node;
-        CindiClusterState state { get { return _stateMachine.CurrentState; } }
-        private IStateMachine<CindiClusterState> _stateMachine;
+        public ApplicationDbContext _context;
+        CindiClusterState state { get; set; }
 
         public ClusterStateService(
             ILogger<ClusterStateService> logger,
             IServiceScopeFactory serviceProvider,
-            IClusterRequestHandler node,
-            IStateMachine<CindiClusterState> stateMachine)
+            ApplicationDbContext context)
         {
-            _node = node;
-            _stateMachine = stateMachine;
+            _context = context;
+            state = _context.CindiClusterStates.FirstOrDefault();
             Initialized = state == null ? false : state.Initialized;
 
             _logger = logger;
@@ -102,22 +93,6 @@ namespace Cindi.Application.Services.ClusterState
 
         public async void SetClusterName(string newName)
         {
-            // state.Id = newName;
-            // ForceStateSave();
-            lock (_locker)
-            {
-                _node.Handle(new ExecuteCommands()
-                {
-                    WaitForCommits = true,
-                    Commands = new List<BaseCommand>()
-                {
-                    new UpdateClusterDetails()
-                    {
-                        Id = newName
-                    }
-                }
-                }).GetAwaiter().GetResult();
-            }
         }
 
         public async Task<string> GenerateEncryptionKeyAsync(string key)
@@ -132,19 +107,9 @@ namespace Cindi.Application.Services.ClusterState
 
             lock (_locker)
             {
-                _node.Handle(new ExecuteCommands()
-                {
-                    WaitForCommits = true,
-                    Commands = new List<BaseCommand>()
-                {
-                    new UpdateClusterDetails()
-                    {
-                        EncryptionKeyHash =  SecurityUtility.OneWayHash(passPhrase, salt),
-                        EncryptionKeySalt = salt,
-                        Initialized = true
-                    }
-                }
-                }).GetAwaiter().GetResult();
+                state.EncryptionKeyHash = SecurityUtility.OneWayHash(passPhrase, salt);
+                state.EncryptionKeySalt = salt;
+                state.Initialized = true;
             }
 
             Initialized = true;
@@ -164,7 +129,8 @@ namespace Cindi.Application.Services.ClusterState
 
         public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
-            return (await _node.Handle(new ExecuteCommands()
+            return 1;
+            /*return (await _node.Handle(new ExecuteCommands()
             {
                 Commands = new List<BaseCommand>()
                 {
@@ -176,12 +142,14 @@ namespace Cindi.Application.Services.ClusterState
                     }
                 },
                 WaitForCommits = true
-            })).EntryNo;
+            })).EntryNo;*/
             //state.LockedLogicBlocks.Add(block.LogicBlockId, DateTime.UtcNow);
         }
 
         public async Task<bool> UnlockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
+            return true;
+            /*
             return (await _node.Handle(new ExecuteCommands()
             {
                 Commands = new List<BaseCommand>()
@@ -193,8 +161,7 @@ namespace Cindi.Application.Services.ClusterState
                     }
                 },
                 WaitForCommits = true
-            })).IsSuccessful;
-            //state.LockedLogicBlocks.Remove(logicBlockId);
+            })).IsSuccessful;*/
         }
 
         public CindiClusterState GetState()
@@ -283,21 +250,21 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool WasLockObtained(Guid lockKey, Guid workflowId, string logicBlockId)
         {
-            if (state.Locks.ContainsKey("Workflow:" + workflowId + ":" + logicBlockId) && state.Locks[("Workflow:" + workflowId + ":" + logicBlockId)].LockId == lockKey)
-            {
+            /*if (state.Locks.ContainsKey("Workflow:" + workflowId + ":" + logicBlockId) && state.Locks[("Workflow:" + workflowId + ":" + logicBlockId)].LockId == lockKey)
+            {*/
                 return true;
-            }
-            return false;
+           /* }
+            return false;*/
         }
 
 
         public bool IsLogicBlockLocked(Guid workflowId, string logicBlockId)
         {
-            if (state.Locks.ContainsKey(workflowId + ":" + logicBlockId))
-            {
+            /*if (state.Locks.ContainsKey(workflowId + ":" + logicBlockId))
+            {*/
                 return true;
-            }
-            return false;
+           /* }
+            return false;*/
         }
     }
 }

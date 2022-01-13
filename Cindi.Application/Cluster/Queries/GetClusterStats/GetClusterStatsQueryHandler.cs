@@ -2,10 +2,12 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.Steps;
+using Cindi.Persistence.Data;
 using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,12 +16,12 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
 {
     public class GetClusterStatsQueryHandler : IRequestHandler<GetClusterStatsQuery, QueryResult<ClusterStats>>
     {
-        IEntitiesRepository _entitiesRepository;
+        ApplicationDbContext _context;
 
-        public GetClusterStatsQueryHandler(IEntitiesRepository entitiesRepository)
+        public GetClusterStatsQueryHandler(ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
-        }
+            _context = context;
+    }
         public async Task<QueryResult<ClusterStats>> Handle(GetClusterStatsQuery request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
@@ -28,12 +30,12 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
             {
                 Steps = new StepStats()
                 {
-                    Suspended = _entitiesRepository.Count<Step>(s => s.Status == StepStatuses.Suspended),
-                    Unassigned = _entitiesRepository.Count<Step>(s => s.Status == StepStatuses.Unassigned),
-                    Assigned = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Assigned),
-                    Successful = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Successful),
-                    Warning = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Warning),
-                    Error = _entitiesRepository.Count<Step>(s => s.Status ==StepStatuses.Error),
+                    Suspended = _context.Steps.Count(s => s.Status == StepStatuses.Suspended),
+                    Unassigned = _context.Steps.Count<Step>(s => s.Status == StepStatuses.Unassigned),
+                    Assigned = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Assigned),
+                    Successful = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Successful),
+                    Warning = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Warning),
+                    Error = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Error),
                 }
 
             };

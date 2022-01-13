@@ -1,17 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConsensusCore.Domain" Version="1.0.4.9-alpha" />
-    <PackageReference Include="MongoDB.Driver" Version="2.7.3" />
+    <PackageReference Include="Elasticsearch.Net" Version="7.16.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Include="NEST" Version="7.16.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cindi.Application\Cindi.Application.csproj" />
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
   </ItemGroup>
 

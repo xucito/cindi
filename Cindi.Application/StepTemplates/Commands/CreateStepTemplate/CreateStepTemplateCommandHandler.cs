@@ -5,15 +5,11 @@ using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,14 +22,13 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler( ApplicationDbContext context, ILogger<CreateStepTemplateCommandHandler> logger)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            
+            _context = context;
             Logger = logger;
         }
 
@@ -50,20 +45,19 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 
 
             var newId = Guid.NewGuid();
-            var newStepTemplate = new StepTemplate(
-                newId,
-                request.ReferenceId == null ? request.Name + ":" + request.Version : request.ReferenceId,
-                request.Description,
-                request.AllowDynamicInputs,
-                request.InputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
+            var newStepTemplate = new StepTemplate()
+            {
+                ReferenceId = request.ReferenceId == null ? request.Name + ":" + request.Version : request.ReferenceId,
+                Description = request.Description,
+                AllowDynamicInputs = request.AllowDynamicInputs,
+                InputDefinitions = request.InputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
                 entry => entry.Value),
-                request.OutputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
+                OutputDefinitions = request.OutputDefinitions.ToDictionary(entry => entry.Key.ToLower(),
                 entry => entry.Value),
-                request.CreatedBy,
-                DateTime.UtcNow
-             );
+                CreatedBy = request.CreatedBy
+            };
 
-            var existingStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
+            var existingStepTemplate = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
 
             if (existingStepTemplate == null)
             {
@@ -72,12 +66,8 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                     throw new InvalidStepTemplateException("Only system workflows can start with _");
                 }
 
-                var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
-                {
-                    Data = newStepTemplate,
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-                });
+                _context.Add(newStepTemplate);
+                await _context.SaveChangesAsync();
             }
             else
             {

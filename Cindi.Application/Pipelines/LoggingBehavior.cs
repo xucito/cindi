@@ -18,7 +18,7 @@ using Cindi.Application.Workflows.Commands.CreateWorkflow;
 
 namespace Cindi.Application.Pipelines
 {
-    public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse> where TRequest: IRequest<TResponse>
     {
         public ILogger<PipelineLogger> Logger;
         private const int maxNumberOfResults = 10;

@@ -3,11 +3,9 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,12 +17,10 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
 {
     public class UpdateBotKeyCommandHandler : IRequestHandler<UpdateBotKeyCommand, CommandResult<BotKey>>
     {
-        IClusterRequestHandler _node;
-        IEntitiesRepository _entitiesRepository;
-        public UpdateBotKeyCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
+        ApplicationDbContext _context;
+        public UpdateBotKeyCommandHandler(ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult<BotKey>> Handle(UpdateBotKeyCommand request, CancellationToken cancellationToken)
@@ -32,7 +28,7 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var botKey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.Id);
+            var botKey = await _context.LockObject<BotKey>(request.Id);
 
             var update = false;
 
@@ -48,47 +44,26 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
                 update = true;
             }
 
-            if (update)
+
+            if (botKey != null)
             {
-                var botLockResult = await _node.Handle(new RequestDataShard()
+                if (update)
                 {
-                    Type = "BotKey",
-                    ObjectId = request.Id,
-                    CreateLock = true
-                });
+                    _context.Update(botKey);
+                    await _context.SaveChangesAsync();
 
-                if (botLockResult.IsSuccessful && botLockResult.AppliedLocked)
-                {
-                    if (update)
+                    return new CommandResult<BotKey>()
                     {
-                        var result = await _node.Handle(new AddShardWriteOperation()
-                        {
-                            Data = botKey,
-                            WaitForSafeWrite = true,
-                            Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                            RemoveLock = true
-                        });
-
-                        if (result.IsSuccessful)
-                        {
-                            return new CommandResult<BotKey>()
-                            {
-                                ElapsedMs = stopwatch.ElapsedMilliseconds,
-                                ObjectRefId = request.Id.ToString(),
-                                Type = CommandResultTypes.Update,
-                                Result = botKey
-                            };
-                        }
-                        else
-                        {
-                            throw new FailedClusterOperationException("Failed to apply cluster operation with for botKey " + request.Id);
-                        }
-                    }
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        ObjectRefId = request.Id.ToString(),
+                        Type = CommandResultTypes.Update,
+                        Result = botKey
+                    };
                 }
-                else
-                {
-                    throw new FailedClusterOperationException("Failed to apply cluster operation with for botkey " + botKey.Id);
-                }
+            }
+            else
+            {
+                throw new FailedClusterOperationException("Failed to apply cluster operation with for botkey " + botKey.Id);
             }
 
             return new CommandResult<BotKey>()

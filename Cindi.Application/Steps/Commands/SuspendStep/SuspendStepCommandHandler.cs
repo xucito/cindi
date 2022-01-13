@@ -6,11 +6,7 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,18 +21,16 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
 {
     public class SuspendStepCommandHandler : IRequestHandler<SuspendStepCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
 
-        public SuspendStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public SuspendStepCommandHandler(
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node)
+             ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            _context = context;
             Logger = logger;
             options.OnChange((change) =>
             {
@@ -50,11 +44,11 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Step step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            Step step = await _context.LockObject<Step>(request.StepId);
 
-            if(step == null)
+            if (step == null)
             {
-                throw new Exception("Failed to find step " + step.Id); 
+                throw new Exception("Failed to find step " + step.Id);
             }
 
             if (step.Status == StepStatuses.Suspended)
@@ -67,74 +61,26 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                 };
             }
 
-            var stepLockResult = await _node.Handle(new RequestDataShard()
-            {
-                Type = "Step",
-                ObjectId = request.StepId,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
-
             // Applied the lock successfully
-            if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
+            if (step != null)
             {
-                Logger.LogInformation("Applied lock on step " + request.StepId + " with lock id " + stepLockResult.LockId);
-                step = (Step)stepLockResult.Data;
                 if (step.Status == StepStatuses.Unassigned ||
                     step.Status == StepStatuses.Suspended ||
                     step.Status == StepStatuses.Assigned // You should only be suspending a assigned step if it is being suspended by the bot assigned, check to be done in presentation
                     )
                 {
-                    step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                    step.Status = StepStatuses.Suspended;
+                    step.SuspendedUntil = request.SuspendedUntil;
+                    step.AssignedTo = null;
+                    step.Unlock();
+                    _context.Update(step);
+                    await _context.SaveChangesAsync();
+                    return new CommandResult()
                     {
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = request.CreatedBy,
-                        Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = StepStatuses.Suspended
-                            },
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "suspendeduntil",
-                                Value = request.SuspendedUntil
-                            },
-                            new Update()
-                            {
-                                FieldName = "assignedto",
-                                Type = UpdateType.Override,
-                                Value = null
-                            }
-
-                        }
-                    });
-
-                    var result = await _node.Handle(new AddShardWriteOperation()
-                    {
-                        Data = step,
-                        WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                        RemoveLock = true,
-                        LockId = stepLockResult.LockId.Value
-                    });
-
-                    if (result.IsSuccessful)
-                    {
-                        return new CommandResult()
-                        {
-                            ElapsedMs = stopwatch.ElapsedMilliseconds,
-                            ObjectRefId = step.Id.ToString(),
-                            Type = CommandResultTypes.Update
-                        };
-                    }
-                    else
-                    {
-                        throw new FailedClusterOperationException("Failed to apply cluster operation with for step " + step.Id);
-                    }
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        ObjectRefId = step.Id.ToString(),
+                        Type = CommandResultTypes.Update
+                    };
                 }
                 else
                 {

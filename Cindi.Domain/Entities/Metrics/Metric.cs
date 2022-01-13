@@ -1,17 +1,13 @@
 ﻿using Cindi.Domain.Enums;
-using ConsensusCore.Domain.BaseClasses;
+
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Cindi.Domain.Entities.Metrics
 {
-    public class Metric : ShardData
+    public class Metric: BaseEntity
     {
-        public Metric()
-        {
-            ShardType = nameof(Metric);
-        }
         /// <summary>
         /// Id of this metric
         /// </summary>

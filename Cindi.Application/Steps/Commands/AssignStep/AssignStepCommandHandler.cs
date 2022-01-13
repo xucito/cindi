@@ -4,7 +4,6 @@ using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.GlobalValues;
-using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.StepTemplates;
@@ -12,14 +11,9 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.BaseClasses;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Domain.SystemCommands;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
@@ -34,24 +28,21 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 {
     public class AssignStepCommandHandler : IRequestHandler<AssignStepCommand, CommandResult<Step>>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
         public ILogger<AssignStepCommandHandler> Logger;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private IMemoryCache _cache;
 
         public AssignStepCommandHandler(
-            IEntitiesRepository entitiesRepository,
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             IMemoryCache cache
             )
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = stateService;
             Logger = logger;
-            _node = node;
+            _context = context;
             _cache = cache;
         }
         public async Task<CommandResult<Step>> Handle(AssignStepCommand request, CancellationToken cancellationToken)
@@ -66,13 +57,13 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                 var dateChecked = DateTime.UtcNow;
                 BotKey botkey;
 
-                if(!_cache.TryGetValue(request.BotId, out botkey))
+                if (!_cache.TryGetValue(request.BotId, out botkey))
                 {
                     // Set cache options.
                     var cacheEntryOptions = new MemoryCacheEntryOptions()
                         // Keep in cache for this time, reset time if accessed.
                         .SetSlidingExpiration(TimeSpan.FromSeconds(10));
-                    botkey = await _entitiesRepository.GetFirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+                    botkey = await _context.BotKeys.FirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
                     // Save data in cache.
                     _cache.Set(request.BotId, botkey, cacheEntryOptions);
                 }
@@ -86,30 +77,21 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     };
                 }
 
-                ignoreUnassignedSteps.AddRange(_clusterStateService.GetState().Locks.Where(l => l.Key.Contains("_object")).Select(ol => new Guid(ol.Key.Split(':').Last())));
-
                 do
                 {
-                    unassignedStep = (await _entitiesRepository.GetAsync<Step>(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id), null, "CreatedOn:1", 1, 0)).FirstOrDefault();
+                    unassignedStep = (await _context.Steps.Where(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefaultAsync());
                     if (unassignedStep != null)
                     {
-                        var assigned = await _node.Handle(new RequestDataShard()
-                        {
-                            Type = unassignedStep.ShardType,
-                            ObjectId = unassignedStep.Id,
-                            CreateLock = true,
-                            LockTimeoutMs = 10000
-                        });
+                        unassignedStep = await _context.LockObject(unassignedStep);
                         //Apply a lock on the item
-                        if (assigned != null && assigned.IsSuccessful && assigned.AppliedLocked)
+                        if (unassignedStep != null && unassignedStep.Status == StepStatuses.Unassigned)
                         {
-
                             //Real values to pass to the Microservice
                             Dictionary<string, object> realAssignedValues = new Dictionary<string, object>();
                             //Inputs that have been converted to reference expression
                             Dictionary<string, object> convertedInputs = new Dictionary<string, object>();
 
-                            var template = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
+                            var template = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
                             try
                             {
                                 //This should not throw a error externally, the server should loop to the next one and log a error
@@ -133,7 +115,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //Copy by reference
                                             if (isReferenceByValue)
                                             {
-                                                var foundGlobalValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _context.GlobalValues.OrderByDescending(o => o.Version).FirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -149,13 +131,13 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                                 else
                                                 {
                                                     realAssignedValues.Add(input.Key, foundGlobalValue.Value);
-                                                    convertedInputs.Add(input.Key, input.Value + ":" + foundGlobalValue.Journal.GetCurrentChainId());
+                                                    convertedInputs.Add(input.Key, input.Value + ":" + foundGlobalValue.Version);
                                                 }
                                             }
                                             //copy by value
                                             else
                                             {
-                                                var foundGlobalValue = await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _context.GlobalValues.FirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -199,79 +181,22 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                 }
 
                                 //If a update was detected then add it to the journal updates
+                                unassignedStep.Status = StepStatuses.Assigned;
                                 if (inputsUpdated)
                                 {
-                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                                    {
-                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                        CreatedOn = DateTime.UtcNow,
-                                        Updates = new List<Update>()
-                                    {
-                                       new Update()
-                                        {
-                                            Type = UpdateType.Override,
-                                            FieldName = "status",
-                                            Value = StepStatuses.Assigned
-                                       },
-                                        new Update()
-                                        {
-                                            FieldName = "inputs",
-                                            Type = UpdateType.Override,
-                                            Value = convertedInputs
-                                        },
-                                        new Update()
-                                        {
-                                            FieldName = "assignedto",
-                                            Type = UpdateType.Override,
-                                            Value = request.BotId
-                                        }
-                                        }
-                                    });
+                                    unassignedStep.Inputs = convertedInputs;
+                                    unassignedStep.AssignedTo = request.BotId;
                                 }
-                                else
-                                {
-                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                                    {
-                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                        CreatedOn = DateTime.UtcNow,
-                                        Updates = new List<Update>()
-                                    {
-                                       new Update()
-                                        {
-                                            Type = UpdateType.Override,
-                                            FieldName = "status",
-                                            Value = StepStatuses.Assigned
-                                       }
-                                    }
-                                    });
-                                }
+                                unassignedStep.Unlock();
 
-                                await _node.Handle(new AddShardWriteOperation()
-                                {
-                                    Data = unassignedStep,
-                                    WaitForSafeWrite = true,
-                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                                    RemoveLock = true,
-                                    LockId = assigned.LockId.Value
-                                });
+                                _context.Update(unassignedStep);
+                                await _context.SaveChangesAsync();
 
                                 //await _entitiesRepository.UpdateStep(unassignedStep);
                                 if (inputsUpdated)
                                 {
                                     //Update the record with real values, this is not commited to DB
-                                    unassignedStep.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                                    {
-                                        CreatedBy = SystemUsers.QUEUE_MANAGER,
-                                        CreatedOn = DateTime.UtcNow,
-                                        Updates = new List<Update>()
-                                    {
-                                        new Update()
-                                            {
-                                                FieldName = "inputs",
-                                                Type = UpdateType.Override,
-                                                Value = realAssignedValues
-                                            }}
-                                    });
+                                    unassignedStep.Inputs = realAssignedValues;
                                 }
                             }
                             catch (Exception e)
@@ -298,13 +223,12 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 if (unassignedStep != null)
                 {
-                    var template = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
+                    var template = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
 
                     //Decrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                     unassignedStep.RemoveDelimiters();
-
                     //Encrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.EncryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
                 }

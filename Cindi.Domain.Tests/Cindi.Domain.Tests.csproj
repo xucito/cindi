@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
 
@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cindi.Domain\Cindi.Domain.csproj" />
-    <ProjectReference Include="..\Cindi.Test.Data\Cindi.Test.Global.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,12 +3,10 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Utilities;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence;
+using Cindi.Persistence.Data;
 using MediatR;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,10 +18,10 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 {
     public class CreateBotKeyCommandHandler : IRequestHandler<CreateBotKeyCommand, CommandResult<string>>
     {
-        IClusterRequestHandler _node;
-        public CreateBotKeyCommandHandler(IClusterRequestHandler node)
+        ElasticClient _context;
+        public CreateBotKeyCommandHandler(ElasticClient context)
         {
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult<string>> Handle(CreateBotKeyCommand request, CancellationToken cancellationToken)
@@ -35,11 +33,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 
             var plainTextKey = SecurityUtility.RandomString(32, false);
             Guid keyId = Guid.NewGuid();
-            var key = (await _node.Handle(new AddShardWriteOperation()
-            {
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                Data = new Domain.Entities.BotKeys.BotKey()
+            var key = await _context.IndexAsync(new Domain.Entities.BotKeys.BotKey()
                 {
                     HashedIdKey = SecurityUtility.OneWayHash(plainTextKey, salt),
                     HashedIdKeySalt = salt,
@@ -48,10 +42,10 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     Id = keyId,
                     IsDisabled = false,
                     Nonce = 0,
-                    ShardType = typeof(BotKey).Name,
                     RegisteredOn = DateTime.Now
-        }
-            }));
+            });
+
+            await _context.SaveChangesAsync();
 
             return new CommandResult<string>()
             {

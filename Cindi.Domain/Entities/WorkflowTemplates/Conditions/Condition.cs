@@ -8,8 +8,6 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 {
-    [Serializable]
-    [JsonConverter(typeof(ConditionSerializer))]
     public abstract class Condition
     {
         public abstract string Name { get; }

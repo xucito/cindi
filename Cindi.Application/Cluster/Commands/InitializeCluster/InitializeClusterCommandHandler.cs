@@ -3,8 +3,8 @@ using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Application.Users.Commands.CreateUserCommand;
 using Cindi.Domain.Entities.States;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Node;
+
+
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -18,20 +18,17 @@ namespace Cindi.Application.Cluster.Commands.InitializeCluster
 {
     public class InitializeClusterCommandHandler : IRequestHandler<InitializeClusterCommand, CommandResult<NewClusterResult>>
     {
-        IEntitiesRepository _entitiesRepository;
         ILogger<InitializeClusterCommandHandler> _logger;
         private IMediator _mediator;
         private IClusterStateService _clusterState;
 
         public InitializeClusterCommandHandler(
         ILogger<InitializeClusterCommandHandler> logger,
-        IEntitiesRepository entitiesRepository,
         IMediator mediator,
         IClusterStateService clusterState
         )
         {
             _mediator = mediator;
-            _entitiesRepository = entitiesRepository;
             _logger = logger;
             _clusterState = clusterState;
         }

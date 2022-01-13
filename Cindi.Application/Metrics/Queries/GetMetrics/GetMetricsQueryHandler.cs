@@ -3,8 +3,9 @@ using Cindi.Application.Results;
 using Cindi.Application.Services;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
-using ConsensusCore.Node;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -18,21 +19,21 @@ namespace Cindi.Application.Metrics.Queries.GetMetrics
     public class GetMetricsQueryHandler : IRequestHandler<GetMetricsQuery, QueryResult<object>>
     {
         ILogger<GetMetricsQueryHandler> _logger;
-        IEntitiesRepository _entitiesRepository;
+        ApplicationDbContext _context;
         IMetricTicksRepository _metricTicksRepository;
 
         public GetMetricsQueryHandler(ILogger<GetMetricsQueryHandler> logger,
-            IEntitiesRepository entitiesRepository,
+            ApplicationDbContext context,
             IMetricTicksRepository metricTicksRepository)
         {
-            _entitiesRepository = entitiesRepository;
+            _context = context;
             _metricTicksRepository = metricTicksRepository;
             _logger = logger;
         }
 
         public async Task<QueryResult<object>> Handle(GetMetricsQuery request, CancellationToken cancellationToken)
         {
-            var foundMetric = await _entitiesRepository.GetFirstOrDefaultAsync<Metric>(m => m.MetricName == request.MetricName);
+            var foundMetric = await _context.Metrics.FirstOrDefaultAsync<Metric>(m => m.MetricName == request.MetricName);
             if (foundMetric == null)
             {
                 throw new NotImplementedException("No metric " + request.MetricName);

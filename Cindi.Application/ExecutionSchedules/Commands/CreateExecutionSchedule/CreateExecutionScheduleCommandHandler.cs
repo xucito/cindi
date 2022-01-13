@@ -5,10 +5,10 @@ using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Entities.ExecutionTemplates;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using Cronos;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,20 +20,17 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
 {
     public class CreateExecutionScheduleCommandHandler : IRequestHandler<CreateExecutionScheduleCommand, CommandResult>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private IMediator _mediator;
 
         public CreateExecutionScheduleCommandHandler(
-            IEntitiesRepository entitiesRepository,
             IClusterStateService service,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             IMediator mediator)
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
+            _context = context;
             _mediator = mediator;
         }
 
@@ -42,14 +39,14 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
+            ExecutionSchedule schedule = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
 
             if (schedule != null)
             {
                 throw new InvalidExecutionScheduleException("Execution Schedule with name " + request.Name + " is invalid.");
             }
 
-            ExecutionTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(st => st.Name == request.ExecutionTemplateName);
+            ExecutionTemplate template = await _context.ExecutionTemplates.FirstOrDefaultAsync(st => st.Name == request.ExecutionTemplateName);
 
             if (template == null)
             {
@@ -59,30 +56,26 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
             foreach (var scheduleString in request.Schedule)
             {
                 var isValid = SchedulerUtility.IsValidScheduleString(scheduleString);
-                if(!isValid)
+                if (!isValid)
                 {
                     throw new InvalidExecutionScheduleException("Schedule " + scheduleString + " is invalid.");
                 }
             }
 
-            var executionSchedule = new ExecutionSchedule(
-                    Guid.NewGuid(),
-                    request.Name,
-                    request.ExecutionTemplateName,
-                    request.Description,
-                    request.CreatedBy,
-                    request.Schedule,
-                    SchedulerUtility.NextOccurence(request.Schedule)
-                    );
-
-            var executionScheduleResponse = await _node.Handle(new AddShardWriteOperation()
+            var executionSchedule = new ExecutionSchedule()
             {
-                Data = executionSchedule,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-            });
+                Name = request.Name,
+                ExecutionTemplateName = request.ExecutionTemplateName,
+                Description = request.Description,
+                CreatedBy = request.CreatedBy,
+                Schedule = request.Schedule,
+                NextRun = SchedulerUtility.NextOccurence(request.Schedule)
+            };
 
-            if(request.RunImmediately)
+            _context.Add(executionSchedule);
+            await _context.SaveChangesAsync();
+
+            if (request.RunImmediately)
             {
                 await _mediator.Send(new ExecuteExecutionTemplateCommand()
                 {

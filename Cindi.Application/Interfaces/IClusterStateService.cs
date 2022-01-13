@@ -1,7 +1,7 @@
 ﻿using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Node;
+
 using System;
 using System.Threading.Tasks;
 

@@ -7,9 +7,9 @@ using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.WorkflowTemplates;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Node;
+
+
+
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -21,22 +21,23 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Cindi.Domain.Entities.WorkflowTemplates.ValueObjects;
 using Cindi.Domain.Enums;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Shard;
+
+
 using Cindi.Domain.Entities.Workflows;
+using Cindi.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
     public class CreateWorkflowTemplateCommandHandler : IRequestHandler<CreateWorkflowTemplateCommand, CommandResult>
     {
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
-        private IEntitiesRepository _entitiesRepository;
 
-        public CreateWorkflowTemplateCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(ApplicationDbContext context, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            
+            _context = context;
             Logger = logger;
         }
 
@@ -45,7 +46,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var existingWorkflowTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.Name + ":" + request.Version);
+            var existingWorkflowTemplate = await _context.WorkflowTemplates.FirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.Name + ":" + request.Version);
 
             if (existingWorkflowTemplate != null)
             {
@@ -62,7 +63,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             {
                 foreach (var ss in lg.Value.SubsequentSteps)
                 {
-                    var st = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == ss.Value.StepTemplateId);
+                    var st = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == ss.Value.StepTemplateId);
                     if (st == null)
                     {
                         throw new StepTemplateNotFoundException("Template " + ss.Value.StepTemplateId + " cannot be found.");
@@ -86,7 +87,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                     {
                         stepRefs.Add(subStep.Key);
                     }
-                    allStepTemplates.Add(await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == subStep.Value.StepTemplateId));
+                    allStepTemplates.Add(await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == subStep.Value.StepTemplateId));
                 }
             }
 
@@ -145,7 +146,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                         foreach (var step in block.Value.SubsequentSteps)
                         {
                             //Check whether the step template exists
-                            var result = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == step.Value.StepTemplateId);
+                            var result = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == step.Value.StepTemplateId);
 
                             foreach (var mapping in step.Value.Mappings)
                             {
@@ -268,21 +269,17 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             }*/
 
             var newId = Guid.NewGuid();
-            var newWorkflowTemplate = new WorkflowTemplate(newId,
-                request.Name + ":" + request.Version,
-                request.Description,
-                request.InputDefinitions,
-                request.LogicBlocks,
-                request.CreatedBy,
-                DateTime.UtcNow
-            );
-
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
+            var newWorkflowTemplate = new WorkflowTemplate()
             {
-                Data = newWorkflowTemplate,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-            });
+                ReferenceId = request.Name + ":" + request.Version,
+                Description = request.Description,
+                InputDefinitions = request.InputDefinitions,
+                LogicBlocks = request.LogicBlocks,
+                CreatedBy = request.CreatedBy
+            };
+
+            _context.Add(newWorkflowTemplate);
+            await _context.SaveChangesAsync();
 
             stopwatch.Stop();
             return new CommandResult()

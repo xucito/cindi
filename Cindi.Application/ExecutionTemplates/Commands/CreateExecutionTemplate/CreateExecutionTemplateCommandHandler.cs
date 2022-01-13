@@ -5,9 +5,9 @@ using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Global;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,19 +19,17 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 {
     public class CreateExecutionTemplateCommandHandler : IRequestHandler<CreateExecutionTemplateCommand, CommandResult<ExecutionTemplate>>
     {
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private IMediator _mediator;
 
-        public CreateExecutionTemplateCommandHandler(IEntitiesRepository entitiesRepository,
+        public CreateExecutionTemplateCommandHandler(
             IClusterStateService service,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             IMediator mediator)
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
+            _context = context;
             _mediator = mediator;
         }
 
@@ -40,7 +38,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionTemplate>(st => st.Name == request.Name);
+            ExecutionTemplate template = await _context.ExecutionTemplates.FirstOrDefaultAsync(st => st.Name == request.Name);
 
             if (template != null)
             {
@@ -49,7 +47,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 
             if (request.ExecutionTemplateType == ExecutionTemplateTypes.Step)
             {
-                var stepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.ReferenceId);
+                var stepTemplate = await _context.StepTemplates.FirstOrDefaultAsync(st => st.ReferenceId == request.ReferenceId);
 
                 if (stepTemplate == null)
                 {
@@ -68,7 +66,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             }
             else if (request.ExecutionTemplateType == ExecutionTemplateTypes.Workflow)
             {
-                var workflowTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(st => st.ReferenceId == request.ReferenceId);
+                var workflowTemplate = await _context.WorkflowTemplates.FirstOrDefaultAsync(st => st.ReferenceId == request.ReferenceId);
 
                 if (workflowTemplate == null)
                 {
@@ -92,21 +90,18 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 
 
 
-            var executionTemplate = new ExecutionTemplate(
-                    Guid.NewGuid(),
-                    request.Name,
-                    request.ReferenceId,
-                    request.ExecutionTemplateType,
-                    request.Description,
-                    request.CreatedBy,
-                    request.Inputs);
-
-            var executionTemplateResponse = await _node.Handle(new AddShardWriteOperation()
+            var executionTemplate = new ExecutionTemplate()
             {
-                Data = executionTemplate,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-            });
+                Name = request.Name,
+                ReferenceId = request.ReferenceId,
+                ExecutionTemplateType = request.ExecutionTemplateType,
+                Description = request.Description,
+                CreatedBy = request.CreatedBy,
+                Inputs = request.Inputs
+            };
+
+            _context.Add(executionTemplate);
+            await _context.SaveChangesAsync();
 
 
             stopwatch.Stop();

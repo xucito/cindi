@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Cindi.Domain.ValueObjects.Journal
+namespace Cindi.Domain.Entities
 {
-    public class UpdateRecord
+    public class BaseEntity
     {
+        public Guid Id { get; set; }
         public DateTime CreatedOn { get; set; }
-        public Update Update { get; set; }
     }
 }

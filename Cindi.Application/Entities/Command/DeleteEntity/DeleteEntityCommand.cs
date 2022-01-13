@@ -1,5 +1,5 @@
 ﻿using Cindi.Application.Results;
-using ConsensusCore.Domain.BaseClasses;
+using Cindi.Domain.Entities;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,8 +8,8 @@ using System.Text;
 
 namespace Cindi.Application.Entities.Command.DeleteEntity
 {
-    public class DeleteEntityCommand<T> : IRequest<CommandResult> where T : ShardData
+    public class DeleteEntityCommand<T> : IRequest<CommandResult> where T : BaseEntity
     {
-        public ShardData Entity { get; set; }
+        public BaseEntity Entity { get; set; }
     }
 }

@@ -1,5 +1,4 @@
-﻿using Cindi.Domain.Entities.JournalEntries;
-using Cindi.Domain.Entities.Steps;
+﻿using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Workflows;
 using Cindi.Domain.ValueObjects;
 using System;
@@ -12,94 +11,8 @@ namespace Cindi.Domain.Entities.Workflows
     /// <summary>
     /// Immutable reference to a workflow
     /// </summary>
-    public class Workflow : TrackedEntity
+    public class Workflow: TrackedEntity
     {
-        public Workflow()
-        {
-            ShardType = nameof(Workflow);
-        }
-
-        public Workflow(
-            Guid id,
-            string workflowTemplateId,
-            Dictionary<string, object> inputs,
-            string name,
-            string createdBy,
-            DateTime createdOn,
-            Guid? executionTemplateId = null,
-            Guid? executionScheduleId = null
-            ) : base(
-            new Journal(new JournalEntry()
-            {
-                Updates = new List<Update>()
-                {
-                    new Update()
-                    {
-                        FieldName = "id",
-                        Value = id,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "workflowtemplateid",
-                        Value = workflowTemplateId,
-                        Type = UpdateType.Create
-                    },
-                   new Update()
-                    {
-                        FieldName = "inputs",
-                        Value = inputs,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "name",
-                        Value = name,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdon",
-                        Value = createdOn,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "createdby",
-                        Value = createdBy,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "status",
-                        Value = WorkflowStatuses.Started,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "executiontemplateid",
-                        Value = executionTemplateId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "executionscheduleid",
-                        Value = executionScheduleId,
-                        Type = UpdateType.Create
-                    },
-                    new Update()
-                    {
-                        FieldName = "completedlogicblocks",
-                        Value = new List<string>(),
-                        Type = UpdateType.Create
-                    }
-                }
-            })
-            )
-        {
-            ShardType = nameof(Workflow);
-        }
-
         public string Name { get; set; }
         public string WorkflowTemplateId { get; set; }
 

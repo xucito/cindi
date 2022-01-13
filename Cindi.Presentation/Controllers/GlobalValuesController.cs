@@ -35,9 +35,6 @@ namespace Cindi.Presentation.Controllers
                 Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<GlobalValue, bool>>> {
                    status == null ? null : ExpressionBuilder.BuildPredicate<GlobalValue>("Status", OperatorComparer.Equals, status)
                 }),
-                Exclusions = new List<Expression<Func<GlobalValue, object>>>{
-                    (s) => s.Journal
-                },
                 Sort = sort
             });
 

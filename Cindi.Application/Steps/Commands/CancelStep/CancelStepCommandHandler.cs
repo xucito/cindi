@@ -6,11 +6,7 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -25,18 +21,16 @@ namespace Cindi.Application.Steps.Commands.CancelStep
 {
     public class CancelStepCommandHandler : IRequestHandler<CancelStepCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
         public ILogger<CancelStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
 
-        public CancelStepCommandHandler(IEntitiesRepository entitiesRepository,
+        public CancelStepCommandHandler(
             ILogger<CancelStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             IClusterRequestHandler node)
+             ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            _context = context;
             Logger = logger;
             options.OnChange((change) =>
             {
@@ -50,60 +44,25 @@ namespace Cindi.Application.Steps.Commands.CancelStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var stepLockResult = await _node.Handle(new RequestDataShard()
-            {
-                Type = "Step",
-                ObjectId = request.StepId,
-                CreateLock = true,
-                LockTimeoutMs = 10000
-            });
-
+            Step step = await _context.LockObject(new Step() { Id = request.StepId });
             // Applied the lock successfully
-            if (stepLockResult.IsSuccessful && stepLockResult.AppliedLocked)
+            if (step != null)
             {
-                var step = (Step)stepLockResult.Data;
                 // You can only cancel steps that are unassigned, suspended or assigned
                 if (step.Status == StepStatuses.Unassigned ||
-                    step.Status == StepStatuses.Suspended || 
+                    step.Status == StepStatuses.Suspended ||
                     step.Status == StepStatuses.Assigned)
                 {
-                    step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+                    step.Status = StepStatuses.Cancelled;
+                    step.Unlock();
+                    _context.Update(step);
+                    await _context.SaveChangesAsync();
+                    return new CommandResult()
                     {
-                        CreatedOn = DateTime.UtcNow,
-                        CreatedBy = request.CreatedBy,
-                        Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Override,
-                                FieldName = "status",
-                                Value = StepStatuses.Cancelled,
-                            }
-
-                        }
-                    });
-
-                    var result = await _node.Handle(new AddShardWriteOperation()
-                    {
-                        Data = step,
-                        WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                        RemoveLock = true
-                    });
-
-                    if (result.IsSuccessful)
-                    {
-                        return new CommandResult()
-                        {
-                            ElapsedMs = stopwatch.ElapsedMilliseconds,
-                            ObjectRefId = step.Id.ToString(),
-                            Type = CommandResultTypes.Update
-                        };
-                    }
-                    else
-                    {
-                        throw new FailedClusterOperationException("Failed to apply cluster operation with for step " + step.Id);
-                    }
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        ObjectRefId = step.Id.ToString(),
+                        Type = CommandResultTypes.Update
+                    };
                 }
                 else
                 {

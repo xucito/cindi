@@ -8,12 +8,9 @@ using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.GlobalValues;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,13 +22,11 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
 {
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        IEntitiesRepository _entitiesRepository { get; set; }
-        IClusterRequestHandler _node;
+        ApplicationDbContext _context;
 
-        public CreateGlobalValueCommandHandler(IEntitiesRepository entitiesRepository, IClusterRequestHandler node)
+        public CreateGlobalValueCommandHandler(ApplicationDbContext context)
         {
-            _entitiesRepository = entitiesRepository;
-            _node = node;
+            _context = context;
         }
         public async Task<CommandResult<GlobalValue>> Handle(CreateGlobalValueCommand request, CancellationToken cancellationToken)
         {
@@ -43,29 +38,24 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 throw new InvalidInputTypeException("Input " + request.Type + " is not valid.");
             }
 
-            if (await _entitiesRepository.GetFirstOrDefaultAsync<GlobalValue>(
+            if (await _context.GlobalValues.FirstOrDefaultAsync<GlobalValue>(
                 gv => gv.Name == request.Name) != null)
             {
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " is already in-use.");
             }
 
-            var createdGV = new GlobalValue(
-                request.Name,
-                request.Type,
-                request.Description,
-                request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, ClusterStateService.GetEncryptionKey()) : request.Value,
-                GlobalValueStatuses.Enabled,
-                Guid.NewGuid(),
-                request.CreatedBy,
-                DateTime.UtcNow
-                );
-
-            var result = _node.Handle(new AddShardWriteOperation()
+            var createdGV = new GlobalValue()
             {
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                WaitForSafeWrite = true,
-                Data = createdGV
-            });
+                Name = request.Name,
+                Type = request.Type,
+                Description = request.Description,
+                Value = request.Type == InputDataTypes.Secret ? SecurityUtility.SymmetricallyEncrypt((string)request.Value, ClusterStateService.GetEncryptionKey()) : request.Value,
+                Status = GlobalValueStatuses.Enabled,
+                CreatedBy = request.CreatedBy
+            };
+
+            _context.Add(createdGV);
+            await _context.SaveChangesAsync();
 
             stopwatch.Stop();
 

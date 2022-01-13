@@ -1,11 +1,9 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
-using Cindi.Domain.ClusterRPC;
-using ConsensusCore.Domain.BaseClasses;
-using ConsensusCore.Domain.RPCs.Raft;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,12 +16,12 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
     public class UpdateClusterStateCommandHandler : IRequestHandler<UpdateClusterStateCommand, CommandResult>
     {
         private IClusterStateService _state;
-        private IClusterRequestHandler _node;
+        private ApplicationDbContext _context;
 
-        public UpdateClusterStateCommandHandler(IClusterRequestHandler node, IClusterStateService state)
+        public UpdateClusterStateCommandHandler(ApplicationDbContext context, IClusterStateService state)
         {
             _state = state;
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult> Handle(UpdateClusterStateCommand request, CancellationToken cancellationToken)
@@ -31,20 +29,13 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            await _node.Handle(new ExecuteCommands()
-            {
-                WaitForCommits = true,
-                Commands = new List<BaseCommand>()
-                {
-                    new UpdateClusterDetails()
-                    {
-                        AssignmentEnabled =  request.AssignmentEnabled,
-                        AllowAutoRegistration = request.AllowAutoRegistration,
-                        MetricRetentionPeriod = request.MetricRetentionPeriod,
-                        DefaultIfNull = request.DefaultIfNull
-                    }
-                }
-            });
+            var state = await _context.CindiClusterStates.FirstOrDefaultAsync();
+            if (request.AssignmentEnabled.HasValue)
+                state.Settings.AssignmentEnabled = request.AssignmentEnabled.Value;
+            if (request.AllowAutoRegistration.HasValue)
+                state.Settings.AllowAutoRegistration = request.AllowAutoRegistration.Value;
+            if (!string.IsNullOrEmpty(request.MetricRetentionPeriod))
+                state.Settings.MetricRetentionPeriod = request.MetricRetentionPeriod;
 
             return new CommandResult()
             {

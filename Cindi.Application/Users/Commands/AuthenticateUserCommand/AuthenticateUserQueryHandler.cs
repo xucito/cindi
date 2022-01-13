@@ -2,8 +2,10 @@
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Utilities;
+using Cindi.Persistence.Data;
 using MediatR;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,20 +18,20 @@ namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
 {
     public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, CommandResult>
     {
-        IEntitiesRepository _entitiesRepository;
+        ApplicationDbContext _context;
 
-        public AuthenticateUserCommandHandler(IEntitiesRepository entitiesRepository,
+        public AuthenticateUserCommandHandler(ApplicationDbContext context,
                 ILogger<AuthenticateUserCommandHandler> logger
             )
         {
-            _entitiesRepository = entitiesRepository;
+            _context = context;
 
         }
         public async Task<CommandResult> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var user = await _entitiesRepository.GetFirstOrDefaultAsync<User>(u => u.Username == request.Username.ToLower());
+            var user = await _context.Users.FirstOrDefaultAsync<User>(u => u.Username == request.Username.ToLower());
 
             if (user != null)
             {

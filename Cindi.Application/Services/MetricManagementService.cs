@@ -2,11 +2,8 @@
 using Cindi.Application.SharedValues;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Node.Services.Raft;
+using Cindi.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,28 +20,22 @@ namespace Cindi.Application.Services
     {
         readonly MetricLibrary _metricLibrary;
         ILogger<MetricManagementService> _logger;
-        IClusterRequestHandler _node;
+        ApplicationDbContext _context;
         private readonly ConcurrentQueue<MetricTick> _ticks = new ConcurrentQueue<MetricTick>();
         private readonly Task writeThread;
-        NodeStateService _nodeStateService;
-        IEntitiesRepository _entitiesRepository;
         IConfiguration _configuration;
         bool EnableMetrics = false;
 
         public MetricManagementService(
             ILogger<MetricManagementService> logger,
-            IClusterRequestHandler node,
-            NodeStateService nodeStateService,
-            IEntitiesRepository entitiesRepository,
+            ApplicationDbContext context,
             IConfiguration configuration
             )
         {
             _logger = logger;
             _logger.LogInformation("Populating Metrics...");
             _metricLibrary = new MetricLibrary();
-            _node = node;
-            _nodeStateService = nodeStateService;
-            _entitiesRepository = entitiesRepository;
+            _context = context;
             _configuration = configuration;
             EnableMetrics = _configuration.GetValue<bool>("EnableMonitoring");
             if (EnableMetrics)
@@ -54,27 +45,19 @@ namespace Cindi.Application.Services
                     MetricTick tick;
                     while (true)
                     {
-                    // Console.WriteLine("Number of tasks " + _ticks.Count());
-                    if (_nodeStateService.InCluster)
+                        // Console.WriteLine("Number of tasks " + _ticks.Count());
+                        if (_ticks.TryDequeue(out tick))
                         {
-                            if (_ticks.TryDequeue(out tick))
-                            {
-                                tick.Date = tick.Date.ToUniversalTime();
-                                tick.Id = Guid.NewGuid();
-                                var startTime = DateTime.Now;
-                                await _node.Handle(new AddShardWriteOperation()
-                                {
-                                    WaitForSafeWrite = true,
-                                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                                    Data = tick,
-                                    Metric = false // Do not metric the metric write operations
-                                });
-                                _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
+                            tick.Date = tick.Date.ToUniversalTime();
+                            tick.Id = Guid.NewGuid();
+                            var startTime = DateTime.Now;
+                            _context.Add(tick);
+                            await _context.SaveChangesAsync();
+                            _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
 
-                                if (_ticks.Count > 100)
-                                {
-                                    _logger.LogWarning("Tick count is greater then 100...");
-                                }
+                            if (_ticks.Count > 100)
+                            {
+                                _logger.LogWarning("Tick count is greater then 100...");
                             }
                         }
                         await Task.Delay(10);
@@ -97,16 +80,12 @@ namespace Cindi.Application.Services
 
         public async void InitializeMetricStore()
         {
-            var metrics = (await _entitiesRepository.GetAsync<Metric>(null, null, null, 100)).Select(m => m.MetricId);
+            var metrics = ((await _context.Metrics.Where(m => true).ToListAsync()).Select(m => m.MetricId));
             foreach (var metric in _metricLibrary.Metrics.Where(m => !metrics.Contains(m.Key)))
             {
                 _logger.LogDebug("Adding metric " + metric.Key + " to database.");
-                await _node.Handle(new AddShardWriteOperation()
-                {
-                    WaitForSafeWrite = true,
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create,
-                    Data = metric.Value
-                });
+                _context.Add(metric.Value);
+                await _context.SaveChangesAsync();
             };
         }
 

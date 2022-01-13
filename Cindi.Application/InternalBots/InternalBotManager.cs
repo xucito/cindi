@@ -43,7 +43,7 @@ namespace Cindi.Application.InternalBots
             var bot = new NodeWorkerBot(
                 new WorkerBotHandlerOptions()
                 {
-                    NodeURL = _configuration.GetValue<string>("Cluster:NodeUrls").Split(",")[0],
+                    NodeURL = _configuration["Cluster:NodeUrls"].Split(",")[0],
                     AutoStart = true,
                     AutoRegister = true,
                     SleepTime = 0,

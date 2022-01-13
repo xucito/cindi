@@ -4,9 +4,9 @@ using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,19 +19,17 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<UpdateExecutionScheduleCommand, CommandResult>
     {
 
-        private readonly IEntitiesRepository _entitiesRepository;
         private readonly IClusterStateService _clusterStateService;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private IMediator _mediator;
 
-        public UpdateExecutionScheduleCommandHandler(IEntitiesRepository entitiesRepository,
+        public UpdateExecutionScheduleCommandHandler(
             IClusterStateService service,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             IMediator mediator)
         {
-            _entitiesRepository = entitiesRepository;
             _clusterStateService = service;
-            _node = node;
+            _context = context;
             _mediator = mediator;
         }
 
@@ -40,7 +38,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _entitiesRepository.GetFirstOrDefaultAsync<ExecutionSchedule>(st => st.Name == request.Name);
+            ExecutionSchedule schedule = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
 
             if (schedule == null)
             {
@@ -58,72 +56,27 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                     }
                 }
 
-            var executionScheduleLock = await _node.Handle(new RequestDataShard()
+            var existingValue = await _context.LockObject(schedule);
+
+            if (existingValue != null)
             {
-                Type = schedule.ShardType,
-                ObjectId = schedule.Id,
-                CreateLock = true
-            });
-
-
-            ExecutionSchedule existingValue;
-
-            List<Update> updates = new List<Update>();
-
-            if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
-            {
-                updates.Add(new Update()
+                if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
                 {
-                    Type = UpdateType.Override,
-                    FieldName = "isdisabled",
-                    Value = request.IsDisabled
-                });
-            }
+                    existingValue.IsDisabled = request.IsDisabled.Value;
+                }
 
-            if (request.Schedule != null && schedule.Schedule != request.Schedule)
-            {
-                updates.Add(new Update()
+                if (request.Schedule != null && schedule.Schedule != request.Schedule)
                 {
-                    Type = UpdateType.Override,
-                    FieldName = "nextrun",
-                    Value = SchedulerUtility.NextOccurence(request.Schedule, DateTime.UtcNow)
-                });
+                    existingValue.Schedule = request.Schedule;
+                }
 
-                updates.Add(new Update()
+                if (request.Description != null && schedule.Description != request.Description)
                 {
-                    Type = UpdateType.Override,
-                    FieldName = "schedule",
-                    Value = request.Schedule
-                });
-            }
+                    existingValue.Description = request.Description;
+                }
 
-            if (request.Description != null && schedule.Description != request.Description)
-            {
-                updates.Add(new Update()
-                {
-                    Type = UpdateType.Override,
-                    FieldName = "description",
-                    Value = request.Description
-                });
-            }
-            
-
-            if (executionScheduleLock.IsSuccessful && executionScheduleLock.AppliedLocked && updates.Count > 0)
-            {
-                existingValue = (ExecutionSchedule)executionScheduleLock.Data;
-                existingValue.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
-                {
-                    CreatedOn = DateTime.UtcNow,
-                    Updates = updates
-                });
-
-                var result = await _node.Handle(new AddShardWriteOperation()
-                {
-                    Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update,
-                    WaitForSafeWrite = true,
-                    Data = existingValue,
-                    RemoveLock = true
-                });
+                _context.Update(existingValue);
+                await _context.SaveChangesAsync();
             }
 
             stopwatch.Stop();

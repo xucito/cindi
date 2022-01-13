@@ -1,16 +1,12 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
-using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Domain.RPCs.Shard;
-using ConsensusCore.Node;
-using ConsensusCore.Node.Communication.Controllers;
+using Cindi.Persistence.Data;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -23,57 +19,35 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
 {
     public class AppendStepLogCommandHandler : IRequestHandler<AppendStepLogCommand, CommandResult>
     {
-        public IEntitiesRepository _entitiesRepository;
         public ILogger<AppendStepLogCommandHandler> Logger;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
 
-        public AppendStepLogCommandHandler(IEntitiesRepository entitiesRepository,
+        public AppendStepLogCommandHandler(
             ILogger<AppendStepLogCommandHandler> logger,
-            IClusterRequestHandler node
+            ApplicationDbContext context
             )
         {
-            _entitiesRepository = entitiesRepository;
             Logger = logger;
-            _node = node;
+            _context = context;
         }
 
         public async Task<CommandResult> Handle(AppendStepLogCommand request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var step = await _entitiesRepository.GetFirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            var step = await _context.Steps.FirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
 
             if (StepStatuses.IsCompleteStatus(step.Status))
             {
                 throw new InvalidStepStatusException("Cannot append log to step, step status is complete with " + step.Status);
             }
 
-            step.UpdateJournal(new Domain.Entities.JournalEntries.JournalEntry()
+            step.Logs.Add(new StepLog()
             {
-                CreatedBy = request.CreatedBy,
                 CreatedOn = DateTime.UtcNow,
-                Updates = new List<Domain.ValueObjects.Update>()
-                        {
-                            new Update()
-                            {
-                                Type = UpdateType.Append,
-                                FieldName = "logs",
-                                Value = new StepLog(){
-                                    CreatedOn = DateTime.UtcNow,
-                                    Message = request.Log
-                                },
-                            }
-                        }
+                Message = request.Log
             });
 
-            //await _entitiesRepository.UpdateStep(step);
-
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
-            {
-                Data = step,
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
-            });
 
             return new CommandResult()
             {

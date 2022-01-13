@@ -1,7 +1,6 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Steps.Commands.CreateStep;
-using Cindi.Domain.Entities.JournalEntries;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Entities.States;
@@ -11,9 +10,9 @@ using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.WorkflowTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using ConsensusCore.Domain.Interfaces;
-using ConsensusCore.Domain.RPCs;
-using ConsensusCore.Node;
+
+
+
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -23,31 +22,32 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cindi.Domain.Exceptions.Workflows;
-using ConsensusCore.Node.Communication.Controllers;
-using ConsensusCore.Domain.RPCs.Shard;
+
+
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Microsoft.Extensions.Logging;
+using Cindi.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
-        private IEntitiesRepository _entitiesRepository;
         private IMediator _mediator;
-        private readonly IClusterRequestHandler _node;
+        private readonly ApplicationDbContext _context;
         private ILogger<CreateWorkflowCommandHandler> _logger;
 
         public CreateWorkflowCommandHandler(
-            IEntitiesRepository entitiesRepository,
+
             IMediator mediator,
-            IClusterRequestHandler node,
+            ApplicationDbContext context,
             ILogger<CreateWorkflowCommandHandler> logger)
         {
-            _entitiesRepository = entitiesRepository;
+
             _mediator = mediator;
-            _node = node;
+            _context = context;
             _logger = logger;
         }
 
@@ -56,7 +56,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WorkflowTemplate template = await _entitiesRepository.GetFirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
+            WorkflowTemplate template = await _context.WorkflowTemplates.FirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
 
             if (template == null)
             {
@@ -93,26 +93,23 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 }
             }
 
-            var createdWorkflowId = Guid.NewGuid();
             var startingLogicBlock = template.LogicBlocks.Where(lb => lb.Value.Dependencies.Evaluate(new List<Step>())).ToList();
 
-            var createdWorkflowTemplateId = await _node.Handle(new AddShardWriteOperation()
+            var createdWorkflow = new Domain.Entities.Workflows.Workflow()
             {
-                Data = new Domain.Entities.Workflows.Workflow(
-                createdWorkflowId,
-                request.WorkflowTemplateId,
-                verifiedWorkflowInputs, //Encrypted inputs
-                request.Name,
-                request.CreatedBy,
-                DateTime.UtcNow,
-                request.ExecutionTemplateId,
-                request.ExecutionScheduleId
-            ),
-                WaitForSafeWrite = true,
-                Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Create
-            });
+                WorkflowTemplateId = request.WorkflowTemplateId,
+                Inputs = verifiedWorkflowInputs, //Encrypted inputs
+                Name = request.Name,
+                CreatedBy = request.CreatedBy,
+                ExecutionTemplateId = request.ExecutionTemplateId,
+                ExecutionScheduleId = request.ExecutionScheduleId
+            };
 
-            var workflow = await _entitiesRepository.GetFirstOrDefaultAsync<Workflow>(w => w.Id == createdWorkflowId);
+            _context.Add(createdWorkflow);
+
+            await _context.SaveChangesAsync();
+
+            var workflow = createdWorkflow;
 
             //When there are no conditions to be met
 
@@ -124,7 +121,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 {
                     foreach (var subBlock in block.Value.SubsequentSteps)
                     {
-                        var newStepTemplate = await _entitiesRepository.GetFirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
+                        var newStepTemplate = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
 
                         if (newStepTemplate == null)
                         {
@@ -153,36 +150,17 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                             CreatedBy = SystemUsers.QUEUE_MANAGER,
                             Description = null,
                             Inputs = verifiedInputs,
-                            WorkflowId = createdWorkflowId,
+                            WorkflowId = createdWorkflow.Id,
                             Name = subBlock.Key
                         });
                     }
 
 
-                    workflow.UpdateJournal(
-                    new JournalEntry()
-                    {
-                        CreatedBy = request.CreatedBy,
-                        CreatedOn = DateTime.UtcNow,
-                        Updates = new List<Update>()
-                        {
-                        new Update()
-                        {
-                            FieldName = "completedlogicblocks",
-                            Type = UpdateType.Append,
-                            Value = block.Key //Add the logic block
-                        }
-                        }
-                    });
-
-                    await _node.Handle(new AddShardWriteOperation()
-                    {
-                        Data = workflow,
-                        WaitForSafeWrite = true,
-                        Operation = ConsensusCore.Domain.Enums.ShardOperationOptions.Update
-                    });
+                    workflow.CompletedLogicBlocks.Add(block.Key);
+                    _context.Update(workflow);
+                    await _context.SaveChangesAsync();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     _logger.LogCritical("Failed to action logic block " + block.Key + " with error " + e.Message + Environment.NewLine + e.StackTrace);
                 }
@@ -193,7 +171,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             return new CommandResult<Workflow>()
             {
                 Result = workflow,
-                ObjectRefId = createdWorkflowId.ToString(),
+                ObjectRefId = createdWorkflow.Id.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Create
             };

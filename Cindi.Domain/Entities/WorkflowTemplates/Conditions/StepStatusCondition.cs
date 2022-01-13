@@ -11,7 +11,6 @@ using System.Text;
 namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
 {
     [Serializable]
-    [JsonConverter(typeof(ConditionSerializer))]
     public class StepStatusCondition : Condition
     {
         public override string Name => "StepStatus"; 
