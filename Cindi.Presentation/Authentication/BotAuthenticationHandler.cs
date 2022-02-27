@@ -69,7 +69,7 @@ namespace Cindi.Presentation.Authentication
                     .SetSlidingExpiration(TimeSpan.FromSeconds(10));
                 var result = await _mediator.Send(new GetEntityQuery<BotKey>()
                 {
-                    Expression = bk => bk.Id == new Guid(id)
+                    Expression = bk => bk.Query(q => q.Term(f => f.Id, new Guid(id)))
                 });
 
                 if (result.Count == 0)

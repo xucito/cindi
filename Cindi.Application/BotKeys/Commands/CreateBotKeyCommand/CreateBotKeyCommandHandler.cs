@@ -3,10 +3,8 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Utilities;
-using Cindi.Persistence;
-using Cindi.Persistence.Data;
-using MediatR;
 using Nest;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +31,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 
             var plainTextKey = SecurityUtility.RandomString(32, false);
             Guid keyId = Guid.NewGuid();
-            var key = await _context.IndexAsync(new Domain.Entities.BotKeys.BotKey()
+            var key = await _context.IndexDocumentAsync(new Domain.Entities.BotKeys.BotKey()
                 {
                     HashedIdKey = SecurityUtility.OneWayHash(plainTextKey, salt),
                     HashedIdKeySalt = salt,
@@ -45,7 +43,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     RegisteredOn = DateTime.Now
             });
 
-            await _context.SaveChangesAsync();
+            
 
             return new CommandResult<string>()
             {

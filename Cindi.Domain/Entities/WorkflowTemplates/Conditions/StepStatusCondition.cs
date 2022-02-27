@@ -45,7 +45,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
         //You can optionally also compare status codes
         public int? StatusCode { get; set; }
 
-        public override bool Evaluate(List<Step> completedSteps)
+        public override bool Evaluate(IEnumerable<Step> completedSteps)
         {
             var foundSteps = completedSteps.Where(cs => cs.Name == StepName);
             if (foundSteps.Count() == 1)

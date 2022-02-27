@@ -4,7 +4,7 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.BotKeys;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -18,9 +18,9 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
     public class UpdateNonceCommandHandler : IRequestHandler<UpdateNonceCommand, CommandResult>
     {
         IMediator _mediator;
-        ApplicationDbContext _context;
+        ElasticClient _context;
 
-        public UpdateNonceCommandHandler(IMediator mediator, ApplicationDbContext context)
+        public UpdateNonceCommandHandler(IMediator mediator, ElasticClient context)
         {
             _mediator = mediator;
             _context = context;
@@ -33,7 +33,7 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             var key = (await _mediator.Send(new GetEntityQuery<BotKey>()
             {
-               Expression = bk => bk.Id == request.Id
+               Expression = bk => bk.Query(q => q.Ids(s => s.Values(request.Id)))
             })).Result;
 
             if (key.Nonce >= request.Nonce)
@@ -43,8 +43,8 @@ namespace Cindi.Application.BotKeys.Commands.Nonce
 
             key.Nonce = request.Nonce;
 
-            _context.Update(key);
-            await _context.SaveChangesAsync();
+            await _context.IndexDocumentAsync(key);
+            
 
            // await _botKeyRepository.UpdateBotKey(key);
 

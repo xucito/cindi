@@ -9,6 +9,7 @@ using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.ExecutionTemplates.Commands;
 using Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate;
 using Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate;
+using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionTemplates;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
@@ -61,10 +62,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<ExecutionTemplate>()
             {
-                Page = page,
-                Size = size,
-                Expression = null,
-                Sort = sort
+                Expression = e => e.Skip(page * size).Size(size).Sort(sort)
             }));
         }
 
@@ -74,7 +72,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<ExecutionTemplate>()
             {
-                Expression = st => st.Name == name
+                Expression = st => st.Query(q => q.Term(f => f.Name, name))
             }));
         }
 

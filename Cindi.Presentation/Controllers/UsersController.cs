@@ -34,12 +34,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<User>()
             {
-                Page = page,
-                Size = size,
-                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<User, bool>>> {
-                   status == null ? null : ExpressionBuilder.BuildPredicate<User>("Status", OperatorComparer.Equals, status)
-                }),
-                Sort = sort
+                Expression = e => e.Size(size).Skip(page * size)
             }));
         }
 
@@ -56,7 +51,7 @@ namespace Cindi.Presentation.Controllers
             var username = ClaimsUtility.GetUsername(User);
             var user = (await Mediator.Send(new GetEntityQuery<User>()
             {
-                Expression = u => u.Username == username
+                Expression = u => u.Query(q => q.Term(f => f.Username, username))
             }));
 
             return Ok(new HttpQueryResult<User, UserVM>(user, Mapper.Map<UserVM>(user.Result)));

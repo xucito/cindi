@@ -40,7 +40,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.ValueObjects
         /// </summary>
         /// <param name="completedSteps"></param>
         /// <returns></returns>
-        public bool Evaluate(List<Step> completedSteps)
+        public bool Evaluate(IEnumerable<Step> completedSteps)
         {
             foreach (var condition in Conditions)
             {

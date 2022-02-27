@@ -28,21 +28,21 @@ using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Microsoft.Extensions.Logging;
-using Cindi.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
+using Nest;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 {
     public class CreateWorkflowCommandHandler : IRequestHandler<CreateWorkflowCommand, CommandResult<Workflow>>
     {
         private IMediator _mediator;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         private ILogger<CreateWorkflowCommandHandler> _logger;
 
         public CreateWorkflowCommandHandler(
 
             IMediator mediator,
-            ApplicationDbContext context,
+            ElasticClient context,
             ILogger<CreateWorkflowCommandHandler> logger)
         {
 
@@ -56,7 +56,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            WorkflowTemplate template = await _context.WorkflowTemplates.FirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.WorkflowTemplateId);
+            WorkflowTemplate template = await _context.FirstOrDefaultAsync<WorkflowTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, request.WorkflowTemplateId)));
 
             if (template == null)
             {
@@ -105,9 +105,9 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 ExecutionScheduleId = request.ExecutionScheduleId
             };
 
-            _context.Add(createdWorkflow);
+            await _context.IndexDocumentAsync(createdWorkflow);
 
-            await _context.SaveChangesAsync();
+
 
             var workflow = createdWorkflow;
 
@@ -121,7 +121,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
                 {
                     foreach (var subBlock in block.Value.SubsequentSteps)
                     {
-                        var newStepTemplate = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == subBlock.Value.StepTemplateId);
+                        var newStepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, subBlock.Value.StepTemplateId)));
 
                         if (newStepTemplate == null)
                         {
@@ -157,8 +157,8 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
 
 
                     workflow.CompletedLogicBlocks.Add(block.Key);
-                    _context.Update(workflow);
-                    await _context.SaveChangesAsync();
+                    await _context.IndexDocumentAsync(workflow);
+
                 }
                 catch (Exception e)
                 {

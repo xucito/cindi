@@ -1,23 +1,24 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Domain.Entities;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Cindi.Application.Entities.Queries.GetEntity
 {
     public class GetEntityQueryHandler<T> : IRequestHandler<GetEntityQuery<T>, QueryResult<T>> where T: TrackedEntity
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
 
-        public GetEntityQueryHandler(ApplicationDbContext context)
+        public GetEntityQueryHandler(ElasticClient context)
         {
             _context = context;
 
@@ -26,8 +27,7 @@ namespace Cindi.Application.Entities.Queries.GetEntity
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            DbSet<T> set = _context.Set<T>();
-            var result = await set.FirstOrDefaultAsync<T>(request.Expression);
+            var result = (await _context.SearchAsync<T>(request.Expression)).Hits.Select(h => h.Source).FirstOrDefault();
 
             stopwatch.Stop();
             return new QueryResult<T>()

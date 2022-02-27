@@ -3,22 +3,23 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
 {
     public class UpdateBotKeyCommandHandler : IRequestHandler<UpdateBotKeyCommand, CommandResult<BotKey>>
     {
-        ApplicationDbContext _context;
-        public UpdateBotKeyCommandHandler(ApplicationDbContext context)
+        ElasticClient _context;
+        public UpdateBotKeyCommandHandler(ElasticClient context)
         {
             _context = context;
         }
@@ -49,8 +50,8 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
             {
                 if (update)
                 {
-                    _context.Update(botKey);
-                    await _context.SaveChangesAsync();
+                    await _context.IndexDocumentAsync(botKey);
+                    
 
                     return new CommandResult<BotKey>()
                     {

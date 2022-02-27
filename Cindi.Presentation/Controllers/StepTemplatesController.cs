@@ -60,10 +60,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<StepTemplate>()
             {
-                Page = page,
-                Size = size,
-                Expression = null,
-                Sort = sort
+                Expression = null
             }));
         }
 
@@ -73,7 +70,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<StepTemplate>()
             {
-                Expression = st => st.ReferenceId == name + ":" + version
+                Expression = st => st.Query(q => q.Term(f => f.ReferenceId,  name + ":" + version))
             }));
         }
     }

@@ -3,7 +3,7 @@ using Cindi.Application.Results;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.States;
 using Cindi.Domain.Exceptions.State;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -11,13 +11,14 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
 {
     public class DeleteBotKeyCommandHandler : IRequestHandler<DeleteBotKeyCommand, CommandResult>
     {
-        ApplicationDbContext _context;
-        public DeleteBotKeyCommandHandler(ApplicationDbContext context)
+        ElasticClient _context;
+        public DeleteBotKeyCommandHandler(ElasticClient context)
         {
             _context = context;
         }
@@ -31,8 +32,8 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
 
             if (botKey != null)
             {
-                _context.Remove(botKey);
-                await _context.SaveChangesAsync();
+                await _context.DeleteAsync<BotKey>(botKey.Id);
+                
 
                 return new CommandResult()
                 {

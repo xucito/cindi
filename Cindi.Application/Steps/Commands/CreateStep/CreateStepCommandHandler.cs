@@ -8,25 +8,26 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Steps.Commands.CreateStep
 {
     public class CreateStepCommandHandler : IRequestHandler<CreateStepCommand, CommandResult<Step>>
     {
         private readonly IClusterStateService _clusterStateService;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         public CreateStepCommandHandler(
             IClusterStateService service, 
-            ApplicationDbContext context)
+            ElasticClient context)
         {
             _clusterStateService = service;
             _context = context;
@@ -37,7 +38,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var resolvedTemplate = await  _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == request.StepTemplateId);
+            var resolvedTemplate = await  _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, request.StepTemplateId)));
 
             if (resolvedTemplate == null)
             {
@@ -57,8 +58,8 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                  newStep
                  );*/
 
-            _context.Add(newStep);
-            await _context.SaveChangesAsync();
+            await _context.IndexDocumentAsync(newStep);
+            
 
 
             stopwatch.Stop();

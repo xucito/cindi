@@ -4,9 +4,9 @@ using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,17 +14,18 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Steps.Commands.AppendStepLog
 {
     public class AppendStepLogCommandHandler : IRequestHandler<AppendStepLogCommand, CommandResult>
     {
         public ILogger<AppendStepLogCommandHandler> Logger;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
 
         public AppendStepLogCommandHandler(
             ILogger<AppendStepLogCommandHandler> logger,
-            ApplicationDbContext context
+            ElasticClient context
             )
         {
             Logger = logger;
@@ -35,7 +36,7 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var step = await _context.Steps.FirstOrDefaultAsync<Step>(e => e.Id == request.StepId);
+            var step = await _context.FirstOrDefaultAsync<Step>(request.StepId);
 
             if (StepStatuses.IsCompleteStatus(step.Status))
             {

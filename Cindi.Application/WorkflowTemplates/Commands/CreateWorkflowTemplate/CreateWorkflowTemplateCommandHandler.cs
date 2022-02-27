@@ -24,17 +24,17 @@ using Cindi.Domain.Enums;
 
 
 using Cindi.Domain.Entities.Workflows;
-using Cindi.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
+using Nest;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
 {
     public class CreateWorkflowTemplateCommandHandler : IRequestHandler<CreateWorkflowTemplateCommand, CommandResult>
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         private ILogger<CreateWorkflowTemplateCommandHandler> Logger;
 
-        public CreateWorkflowTemplateCommandHandler(ApplicationDbContext context, ILogger<CreateWorkflowTemplateCommandHandler> logger)
+        public CreateWorkflowTemplateCommandHandler(ElasticClient context, ILogger<CreateWorkflowTemplateCommandHandler> logger)
         {
             
             _context = context;
@@ -46,7 +46,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var existingWorkflowTemplate = await _context.WorkflowTemplates.FirstOrDefaultAsync<WorkflowTemplate>(wft => wft.ReferenceId == request.Name + ":" + request.Version);
+            var existingWorkflowTemplate = await _context.FirstOrDefaultAsync<WorkflowTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, request.Name + ":" + request.Version)));
 
             if (existingWorkflowTemplate != null)
             {
@@ -63,7 +63,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
             {
                 foreach (var ss in lg.Value.SubsequentSteps)
                 {
-                    var st = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == ss.Value.StepTemplateId);
+                    var st = await _context.FirstOrDefaultAsync<StepTemplate>(ste => ste.Query(q => q.Term(f => f.ReferenceId, ss.Value.StepTemplateId)));
                     if (st == null)
                     {
                         throw new StepTemplateNotFoundException("Template " + ss.Value.StepTemplateId + " cannot be found.");
@@ -87,7 +87,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                     {
                         stepRefs.Add(subStep.Key);
                     }
-                    allStepTemplates.Add(await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == subStep.Value.StepTemplateId));
+                    allStepTemplates.Add(await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, subStep.Value.StepTemplateId))));
                 }
             }
 
@@ -146,7 +146,7 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                         foreach (var step in block.Value.SubsequentSteps)
                         {
                             //Check whether the step template exists
-                            var result = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(stepTemplate => stepTemplate.ReferenceId == step.Value.StepTemplateId);
+                            var result = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, step.Value.StepTemplateId)));
 
                             foreach (var mapping in step.Value.Mappings)
                             {
@@ -278,8 +278,8 @@ namespace Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate
                 CreatedBy = request.CreatedBy
             };
 
-            _context.Add(newWorkflowTemplate);
-            await _context.SaveChangesAsync();
+            await _context.IndexDocumentAsync(newWorkflowTemplate);
+            
 
             stopwatch.Stop();
             return new CommandResult()

@@ -9,6 +9,7 @@ using Cindi.Application.Entities.Queries;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule;
 using Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule;
+using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Exceptions;
 using Cindi.Presentation.Results;
@@ -62,10 +63,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<ExecutionSchedule>()
             {
-                Page = page,
-                Size = size,
-                Expression = null,
-                Sort = sort
+                Expression = e => e.Skip(page * size).Size(size).Sort(sort)
             }));
         }
 
@@ -75,7 +73,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<ExecutionSchedule>()
             {
-                Expression = st => st.Name == name
+                Expression = st => st.Query(q => q.Term(f => f.Name, name))
             }));
         }
 
@@ -99,7 +97,7 @@ namespace Cindi.Presentation.Controllers
         {
             var result = await Mediator.Send(new GetEntityQuery<ExecutionSchedule>()
             {
-                Expression = de => de.Name == name
+                Expression = de => de.Query(q => q.Term(f => f.Name, name))
             });
             return Ok(await Mediator.Send(new DeleteEntityCommand<ExecutionSchedule>()
             {

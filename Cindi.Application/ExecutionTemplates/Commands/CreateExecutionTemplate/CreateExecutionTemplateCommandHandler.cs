@@ -5,27 +5,28 @@ using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Global;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries.GetEntity;
 
 namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 {
     public class CreateExecutionTemplateCommandHandler : IRequestHandler<CreateExecutionTemplateCommand, CommandResult<ExecutionTemplate>>
     {
         private readonly IClusterStateService _clusterStateService;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         private IMediator _mediator;
 
         public CreateExecutionTemplateCommandHandler(
             IClusterStateService service,
-            ApplicationDbContext context,
+            ElasticClient context,
             IMediator mediator)
         {
             _clusterStateService = service;
@@ -38,7 +39,11 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionTemplate template = await _context.ExecutionTemplates.FirstOrDefaultAsync(st => st.Name == request.Name);
+            ExecutionTemplate template = (await _mediator.Send(new GetEntityQuery<ExecutionTemplate>()
+            {
+                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)
+                    ))
+            })).Result;
 
             if (template != null)
             {
@@ -47,7 +52,10 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 
             if (request.ExecutionTemplateType == ExecutionTemplateTypes.Step)
             {
-                var stepTemplate = await _context.StepTemplates.FirstOrDefaultAsync(st => st.ReferenceId == request.ReferenceId);
+                var stepTemplate = (await _mediator.Send(new GetEntityQuery<StepTemplate>()
+                {
+                    Expression = (e => e.Query(q => q.Term(f => f.ReferenceId, request.ReferenceId)))
+                })).Result;
 
                 if (stepTemplate == null)
                 {
@@ -66,7 +74,10 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             }
             else if (request.ExecutionTemplateType == ExecutionTemplateTypes.Workflow)
             {
-                var workflowTemplate = await _context.WorkflowTemplates.FirstOrDefaultAsync(st => st.ReferenceId == request.ReferenceId);
+                var workflowTemplate = (await _mediator.Send(new GetEntityQuery<WorkflowTemplate>()
+                {
+                    Expression = (e => e.Query(q => q.Term(f => f.ReferenceId, request.ReferenceId)))
+                })).Result;
 
                 if (workflowTemplate == null)
                 {
@@ -100,8 +111,8 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
                 Inputs = request.Inputs
             };
 
-            _context.Add(executionTemplate);
-            await _context.SaveChangesAsync();
+            await _context.IndexDocumentAsync(executionTemplate);
+            
 
 
             stopwatch.Stop();

@@ -4,15 +4,16 @@ using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries.GetEntity;
 
 namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
 {
@@ -20,12 +21,12 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
     {
 
         private readonly IClusterStateService _clusterStateService;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         private IMediator _mediator;
 
         public UpdateExecutionScheduleCommandHandler(
             IClusterStateService service,
-            ApplicationDbContext context,
+            ElasticClient context,
             IMediator mediator)
         {
             _clusterStateService = service;
@@ -38,7 +39,11 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
+            ExecutionSchedule schedule = (await _mediator.Send(new GetEntityQuery<ExecutionSchedule>()
+            {
+                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)
+                    ))
+            })).Result;
 
             if (schedule == null)
             {
@@ -75,8 +80,8 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                     existingValue.Description = request.Description;
                 }
 
-                _context.Update(existingValue);
-                await _context.SaveChangesAsync();
+                await _context.IndexDocumentAsync(existingValue);
+                
             }
 
             stopwatch.Stop();

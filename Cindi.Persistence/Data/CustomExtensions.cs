@@ -1,12 +1,12 @@
 ﻿
-using Cindi.Persistence.Data;
+using Nest;
 using System;
 using System.Linq;
 using System.Reflection;
 
 namespace Microsoft.EntityFrameworkCore
 {
-    public static partial class CustomExtensions
+    /*public static partial class CustomExtensions
     {
         public static IQueryable Query(this DbContext context, string entityName) =>
             context.Query(context.Model.FindEntityType(entityName).ClrType);
@@ -16,9 +16,9 @@ namespace Microsoft.EntityFrameworkCore
         public static IQueryable Query(this DbContext context, Type entityType) =>
             (IQueryable)SetMethod.MakeGenericMethod(entityType).Invoke(context, null);
 
-        public static DbSet<T> GetEntitySet<T>(this ApplicationDbContext objectContext) where T : class
+        public static DbSet<T> GetEntitySet<T>(this ElasticClient objectContext) where T : class
         {
             return objectContext.Set<T>();
         }
-    }
+    }*/
 }

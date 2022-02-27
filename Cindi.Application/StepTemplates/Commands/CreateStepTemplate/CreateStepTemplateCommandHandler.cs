@@ -5,9 +5,9 @@ using Cindi.Domain.Entities.States;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -17,15 +17,16 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
 {
     public class CreateStepTemplateCommandHandler : IRequestHandler<CreateStepTemplateCommand, CommandResult>
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         private ILogger<CreateStepTemplateCommandHandler> Logger;
 
-        public CreateStepTemplateCommandHandler( ApplicationDbContext context, ILogger<CreateStepTemplateCommandHandler> logger)
+        public CreateStepTemplateCommandHandler( ElasticClient context, ILogger<CreateStepTemplateCommandHandler> logger)
         {
             
             _context = context;
@@ -57,7 +58,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 CreatedBy = request.CreatedBy
             };
 
-            var existingStepTemplate = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == newStepTemplate.ReferenceId);
+            var existingStepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, newStepTemplate.ReferenceId)));
 
             if (existingStepTemplate == null)
             {
@@ -66,8 +67,8 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                     throw new InvalidStepTemplateException("Only system workflows can start with _");
                 }
 
-                _context.Add(newStepTemplate);
-                await _context.SaveChangesAsync();
+                await _context.IndexDocumentAsync(newStepTemplate);
+                
             }
             else
             {

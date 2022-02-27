@@ -45,11 +45,10 @@ namespace Cindi.Application.InternalBots
 
             switch (step.StepTemplateId)
             {
-                case "_GenerateSystemReport:0":
+               /* case "_GenerateSystemReport:0":
                     var totalStepCount = (await _mediator.Send(new GetEntitiesQuery<Step>
                     {
-                        Page = 0,
-                        Size = 0,
+                        Expression = e => e.P
                     })).Count;
 
                     var totalUnassignedStepCount = (await _mediator.Send(new GetEntitiesQuery<Step>
@@ -123,7 +122,7 @@ namespace Cindi.Application.InternalBots
                         text = step.Inputs.ContainsKey("text") ? (string)DynamicDataUtility.GetData(step.Inputs, "text").Value : null
                     });
                     updateRequest.Status = StepStatuses.Successful;
-                    return updateRequest;
+                    return updateRequest;*/
             }
 
             updateRequest.Status = StepStatuses.Error;

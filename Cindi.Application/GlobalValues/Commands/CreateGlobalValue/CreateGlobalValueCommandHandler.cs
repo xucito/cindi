@@ -8,25 +8,29 @@ using Cindi.Domain.Exceptions.Global;
 using Cindi.Domain.Exceptions.GlobalValues;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries.GetEntity;
 
 namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
 {
     public class CreateGlobalValueCommandHandler : IRequestHandler<CreateGlobalValueCommand, CommandResult<GlobalValue>>
     {
-        ApplicationDbContext _context;
+        ElasticClient _context;
+        private IMediator _mediator;
 
-        public CreateGlobalValueCommandHandler(ApplicationDbContext context)
+        public CreateGlobalValueCommandHandler(ElasticClient context,
+            IMediator mediator)
         {
             _context = context;
+            _mediator = mediator;
         }
         public async Task<CommandResult<GlobalValue>> Handle(CreateGlobalValueCommand request, CancellationToken cancellationToken)
         {
@@ -38,8 +42,10 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 throw new InvalidInputTypeException("Input " + request.Type + " is not valid.");
             }
 
-            if (await _context.GlobalValues.FirstOrDefaultAsync<GlobalValue>(
-                gv => gv.Name == request.Name) != null)
+            if ((await _mediator.Send(new GetEntityQuery<GlobalValue>()
+                {
+                    Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)))
+                })).Result != null)
             {
                 throw new InvalidGlobalValuesException("The global value name " + request.Name + " is already in-use.");
             }
@@ -54,8 +60,8 @@ namespace Cindi.Application.GlobalValues.Commands.CreateGlobalValue
                 CreatedBy = request.CreatedBy
             };
 
-            _context.Add(createdGV);
-            await _context.SaveChangesAsync();
+            await _context.IndexDocumentAsync(createdGV);
+            
 
             stopwatch.Stop();
 

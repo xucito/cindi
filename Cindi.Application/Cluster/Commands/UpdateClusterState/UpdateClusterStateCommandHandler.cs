@@ -1,24 +1,26 @@
 ﻿using Cindi.Application.Interfaces;
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Domain.Entities.States;
+using System.Linq;
 
 namespace Cindi.Application.Cluster.Commands.UpdateClusterState
 {
     public class UpdateClusterStateCommandHandler : IRequestHandler<UpdateClusterStateCommand, CommandResult>
     {
         private IClusterStateService _state;
-        private ApplicationDbContext _context;
+        private ElasticClient _context;
 
-        public UpdateClusterStateCommandHandler(ApplicationDbContext context, IClusterStateService state)
+        public UpdateClusterStateCommandHandler(ElasticClient context, IClusterStateService state)
         {
             _state = state;
             _context = context;
@@ -29,7 +31,7 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var state = await _context.CindiClusterStates.FirstOrDefaultAsync();
+            var state = (await _context.SearchAsync<CindiClusterState>()).HitsMetadata.Hits.Select(h => h.Source).FirstOrDefault();
             if (request.AssignmentEnabled.HasValue)
                 state.Settings.AssignmentEnabled = request.AssignmentEnabled.Value;
             if (request.AllowAutoRegistration.HasValue)

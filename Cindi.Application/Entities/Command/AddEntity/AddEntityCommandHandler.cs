@@ -13,21 +13,21 @@ using System.Threading.Tasks;
 
 namespace Cindi.Application.Entities.Command.DeleteEntity
 {
-    public class DeleteEntityCommandHandler<T> : IRequestHandler<DeleteEntityCommand<T>, CommandResult>
+    public class AddEntityCommandHandler<T> : IRequestHandler<AddEntityCommand<T>, CommandResult>
         where T : BaseEntity
     {
         ElasticClient _context;
-        public DeleteEntityCommandHandler(ElasticClient context)
+        public AddEntityCommandHandler(ElasticClient context)
         {
             _context = context;
         }
 
-        public async Task<CommandResult> Handle(DeleteEntityCommand<T> request, CancellationToken cancellationToken)
+        public async Task<CommandResult> Handle(AddEntityCommand<T> request, CancellationToken cancellationToken)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            _context.Delete<T>(request.Entity.Id);
+            await _context.IndexDocumentAsync(request.Entity);
 
             return new CommandResult()
             {

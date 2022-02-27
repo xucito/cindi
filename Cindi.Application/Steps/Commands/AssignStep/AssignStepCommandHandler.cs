@@ -11,9 +11,9 @@ using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
+using Elasticsearch.Net;
 
 namespace Cindi.Application.Steps.Commands.AssignStep
 {
@@ -30,13 +32,13 @@ namespace Cindi.Application.Steps.Commands.AssignStep
     {
         private readonly IClusterStateService _clusterStateService;
         public ILogger<AssignStepCommandHandler> Logger;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
         private IMemoryCache _cache;
 
         public AssignStepCommandHandler(
             IClusterStateService stateService,
             ILogger<AssignStepCommandHandler> logger,
-            ApplicationDbContext context,
+            ElasticClient context,
             IMemoryCache cache
             )
         {
@@ -63,7 +65,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                     var cacheEntryOptions = new MemoryCacheEntryOptions()
                         // Keep in cache for this time, reset time if accessed.
                         .SetSlidingExpiration(TimeSpan.FromSeconds(10));
-                    botkey = await _context.BotKeys.FirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+                    botkey = await _context.FirstOrDefaultAsync<BotKey>(request.BotId);
                     // Save data in cache.
                     _cache.Set(request.BotId, botkey, cacheEntryOptions);
                 }
@@ -79,7 +81,47 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 do
                 {
-                    unassignedStep = (await _context.Steps.Where(s => s.Status == StepStatuses.Unassigned && request.StepTemplateIds.Contains(s.StepTemplateId) && !ignoreUnassignedSteps.Contains(s.Id)).FirstOrDefaultAsync());
+                    unassignedStep = (await _context.FirstOrDefaultAsync<Step>(s =>
+                    s.Query(q =>
+                        q.Term(o => o.Status, StepStatuses.Unassigned) &&
+                        q.Terms(t => t.Field(o => o.StepTemplateId).Terms(request.StepTemplateIds)) &&
+                        !q.Terms(t => t.Field(o => o.Id).Terms(ignoreUnassignedSteps)))));
+                        
+                        
+                    //    PostData.Serializable(new {
+                    //    from = 0,
+                    //    size = 1,
+                    //    query = new
+                    //    {
+                    //        @bool = new
+                    //        {
+                    //            must = new Object[]
+                    //            {
+                    //                new
+                    //                {
+                    //                    term = new {
+                    //                        status = StepStatuses.Unassigned
+                    //                    }
+                    //                },
+                    //                new
+                    //                {
+                    //                    terms = new {
+                    //                        stepTemplateIds = request.StepTemplateIds
+                    //                    }
+                    //                }
+                    //            },
+                    //            must_not = new Object[]
+                    //            {
+                    //                new
+                    //                {
+                    //                    terms = new {
+                    //                        stepTemplateIds = ignoreUnassignedSteps
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //})));
                     if (unassignedStep != null)
                     {
                         unassignedStep = await _context.LockObject(unassignedStep);
@@ -91,7 +133,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                             //Inputs that have been converted to reference expression
                             Dictionary<string, object> convertedInputs = new Dictionary<string, object>();
 
-                            var template = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
+                            var template = await _context.FirstOrDefaultAsync<StepTemplate>(s => s.Query(q => q.Term(o => o.ReferenceId, unassignedStep.StepTemplateId)));
                             try
                             {
                                 //This should not throw a error externally, the server should loop to the next one and log a error
@@ -115,7 +157,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //Copy by reference
                                             if (isReferenceByValue)
                                             {
-                                                var foundGlobalValue = await _context.GlobalValues.OrderByDescending(o => o.Version).FirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _context.FirstOrDefaultAsync<GlobalValue>(s => s.Query(q => q.Term(o => o.Name, convertedValue)).Sort(so => so.Descending(o => o.Version)));
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -137,7 +179,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                             //copy by value
                                             else
                                             {
-                                                var foundGlobalValue = await _context.GlobalValues.FirstOrDefaultAsync<GlobalValue>(gv => gv.Name == convertedValue);
+                                                var foundGlobalValue = await _context.FirstOrDefaultAsync<GlobalValue>(s => s.Query(q => q.Term(o => o.Name, convertedValue)).Sort(so => so.Descending(o => o.Version)));
                                                 if (foundGlobalValue == null)
                                                 {
                                                     Logger.LogWarning("No global value was found for value " + input.Value);
@@ -189,8 +231,8 @@ namespace Cindi.Application.Steps.Commands.AssignStep
                                 }
                                 unassignedStep.Unlock();
 
-                                _context.Update(unassignedStep);
-                                await _context.SaveChangesAsync();
+                                await _context.IndexDocumentAsync(unassignedStep);
+                                
 
                                 //await _entitiesRepository.UpdateStep(unassignedStep);
                                 if (inputsUpdated)
@@ -223,7 +265,7 @@ namespace Cindi.Application.Steps.Commands.AssignStep
 
                 if (unassignedStep != null)
                 {
-                    var template = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == unassignedStep.StepTemplateId);
+                    var template = await _context.FirstOrDefaultAsync<StepTemplate>(s => s.Query(q => q.Term(o => o.ReferenceId, unassignedStep.StepTemplateId)));
 
                     //Decrypt the step
                     unassignedStep.Inputs = DynamicDataUtility.DecryptDynamicData(template.InputDefinitions, unassignedStep.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());

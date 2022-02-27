@@ -12,20 +12,20 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Diagnostics;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.Entities.States;
-using Cindi.Persistence.Data;
+using Nest;
 
 namespace Cindi.Application.Users.Commands.CreateUserCommand
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, CommandResult>
     {
         
-        ApplicationDbContext _context;
+        ElasticClient _context;
 
         public CreateUserCommandHandler(
             
             ILogger<CreateUserCommandHandler> logger,
             IServiceProvider prov,
-            ApplicationDbContext context
+            ElasticClient context
     )
         {
             
@@ -38,7 +38,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
 
             var salt = SecurityUtility.GenerateSalt(128);
             Guid id = Guid.NewGuid();
-            var createdUser =  _context.Add(new Domain.Entities.Users.User()
+            var createdUser =  await _context.IndexDocumentAsync(new Domain.Entities.Users.User()
             {
                 Username = request.Username.ToLower(),
                 HashedPassword = SecurityUtility.OneWayHash(request.Password, salt),
@@ -47,7 +47,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
                 CreatedBy = request.CreatedBy
             });
 
-            await _context.SaveChangesAsync();
+            
 
             return new CommandResult()
             {

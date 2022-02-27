@@ -10,6 +10,7 @@ using Cindi.Application.Entities.Queries;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.Interfaces;
 using Cindi.Application.Services.ClusterState;
+using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Utilities;
 using Cindi.Presentation.Results;
@@ -48,7 +49,7 @@ namespace Cindi.Presentation.Controllers
 
             var key = await Mediator.Send(new GetEntityQuery<BotKey>()
             {
-                Expression = bk => bk.Id == new Guid(keyCreationResult.ObjectRefId)
+                Expression = bk => bk.Query(q => q.Term(o => o.Id, new Guid(keyCreationResult.ObjectRefId)))
             });
 
             return Ok(new HttpCommandResult<NewBotKeyVM>("", keyCreationResult, new NewBotKeyVM()
@@ -65,12 +66,8 @@ namespace Cindi.Presentation.Controllers
         {
             var keys = await Mediator.Send(new GetEntitiesQuery<BotKey>()
             {
-                Page = page,
-                Size = size,
-                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<BotKey, bool>>> {
-                   isDisabled == null ? null : ExpressionBuilder.BuildPredicate<BotKey>("IsDisabled", OperatorComparer.Equals, isDisabled)
-                }),
-                Sort = sort
+                Expression = bk => bk.Query(q =>
+                    q.Term(o => o.IsDisabled, isDisabled == null ? null : isDisabled)).Size(size).Skip(0 * size).Sort(sort)
             });
 
             return Ok(new HttpQueryResult<List<BotKey>, List<GetBotKeyVM>>(keys, Mapper.Map<List<GetBotKeyVM>>(keys.Result)));
@@ -81,7 +78,8 @@ namespace Cindi.Presentation.Controllers
         [Route("{id}")]
         public async Task<IActionResult> UpdateBotkeys(Guid id, PutBotKeyVM update)
         {
-            var keys = await Mediator.Send(new UpdateBotKeyCommand() {
+            var keys = await Mediator.Send(new UpdateBotKeyCommand()
+            {
                 Id = id,
                 BotName = update.BotName,
                 IsDisabled = update.IsDisabled

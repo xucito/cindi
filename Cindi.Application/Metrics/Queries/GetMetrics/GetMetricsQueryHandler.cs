@@ -3,9 +3,9 @@ using Cindi.Application.Results;
 using Cindi.Application.Services;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,27 +13,36 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Domain.Entities.GlobalValues;
+using Cindi.Application.Entities.Queries.GetEntity;
 
 namespace Cindi.Application.Metrics.Queries.GetMetrics
 {
     public class GetMetricsQueryHandler : IRequestHandler<GetMetricsQuery, QueryResult<object>>
     {
         ILogger<GetMetricsQueryHandler> _logger;
-        ApplicationDbContext _context;
+        ElasticClient _context;
         IMetricTicksRepository _metricTicksRepository;
+        private IMediator _mediator;
 
         public GetMetricsQueryHandler(ILogger<GetMetricsQueryHandler> logger,
-            ApplicationDbContext context,
-            IMetricTicksRepository metricTicksRepository)
+            ElasticClient context,
+            IMetricTicksRepository metricTicksRepository,
+            IMediator mediator)
         {
             _context = context;
             _metricTicksRepository = metricTicksRepository;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<QueryResult<object>> Handle(GetMetricsQuery request, CancellationToken cancellationToken)
         {
-            var foundMetric = await _context.Metrics.FirstOrDefaultAsync<Metric>(m => m.MetricName == request.MetricName);
+            var foundMetric = (await _mediator.Send(new GetEntityQuery<Metric>()
+            {
+                Expression = (e => e.Query(q => q.Term(f => f.MetricName, request.MetricName)))
+            })).Result;
+
             if (foundMetric == null)
             {
                 throw new NotImplementedException("No metric " + request.MetricName);

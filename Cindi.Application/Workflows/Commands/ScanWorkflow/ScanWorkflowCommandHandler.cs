@@ -14,9 +14,9 @@ using Cindi.Domain.Exceptions.Workflows;
 using Cindi.Domain.Exceptions.WorkflowTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -26,6 +26,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 {
@@ -36,14 +37,14 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
         public ILogger<ScanWorkflowCommandHandler> Logger;
         private CindiClusterOptions _option;
         private IMediator _mediator;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
 
         public ScanWorkflowCommandHandler(
             IClusterStateService clusterStateService,
             ILogger<ScanWorkflowCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            ApplicationDbContext context
+            ElasticClient context
             )
         {
 
@@ -65,7 +66,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
             List<string> messages = new List<string>();
             bool workflowStillRunning = false;
 
-            var workflow = await _context.Workflows.FirstOrDefaultAsync<Workflow>(w => w.Id == request.WorkflowId);
+            var workflow = await _context.FirstOrDefaultAsync<Workflow>(request.WorkflowId);
 
             if (workflow == null)
             {
@@ -73,7 +74,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
             }
 
             //Get the workflow template
-            var workflowTemplate = await _context.WorkflowTemplates.FirstOrDefaultAsync<WorkflowTemplate>(wt => wt.ReferenceId == workflow.WorkflowTemplateId);
+            var workflowTemplate = await _context.FirstOrDefaultAsync<WorkflowTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, workflow.WorkflowTemplateId)));
 
             if (workflowTemplate == null)
             {
@@ -81,11 +82,11 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
             }
 
             //Get all the steps related to this task
-            var workflowSteps = (await _context.Steps.Where(s => s.WorkflowId == request.WorkflowId).ToListAsync());
+            var workflowSteps = (await _context.SearchAsync<Step>(st => st.Query(q => q.Term(f => f.WorkflowId, request.WorkflowId)))).Hits.Select(h => h.Source);
 
             foreach (var workflowStep in workflowSteps)
             {
-                workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
+                workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, workflowStep.StepTemplateId)))).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
                 if (!workflowStep.IsComplete())
                 {
                     messages.Add("Workflow step " + workflowStep.Id + " (" + workflowStep.Name + ")" + " is running.");
@@ -123,7 +124,7 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
-                    workflow = await _context.Workflows.FirstOrDefaultAsync<Workflow>(w => w.Id == request.WorkflowId);
+                    workflow = await _context.FirstOrDefaultAsync<Workflow>(request.WorkflowId);
                     workflow.Inputs = DynamicDataUtility.DecryptDynamicData(workflowTemplate.InputDefinitions, workflow.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
 
@@ -210,8 +211,8 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
 
                         //Mark it as evaluated
                         workflow.CompletedLogicBlocks.Add(logicBlock.Key);
-                        _context.Update(workflow);
-                        await _context.SaveChangesAsync();
+                        await _context.IndexDocumentAsync(workflow);
+                        
                     }
                     await _clusterStateService.UnlockLogicBlock(lockId, request.WorkflowId, logicBlock.Key);
                 }
@@ -219,15 +220,15 @@ namespace Cindi.Application.Workflows.Commands.ScanWorkflow
                 //Check if there are no longer any steps that are unassigned or assigned
 
                 var workflowStatus = workflow.Status;
-                workflowSteps = (await _context.Steps.Where(s => s.WorkflowId == request.WorkflowId).ToListAsync());
+                workflowSteps = (await _context.SearchAsync<Step>(st => st.Query(q => q.Term(f => f.WorkflowId, request.WorkflowId)))).Hits.Select(h => h.Source);
                 var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
                 var newWorkflowStatus = stepCreated ? WorkflowStatuses.ConvertStepStatusToWorkflowStatus(StepStatuses.Unassigned) : WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
 
                 if (newWorkflowStatus != workflow.Status)
                 {
                     workflow.Status = newWorkflowStatus;
-                    _context.Update(workflow);
-                    await _context.SaveChangesAsync();
+                    await _context.IndexDocumentAsync(workflow);
+                    
                     messages.Add("Updated workflow status " + newWorkflowStatus + ".");
                 }
             }

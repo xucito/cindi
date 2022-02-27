@@ -55,12 +55,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<Workflow>()
             {
-                Page = page,
-                Size = size,
-                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<Workflow, bool>>> {
-                   status == null ? null : ExpressionBuilder.BuildPredicate<Workflow>("Status", OperatorComparer.Equals, status)
-                }),
-                Sort = sort
+                Expression = e => e.Query(q => q.Term(f => f.Status, status == null ? null : status)).Size(size).Skip(size * page)
             }));
         }
 
@@ -70,7 +65,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<Workflow>()
             {
-                Expression = w => w.Id == id
+                Expression = w => w.Query(q => q.Term(f => f.Id, id))
             }));
         }
 
@@ -80,9 +75,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
             {
-                Page = 0,
-                Size = 1000,
-                Expression = (s) => s.WorkflowId == id
+                Expression = (s) => s.Query(q => q.Term(f => f.WorkflowId, id)).Size(1000)
             }));
         }
 

@@ -2,7 +2,7 @@
 using Cindi.Application.Results;
 using Cindi.Application.Services.ClusterState;
 using Cindi.Domain.Entities.Steps;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -16,9 +16,9 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
 {
     public class GetClusterStatsQueryHandler : IRequestHandler<GetClusterStatsQuery, QueryResult<ClusterStats>>
     {
-        ApplicationDbContext _context;
+        ElasticClient _context;
 
-        public GetClusterStatsQueryHandler(ApplicationDbContext context)
+        public GetClusterStatsQueryHandler(ElasticClient context)
         {
             _context = context;
     }
@@ -30,12 +30,24 @@ namespace Cindi.Application.Cluster.Queries.GetClusterStats
             {
                 Steps = new StepStats()
                 {
-                    Suspended = _context.Steps.Count(s => s.Status == StepStatuses.Suspended),
-                    Unassigned = _context.Steps.Count<Step>(s => s.Status == StepStatuses.Unassigned),
-                    Assigned = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Assigned),
-                    Successful = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Successful),
-                    Warning = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Warning),
-                    Error = _context.Steps.Count<Step>(s => s.Status ==StepStatuses.Error),
+                    Suspended = (await _context.CountAsync<Step>(s => s.Query(q => 
+                    q.Term(t => t.Status, StepStatuses.Suspended)
+                    ))).Count,
+                    Unassigned = (await _context.CountAsync<Step>(s => s.Query(q =>
+                    q.Term(t => t.Status, StepStatuses.Unassigned)
+                    ))).Count,
+                    Assigned = (await _context.CountAsync<Step>(s => s.Query(q =>
+                    q.Term(t => t.Status, StepStatuses.Assigned)
+                    ))).Count,
+                    Successful = (await _context.CountAsync<Step>(s => s.Query(q =>
+                    q.Term(t => t.Status, StepStatuses.Successful)
+                    ))).Count,
+                    Warning = (await _context.CountAsync<Step>(s => s.Query(q =>
+                    q.Term(t => t.Status, StepStatuses.Warning)
+                    ))).Count,
+                    Error = (await _context.CountAsync<Step>(s => s.Query(q =>
+                    q.Term(t => t.Status, StepStatuses.Error)
+                    ))).Count
                 }
 
             };

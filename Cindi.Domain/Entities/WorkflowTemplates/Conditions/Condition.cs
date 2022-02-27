@@ -12,7 +12,7 @@ namespace Cindi.Domain.Entities.WorkflowTemplates.Conditions
     {
         public abstract string Name { get; }
         public string Description { get; set; }
-        public abstract bool Evaluate(List<Step> completedSteps);
+        public abstract bool Evaluate(IEnumerable<Step> completedSteps);
         public abstract ConditionValidation ValidateCondition(IEnumerable<LogicBlock> validatedLogicblocks);
         public abstract bool ContainsStep(string stepName);
     }

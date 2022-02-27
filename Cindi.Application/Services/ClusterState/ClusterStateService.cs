@@ -17,7 +17,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cindi.Persistence.Data;
+using Nest;
 using System.Linq;
 
 namespace Cindi.Application.Services.ClusterState
@@ -30,16 +30,16 @@ namespace Cindi.Application.Services.ClusterState
         private Thread _initThread { get; set; }
         public static bool Initialized { get; set; }
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
-        public ApplicationDbContext _context;
+        public ElasticClient _context;
         CindiClusterState state { get; set; }
 
         public ClusterStateService(
             ILogger<ClusterStateService> logger,
             IServiceScopeFactory serviceProvider,
-            ApplicationDbContext context)
+            ElasticClient context)
         {
             _context = context;
-            state = _context.CindiClusterStates.FirstOrDefault();
+            state = _context.Search<CindiClusterState>(s => s.Query(q => q.MatchAll())).Hits.FirstOrDefault().Source;
             Initialized = state == null ? false : state.Initialized;
 
             _logger = logger;

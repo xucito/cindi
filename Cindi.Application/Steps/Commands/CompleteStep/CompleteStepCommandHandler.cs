@@ -26,8 +26,8 @@ using Newtonsoft.Json;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.WorkflowsTemplates;
-using Cindi.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
+using Nest;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Steps.Commands.CompleteStep
 {
@@ -37,14 +37,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
         public ILogger<CompleteStepCommandHandler> Logger;
         private CindiClusterOptions _option;
         private IMediator _mediator;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
 
         public CompleteStepCommandHandler(
             IClusterStateService clusterStateService,
             ILogger<CompleteStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
             IMediator mediator,
-            ApplicationDbContext context
+            ElasticClient context
             )
         {
             _clusterStateService = clusterStateService;
@@ -63,7 +63,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             ILogger<CompleteStepCommandHandler> logger,
             CindiClusterOptions options,
             IMediator mediator,
-             ApplicationDbContext context
+             ElasticClient context
     )
         {
             _clusterStateService = clusterStateService;
@@ -78,7 +78,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var stepToComplete = await _context.Steps.FirstOrDefaultAsync<Step>(s => s.Id == request.Id);
+            var stepToComplete = await _context.FirstOrDefaultAsync<Step>(request.Id);
 
             if (stepToComplete.IsComplete())
             {
@@ -95,14 +95,14 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");
             }
 
-            var stepTemplate = await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == stepToComplete.StepTemplateId);
+            var stepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, stepToComplete.StepTemplateId)));
 
             if (request.Outputs == null)
             {
                 request.Outputs = new Dictionary<string, object>();
             }
 
-            var botkey = await _context.BotKeys.FirstOrDefaultAsync<BotKey>(bk => bk.Id == request.BotId);
+            var botkey = await _context.FirstOrDefaultAsync<BotKey>(request.BotId);
 
             var unencryptedOuputs = DynamicDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
 
@@ -119,16 +119,16 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 });
             }
 
-            _context.Update(stepToComplete);
-            await _context.SaveChangesAsync();
+            await _context.IndexDocumentAsync(stepToComplete);
+            
 
             Logger.LogInformation("Updated step " + stepToComplete.Id + " with status " + stepToComplete.Status);
 
-            var updatedStep = await _context.Steps.FirstOrDefaultAsync<Step>(s => s.Id == stepToComplete.Id);
+            var updatedStep = await _context.FirstOrDefaultAsync<Step>(stepToComplete.Id);
 
             if (updatedStep.WorkflowId != null)
             {
-                var workflow = await _context.Workflows.FirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
+                var workflow = await _context.FirstOrDefaultAsync<Workflow>(updatedStep.WorkflowId.Value);
 
                 if (workflow == null)
                 {
@@ -136,7 +136,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 }
 
                 //Get the workflow template
-                var workflowTemplate = await _context.WorkflowTemplates.FirstOrDefaultAsync<WorkflowTemplate>(wt => wt.ReferenceId == workflow.WorkflowTemplateId);
+                var workflowTemplate = await _context.FirstOrDefaultAsync<WorkflowTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, workflow.WorkflowTemplateId)));
 
                 if (workflowTemplate == null)
                 {
@@ -144,11 +144,11 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 }
 
                 //Get all the steps related to this task
-                var workflowSteps = (await _context.Steps.Where(s => s.WorkflowId == updatedStep.WorkflowId.Value).ToListAsync());
+                var workflowSteps = (await _context.SearchAsync<Step>(st => st.Query(q => q.Term(f => f.WorkflowId,updatedStep.WorkflowId.Value)))).Hits.Select(s => s.Source);
 
                 foreach (var workflowStep in workflowSteps)
                 {
-                    workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == workflowStep.StepTemplateId)).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
+                    workflowStep.Outputs = DynamicDataUtility.DecryptDynamicData((await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, workflowStep.StepTemplateId)))).OutputDefinitions, workflowStep.Outputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
                 }
                 //Keep track of whether a step has been added
                 bool stepCreated = false;
@@ -176,7 +176,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                     }
 
                     //When the logic block is released, recheck whether this logic block has been evaluated
-                    workflow = await _context.Workflows.FirstOrDefaultAsync<Workflow>(w => w.Id == updatedStep.WorkflowId.Value);
+                    workflow = await _context.FirstOrDefaultAsync<Workflow>(updatedStep.WorkflowId.Value);
                     workflow.Inputs = DynamicDataUtility.DecryptDynamicData(workflowTemplate.InputDefinitions, workflow.Inputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
 
                     //If the logic block is ready to be processed, submit the steps
@@ -259,8 +259,8 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                         }
 
                         workflow.CompletedLogicBlocks.Add(logicBlock.Key);
-                        _context.Update(workflow);
-                        await _context.SaveChangesAsync();
+                        await _context.IndexDocumentAsync(workflow);
+                        
                     }
                     await _clusterStateService.UnlockLogicBlock(lockId, updatedStep.WorkflowId.Value, logicBlock.Key);
                 }
@@ -268,15 +268,15 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 //Check if there are no longer any steps that are unassigned or assigned
 
                 var workflowStatus = workflow.Status;
-                workflowSteps = (await _context.Steps.Where(s => s.WorkflowId == updatedStep.WorkflowId.Value).ToListAsync());
+                workflowSteps = (await _context.SearchAsync<Step>(st => st.Query(q => q.Term(f => f.WorkflowId, updatedStep.WorkflowId.Value)))).Hits.Select(s => s.Source);
                 var highestStatus = StepStatuses.GetHighestPriority(workflowSteps.Select(s => s.Status).ToArray());
                 var newWorkflowStatus = stepCreated ? WorkflowStatuses.ConvertStepStatusToWorkflowStatus(StepStatuses.Unassigned) : WorkflowStatuses.ConvertStepStatusToWorkflowStatus(highestStatus);
 
                 if (newWorkflowStatus != workflow.Status)
                 {
                     workflow.Status = newWorkflowStatus;
-                    _context.Update(workflow);
-                    await _context.SaveChangesAsync();
+                    await _context.IndexDocumentAsync(workflow);
+                    
                 }
             }
 

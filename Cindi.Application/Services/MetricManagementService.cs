@@ -2,8 +2,8 @@
 using Cindi.Application.SharedValues;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.States;
-using Cindi.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
+using Nest;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -20,7 +20,7 @@ namespace Cindi.Application.Services
     {
         readonly MetricLibrary _metricLibrary;
         ILogger<MetricManagementService> _logger;
-        ApplicationDbContext _context;
+        ElasticClient _context;
         private readonly ConcurrentQueue<MetricTick> _ticks = new ConcurrentQueue<MetricTick>();
         private readonly Task writeThread;
         IConfiguration _configuration;
@@ -28,7 +28,7 @@ namespace Cindi.Application.Services
 
         public MetricManagementService(
             ILogger<MetricManagementService> logger,
-            ApplicationDbContext context,
+            ElasticClient context,
             IConfiguration configuration
             )
         {
@@ -51,8 +51,8 @@ namespace Cindi.Application.Services
                             tick.Date = tick.Date.ToUniversalTime();
                             tick.Id = Guid.NewGuid();
                             var startTime = DateTime.Now;
-                            _context.Add(tick);
-                            await _context.SaveChangesAsync();
+                            await _context.IndexDocumentAsync(tick);
+                            
                             _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
 
                             if (_ticks.Count > 100)
@@ -80,12 +80,12 @@ namespace Cindi.Application.Services
 
         public async void InitializeMetricStore()
         {
-            var metrics = ((await _context.Metrics.Where(m => true).ToListAsync()).Select(m => m.MetricId));
+            var metrics = ((await _context.SearchAsync<Metric>()).Hits).Select(m => m.Source.MetricId);
             foreach (var metric in _metricLibrary.Metrics.Where(m => !metrics.Contains(m.Key)))
             {
                 _logger.LogDebug("Adding metric " + metric.Key + " to database.");
-                _context.Add(metric.Value);
-                await _context.SaveChangesAsync();
+                await _context.IndexDocumentAsync(metric.Value);
+                
             };
         }
 

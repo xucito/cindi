@@ -1,5 +1,6 @@
 ﻿using Cindi.Application.Results;
 using MediatR;
+using Nest;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,10 +9,8 @@ using System.Text;
 
 namespace Cindi.Application.Entities.Queries.GetEntity
 {
-    public class GetEntityQuery<T> : IRequest<QueryResult<T>>
+    public class GetEntityQuery<T> : MediatR.IRequest<QueryResult<T>> where T: class
     {
-        public Expression<Func<T, bool>> Expression { get; set; }
-        [JsonIgnore]
-        public Expression<Func<T, object>> Exclude = null;
+        public Func<SearchDescriptor<T>, ISearchRequest> Expression { get; set; } = null;
     }
 }

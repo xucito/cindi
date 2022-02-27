@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Cindi.Application.Results
 {
-    public class QueryResult<T>
+    public class QueryResult<T> where T:class
     {
         public long? Count { get; set; }
         public T Result { get; set; }

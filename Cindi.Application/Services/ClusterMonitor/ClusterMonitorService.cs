@@ -15,9 +15,9 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Utilities;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -41,12 +41,9 @@ namespace Cindi.Application.Services.ClusterMonitor
         Thread cleanupWorkflowsExecutions;
         Thread dataCleanupThread;
         private ILogger<ClusterMonitorService> _logger;
-        private ApplicationDbContext _context;
+        private ElasticClient _context;
         private IMetricTicksRepository _metricTicksRepository;
         private MetricManagementService _metricManagementService;
-        int leaderMonitoringInterval = Timeout.Infinite;
-        int nodeMonitoringInterval = Timeout.Infinite;
-        int lastSecond = 0;
         private IDatabaseMetricsCollector _databaseMetricsCollector;
         private IOptions<ClusterOptions> _clusterOptions;
         private IClusterStateService _state;
@@ -58,7 +55,7 @@ namespace Cindi.Application.Services.ClusterMonitor
 
         public ClusterMonitorService(
             IServiceProvider sp,
-            ApplicationDbContext context,
+            ElasticClient context,
             MetricManagementService metricManagementService,
             IMetricTicksRepository metricTicksRepository,
             IDatabaseMetricsCollector databaseMetricsCollector,
@@ -77,13 +74,6 @@ namespace Cindi.Application.Services.ClusterMonitor
             _clusterOptions = clusterOptions;
             Start();
         }
-
-        /*public ClusterMonitorService(IMediator mediatr, ILogger<ClusterMonitorService> logger)
-        {
-            _mediator = mediatr;
-            _logger = logger;
-            Start();
-        }*/
 
         public void Start()
         {
@@ -113,7 +103,13 @@ namespace Cindi.Application.Services.ClusterMonitor
                 {
                     if (_state.GetSettings != null)
                     {
-                        var entities = await _context.MetricTicks.Where((s) => s.Date < DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod))).ToListAsync();
+                        var entities = (await _mediator.Send(new GetEntitiesQuery<MetricTick>()
+                        {
+                            Expression = (e => e.Query(q => q.DateRange(f =>
+                            f.Field(a => a.Date)
+                            .LessThan(DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod))))))
+                        })).Result;
+
                         try
                         {
                             foreach (var tick in entities)
@@ -160,9 +156,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                     {
                         var steps = await _mediator.Send(new GetEntitiesQuery<Step>
                         {
-                            Page = 0,
-                            Size = 1000,
-                            Expression = (s) => s.Status == StepStatuses.Suspended
+                            Expression = (e => e.Query(q => q.Term(f => f.Status, StepStatuses.Suspended)))
                         });
 
                         totalSteps = steps.Count.Value;
@@ -200,7 +194,11 @@ namespace Cindi.Application.Services.ClusterMonitor
             while (true)
             {
                 _logger.LogDebug("Started clean up of workflow.");
-                var runningWorkflows = await _context.Workflows.Where(w => !WorkflowStatuses.CompletedStatus.Contains(w.Status) && w.CreatedOn < DateTime.Now.AddMinutes(-5)).ToListAsync();
+                var runningWorkflows = (await _mediator.Send(new GetEntitiesQuery<Workflow>()
+                {
+                    Expression = e => e.Query(q => q.Bool(m => m.MustNot(a => a.Terms(t => t.Field(f => f.Status).Terms(WorkflowStatuses.CompletedStatus)))
+                    .Must(d => d.DateRange(r => r.Field(a => a.CreatedOn).LessThan(DateTime.Now.AddMinutes(-5)))))).Size(10000)
+                })).Result;
                 foreach (var workflow in runningWorkflows)
                 {
                     try
@@ -225,73 +223,49 @@ namespace Cindi.Application.Services.ClusterMonitor
         {
             bool printedMessage = false;
             var stopwatch = new Stopwatch();
-            ConcurrentDictionary<Guid, DateTime> skipSchedules = new ConcurrentDictionary<Guid, DateTime>();
             var lastLatencyCheck = DateTime.Now;
             long maxLatency = 0;
             while (true)
             {
                 try
                 {
-                    List<Guid> enableScheduleList = new List<Guid>();
-                    foreach (var skippedSchedule in skipSchedules)
-                    {
-                        if (skippedSchedule.Value < DateTime.UtcNow)
-                        {
-                            enableScheduleList.Add(skippedSchedule.Key);
-                        }
-                    }
-
-                    foreach (var es in enableScheduleList)
-                    {
-                        skipSchedules.TryRemove(es, out _);
-                    }
 
                     stopwatch.Restart();
                     var startDate = DateTime.Now;
-
-                    if (!printedMessage)
-                    {
-                        _logger.LogInformation("Detected I am cluster leader, starting to run schedule up cluster");
-                        printedMessage = true;
-                    }
-                    Guid[] skip = skipSchedules.Select(ss => ss.Key).ToArray();
-
-                    var pageSize = 10;
-                    var totalSize = _context.ExecutionSchedules.Count<ExecutionSchedule>(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id));
                     int runTasks = 0;
-                    _logger.LogDebug("Found " + totalSize + " execution schedules to execute.");
-                    for (var i = 0; i < (totalSize + pageSize - 1) / pageSize; i++)
+
+                    var executionSchedules = (await _context.SearchAsync<ExecutionSchedule>(e => e.Query(q => q.Bool(b => b.Must(
+                        c => c.Bool(
+                            t => t.Must(
+                                x => x.Exists(f => f.Field(fi => fi.NextRun)),
+                                x => x.DateRange(da => da.Field(f => f.NextRun)),
+                                x => x.Term(f => f.Field(at => at.IsDisabled).Value(true)
+                            )))))).Size(10000))).Hits.Select(s => s.Source).ToList();
+
+                    var tasks = executionSchedules.Select((es) => Task.Run(async () =>
                     {
-                        _logger.LogDebug("Pulling " + (i * pageSize + 1) + "-" + (i * pageSize + pageSize));
-                        var executionSchedules = await _context.ExecutionSchedules.Where(e => (e.NextRun == null || e.NextRun < DateTime.Now && e.IsDisabled == false) && !skip.Contains(e.Id)).ToListAsync();
-
-                        var tasks = executionSchedules.Select((es) => Task.Run(async () =>
+                        try
                         {
-                            try
+                            await _mediator.Send(new RecalculateExecutionScheduleCommand()
                             {
-                                await _mediator.Send(new RecalculateExecutionScheduleCommand()
-                                {
-                                    Name = es.Name
-                                });
-                                _logger.LogDebug("Executing schedule " + es.Name + " last run " + es.NextRun.ToString("o") + " current run " + DateTime.Now.ToString("o"));
+                                Name = es.Name
+                            });
+                            _logger.LogDebug("Executing schedule " + es.Name + " last run " + es.NextRun.ToString("o") + " current run " + DateTime.Now.ToString("o"));
 
-                                await _mediator.Send(new ExecuteExecutionTemplateCommand()
-                                {
-                                    Name = es.ExecutionTemplateName,
-                                    ExecutionScheduleId = es.Id,
-                                    CreatedBy = SystemUsers.SCHEDULE_MANAGER
-                                });
-                            }
-                            catch (Exception e)
+                            await _mediator.Send(new ExecuteExecutionTemplateCommand()
                             {
-                                _logger.LogError("Failed to run schedule with exception " + e.Message + " skipping the schedule for 5 minutes" + Environment.NewLine + e.StackTrace);
-                                skipSchedules.TryAdd(es.Id, DateTime.UtcNow.AddMinutes(5));
-                            }
-                            Interlocked.Increment(ref runTasks);
-                        }));
-
-                        await Task.WhenAll(tasks);
-                    }
+                                Name = es.ExecutionTemplateName,
+                                ExecutionScheduleId = es.Id,
+                                CreatedBy = SystemUsers.SCHEDULE_MANAGER
+                            });
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError("Failed to run schedule with exception " + e.Message + " skipping the schedule for 5 minutes" + Environment.NewLine + e.StackTrace);
+                        }
+                        Interlocked.Increment(ref runTasks);
+                    }));
+                    await Task.WhenAll(tasks);
 
                     var totalTime = stopwatch.ElapsedMilliseconds;
 

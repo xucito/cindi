@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using MediatR;
 using Swashbuckle.AspNetCore.Swagger;
 using Cindi.Application.Interfaces;
-using Cindi.Persistence;
 using Cindi.Application.Services.ClusterState;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
@@ -38,8 +37,8 @@ using Cindi.Application.StepTemplates.Commands.CreateStepTemplate;
 using Cindi.Domain.Enums;
 using Cindi.Application.Cluster.Commands.UpdateClusterState;
 using Microsoft.AspNetCore.ResponseCompression;
-using Cindi.Persistence.Data;
-using Microsoft.EntityFrameworkCore;
+using Nest;
+
 using Microsoft.OpenApi.Models;
 
 namespace Cindi.Presentation
@@ -67,12 +66,6 @@ namespace Cindi.Presentation
             services.AddResponseCompression(options =>
             {
                 options.Providers.Add<GzipCompressionProvider>();
-            });
-
-            services.AddDbContext<ApplicationDbContext>(options =>
-            {
-                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
-                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             });
 
             //services.AddScoped<IMediator, Mediator>();

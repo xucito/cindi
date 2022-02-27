@@ -7,6 +7,7 @@ using Cindi.Application.Entities.Queries;
 using Cindi.Application.Entities.Queries.GetEntity;
 using Cindi.Application.GlobalValues.Commands.CreateGlobalValue;
 using Cindi.Application.GlobalValues.Commands.UpdateGlobalValue;
+using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.GlobalValues;
 using Cindi.Presentation.Results;
 using Cindi.Presentation.Utility;
@@ -30,12 +31,8 @@ namespace Cindi.Presentation.Controllers
         {
             var globalValues = await Mediator.Send(new GetEntitiesQuery<GlobalValue>()
             {
-                Page = page,
-                Size = size,
-                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<GlobalValue, bool>>> {
-                   status == null ? null : ExpressionBuilder.BuildPredicate<GlobalValue>("Status", OperatorComparer.Equals, status)
-                }),
-                Sort = sort
+                Expression =  er => er.Query(q => 
+                q.Term(f => f.Status, status == null ? null: status)).Size(size).Skip(size * page).Sort(sort) 
             });
 
             return Ok(new HttpQueryResult<List<GlobalValue>, List<GlobalValueVM>>(globalValues, Mapper.Map<List<GlobalValueVM>>(globalValues.Result)));
@@ -47,7 +44,7 @@ namespace Cindi.Presentation.Controllers
         {
             var globalValue = await Mediator.Send(new GetEntityQuery<GlobalValue>()
             {
-                Expression = gv => gv.Name == name
+                Expression = gv => gv.Query(q => q.Term(f => f.Name, name))
             });
 
             return Ok(new HttpQueryResult<GlobalValue, GlobalValueVM>(globalValue, Mapper.Map<GlobalValueVM>(globalValue.Result)));

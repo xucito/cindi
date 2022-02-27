@@ -53,7 +53,7 @@ namespace Cindi.Presentation.Authentication
                 });
                 user = (await _mediator.Send(new GetEntitiesQuery<User>()
                 {
-                    Expression = u =>u.Username == userId.ObjectRefId
+                    Expression = u =>u.Query(q => q.Term(f => f.Username, userId.ObjectRefId))
                 })).Result.FirstOrDefault();
             }
             catch(Exception e)

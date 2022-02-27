@@ -6,7 +6,7 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.State;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Steps.Commands.SuspendStep
 {
@@ -23,12 +24,12 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
     {
         public ILogger<SuspendStepCommandHandler> Logger;
         private CindiClusterOptions _option;
-        private readonly ApplicationDbContext _context;
+        private readonly ElasticClient _context;
 
         public SuspendStepCommandHandler(
             ILogger<SuspendStepCommandHandler> logger,
             IOptionsMonitor<CindiClusterOptions> options,
-             ApplicationDbContext context)
+             ElasticClient context)
         {
             _context = context;
             Logger = logger;
@@ -73,8 +74,8 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                     step.SuspendedUntil = request.SuspendedUntil;
                     step.AssignedTo = null;
                     step.Unlock();
-                    _context.Update(step);
-                    await _context.SaveChangesAsync();
+                    await _context.IndexDocumentAsync(step);
+                    
                     return new CommandResult()
                     {
                         ElapsedMs = stopwatch.ElapsedMilliseconds,

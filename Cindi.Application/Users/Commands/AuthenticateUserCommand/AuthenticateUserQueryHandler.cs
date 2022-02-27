@@ -2,10 +2,10 @@
 using Cindi.Application.Results;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Utilities;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,14 +13,15 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
 {
     public class AuthenticateUserCommandHandler : IRequestHandler<AuthenticateUserCommand, CommandResult>
     {
-        ApplicationDbContext _context;
+        ElasticClient _context;
 
-        public AuthenticateUserCommandHandler(ApplicationDbContext context,
+        public AuthenticateUserCommandHandler(ElasticClient context,
                 ILogger<AuthenticateUserCommandHandler> logger
             )
         {
@@ -31,7 +32,7 @@ namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var user = await _context.Users.FirstOrDefaultAsync<User>(u => u.Username == request.Username.ToLower());
+            var user = await _context.FirstOrDefaultAsync<User>(st => st.Query(q => q.Term(f => f.Username, request.Username.ToLower())));
 
             if (user != null)
             {

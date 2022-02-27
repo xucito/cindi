@@ -8,9 +8,9 @@ using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,14 +18,15 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.Steps.Queries.UnencryptStepField
 {
     public class UnencryptStepFieldQueryHandler : IRequestHandler<UnencryptStepFieldQuery, QueryResult<string>>
     {
-        private ApplicationDbContext _context;
+        private ElasticClient _context;
 
-        public UnencryptStepFieldQueryHandler(ApplicationDbContext context)
+        public UnencryptStepFieldQueryHandler(ElasticClient context)
         {
             _context = context;
         }
@@ -39,7 +40,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
             {
                 throw new InvalidUnencryptionRequestException("No such encryption type " + request.Type);
             }
-            var step = await _context.Steps.FirstOrDefaultAsync<Step>(s => s.Id == request.StepId);
+            var step = await _context.FirstOrDefaultAsync<Step>(request.StepId);
 
 
             if (step.CreatedBy != request.UserId)
@@ -47,7 +48,7 @@ namespace Cindi.Application.Steps.Queries.UnencryptStepField
                 throw new InvalidStepPermissionException("Only the creating user can decrypt the step secret.");
             }
 
-            var stepTemplate = await  _context.StepTemplates.FirstOrDefaultAsync<StepTemplate>(st => st.ReferenceId == step.StepTemplateId);
+            var stepTemplate = await  _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, step.StepTemplateId)));
 
             //Compare the to lower of inputs, TODO - this is inefficient
             if (!stepTemplate.InputDefinitions.ContainsKey(request.FieldName.ToLower()))

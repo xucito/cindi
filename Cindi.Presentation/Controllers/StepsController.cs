@@ -18,6 +18,7 @@ using Cindi.Application.Steps.Commands.CreateStep;
 using Cindi.Application.Steps.Commands.SuspendStep;
 using Cindi.Application.Steps.Commands.UnassignStep;
 using Cindi.Application.Steps.Queries;
+using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions;
@@ -61,7 +62,7 @@ namespace Cindi.Presentation.Controllers
 
                 Step step = (await Mediator.Send(new GetEntityQuery<Step>()
                 {
-                    Expression = s => s.Id == new Guid(result.ObjectRefId)
+                    Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId)))
                 })).Result;
 
 
@@ -73,7 +74,7 @@ namespace Cindi.Presentation.Controllers
                     {
                         step = (await Mediator.Send(new GetEntityQuery<Step>()
                         {
-                            Expression = s => s.Id == new Guid(result.ObjectRefId)
+                            Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId)))
                         })).Result;
                     }
 
@@ -126,7 +127,7 @@ namespace Cindi.Presentation.Controllers
             var result = await Mediator.Send(appendCommand);
             if (result.ObjectRefId != "")
             {
-                var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
+                var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId))) })).Result;
                 return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
             }
             else
@@ -152,7 +153,7 @@ namespace Cindi.Presentation.Controllers
 
                 if (result.ObjectRefId != "")
                 {
-                    var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
+                    var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId))) })).Result;
                     return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
                 }
                 else
@@ -177,7 +178,7 @@ namespace Cindi.Presentation.Controllers
                     var result = await Mediator.Send(completeStepCommand);
                     if (result.ObjectRefId != "")
                     {
-                        var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
+                        var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId))) })).Result;
                         return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
                     }
                     else
@@ -192,7 +193,7 @@ namespace Cindi.Presentation.Controllers
                         Type = CommandResultTypes.None
                     }, (await Mediator.Send(new GetEntityQuery<Step>()
                     {
-                        Expression = s => s.Id == id
+                        Expression = s => s.Query(q => q.Term(f => f.Id, id))
                     })).Result));
                 }
             }
@@ -239,7 +240,7 @@ namespace Cindi.Presentation.Controllers
             var result = await Mediator.Send(request);
             if (result.ObjectRefId != "")
             {
-                var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Id == new Guid(result.ObjectRefId) })).Result;
+                var resolvedStep = (await Mediator.Send(new GetEntityQuery<Step>() { Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId))) })).Result;
                 return Ok(new HttpCommandResult<Step>("step", result, resolvedStep));
             }
             else
@@ -253,12 +254,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
             {
-                Page = page,
-                Size = size,
-                Expression = ExpressionBuilder.GenerateExpression(new List<Expression<Func<Step, bool>>> {
-                   status == null ? null : ExpressionBuilder.BuildPredicate<Step>("Status", OperatorComparer.Equals, status)
-                }),
-                Sort = sort
+                Expression = s => s.Query(q => q.Term(f => f.Status,  status == null ? null : status)).Skip(page * size).Size(size).Sort(sort)
             }));
         }
 
@@ -268,7 +264,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<Step>()
             {
-                Expression = s => s.Id == id
+                Expression = s => s.Query(q => q.Term(f => f.Id, id))
             }));
         }
     }

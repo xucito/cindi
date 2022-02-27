@@ -5,32 +5,34 @@ using Cindi.Application.Results;
 using Cindi.Application.Utilities;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.ValueObjects;
-using Cindi.Persistence.Data;
+using Nest;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Entities.Queries.GetEntity;
 
 namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSchedule
 {
     public class UpdateExecutionScheduleCommandHandler : IRequestHandler<RecalculateExecutionScheduleCommand, CommandResult>
     {
         private readonly IClusterStateService _clusterStateService;
-        private readonly ApplicationDbContext _context;
         private IMediator _mediator;
+        ElasticClient _context;
+
 
         public UpdateExecutionScheduleCommandHandler(
             IClusterStateService service,
-            ApplicationDbContext context,
-            IMediator mediator)
+            IMediator mediator,
+            ElasticClient context)
         {
             _clusterStateService = service;
-            _context = context;
             _mediator = mediator;
+            _context = context;
         }
 
         public async Task<CommandResult> Handle(RecalculateExecutionScheduleCommand request, CancellationToken cancellationToken)
@@ -38,7 +40,10 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            ExecutionSchedule schedule = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
+            ExecutionSchedule schedule = (await _mediator.Send(new GetEntityQuery<ExecutionSchedule>()
+            {
+                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)))
+            })).Result;
 
             if (schedule == null)
             {
@@ -47,16 +52,18 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
 
             var appliedLock = await _context.LockObject(schedule);
 
-
             ExecutionSchedule existingValue;
 
             if (appliedLock != null)
             {
-                existingValue = await _context.ExecutionSchedules.FirstOrDefaultAsync(st => st.Name == request.Name);
+                existingValue = (await _mediator.Send(new GetEntityQuery<ExecutionSchedule>()
+                {
+                    Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)))
+                })).Result;
                 existingValue.NextRun = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow);
                 existingValue.Unlock();
-                _context.Update(existingValue);
-                await _context.SaveChangesAsync();
+                await _context.IndexDocumentAsync(existingValue);
+                
             }
 
             stopwatch.Stop();

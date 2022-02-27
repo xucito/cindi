@@ -4,7 +4,6 @@ using Cindi.Application.Workflows.Commands;
 using Cindi.Application.WorkflowTemplates.Commands.CreateWorkflowTemplate;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Cindi.Domain.Exceptions;
-using Cindi.Persistence;
 using Cindi.Presentation.Results;
 using Cindi.Presentation.Utility;
 using MediatR;
@@ -59,10 +58,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<WorkflowTemplate>()
             {
-                Page = page,
-                Size = size,
-                Expression = null,
-                Sort = sort
+                Expression = (s => s.Size(size).Skip(page * size))
             }));
         }
 
@@ -72,7 +68,7 @@ namespace Cindi.Presentation.Controllers
         {
             return Ok(await Mediator.Send(new GetEntityQuery<WorkflowTemplate>()
             {
-                Expression = st => st.ReferenceId == name + ":" + version
+                Expression = s => s.Query(st => st.Term(a => a.ReferenceId, name + ":" + version))
             }));
         }
     }
