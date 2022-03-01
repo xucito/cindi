@@ -7,13 +7,13 @@ namespace Cindi.Application.Utilities
 {
     public static class SchedulerUtility
     {
-        public static DateTime NextOccurence(string[] schedules, DateTime? lastRun = null)
+        public static DateTimeOffset NextOccurence(string[] schedules, DateTime? lastRun = null)
         {
-            DateTime? nextDate = null;
+            DateTimeOffset? nextDate = null;
 
             foreach (var schedule in schedules)
             {
-                DateTime? candidateDateTime = null;
+                DateTimeOffset? candidateDateTime = null;
                 var includeSeconds = schedule.Split(" ", StringSplitOptions.RemoveEmptyEntries);
                 CronExpression expression = includeSeconds.Length == 6 ? CronExpression.Parse(schedule, CronFormat.IncludeSeconds) : CronExpression.Parse(schedule, CronFormat.Standard);
                 candidateDateTime = expression.GetNextOccurrence(lastRun == null ? DateTime.UtcNow : lastRun.Value);

@@ -41,7 +41,7 @@ namespace Cindi.Domain.Entities.StepTests
         //public TemplateReference StepTemplate { get; set; }
         public Dictionary<string, string> Inputs { get; set; }
         public List<TestBase> Tests { get; set; }
-        public DateTime CreatedOn { get; set; }
+        public DateTimeOffset CreatedOn { get; set; }
 
         public StepTestTemplate()
         {

@@ -7,6 +7,8 @@ using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.StepTemplates;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using Nest;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;

@@ -1,6 +1,9 @@
-﻿using Cindi.Domain.Entities.Steps;
+﻿using Cindi.Domain.Converters;
+using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Exceptions.Workflows;
 using Cindi.Domain.ValueObjects;
+using Nest;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -19,6 +22,8 @@ namespace Cindi.Domain.Entities.Workflows
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
+        [Text]
+        [JsonConverter(typeof(ObjectJsonConverter))]
         public Dictionary<string, object> Inputs { get; set; }
 
         public string Status { get; set; }

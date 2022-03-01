@@ -4,10 +4,8 @@ using System.Text;
 
 namespace Cindi.Domain.Entities.Steps
 {
-    public class StepLog
+    public class StepLog: BaseEntity
     {
-        public Guid Id { get; set; }
         public string Message { get; set; }
-        public DateTime CreatedOn { get; set; }
     }
 }

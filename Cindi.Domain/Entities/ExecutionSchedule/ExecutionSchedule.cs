@@ -11,7 +11,7 @@ namespace Cindi.Domain.Entities.ExecutionSchedule
         public string Description { get; set; }
         public string ExecutionTemplateName {get;set;}
         public bool IsDisabled { get; set; }
-        public DateTime NextRun { get; set; }
+        public DateTimeOffset NextRun { get; set; }
         /// <summary>
         /// Cron based scheduling
         /// If multiple schedules are given, the next valid time is used

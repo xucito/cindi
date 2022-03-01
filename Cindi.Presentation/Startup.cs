@@ -40,6 +40,19 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Nest;
 
 using Microsoft.OpenApi.Models;
+using Cindi.Domain.Entities;
+using Cindi.Application.Utilities;
+using Cindi.Domain.Entities.Steps;
+using Cindi.Domain.Entities.BotKeys;
+using Cindi.Domain.Entities.ExecutionSchedule;
+using Cindi.Domain.Entities.ExecutionTemplates;
+using Cindi.Domain.Entities.Locks;
+using Cindi.Domain.Entities.Metrics;
+using Cindi.Domain.Entities.Users;
+using Cindi.Domain.Entities.Workflows;
+using Cindi.Domain.Entities.WorkflowsTemplates;
+using Nest.JsonNetSerializer;
+using Elasticsearch.Net;
 
 namespace Cindi.Presentation
 {
@@ -95,6 +108,23 @@ namespace Cindi.Presentation
                 });
             }
 
+            var pool = new SingleNodeConnectionPool((new Uri(Configuration.GetValue<string>("elastic:url"))));
+            var _connectionSettings = new ConnectionSettings(pool, sourceSerializer: JsonNetSerializer.Default)
+                        .DefaultMappingFor<CindiClusterState>()
+                        .DefaultMappingFor<BotKey>()
+                        .DefaultMappingFor<ExecutionSchedule>()
+                        .DefaultMappingFor<ExecutionTemplate>()
+                        .DefaultMappingFor<Lock>()
+                        .DefaultMappingFor<Metric>()
+                        .DefaultMappingFor<MetricTick>()
+                        .DefaultMappingFor<Step>()
+                        .DefaultMappingFor<StepTemplate>()
+                        .DefaultMappingFor<StepLog>()
+                        .DefaultMappingFor<User>()
+                        .DefaultMappingFor<Workflow>()
+                        .DefaultMappingFor<WorkflowTemplate>();
+            services.AddSingleton<ElasticClient>(new ElasticClient(_connectionSettings));
+
             services.AddSingleton<IClusterStateService, ClusterStateService>();
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
@@ -139,12 +169,29 @@ namespace Cindi.Presentation
 
             services.AddSwaggerGen(c =>
             {
-                c.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BasicAuth", Version = "v1" });
+                c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
                 {
+                    Name = "Authorization",
                     Type = SecuritySchemeType.Http,
-                    Scheme = "basic"
+                    Scheme = "basic",
+                    In = ParameterLocation.Header,
+                    Description = "Basic Authorization header using the Bearer scheme."
                 });
-                c.DocumentFilter<BasicAuthenticationFilter>();
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                          new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "basic"
+                                }
+                            },
+                            new string[] {}
+                    }
+                });
             });
 
             services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
@@ -157,18 +204,19 @@ namespace Cindi.Presentation
                 var c = ctx.Resolve<IComponentContext>();
                 return t => c.Resolve(t);
             });
+            services.AddControllers();
 
             builder.Populate(services);
 
             var AutofacContainer = builder.Build();
 
-            System.Net.ServicePointManager.ServerCertificateValidationCallback +=
+            /*System.Net.ServicePointManager.ServerCertificateValidationCallback +=
             delegate (object sender, System.Security.Cryptography.X509Certificates.X509Certificate certificate,
                                     System.Security.Cryptography.X509Certificates.X509Chain chain,
                                     System.Net.Security.SslPolicyErrors sslPolicyErrors)
             {
                 return true; // **** Always accept
-            };
+            };*/
 
             // this will be used as the service-provider for the application!
             return new AutofacServiceProvider(AutofacContainer);
@@ -179,81 +227,113 @@ namespace Cindi.Presentation
             IHostingEnvironment env,
             IClusterStateService service,
             ILogger<Startup> logger,
-            IDatabaseMetricsCollector collector,
-            ClusterMonitorService monitor,
+            //IDatabaseMetricsCollector collector,
+            //ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider,
-            MetricManagementService metricManagementService,
-            InternalBotManager internalBotManager
+            //MetricManagementService metricManagementService,
+            //InternalBotManager internalBotManager,
+            ElasticClient client
             )
         {
-            BootstrapThread = new Task(() =>
+            var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+            ClusterStateService.Initialized = service.GetState() != null;
+            var key = Configuration.GetValue<string>("EncryptionKey");
+            if (key != null)
             {
+                if (ClusterStateService.Initialized)
+                {
+                    logger.LogWarning("Loading key in configuration file, this is not recommended for production.");
+                    try
+                    {
+                        service.SetEncryptionKey(key);
+                        logger.LogInformation("Successfully applied encryption key.");
+                    }
+                    catch (InvalidPrivateKeyException e)
+                    {
+                        logger.LogError("Failed to apply stored key. Key does not match registered encryption hash.");
+                    }
+                }
+            }
 
 
-                var med = (IMediator)app.ApplicationServices.CreateScope().ServiceProvider.GetService(typeof(IMediator));
+            if (!ClusterStateService.Initialized)
+            {
+                var run = client.Create<CindiClusterState>();
+                service.Initialize();
 
-                ClusterStateService.Initialized = true;
-                var key = Configuration.GetValue<string>("EncryptionKey");
                 if (key != null)
                 {
-                    if (ClusterStateService.Initialized)
-                    {
-                        logger.LogWarning("Loading key in configuration file, this is not recommended for production.");
-                        try
-                        {
-                            service.SetEncryptionKey(key);
-                            logger.LogInformation("Successfully applied encryption key.");
-                        }
-                        catch (InvalidPrivateKeyException e)
-                        {
-                            logger.LogError("Failed to apply stored key. Key does not match registered encryption hash.");
-                        }
-                    }
+                    logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
+                    service.SetEncryptionKey(key);
                 }
-
-
-                if (!ClusterStateService.Initialized)
+                else
                 {
-
-                    if (key != null)
-                    {
-                        logger.LogWarning("Initializing new node with key in configuration file, this is not recommended for production.");
-                        service.SetEncryptionKey(key);
-                    }
-                    else
-                    {
-                        logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
-                    }
-
-                    var setPassword = Configuration.GetValue<string>("DefaultPassword");
+                    logger.LogWarning("No default key detected, post key to /api/cluster/encryption-key.");
                 }
 
-                metricManagementService.InitializeMetricStore();
-                if (service.GetSettings == null)
+                var setPassword = Configuration.GetValue<string>("DefaultPassword");
+
+
+                client.Create<CindiClusterState>();
+                client.Create<BotKey>();
+                client.Create<ExecutionSchedule>();
+                client.Create<ExecutionTemplate>();
+                client.Create<Lock>();
+                client.Create<Metric>();
+                client.Create<MetricTick>();
+                client.Create<Step>();
+                client.Create<StepLog>();
+                client.Create<User>();
+                client.Create<Workflow>();
+                client.Create<WorkflowTemplate>();
+                client.Create<StepTemplate>();
+
+                med.Send(new InitializeClusterCommand()
                 {
-                    logger.LogWarning("No setting detected, resetting settings to default.");
-                    med.Send(new UpdateClusterStateCommand()
-                    {
-                        DefaultIfNull = true
-                    }).GetAwaiter().GetResult(); ;
-                }
+                    DefaultPassword = setPassword == null ? "PleaseChangeMe" : setPassword,
+                    Name = Configuration.GetValue<string>("ClusterName")
+                }).GetAwaiter().GetResult();
+            }
+            else
+            {
+                client.Create<CindiClusterState>();
+                client.Create<BotKey>();
+                client.Create<ExecutionSchedule>();
+                client.Create<ExecutionTemplate>();
+                client.Create<Lock>();
+                client.Create<Metric>();
+                client.Create<MetricTick>();
+                client.Create<Step>();
+                client.Create<StepLog>();
+                client.Create<User>();
+                client.Create<Workflow>();
+                client.Create<WorkflowTemplate>();
+                client.Create<StepTemplate>();
+            }
 
-                foreach (var template in InternalStepLibrary.All)
+            //metricManagementService.InitializeMetricStore();
+            if (service.GetSettings == null)
+            {
+                logger.LogWarning("No setting detected, resetting settings to default.");
+                med.Send(new UpdateClusterStateCommand()
                 {
-                    med.Send(new CreateStepTemplateCommand()
-                    {
-                        Name = template.Name,
-                        InputDefinitions = template.InputDefinitions,
-                        OutputDefinitions = template.OutputDefinitions,
-                        CreatedBy = SystemUsers.SYSTEM_TEMPLATES_MANAGER,
-                        Version = template.Version,
-                        Description = template.Description
-                    }).GetAwaiter().GetResult();
-                }
-                //internalBotManager.AddAdditionalBot();
-            });
-            BootstrapThread.Start();
+                    DefaultIfNull = true
+                }).GetAwaiter().GetResult(); ;
+            }
+
+            foreach (var template in InternalStepLibrary.All)
+            {
+                med.Send(new CreateStepTemplateCommand()
+                {
+                    Name = template.Name,
+                    InputDefinitions = template.InputDefinitions,
+                    OutputDefinitions = template.OutputDefinitions,
+                    CreatedBy = SystemUsers.SYSTEM_TEMPLATES_MANAGER,
+                    Version = template.Version,
+                    Description = template.Description
+                }).GetAwaiter().GetResult();
+            }
 
             if (env.IsDevelopment())
             {
@@ -272,11 +352,11 @@ namespace Cindi.Presentation
 
             app.UseCindiClusterPipeline();
 
+            app.UseRouting();
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseCors("AllowAll");
-
-            app.UseMvc();
 
             if (EnableUI)
             {
@@ -295,6 +375,10 @@ namespace Cindi.Presentation
                     }
                 });
             }
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
 
         public void OverrideUISettings()

@@ -14,8 +14,8 @@ namespace Cindi.Application.Interfaces
         /// <param name="toDate"></param>
         /// <param name="metricIdsAndSubcategories">[metric Id]-[subcategory]</param>
         /// <returns></returns>
-        Task<object> GetMetricTicksAsync(DateTime fromDate, DateTime toDate, int metricId, string[] aggs, char interval = 'S', string subcategory = null, Guid? objectId = null, bool includeSubcategories = false);
+        Task<object> GetMetricTicksAsync(DateTimeOffset fromDate, DateTimeOffset toDate, int metricId, string[] aggs, char interval = 'S', string subcategory = null, Guid? objectId = null, bool includeSubcategories = false);
         Task<MetricTick> InsertMetricTicksAsync(MetricTick metrics);
-        Task<DateTime?> GetLastMetricTickDate(int metricDate);
+        Task<DateTimeOffset?> GetLastMetricTickDate(int metricDate);
     }
 }

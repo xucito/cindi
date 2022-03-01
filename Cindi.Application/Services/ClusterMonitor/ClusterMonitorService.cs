@@ -107,19 +107,19 @@ namespace Cindi.Application.Services.ClusterMonitor
                         {
                             Expression = (e => e.Query(q => q.DateRange(f =>
                             f.Field(a => a.Date)
-                            .LessThan(DateTime.Now.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod))))))
+                            .LessThan(DateTimeOffset.UtcNow.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod)).DateTime))))
                         })).Result;
 
                         try
                         {
                             foreach (var tick in entities)
                             {
-                                var startTime = DateTime.Now;
+                                var startTime = DateTimeOffset.UtcNow;
                                 result = await _mediator.Send(new DeleteEntityCommand<MetricTick>
                                 {
                                     Entity = tick
                                 });
-                                _logger.LogDebug("Cleanup of record " + result.ObjectRefId + " took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks.");
+                                _logger.LogDebug("Cleanup of record " + result.ObjectRefId + " took " + (DateTimeOffset.UtcNow - startTime).TotalMilliseconds + " total ticks.");
                                 // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
                             }
                         }

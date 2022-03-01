@@ -1,10 +1,13 @@
-﻿using Cindi.Domain.Entities.StepTemplates;
+﻿using Cindi.Domain.Converters;
+using Cindi.Domain.Entities.StepTemplates;
 using Cindi.Domain.Entities.StepTests;
 using Cindi.Domain.Enums;
 using Cindi.Domain.Exceptions.Steps;
 using Cindi.Domain.Exceptions.Utility;
 using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
+using Nest;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -37,6 +40,8 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
+        [Text]
+        [JsonConverter(typeof(ObjectJsonConverter))]
         public Dictionary<string, object> Inputs { get; set; }
 
         /*  public DateTime AssignedOn { get; set; }
@@ -49,13 +54,15 @@ namespace Cindi.Domain.Entities.Steps
         /// <summary>
         /// Completed is the date the step is moved to a completed queue
         /// </summary>
-        public DateTime? CompletedOn { get; set; }
+        public DateTimeOffset? CompletedOn { get; set; }
 
         public string Status { get; set; }
 
         /// <summary>
         /// Output from task, the output name is the dictionary key and the value is Dictionary value
         /// </summary>
+        [Text]
+        [JsonConverter(typeof(ObjectJsonConverter))]
         public Dictionary<string, object> Outputs { get; set; }
 
         /// <summary>

@@ -10,6 +10,6 @@ namespace Cindi.Presentation.ViewModels
         public string BotName { get; set; }
         public bool IsDisabled { get; set; }
         public Guid Id { get; set; }
-        public DateTime RegisteredOn { get; set; }
+        public DateTimeOffset RegisteredOn { get; set; }
     }
 }

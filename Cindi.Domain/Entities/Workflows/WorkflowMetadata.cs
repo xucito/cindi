@@ -11,7 +11,7 @@ namespace Cindi.Domain.Entities.Workflows
         {
         }
         public Guid WorkflowId { get; set; }
-        public DateTime CreatedOn { get; set; }
+        public DateTimeOffset CreatedOn { get; set; }
         public string Status { get; set; }
         public string WorkflowTemplateId { get; set; }
         public Dictionary<string, DateTime> LockedLogicBlocks = new Dictionary<string, DateTime>();

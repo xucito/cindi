@@ -1,4 +1,5 @@
 ﻿using Cindi.Domain.ValueObjects;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -8,12 +9,11 @@ namespace Cindi.Domain.Entities.Users
 {
     public class User: TrackedEntity
     {
-
-
         [Key]
         public string Username { get; set; }
         public string HashedPassword { get; set; }
         public string Email { get; set; }
+        [Text]
         public byte[] Salt { get; set; }
         public bool IsDisabled { get; set; }
     }

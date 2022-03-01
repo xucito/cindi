@@ -9,8 +9,8 @@ namespace Cindi.Application.Metrics.Queries.GetMetrics
 {
     public class GetMetricsQuery : IRequest<QueryResult<object>>
     {
-        public DateTime From { get; set; }
-        public DateTime To { get; set; }
+        public DateTimeOffset From { get; set; }
+        public DateTimeOffset To { get; set; }
         /// <summary>
         /// Use metricname.subcategory to use subcategories
         /// </summary>

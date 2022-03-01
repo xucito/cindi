@@ -40,7 +40,7 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     Id = keyId,
                     IsDisabled = false,
                     Nonce = 0,
-                    RegisteredOn = DateTime.Now
+                    RegisteredOn = DateTimeOffset.UtcNow
             });
 
             

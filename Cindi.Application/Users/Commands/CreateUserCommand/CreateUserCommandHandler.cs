@@ -28,7 +28,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
             ElasticClient context
     )
         {
-            
+            _context = context;
         }
 
         public async Task<CommandResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -40,6 +40,7 @@ namespace Cindi.Application.Users.Commands.CreateUserCommand
             Guid id = Guid.NewGuid();
             var createdUser =  await _context.IndexDocumentAsync(new Domain.Entities.Users.User()
             {
+                Id = Guid.NewGuid(),
                 Username = request.Username.ToLower(),
                 HashedPassword = SecurityUtility.OneWayHash(request.Password, salt),
                 Email = request.Username.ToLower(),

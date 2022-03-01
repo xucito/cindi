@@ -7,6 +7,6 @@ namespace Cindi.Domain.Entities
     public class BaseEntity
     {
         public Guid Id { get; set; }
-        public DateTime CreatedOn { get; set; }
+        public DateTimeOffset CreatedOn { get; set; } = DateTimeOffset.UtcNow;
     }
 }

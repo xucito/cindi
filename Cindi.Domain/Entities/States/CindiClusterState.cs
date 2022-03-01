@@ -11,10 +11,9 @@ using System.Threading.Tasks;
 
 namespace Cindi.Domain.Entities.States
 {
-    public class CindiClusterState
+    public class CindiClusterState: BaseEntity
     {
         public const string DefaultId = "State";
-        public string Id { get; set; } = DefaultId;
         //public Dictionary<string, LogicBlockLock> LockedLogicBlocks = new Dictionary<string, LogicBlockLock>();
         public string Version { get; private set; } = "1.0";
         public string EncryptionKeyHash { get; set; }

@@ -20,6 +20,8 @@ namespace Cindi.Application.Interfaces
         bool WasLockObtained(Guid lockKey, Guid workflowid, string Value);
         CindiClusterState GetState();
 
+        void Initialize();
+
         //bool AutoRegistrationEnabled { get; }
         //void ChangeAssignmentEnabled(bool newState);
         //bool IsAssignmentEnabled();

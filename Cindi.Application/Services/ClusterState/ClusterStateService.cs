@@ -39,7 +39,14 @@ namespace Cindi.Application.Services.ClusterState
             ElasticClient context)
         {
             _context = context;
-            state = _context.Search<CindiClusterState>(s => s.Query(q => q.MatchAll())).Hits.FirstOrDefault().Source;
+            try
+            {
+                state = _context.Search<CindiClusterState>(s => s.Query(q => q.MatchAll())).Hits.FirstOrDefault()?.Source;
+            }
+            catch(Exception e)
+            {
+                state = null; 
+            }
             Initialized = state == null ? false : state.Initialized;
 
             _logger = logger;
@@ -51,6 +58,14 @@ namespace Cindi.Application.Services.ClusterState
             {
                 Console.WriteLine("Existing cluster state found with name " + state.Id + ". Loading existing state.");
             }
+        }
+
+        public void Initialize()
+        {
+            var newState = new CindiClusterState();
+            newState.Initialized = true;
+            _context.IndexDocument(newState);
+            state = newState;
         }
 
         public static Func<string> GetEncryptionKey = () =>
