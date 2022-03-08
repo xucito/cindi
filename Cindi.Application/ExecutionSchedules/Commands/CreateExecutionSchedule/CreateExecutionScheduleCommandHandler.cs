@@ -41,8 +41,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
             stopwatch.Start();
 
             ExecutionSchedule schedule = (await _mediator.Send(new GetEntityQuery<ExecutionSchedule>() { 
-                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)
-                    ))
+                Expression = (e => e.Query(q => q.Term(f => f.Field(es => es.Name.Suffix("keyword")).Value(request.Name))))
             })).Result;
 
             if (schedule != null)
@@ -52,7 +51,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
 
             ExecutionTemplate template = (await _mediator.Send(new GetEntityQuery<ExecutionTemplate>()
             {
-                Expression = (e => e.Query(q => q.Term(f => f.Name, request.ExecutionTemplateName)
+                Expression = (e => e.Query(q => q.Term(f => f.Field(et => et.Name.Suffix("keyword")).Value(request.ExecutionTemplateName))
                     ))
             })).Result;
 
@@ -72,6 +71,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.CreateExecutionSchedule
 
             var executionSchedule = new ExecutionSchedule()
             {
+                Id = Guid.NewGuid(),
                 Name = request.Name,
                 ExecutionTemplateName = request.ExecutionTemplateName,
                 Description = request.Description,

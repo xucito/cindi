@@ -12,12 +12,5 @@ namespace Cindi.Domain.Entities
     public class TrackedEntity : BaseEntity
     {
         public string CreatedBy { get; set; }
-        public DateTime? LockExpiryDate { get; set; }
-        public Guid? LockId { get; set; }
-        public void Unlock()
-        {
-            LockExpiryDate = null;
-            LockId = null;
-        }
     }
 }

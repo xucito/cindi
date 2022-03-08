@@ -22,16 +22,16 @@ export const MENU_ITEMS: NbMenuItem[] = [
     icon: "clock-outline",
     link: "/pages/execution-schedules"
   },
-  {
-    title: "Monitoring",
-    icon: "heart-outline",
-    link: "/pages/monitoring"
-  },
-  {
-    title: "Console",
-    icon: "browser-outline",
-    link: "/pages/console"
-  },
+  // {
+  //   title: "Monitoring",
+  //   icon: "heart-outline",
+  //   link: "/pages/monitoring"
+  // },
+  // {
+  //   title: "Console",
+  //   icon: "browser-outline",
+  //   link: "/pages/console"
+  // },
   {
     title: "Templates",
     expanded: false,
@@ -51,11 +51,11 @@ export const MENU_ITEMS: NbMenuItem[] = [
         icon: "book-outline",
         link: "/pages/execution-templates"
       },
-      {
-        title: "Workflow-Designer",
-        icon: "edit-2-outline",
-        link: "/pages/workflow-designer"
-      }
+      // {
+      //   title: "Workflow-Designer",
+      //   icon: "edit-2-outline",
+      //   link: "/pages/workflow-designer"
+      // }
     ]
   },
   {

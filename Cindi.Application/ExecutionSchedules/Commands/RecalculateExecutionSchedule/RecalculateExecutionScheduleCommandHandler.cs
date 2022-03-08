@@ -42,7 +42,7 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
 
             ExecutionSchedule schedule = (await _mediator.Send(new GetEntityQuery<ExecutionSchedule>()
             {
-                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)))
+                Expression = (e => e.Query(q => q.Term(f => f.Field(a => a.Name.Suffix("keyword")).Value(request.Name))))
             })).Result;
 
             if (schedule == null)
@@ -53,17 +53,13 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
             var appliedLock = await _context.LockObject(schedule);
 
             ExecutionSchedule existingValue;
-
+            var isSuccessful = false;
             if (appliedLock != null)
             {
-                existingValue = (await _mediator.Send(new GetEntityQuery<ExecutionSchedule>()
-                {
-                    Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)))
-                })).Result;
-                existingValue.NextRun = SchedulerUtility.NextOccurence(existingValue.Schedule, DateTime.UtcNow);
-                existingValue.Unlock();
-                await _context.IndexDocumentAsync(existingValue);
-                
+                schedule.NextRun = SchedulerUtility.NextOccurence(schedule.Schedule, DateTime.UtcNow);
+                var updateResponse = await _context.IndexDocumentAsync(schedule);
+                isSuccessful = updateResponse.IsValid;
+                await _context.Unlock<ExecutionSchedule>(schedule.Id);
             }
 
             stopwatch.Stop();
@@ -72,7 +68,8 @@ namespace Cindi.Application.ExecutionSchedules.Commands.RecalculateExecutionSche
                 ObjectRefId = schedule.Id.ToString(),
                 ElapsedMs = stopwatch.ElapsedMilliseconds,
                 Type = CommandResultTypes.Update,
-                Result = schedule
+                Result = schedule,
+                IsSuccessful = isSuccessful
             };
         }
     }

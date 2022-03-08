@@ -51,7 +51,7 @@ namespace Cindi.Domain.Entities.StepTests
 
         public StepTestResult EvaluateStep(Step step)
         {
-            var startTime = DateTime.Now;
+            var startTime = DateTimeOffset.UtcNow;
             List<TestResult> results = new List<TestResult>();
            
             foreach(var test in Tests)
@@ -63,7 +63,7 @@ namespace Cindi.Domain.Entities.StepTests
                 StepTestTemplateId = Id,
                 TestResults = results,
                 StartTime = startTime,
-                CompletionTime = DateTime.Now
+                CompletionTime = DateTimeOffset.UtcNow
             };
         }
 

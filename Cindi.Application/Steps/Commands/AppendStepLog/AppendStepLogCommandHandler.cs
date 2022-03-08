@@ -43,6 +43,11 @@ namespace Cindi.Application.Steps.Commands.AppendStepLog
                 throw new InvalidStepStatusException("Cannot append log to step, step status is complete with " + step.Status);
             }
 
+            if(step.Logs == null)
+            {
+                step.Logs = new List<StepLog>();
+            }
+
             step.Logs.Add(new StepLog()
             {
                 CreatedOn = DateTime.UtcNow,

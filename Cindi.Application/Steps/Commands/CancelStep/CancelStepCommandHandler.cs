@@ -45,7 +45,7 @@ namespace Cindi.Application.Steps.Commands.CancelStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Step step = await _context.LockObject(new Step() { Id = request.StepId });
+            Step step = await _context.LockAndGetObject<Step>(request.StepId);
             // Applied the lock successfully
             if (step != null)
             {
@@ -55,9 +55,9 @@ namespace Cindi.Application.Steps.Commands.CancelStep
                     step.Status == StepStatuses.Assigned)
                 {
                     step.Status = StepStatuses.Cancelled;
-                    step.Unlock();
                     await _context.IndexDocumentAsync(step);
-                    
+                    await _context.Unlock<Step>(step.Id);
+
                     return new CommandResult()
                     {
                         ElapsedMs = stopwatch.ElapsedMilliseconds,

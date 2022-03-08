@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 namespace Cindi.Presentation.Controllers
 {
-    [Route("api/[controller]")]
+    /*[Route("api/[controller]")]
     public class MetricsController : BaseController
     {
         private CindiClusterOptions _option;
@@ -35,5 +35,5 @@ namespace Cindi.Presentation.Controllers
 
             return Ok(new HttpQueryResult<object, object>(result, result.Result));
         }
-    }
+    }*/
 }

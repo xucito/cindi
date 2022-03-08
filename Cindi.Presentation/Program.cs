@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetEscapades.Extensions.Logging.RollingFile;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cindi.Presentation
 {
@@ -19,10 +20,14 @@ namespace Cindi.Presentation
         public static IConfiguration configuration;
 
         public static void Main(string[] args)
-        {
+        { 
+            var host = CreateWebHostBuilder(args).Build();
+            IWebHostEnvironment env = host.Services.GetRequiredService<IWebHostEnvironment>();
+
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddCommandLine(args)
                 .AddEnvironmentVariables()
                 .Build();
@@ -43,15 +48,15 @@ namespace Cindi.Presentation
             {
                 Console.WriteLine("WARNING: Logs are not being persisted to disk, this can be configured using the setting Logging:File:Enabled");
             }
-            
-            CreateWebHostBuilder(args).Build().Run();
+
+            host.Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureKestrel(serverOptions =>
                 {
-                    serverOptions.Configure(configuration.GetSection("Kestrel"));
+                        serverOptions.Configure(configuration.GetSection("Kestrel"));
                 })
                 .ConfigureServices(services => services.AddAutofac())
                 .ConfigureLogging(builder =>

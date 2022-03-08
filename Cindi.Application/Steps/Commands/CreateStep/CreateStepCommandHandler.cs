@@ -38,7 +38,7 @@ namespace Cindi.Application.Steps.Commands.CreateStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var resolvedTemplate = await  _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, request.StepTemplateId)));
+            var resolvedTemplate = await  _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.Field(field => field.ReferenceId.Suffix("keyword")).Value(request.StepTemplateId))));
 
             if (resolvedTemplate == null)
             {
@@ -58,9 +58,10 @@ namespace Cindi.Application.Steps.Commands.CreateStep
                  newStep
                  );*/
 
-            await _context.IndexDocumentAsync(newStep);
-            
+            newStep.Status = StepStatuses.Unassigned;
+            var result = await _context.IndexDocumentAsync(newStep);
 
+            await _context.MakeSureIsQueryable<Step>(newStep.Id);
 
             stopwatch.Stop();
             return new CommandResult<Step>()

@@ -11,12 +11,14 @@ namespace Cindi.Domain.Converters
     {
         public override Dictionary<string, object> ReadJson(JsonReader reader, Type objectType, Dictionary<string, object> existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var test = reader.ReadAsString();
+            return JsonConvert.DeserializeObject<Dictionary<string, object>>(test);
         }
 
         public override void WriteJson(JsonWriter writer, Dictionary<string, object> value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var json = "asd";// JsonConvert.SerializeObject(value).Replace("\"", "\\\"");
+            writer.WriteValue(json);
         }
     }
 }

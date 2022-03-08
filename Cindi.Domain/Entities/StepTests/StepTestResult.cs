@@ -9,7 +9,7 @@ namespace Cindi.Domain.Entities.StepTests
     {
         public string StepTestTemplateId { get; set; }
         public List<TestResult> TestResults { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime? CompletionTime { get; set; }
+        public DateTimeOffset StartTime { get; set; }
+        public DateTimeOffset? CompletionTime { get; set; }
     }
 }

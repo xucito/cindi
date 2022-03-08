@@ -29,7 +29,7 @@ namespace Cindi.Application.BotKeys.Commands.UpdateBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var botKey = await _context.LockObject<BotKey>(request.Id);
+            var botKey = await _context.LockAndGetObject<BotKey>(request.Id);
 
             var update = false;
 

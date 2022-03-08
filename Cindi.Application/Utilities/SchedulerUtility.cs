@@ -7,7 +7,7 @@ namespace Cindi.Application.Utilities
 {
     public static class SchedulerUtility
     {
-        public static DateTimeOffset NextOccurence(string[] schedules, DateTime? lastRun = null)
+        public static DateTimeOffset NextOccurence(string[] schedules, DateTimeOffset? lastRun = null)
         {
             DateTimeOffset? nextDate = null;
 
@@ -16,7 +16,7 @@ namespace Cindi.Application.Utilities
                 DateTimeOffset? candidateDateTime = null;
                 var includeSeconds = schedule.Split(" ", StringSplitOptions.RemoveEmptyEntries);
                 CronExpression expression = includeSeconds.Length == 6 ? CronExpression.Parse(schedule, CronFormat.IncludeSeconds) : CronExpression.Parse(schedule, CronFormat.Standard);
-                candidateDateTime = expression.GetNextOccurrence(lastRun == null ? DateTime.UtcNow : lastRun.Value);
+                candidateDateTime = expression.GetNextOccurrence(lastRun == null ? DateTime.UtcNow : lastRun.Value.UtcDateTime);
 
                 if (nextDate == null || candidateDateTime.Value < nextDate)
                 {

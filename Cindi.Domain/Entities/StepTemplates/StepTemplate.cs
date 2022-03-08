@@ -9,11 +9,13 @@ using Cindi.Domain.Utilities;
 using Cindi.Domain.ValueObjects;
 using Nest;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 
 namespace Cindi.Domain.Entities.StepTemplates
 {
@@ -171,7 +173,20 @@ namespace Cindi.Domain.Entities.StepTemplates
                     {
                         if (InputDefinitions.ContainsKey(input.Key) && InputDefinitions[input.Key].Type == InputDataTypes.Secret && !InputDataUtility.IsInputReference(input, out _, out _))
                         {
-                            verifiedInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, encryptionKey));
+                            var inputValue = input.Value;
+                            if(inputValue is JsonElement)
+                            {
+                                verifiedInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt(((JsonElement)input.Value).GetString(), encryptionKey));
+                            }
+                            else if (inputValue is Newtonsoft.Json.Linq.JObject)
+                            {
+                                var convertedInput = (JObject)input.Value;
+                                verifiedInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, encryptionKey));
+                            }
+                            else
+                            {
+                                verifiedInputs.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyEncrypt((string)input.Value, encryptionKey));
+                            }
                         }
                         else
                         {

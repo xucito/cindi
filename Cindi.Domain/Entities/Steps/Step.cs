@@ -37,12 +37,15 @@ namespace Cindi.Domain.Entities.Steps
         [Required]
         public string StepTemplateId { get; set; }
 
+        [Text]
+        [JsonIgnore]
+        public string _Inputs { get; set; }
+
         /// <summary>
         /// Input for the task, the Input name is the dictionary key and the input value is the Dictionary value
         /// </summary>
-        [Text]
-        [JsonConverter(typeof(ObjectJsonConverter))]
-        public Dictionary<string, object> Inputs { get; set; }
+        [Text(Ignore = true)]
+        public Dictionary<string, object> Inputs { get { return JsonConvert.DeserializeObject<Dictionary<string, object>>(_Inputs); } set { _Inputs = JsonConvert.SerializeObject(value); } }
 
         /*  public DateTime AssignedOn { get; set; }
 
@@ -58,19 +61,23 @@ namespace Cindi.Domain.Entities.Steps
 
         public string Status { get; set; }
 
+
+        [Text]
+        public string _Outputs { get; set; }
+
         /// <summary>
         /// Output from task, the output name is the dictionary key and the value is Dictionary value
         /// </summary>
-        [Text]
-        [JsonConverter(typeof(ObjectJsonConverter))]
-        public Dictionary<string, object> Outputs { get; set; }
+        [Text(Ignore = true)]
+        public Dictionary<string, object> Outputs { get { 
+                return (_Outputs != null ? JsonConvert.DeserializeObject<Dictionary<string, object>>(_Outputs) : null); } set { _Outputs = JsonConvert.SerializeObject(value); } }
 
         /// <summary>
         /// Combined with Status can be used to evaluate dependencies
         /// </summary>
         public int StatusCode { get; set; }
 
-        public List<StepLog> Logs { get; set; }
+        public List<StepLog> Logs { get; set; } = new List<StepLog>();
 
         public bool IsComplete()
         {
@@ -86,7 +93,7 @@ namespace Cindi.Domain.Entities.Steps
         /// </summary>
         public Guid? AssignedTo { get; set; }
 
-        public DateTime? SuspendedUntil { get; set; }
+        public DateTimeOffset? SuspendedUntil { get; set; }
 
         public Guid? ExecutionTemplateId { get; set; }
         public Guid? ExecutionScheduleId { get; set; }

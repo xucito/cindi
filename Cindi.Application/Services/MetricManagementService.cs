@@ -50,10 +50,10 @@ namespace Cindi.Application.Services
                         {
                             tick.Date = tick.Date.ToUniversalTime();
                             tick.Id = Guid.NewGuid();
-                            var startTime = DateTime.Now;
+                            var startTime = DateTimeOffset.UtcNow;
                             await _context.IndexDocumentAsync(tick);
                             
-                            _logger.LogDebug("Total write time took " + (DateTime.Now - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
+                            _logger.LogDebug("Total write time took " + (DateTimeOffset.UtcNow - startTime).TotalMilliseconds + " total ticks left in queue " + _ticks.Count());
 
                             if (_ticks.Count > 100)
                             {

@@ -60,7 +60,7 @@ namespace Cindi.Presentation.Controllers
                 command.CreatedBy = ClaimsUtility.GetId(User);
                 var result = await Mediator.Send(command);
 
-                Step step = (await Mediator.Send(new GetEntityQuery<Step>()
+                /*Step step = (await Mediator.Send(new GetEntityQuery<Step>()
                 {
                     Expression = s => s.Query(q => q.Term(f => f.Id, new Guid(result.ObjectRefId)))
                 })).Result;
@@ -78,10 +78,10 @@ namespace Cindi.Presentation.Controllers
                         })).Result;
                     }
 
-                }
+                }*/
 
 
-                return Ok(new HttpCommandResult<Step>("step", result, step));
+                return Ok(new HttpCommandResult<Step>("step", result, result.Result));
             }
             catch (BaseException e)
             {
@@ -148,7 +148,7 @@ namespace Cindi.Presentation.Controllers
                 {
                     StepId = id,
                     CreatedBy = ClaimsUtility.GetId(User),
-                    SuspendedUntil = DateTime.Now.AddMilliseconds(_option.DefaultSuspensionTimeMs)
+                    SuspendedUntil = DateTimeOffset.UtcNow.AddMilliseconds(_option.DefaultSuspensionTimeMs)
                 });
 
                 if (result.ObjectRefId != "")
@@ -250,11 +250,11 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string status = null, string sort = "CreatedOn:1")
+        public async Task<IActionResult> GetAll(int page = 0, int size = 20, string sort = "createdOn:1")
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<Step>()
             {
-                Expression = s => s.Query(q => q.Term(f => f.Status,  status == null ? null : status)).Skip(page * size).Size(size).Sort(sort)
+                Expression = s => s.Query(q => q.MatchAll()).Skip(page * size).Size(size).Sort(sort)
             }));
         }
 

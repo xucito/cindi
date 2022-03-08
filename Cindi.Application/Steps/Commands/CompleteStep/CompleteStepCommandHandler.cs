@@ -95,7 +95,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
                 throw new InvalidStepStatusInputException(request.Status + " is not a valid completion status.");
             }
 
-            var stepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, stepToComplete.StepTemplateId)));
+            var stepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.Field(field => field.ReferenceId.Suffix("keyword")).Value(stepToComplete.StepTemplateId))));
 
             if (request.Outputs == null)
             {

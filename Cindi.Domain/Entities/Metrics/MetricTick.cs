@@ -10,7 +10,7 @@ namespace Cindi.Domain.Entities.Metrics
         public int MetricId { get; set; }
         public Guid ObjectId { get; set; }
         public double Value { get; set; }
-        public DateTime Date { get; set; }
+        public DateTimeOffset Date { get; set; }
         public string SubCategory { get; set; }
     }
 }

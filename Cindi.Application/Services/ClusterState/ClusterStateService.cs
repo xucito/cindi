@@ -42,6 +42,10 @@ namespace Cindi.Application.Services.ClusterState
             try
             {
                 state = _context.Search<CindiClusterState>(s => s.Query(q => q.MatchAll())).Hits.FirstOrDefault()?.Source;
+                if(state != null && state.Settings == null)
+                {
+                    state.Settings = new ClusterSettings();
+                }
             }
             catch(Exception e)
             {
@@ -64,6 +68,7 @@ namespace Cindi.Application.Services.ClusterState
         {
             var newState = new CindiClusterState();
             newState.Initialized = true;
+            newState.Settings = new ClusterSettings();
             _context.IndexDocument(newState);
             state = newState;
         }
@@ -140,7 +145,7 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool AutoRegistrationEnabled { get { return state.Settings.AllowAutoRegistration; } }
 
-        public ClusterSettings GetSettings { get { return state.Settings; } }
+        public ClusterSettings GetSettings { get { return state?.Settings; } }
 
         public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {
@@ -152,7 +157,7 @@ namespace Cindi.Application.Services.ClusterState
                     new SetLock(){
                         Name = "Workflow:" + workflowid + ":" + logicBlockId,
                         LockId = lockKey,
-                        CreatedOn = DateTime.Now,
+                        CreatedOn = DateTimeOffset.UtcNow,
                         TimeoutMs = 30000
                     }
                 },

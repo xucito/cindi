@@ -8,6 +8,6 @@ namespace Cindi.Presentation.ViewModels
     public class PutStepStatus
     {
         public string Status { get; set; }
-        public DateTime? SuspendedUntil { get; set; }
+        public DateTimeOffset? SuspendedUntil { get; set; }
     }
 }

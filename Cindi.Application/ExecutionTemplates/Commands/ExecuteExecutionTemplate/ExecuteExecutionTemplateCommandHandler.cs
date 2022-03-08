@@ -41,7 +41,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.ExecuteExecutionTemplate
         {
             var executionTemplate = (await _mediator.Send(new GetEntityQuery<ExecutionTemplate>()
             {
-                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)
+                Expression = (e => e.Query(q => q.Term(f => f.Field(a => a.Name.Suffix("keyword")).Value(request.Name))
                     ))
             })).Result;
 

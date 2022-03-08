@@ -5,7 +5,6 @@ using Cindi.Domain.Utilities;
 using Nest;
 using MediatR;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -32,7 +31,7 @@ namespace Cindi.Application.Users.Commands.AuthenticateUserCommand
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var user = await _context.FirstOrDefaultAsync<User>(st => st.Query(q => q.Term(f => f.Username, request.Username.ToLower())));
+            var user = await _context.FirstOrDefaultAsync<User>(st => st.Query(q => q.Term(f => f.Field(a => a.Username.Suffix("keyword")).Value(request.Username.ToLower()))));
 
             if (user != null)
             {

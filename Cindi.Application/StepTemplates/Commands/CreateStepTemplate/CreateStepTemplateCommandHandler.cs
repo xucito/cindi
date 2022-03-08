@@ -48,6 +48,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
             var newId = Guid.NewGuid();
             var newStepTemplate = new StepTemplate()
             {
+                Id = Guid.NewGuid(),
                 ReferenceId = request.ReferenceId == null ? request.Name + ":" + request.Version : request.ReferenceId,
                 Description = request.Description,
                 AllowDynamicInputs = request.AllowDynamicInputs,
@@ -58,7 +59,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                 CreatedBy = request.CreatedBy
             };
 
-            var existingStepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.ReferenceId, newStepTemplate.ReferenceId)));
+            var existingStepTemplate = await _context.FirstOrDefaultAsync<StepTemplate>(st => st.Query(q => q.Term(f => f.Field(field => field.ReferenceId.Suffix("keyword")).Value(newStepTemplate.ReferenceId))));
 
             if (existingStepTemplate == null)
             {
@@ -67,7 +68,7 @@ namespace Cindi.Application.StepTemplates.Commands.CreateStepTemplate
                     throw new InvalidStepTemplateException("Only system workflows can start with _");
                 }
 
-                await _context.IndexDocumentAsync(newStepTemplate);
+                var indexResult = await _context.IndexDocumentAsync(newStepTemplate);
                 
             }
             else

@@ -15,6 +15,7 @@ using Cindi.Presentation.Utility;
 using Cindi.Presentation.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Nest;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -51,7 +52,7 @@ namespace Cindi.Presentation.Controllers
             var username = ClaimsUtility.GetUsername(User);
             var user = (await Mediator.Send(new GetEntityQuery<User>()
             {
-                Expression = u => u.Query(q => q.Term(f => f.Username, username))
+                Expression = u => u.Query(q => q.Term(f => f.Field(a => a.Username.Suffix("keyword")).Value(username)))
             }));
 
             return Ok(new HttpQueryResult<User, UserVM>(user, Mapper.Map<UserVM>(user.Result)));

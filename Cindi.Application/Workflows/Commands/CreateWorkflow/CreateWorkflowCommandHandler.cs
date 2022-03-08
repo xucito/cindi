@@ -114,7 +114,7 @@ namespace Cindi.Application.Workflows.Commands.CreateWorkflow
             //When there are no conditions to be met
 
             // Needs to happen before first step is added
-            DateTimeOffset WorkflowStartTime = DateTime.Now;
+            DateTimeOffset WorkflowStartTime = DateTimeOffset.UtcNow;
             foreach (var block in startingLogicBlock)
             {
                 try

@@ -42,26 +42,26 @@ namespace Cindi.Application.Services.ClusterMonitor
         Thread dataCleanupThread;
         private ILogger<ClusterMonitorService> _logger;
         private ElasticClient _context;
-        private IMetricTicksRepository _metricTicksRepository;
-        private MetricManagementService _metricManagementService;
-        private IDatabaseMetricsCollector _databaseMetricsCollector;
+       // private IMetricTicksRepository _metricTicksRepository;
+       // private MetricManagementService _metricManagementService;
+       // private IDatabaseMetricsCollector _databaseMetricsCollector;
         private IOptions<ClusterOptions> _clusterOptions;
         private IClusterStateService _state;
 
         private int _fetchingDbMetrics = 0; //0 is false, 1 is true
 
-        private Timer monitoringTimer;
+        //private Timer monitoringTimer;
         private int secondsOfMetrics = 5;
 
         public ClusterMonitorService(
             IServiceProvider sp,
             ElasticClient context,
-            MetricManagementService metricManagementService,
-            IMetricTicksRepository metricTicksRepository,
-            IDatabaseMetricsCollector databaseMetricsCollector,
+            //MetricManagementService metricManagementService,
+            //IMetricTicksRepository metricTicksRepository,
+            //IDatabaseMetricsCollector databaseMetricsCollector,
             IOptions<ClusterOptions> clusterOptions)
         {
-            _metricManagementService = metricManagementService;
+            //_metricManagementService = metricManagementService;
             // var sp = serviceProvider.CreateScope().ServiceProvider;
             _mediator = sp.GetService<IMediator>();
             _logger = sp.GetService<ILogger<ClusterMonitorService>>();
@@ -69,15 +69,15 @@ namespace Cindi.Application.Services.ClusterMonitor
 
             _logger.LogInformation("Starting clean up service...");
             _context = context;
-            _metricTicksRepository = metricTicksRepository;
-            _databaseMetricsCollector = databaseMetricsCollector;
+            //_metricTicksRepository = metricTicksRepository;
+            //_databaseMetricsCollector = databaseMetricsCollector;
             _clusterOptions = clusterOptions;
             Start();
         }
 
         public void Start()
         {
-            monitoringTimer.Change(0, 100);
+            //monitoringTimer.Change(0, 100);
             secondsOfMetrics = _clusterOptions.Value.MetricsIntervalMs / 1000;
             checkSuspendedStepsThread = new Thread(async () => await CheckSuspendedSteps());
             checkSuspendedStepsThread.Start();
@@ -197,7 +197,7 @@ namespace Cindi.Application.Services.ClusterMonitor
                 var runningWorkflows = (await _mediator.Send(new GetEntitiesQuery<Workflow>()
                 {
                     Expression = e => e.Query(q => q.Bool(m => m.MustNot(a => a.Terms(t => t.Field(f => f.Status).Terms(WorkflowStatuses.CompletedStatus)))
-                    .Must(d => d.DateRange(r => r.Field(a => a.CreatedOn).LessThan(DateTime.Now.AddMinutes(-5)))))).Size(10000)
+                    .Must(d => d.DateRange(r => r.Field(a => a.CreatedOn).LessThan(DateTimeOffset.UtcNow.AddMinutes(-5).DateTime))))).Size(10000)
                 })).Result;
                 foreach (var workflow in runningWorkflows)
                 {
@@ -223,7 +223,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         {
             bool printedMessage = false;
             var stopwatch = new Stopwatch();
-            var lastLatencyCheck = DateTime.Now;
+            var lastLatencyCheck = DateTimeOffset.UtcNow;
             long maxLatency = 0;
             while (true)
             {
@@ -231,33 +231,40 @@ namespace Cindi.Application.Services.ClusterMonitor
                 {
 
                     stopwatch.Restart();
-                    var startDate = DateTime.Now;
+                    var startDate = DateTimeOffset.UtcNow;
                     int runTasks = 0;
 
-                    var executionSchedules = (await _context.SearchAsync<ExecutionSchedule>(e => e.Query(q => q.Bool(b => b.Must(
-                        c => c.Bool(
+                    var executionSchedules = (await _context.SearchAsync<ExecutionSchedule>(e => e.Query(q => q.Bool(
                             t => t.Must(
                                 x => x.Exists(f => f.Field(fi => fi.NextRun)),
-                                x => x.DateRange(da => da.Field(f => f.NextRun)),
-                                x => x.Term(f => f.Field(at => at.IsDisabled).Value(true)
-                            )))))).Size(10000))).Hits.Select(s => s.Source).ToList();
+                                x => x.DateRange(da => da.Field(f => f.NextRun).LessThan(DateTime.UtcNow)),
+                                x => x.Term(f => f.Field(at => at.IsDisabled).Value(false))
+                            ))).Size(10000))).Hits.Select(s => s.Source).ToList();
 
                     var tasks = executionSchedules.Select((es) => Task.Run(async () =>
                     {
                         try
                         {
-                            await _mediator.Send(new RecalculateExecutionScheduleCommand()
+                            var result = await _mediator.Send(new RecalculateExecutionScheduleCommand()
                             {
                                 Name = es.Name
                             });
-                            _logger.LogDebug("Executing schedule " + es.Name + " last run " + es.NextRun.ToString("o") + " current run " + DateTime.Now.ToString("o"));
 
-                            await _mediator.Send(new ExecuteExecutionTemplateCommand()
+                            if (result.IsSuccessful)
                             {
-                                Name = es.ExecutionTemplateName,
-                                ExecutionScheduleId = es.Id,
-                                CreatedBy = SystemUsers.SCHEDULE_MANAGER
-                            });
+                                _logger.LogDebug("Executing schedule " + es.Name + " last run " + es.NextRun.ToString("o") + " current run " + DateTimeOffset.UtcNow.ToString("o"));
+
+                                await _mediator.Send(new ExecuteExecutionTemplateCommand()
+                                {
+                                    Name = es.ExecutionTemplateName,
+                                    ExecutionScheduleId = es.Id,
+                                    CreatedBy = SystemUsers.SCHEDULE_MANAGER
+                                });
+                            }
+                            else
+                            {
+                                _logger.LogError("Failed to execute schedule excectuion template");
+                            }
                         }
                         catch (Exception e)
                         {
@@ -269,12 +276,12 @@ namespace Cindi.Application.Services.ClusterMonitor
 
                     var totalTime = stopwatch.ElapsedMilliseconds;
 
-                    _metricManagementService.EnqueueTick(new MetricTick()
+                    /*_metricManagementService.EnqueueTick(new MetricTick()
                     {
                         MetricId = 0,
-                        Date = DateTime.Now,
+                        Date = DateTimeOffset.UtcNow,
                         Value = totalTime
-                    });
+                    });*/
 
                     if (TimeSpan.FromMilliseconds(totalTime) > TimeSpan.FromSeconds(5))
                     {
@@ -285,16 +292,16 @@ namespace Cindi.Application.Services.ClusterMonitor
                     {
                         maxLatency = totalTime;
                     }
-                    if ((DateTime.Now - lastLatencyCheck).TotalMilliseconds > _clusterOptions.Value.MetricsIntervalMs)
+                    if ((DateTimeOffset.UtcNow - lastLatencyCheck).TotalMilliseconds > _clusterOptions.Value.MetricsIntervalMs)
                     {
-                        _metricManagementService.EnqueueTick(new MetricTick()
+                     /*   _metricManagementService.EnqueueTick(new MetricTick()
                         {
                             MetricId = (int)MetricIds.SchedulerLatencyMs,
                             Date = startDate,
                             Value = totalTime
-                        });
-                        _logger.LogDebug("Adding a scheduler metric with " + totalTime + " for " + DateTime.Now.ToString("o"));
-                        lastLatencyCheck = DateTime.Now;
+                        });*/
+                        _logger.LogDebug("Adding a scheduler metric with " + totalTime + " for " + DateTimeOffset.UtcNow.ToString("o"));
+                        lastLatencyCheck = DateTimeOffset.UtcNow;
                         maxLatency = 0;
                     }
 

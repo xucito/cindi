@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
 {
@@ -43,6 +44,10 @@ namespace Cindi.Application.BotKeys.Commands.CreateBotKeyCommand
                     RegisteredOn = DateTimeOffset.UtcNow
             });
 
+            if(key.IsValid)
+            {
+                await _context.MakeSureIsQueryable<BotKey>(keyId);
+            }
             
 
             return new CommandResult<string>()

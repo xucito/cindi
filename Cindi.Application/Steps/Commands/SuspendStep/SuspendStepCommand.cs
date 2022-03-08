@@ -12,7 +12,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
     public class SuspendStepCommand : IRequest<CommandResult>
     {
         public Guid StepId { get; set; }
-        public DateTime? SuspendedUntil { get; set; }
+        public DateTimeOffset? SuspendedUntil { get; set; }
         public string CreatedBy { get; set; }
     }
 }

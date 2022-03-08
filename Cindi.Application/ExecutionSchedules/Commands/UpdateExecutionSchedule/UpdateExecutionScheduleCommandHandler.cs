@@ -61,26 +61,26 @@ namespace Cindi.Application.ExecutionSchedules.Commands.UpdateExecutionSchedule
                     }
                 }
 
-            var existingValue = await _context.LockObject(schedule);
+            var lockId = await _context.LockObject(schedule);
 
-            if (existingValue != null)
+            if (lockId != null)
             {
                 if (request.IsDisabled != null && schedule.IsDisabled != request.IsDisabled)
                 {
-                    existingValue.IsDisabled = request.IsDisabled.Value;
+                    schedule.IsDisabled = request.IsDisabled.Value;
                 }
 
                 if (request.Schedule != null && schedule.Schedule != request.Schedule)
                 {
-                    existingValue.Schedule = request.Schedule;
+                    schedule.Schedule = request.Schedule;
                 }
 
                 if (request.Description != null && schedule.Description != request.Description)
                 {
-                    existingValue.Description = request.Description;
+                    schedule.Description = request.Description;
                 }
 
-                await _context.IndexDocumentAsync(existingValue);
+                await _context.IndexDocumentAsync(schedule);
                 
             }
 

@@ -45,7 +45,7 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Step step = await _context.LockObject<Step>(request.StepId);
+            Step step = await _context.LockAndGetObject<Step>(request.StepId);
 
             if (step == null)
             {
@@ -73,9 +73,9 @@ namespace Cindi.Application.Steps.Commands.SuspendStep
                     step.Status = StepStatuses.Suspended;
                     step.SuspendedUntil = request.SuspendedUntil;
                     step.AssignedTo = null;
-                    step.Unlock();
                     await _context.IndexDocumentAsync(step);
-                    
+                    await _context.Unlock<Step>(step.Id);
+
                     return new CommandResult()
                     {
                         ElapsedMs = stopwatch.ElapsedMilliseconds,

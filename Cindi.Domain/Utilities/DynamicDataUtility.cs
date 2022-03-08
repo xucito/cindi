@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 
 namespace Cindi.Domain.Utilities
 {
@@ -52,7 +53,7 @@ namespace Cindi.Domain.Utilities
                         case EncryptionProtocol.RSA:
                             if (usePublicKey)
                             {
-                                decryptedData.Add(input.Key.ToLower(), SecurityUtility.RsaDecryptWithPublic((string)input.Value, encryptionKey));
+                                decryptedData.Add(input.Key.ToLower(), SecurityUtility.RsaDecryptWithPublic(((JsonElement)input.Value).GetString(), encryptionKey));
                             }
                             else
                             {

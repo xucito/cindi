@@ -28,11 +28,11 @@ namespace Cindi.Application.BotKeys.Commands.DeleteBotKeyCommand
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            var botKey = await _context.LockObject<BotKey>(request.Id);
+            var lockid = await _context.LockObject<BotKey>(request.Id);
 
-            if (botKey != null)
+            if (lockid != null)
             {
-                await _context.DeleteAsync<BotKey>(botKey.Id);
+                await _context.DeleteAsync<BotKey>(request.Id);
                 
 
                 return new CommandResult()

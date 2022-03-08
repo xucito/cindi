@@ -46,13 +46,13 @@ using Cindi.Domain.Entities.Steps;
 using Cindi.Domain.Entities.BotKeys;
 using Cindi.Domain.Entities.ExecutionSchedule;
 using Cindi.Domain.Entities.ExecutionTemplates;
-using Cindi.Domain.Entities.Locks;
 using Cindi.Domain.Entities.Metrics;
 using Cindi.Domain.Entities.Users;
 using Cindi.Domain.Entities.Workflows;
 using Cindi.Domain.Entities.WorkflowsTemplates;
 using Nest.JsonNetSerializer;
 using Elasticsearch.Net;
+using Cindi.Domain.Entities.GlobalValues;
 
 namespace Cindi.Presentation
 {
@@ -114,15 +114,15 @@ namespace Cindi.Presentation
                         .DefaultMappingFor<BotKey>()
                         .DefaultMappingFor<ExecutionSchedule>()
                         .DefaultMappingFor<ExecutionTemplate>()
-                        .DefaultMappingFor<Lock>()
                         .DefaultMappingFor<Metric>()
                         .DefaultMappingFor<MetricTick>()
                         .DefaultMappingFor<Step>()
                         .DefaultMappingFor<StepTemplate>()
                         .DefaultMappingFor<StepLog>()
                         .DefaultMappingFor<User>()
+                        .DefaultMappingFor<GlobalValue>()
                         .DefaultMappingFor<Workflow>()
-                        .DefaultMappingFor<WorkflowTemplate>();
+                        .DefaultMappingFor<WorkflowTemplate>().DisableDirectStreaming();
             services.AddSingleton<ElasticClient>(new ElasticClient(_connectionSettings));
 
             services.AddSingleton<IClusterStateService, ClusterStateService>();
@@ -228,7 +228,7 @@ namespace Cindi.Presentation
             IClusterStateService service,
             ILogger<Startup> logger,
             //IDatabaseMetricsCollector collector,
-            //ClusterMonitorService monitor,
+            ClusterMonitorService monitor,
             IMediator mediator,
             IServiceProvider serviceProvider,
             //MetricManagementService metricManagementService,
@@ -274,12 +274,10 @@ namespace Cindi.Presentation
 
                 var setPassword = Configuration.GetValue<string>("DefaultPassword");
 
-
                 client.Create<CindiClusterState>();
                 client.Create<BotKey>();
                 client.Create<ExecutionSchedule>();
                 client.Create<ExecutionTemplate>();
-                client.Create<Lock>();
                 client.Create<Metric>();
                 client.Create<MetricTick>();
                 client.Create<Step>();
@@ -288,6 +286,7 @@ namespace Cindi.Presentation
                 client.Create<Workflow>();
                 client.Create<WorkflowTemplate>();
                 client.Create<StepTemplate>();
+                client.Create<GlobalValue>();
 
                 med.Send(new InitializeClusterCommand()
                 {
@@ -301,7 +300,6 @@ namespace Cindi.Presentation
                 client.Create<BotKey>();
                 client.Create<ExecutionSchedule>();
                 client.Create<ExecutionTemplate>();
-                client.Create<Lock>();
                 client.Create<Metric>();
                 client.Create<MetricTick>();
                 client.Create<Step>();

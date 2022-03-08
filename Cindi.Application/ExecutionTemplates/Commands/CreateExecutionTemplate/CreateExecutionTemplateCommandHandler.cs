@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cindi.Application.Entities.Queries.GetEntity;
+using Cindi.Application.Utilities;
 
 namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 {
@@ -41,8 +42,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 
             ExecutionTemplate template = (await _mediator.Send(new GetEntityQuery<ExecutionTemplate>()
             {
-                Expression = (e => e.Query(q => q.Term(f => f.Name, request.Name)
-                    ))
+                Expression = (e => e.Query(q => q.Term(f => f.Field( et => et.Name.Suffix("keyword")).Value(request.Name))))
             })).Result;
 
             if (template != null)
@@ -54,7 +54,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             {
                 var stepTemplate = (await _mediator.Send(new GetEntityQuery<StepTemplate>()
                 {
-                    Expression = (e => e.Query(q => q.Term(f => f.ReferenceId, request.ReferenceId)))
+                    Expression = (e => e.Query(q => q.Term(f => f.Field(a => a.ReferenceId.Suffix("keyword")).Value(request.ReferenceId))))
                 })).Result;
 
                 if (stepTemplate == null)
@@ -76,7 +76,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
             {
                 var workflowTemplate = (await _mediator.Send(new GetEntityQuery<WorkflowTemplate>()
                 {
-                    Expression = (e => e.Query(q => q.Term(f => f.ReferenceId, request.ReferenceId)))
+                    Expression = (e => e.Query(q => q.Term(f => f.Field(a => a.ReferenceId.Suffix("keyword")).Value(request.ReferenceId))))
                 })).Result;
 
                 if (workflowTemplate == null)
@@ -103,6 +103,7 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
 
             var executionTemplate = new ExecutionTemplate()
             {
+                Id = Guid.NewGuid(),
                 Name = request.Name,
                 ReferenceId = request.ReferenceId,
                 ExecutionTemplateType = request.ExecutionTemplateType,
@@ -111,9 +112,12 @@ namespace Cindi.Application.ExecutionTemplates.Commands.CreateExecutionTemplate
                 Inputs = request.Inputs
             };
 
-            await _context.IndexDocumentAsync(executionTemplate);
-            
+            ;
 
+            if ((await _context.IndexDocumentAsync(executionTemplate)).IsValid)
+            {
+                await _context.MakeSureIsQueryable<ExecutionTemplate>(executionTemplate.Id);
+            }
 
             stopwatch.Stop();
             return new CommandResult<ExecutionTemplate>()

@@ -62,7 +62,7 @@ namespace Cindi.Application.Steps.Commands.UnassignStep
                 };
             }
 
-            step = await _context.LockObject(step);
+            step = await _context.LockAndGetObject<Step>(step.Id);
 
             if (step != null)
             {

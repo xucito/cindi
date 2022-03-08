@@ -8,10 +8,7 @@ namespace Cindi.Domain.Entities.Locks
     {
         public string Name { get; set; }
         public int LockTimeoutMs { get; set; }
-        /// <summary>
-        /// Key used
-        /// </summary>
-        public string UniqueKey { get; set; }
-        public bool IsExpired() { return (DateTime.Now - CreatedOn).TotalMilliseconds > LockTimeoutMs; }
+        public Guid LockId { get; set; }
+        public bool IsExpired() { return (DateTimeOffset.UtcNow - CreatedOn).TotalMilliseconds > LockTimeoutMs; }
     }
 }

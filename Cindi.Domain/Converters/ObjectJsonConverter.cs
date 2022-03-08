@@ -16,7 +16,15 @@ namespace Cindi.Domain.Converters
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            return JsonConvert.DeserializeObject<object>(reader.ReadAsString());
+            var test = reader.ReadAsString();
+            try
+            {
+                return JsonConvert.DeserializeObject<object>(test);
+            }
+            catch (JsonReaderException ex)
+            {
+                return test;
+            }
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
