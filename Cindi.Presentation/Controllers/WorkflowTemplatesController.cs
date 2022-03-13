@@ -54,7 +54,7 @@ namespace Cindi.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string sort = "CreatedOn:1")
+        public async Task<IActionResult> GetAll(int page = 0, int size = 100, string sort = "createdOn:1")
         {
             return Ok(await Mediator.Send(new GetEntitiesQuery<WorkflowTemplate>()
             {

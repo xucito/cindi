@@ -12,5 +12,7 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
         public bool? AssignmentEnabled { get; set; } = null;
         public bool? AllowAutoRegistration { get; set; } = null;
         public string MetricRetentionPeriod { get; set; } = null;
+        public string StepRetentionPeriod { get; set; } = null;
+        public int? CleanupInterval { get; set; }
     }
 }

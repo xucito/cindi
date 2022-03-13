@@ -104,8 +104,7 @@ namespace Cindi.Application.Steps.Commands.CompleteStep
 
             var botkey = await _context.FirstOrDefaultAsync<BotKey>(request.BotId);
 
-            var unencryptedOuputs = DynamicDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, request.Outputs, EncryptionProtocol.RSA, botkey.PublicEncryptionKey, true);
-
+            var unencryptedOuputs = DynamicDataUtility.DecryptDynamicData(stepTemplate.OutputDefinitions, request.Outputs, EncryptionProtocol.AES256, SecurityUtility.RsaDecryptWithPublic(request.EncryptionKey, botkey.PublicEncryptionKey), true);
             stepToComplete.Status = request.Status;
             stepToComplete.Outputs = DynamicDataUtility.EncryptDynamicData(stepTemplate.OutputDefinitions, unencryptedOuputs, EncryptionProtocol.AES256, ClusterStateService.GetEncryptionKey());
             stepToComplete.StatusCode = request.StatusCode;

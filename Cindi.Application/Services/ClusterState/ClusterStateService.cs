@@ -32,6 +32,7 @@ namespace Cindi.Application.Services.ClusterState
         public static bool HasValidEncryptionKey { get { return _encryptionKey != null; } }
         public ElasticClient _context;
         CindiClusterState state { get; set; }
+        DateTime lastSettingReload { get; set; }
 
         public ClusterStateService(
             ILogger<ClusterStateService> logger,
@@ -62,6 +63,7 @@ namespace Cindi.Application.Services.ClusterState
             {
                 Console.WriteLine("Existing cluster state found with name " + state.Id + ". Loading existing state.");
             }
+            lastSettingReload = DateTime.Now;
         }
 
         public void Initialize()
@@ -145,7 +147,14 @@ namespace Cindi.Application.Services.ClusterState
 
         public bool AutoRegistrationEnabled { get { return state.Settings.AllowAutoRegistration; } }
 
-        public ClusterSettings GetSettings { get { return state?.Settings; } }
+        public ClusterSettings GetSettings { get { 
+                if(lastSettingReload < DateTime.UtcNow.AddMinutes(-1))
+                {
+                    state = _context.Search<CindiClusterState>(s => s.Query(q => q.MatchAll())).Hits.FirstOrDefault()?.Source;
+                    lastSettingReload = DateTime.Now;
+                }
+                return state?.Settings; 
+            } }
 
         public async Task<int> LockLogicBlock(Guid lockKey, Guid workflowid, string logicBlockId)
         {

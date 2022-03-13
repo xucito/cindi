@@ -43,6 +43,17 @@ namespace Cindi.Application.Results
         public T Result { get; set; }
     }
 
+    public class EncryptedCommandResult<T> : CommandResult<T>
+    {
+        /// <summary>
+        /// Encryption key to be used to share secret data
+        /// </summary>
+        public string EncryptionKey { get; set; }
+
+        public EncryptedCommandResult(Exception e) : base(e) { }
+        public EncryptedCommandResult() { }
+    }
+
     public static class CommandResultTypes
     {
         public static string Update = "update";

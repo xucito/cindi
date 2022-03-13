@@ -48,7 +48,14 @@ namespace Cindi.Domain.Utilities
                     switch (protocol)
                     {
                         case EncryptionProtocol.AES256:
-                            decryptedData.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyDecrypt((string)input.Value, encryptionKey));
+                            if (input.Value is JsonElement)
+                            {
+                                decryptedData.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyDecrypt(((JsonElement)input.Value).GetString(), encryptionKey));
+                            }
+                            else
+                            {
+                                decryptedData.Add(input.Key.ToLower(), SecurityUtility.SymmetricallyDecrypt((string)input.Value, encryptionKey));
+                            }
                             break;
                         case EncryptionProtocol.RSA:
                             if (usePublicKey)

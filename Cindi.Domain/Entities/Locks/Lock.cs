@@ -9,6 +9,6 @@ namespace Cindi.Domain.Entities.Locks
         public string Name { get; set; }
         public int LockTimeoutMs { get; set; }
         public Guid LockId { get; set; }
-        public bool IsExpired() { return (DateTimeOffset.UtcNow - CreatedOn).TotalMilliseconds > LockTimeoutMs; }
+        public DateTimeOffset ExpireOn { get; set; }
     }
 }

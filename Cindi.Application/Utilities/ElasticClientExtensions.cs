@@ -1,4 +1,5 @@
 ﻿using Cindi.Domain.Entities;
+using Cindi.Domain.Entities.Locks;
 using Elasticsearch.Net.Specification.FleetApi;
 using Nest;
 using System;
@@ -24,22 +25,26 @@ namespace Cindi.Application.Utilities
             //    LockExpiresOn = DateTimeOffset.UtcNow.AddMilliseconds(lockTimeoutMs),
             //    LockTimeoutMs = lockTimeoutMs
             //}));
-            var result = await client.UpdateByQueryAsync<T>(u => u.Query(q => q.Term(f => f.Id, i) && (!q.Exists(t => t.Field(f => f.LockId)) || q.DateRange(f => f.Field(a => a.LockExpiresOn).LessThan(DateTime.Now)))).Script(s => s.Id("apply-lock").Params(new Dictionary<string, object>()
-            {
-                {"lockTimeoutMs",lockTimeoutMs },
-                {"lockid", lockId },
-                {"lockCreatedOn",DateTimeOffset.UtcNow.ToString("o") },
-                {"lockExpiresOn",(DateTimeOffset.UtcNow.AddMilliseconds(lockTimeoutMs)).ToString("o") },
-            })).Conflicts(Elasticsearch.Net.Conflicts.Abort).Refresh());
+            //var result = await client.UpdateByQueryAsync<T>(u => u.Query(q => q.Term(f => f.Id, i) && (!q.Exists(t => t.Field(f => f.LockId)) || q.DateRange(f => f.Field(a => a.LockExpiresOn).LessThan(DateTime.Now)))).Script(s => s.Id("apply-lock").Params(new Dictionary<string, object>()
+            //{
+            //    {"lockTimeoutMs",lockTimeoutMs },
+            //    {"lockid", lockId },
+            //    {"lockCreatedOn",DateTimeOffset.UtcNow.ToString("o") },
+            //    {"lockExpiresOn",(DateTimeOffset.UtcNow.AddMilliseconds(lockTimeoutMs)).ToString("o") },
+            //})).Conflicts(Elasticsearch.Net.Conflicts.Abort).Refresh());
 
-            if (result.IsValid && result.Updated > 0)
+            var result = await client.IndexDocumentAsync(new Lock()
             {
-                var searchedObject = await FirstOrDefaultAsync<T>(client, i);
+                Id = i,
+                LockId = lockId,
+                LockTimeoutMs = lockTimeoutMs,
+                CreatedOn = DateTimeOffset.UtcNow,
+                ExpireOn = DateTimeOffset.UtcNow.AddMilliseconds(lockTimeoutMs)
+            });
 
-                if(searchedObject != null && searchedObject.LockId == lockId)
-                {
-                    return lockId;
-                }
+            if (result.IsValid)
+            {
+                return lockId;
             }
 
             return null;
@@ -78,14 +83,14 @@ namespace Cindi.Application.Utilities
         public static async Task<bool> Unlock<T>(this ElasticClient client, Guid id, int lockTimeoutMs = 60000) where T : BaseEntity
         {
             //var result = await client.UpdateByQueryAsync<T>(u => u.Query(q => q.Term(f => f.Id, id) && q.Exists(t => t.Field(f => f.LockId))).Script($"ctx._source.lockTimeoutMs=null; ctx._source.lockId=null; ctx._source.lockCreatedOn=null;ctx._source.lockExpiresOn=null;").Conflicts(Elasticsearch.Net.Conflicts.Abort).Refresh());
-            var result = await client.UpdateAsync<T, object>(id, u => u.Doc(new
-            {
-                LockId = (string)null,
-                LockCreatedOn = (string)null,
-                LockExpiresOn = (string)null,
-                LockTimeoutMs = (string)null
-            }));
-
+            //var result = await client.UpdateAsync<T, object>(id, u => u.Doc(new
+            //{
+            //    LockId = (string)null,
+            //    LockCreatedOn = (string)null,
+            //    LockExpiresOn = (string)null,
+            //    LockTimeoutMs = (string)null
+            //}));
+            var result = await client.DeleteAsync<Lock>(id);
             return result.IsValid;
         }
 

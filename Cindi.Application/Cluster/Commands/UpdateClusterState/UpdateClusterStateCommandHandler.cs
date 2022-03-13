@@ -38,6 +38,12 @@ namespace Cindi.Application.Cluster.Commands.UpdateClusterState
                 state.Settings.AllowAutoRegistration = request.AllowAutoRegistration.Value;
             if (!string.IsNullOrEmpty(request.MetricRetentionPeriod))
                 state.Settings.MetricRetentionPeriod = request.MetricRetentionPeriod;
+            if (!string.IsNullOrEmpty(request.StepRetentionPeriod))
+                state.Settings.StepRetentionPeriod = request.StepRetentionPeriod;
+            if (request.CleanupInterval != null)
+                state.Settings.CleanupInterval = request.CleanupInterval.Value;
+
+            await _context.IndexDocumentAsync<CindiClusterState>(state);
 
             return new CommandResult()
             {

@@ -21,6 +21,7 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Crypto.Parameters;
 using PemWriter = Org.BouncyCastle.OpenSsl.PemWriter;
+using System.Runtime.CompilerServices;
 
 namespace Cindi.Domain.Utilities
 {
@@ -28,6 +29,26 @@ namespace Cindi.Domain.Utilities
     public class SecurityUtility
     {
         private static readonly Encoding encoding = Encoding.UTF8;
+        private static Random rng = new Random();
+
+        public const string alphabet = "abcdefghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+        public static string SymmetricallyEncrypt(string plainText, out string generatedKey)
+        {
+            generatedKey = RandomString(32);
+            // Encrypt the string to an array of bytes.
+            return SymmetricallyEncrypt(plainText, generatedKey);
+        }
+
+        public static string RandomString(int size)
+        {
+            char[] chars = new char[size];
+            for (int i = 0; i < size; i++)
+            {
+                chars[i] = alphabet[rng.Next(alphabet.Length)];
+            }
+            return new string(chars);
+        }
 
         public static string SymmetricallyEncrypt(string plainText, string key)
         {
@@ -243,7 +264,7 @@ namespace Cindi.Domain.Utilities
 
         public static string RsaDecryptWithPublic(string base64Input, string publicKey)
         {
-            if(base64Input == null)
+            if (base64Input == null)
             {
                 return null;
             }

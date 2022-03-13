@@ -171,7 +171,8 @@ namespace Cindi.Presentation.Controllers
                     Log = commandVM.Logs,
                     Outputs = commandVM.Outputs,
                     CreatedBy = ClaimsUtility.GetId(User),
-                    BotId = new Guid(ClaimsUtility.GetId(User))
+                    BotId = new Guid(ClaimsUtility.GetId(User)),
+                    EncryptionKey = commandVM.EncryptionKey
                 };
                 try
                 {

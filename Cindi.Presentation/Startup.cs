@@ -53,6 +53,7 @@ using Cindi.Domain.Entities.WorkflowsTemplates;
 using Nest.JsonNetSerializer;
 using Elasticsearch.Net;
 using Cindi.Domain.Entities.GlobalValues;
+using Cindi.Domain.Entities.Locks;
 
 namespace Cindi.Presentation
 {
@@ -122,9 +123,10 @@ namespace Cindi.Presentation
                         .DefaultMappingFor<User>()
                         .DefaultMappingFor<GlobalValue>()
                         .DefaultMappingFor<Workflow>()
-                        .DefaultMappingFor<WorkflowTemplate>().DisableDirectStreaming();
-            services.AddSingleton<ElasticClient>(new ElasticClient(_connectionSettings));
+                        .DefaultMappingFor<WorkflowTemplate>()
+                        .DefaultMappingFor<Lock>().DisableDirectStreaming();
 
+            services.AddSingleton<ElasticClient>(new ElasticClient(_connectionSettings));
             services.AddSingleton<IClusterStateService, ClusterStateService>();
             services.AddSingleton<ClusterMonitorService>();
             services.AddSingleton<MetricManagementService>();
@@ -287,6 +289,7 @@ namespace Cindi.Presentation
                 client.Create<WorkflowTemplate>();
                 client.Create<StepTemplate>();
                 client.Create<GlobalValue>();
+                client.Create<Lock>();
 
                 med.Send(new InitializeClusterCommand()
                 {
@@ -308,6 +311,8 @@ namespace Cindi.Presentation
                 client.Create<Workflow>();
                 client.Create<WorkflowTemplate>();
                 client.Create<StepTemplate>();
+                client.Create<GlobalValue>();
+                client.Create<Lock>();
             }
 
             //metricManagementService.InitializeMetricStore();

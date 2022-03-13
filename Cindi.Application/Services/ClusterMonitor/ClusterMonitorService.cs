@@ -30,6 +30,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cindi.Domain.Entities.Locks;
 
 namespace Cindi.Application.Services.ClusterMonitor
 {
@@ -39,6 +40,7 @@ namespace Cindi.Application.Services.ClusterMonitor
         Thread checkSuspendedStepsThread;
         Thread checkScheduledExecutions;
         Thread cleanupWorkflowsExecutions;
+        Thread dataCleanupLocks;
         Thread dataCleanupThread;
         private ILogger<ClusterMonitorService> _logger;
         private ElasticClient _context;
@@ -83,56 +85,49 @@ namespace Cindi.Application.Services.ClusterMonitor
             checkSuspendedStepsThread.Start();
             checkScheduledExecutions = new Thread(async () => await CheckScheduledExecutions());
             checkScheduledExecutions.Start();
-            dataCleanupThread = new Thread(async () => await CleanUpData());
-            dataCleanupThread.Start();
+            dataCleanupLocks = new Thread(async () => await CleanUpData());
+            dataCleanupLocks.Start();
             cleanupWorkflowsExecutions = new Thread(async () => await CleanupWorkflowsExecutions());
             cleanupWorkflowsExecutions.Start();
+            dataCleanupThread = new Thread(async () => await CleanUpCluster());
+            dataCleanupThread.Start();
         }
 
         public async Task CleanUpData()
         {
             while (true)
             {
+                var result = await _context.DeleteByQueryAsync<Lock>(q => q.Query(a => a.DateRange(c => c.Field(f => f.ExpireOn).LessThanOrEquals(DateTime.UtcNow))));
+                await Task.Delay(60000);
+            }
+        }
 
+        public async Task CleanUpCluster()
+        {
+            int rebuildCount = 0;
+            while (true)
+            {
                 var page = 0;
                 long tickPosition = 0;
                 long totalMetricTicks = 0;
                 int cleanedCount = 0;
-                CommandResult result = null;
-                do
+                if (_state.GetSettings != null)
                 {
-                    if (_state.GetSettings != null)
+                    try
                     {
-                        var entities = (await _mediator.Send(new GetEntitiesQuery<MetricTick>()
-                        {
-                            Expression = (e => e.Query(q => q.DateRange(f =>
-                            f.Field(a => a.Date)
-                            .LessThan(DateTimeOffset.UtcNow.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.MetricRetentionPeriod)).DateTime))))
-                        })).Result;
+                        DateTime stepCompare = DateTime.UtcNow.AddMilliseconds(-1 * DateTimeMathsUtility.GetMs(_state.GetSettings.StepRetentionPeriod));
 
-                        try
-                        {
-                            foreach (var tick in entities)
-                            {
-                                var startTime = DateTimeOffset.UtcNow;
-                                result = await _mediator.Send(new DeleteEntityCommand<MetricTick>
-                                {
-                                    Entity = tick
-                                });
-                                _logger.LogDebug("Cleanup of record " + result.ObjectRefId + " took " + (DateTimeOffset.UtcNow - startTime).TotalMilliseconds + " total ticks.");
-                                // _logger.LogDebug("Deleted record " + result.ObjectRefId + ".");
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError("Encountered error while trying to delete record " + Environment.NewLine + e.StackTrace);
-                        }
-
+                        var result = await _context.DeleteByQueryAsync<Step>((s) => s.Query(q => q.DateRange(dr => dr.Field(f => f.CreatedOn).LessThanOrEquals(stepCompare)) &&
+                          !q.Term(o => o.Status.Suffix("keyword"), StepStatuses.Unassigned) &&
+                          !q.Term(o => o.Status.Suffix("keyword"), StepStatuses.Assigned) &&
+                          !q.Term(o => o.Status.Suffix("keyword"), StepStatuses.Suspended)));
                     }
-                    // }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("Failed to clean up steps with exception " + e.Message + Environment.NewLine + e.StackTrace);
+                    }
                 }
-                while (result != null && result.IsSuccessful);
-                await Task.Delay(30000);
+                await Task.Delay(_state.GetSettings.CleanupInterval);
             }
         }
 

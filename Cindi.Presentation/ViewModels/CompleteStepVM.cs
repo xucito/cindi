@@ -11,5 +11,6 @@ namespace Cindi.Presentation.ViewModels
         public string Status { get; set; }
         public int StatusCode { get; set; }
         public string Logs { get; set; }
+        public string EncryptionKey { get; set; }
     }
 }
